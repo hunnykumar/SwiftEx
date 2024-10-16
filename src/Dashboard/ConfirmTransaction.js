@@ -208,17 +208,23 @@ const ConfirmTransaction = (props) => {
     }
   }
 
-  useEffect(async () => {
-    const user = await state.user;
-    console.log(user);
-    AsyncStorageLib.getItem("walletType").then(async (type) => {
-      console.log(JSON.parse(type));
-      const Type = JSON.parse(type);
-      setWalletType(Type);
-    });
-    const fee = props.route.params.info.fee;
-    const transactionCost = fee.toString();
-    setCost(ethers.utils.formatEther(transactionCost));
+  useEffect(() => {
+    const consfirm_new_transctions=async()=>{
+      try {
+        const user = await state.user;
+        console.log(user);
+        AsyncStorageLib.getItem("walletType").then(async (type) => {
+          console.log(JSON.parse(type));
+          const Type = JSON.parse(type);
+          setWalletType(Type);
+        });
+        const fee = props.route.params.info.fee;
+        const transactionCost = fee.toString();
+        setCost(ethers.utils.formatEther(transactionCost));
+      } catch (error) {
+        console.log("0----",error)
+      }
+    }
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,

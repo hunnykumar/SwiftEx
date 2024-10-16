@@ -239,16 +239,16 @@ const ImportMultiCoinWalletModal = ({
                     "Incorrect Mnemonic. Please provide a valid Mnemonic"
                   );
                 }
-                const xrpWalletFromM = xrpl.Wallet.fromMnemonic(trimmedPhrase);
+                // const xrpWalletFromM = xrpl.Wallet.fromMnemonic(trimmedPhrase); // UNCOMMENT
                 const entropy = ethers.utils.mnemonicToEntropy(trimmedPhrase);
                 console.log(
                   "\t===> seed Created from mnemonic",
                   entropy.split("x")[1]
                 );
-                const xrpWallet = xrpl.Wallet.fromEntropy(
-                  entropy.split("x")[1]
-                ); // This is suggested because we will get seeds also
-                console.log(xrpWallet); // Produces different addresses
+                // const xrpWallet = xrpl.Wallet.fromEntropy( // UNCOMMENT
+                //   entropy.split("x")[1] // UNCOMMENT
+                // ); // This is suggested because we will get seeds also // UNCOMMENT
+                // console.log(xrpWallet); // Produces different addresses // UNCOMMENT
 
                 const accountFromMnemonic =
                   ethers.Wallet.fromMnemonic(trimmedPhrase);
@@ -258,8 +258,10 @@ const ImportMultiCoinWalletModal = ({
                   address: accountFromMnemonic.address,
                   privateKey: privateKey,
                   xrp: {
-                    address: xrpWallet.classicAddress,
-                    privateKey: xrpWallet.seed,
+                    // address: xrpWallet.classicAddress, // UNCOMMENT
+                    // privateKey: xrpWallet.seed, // UNCOMMENT
+                    address: "000000000",
+                    privateKey: "000000000",
                   },
                 };
                 /* const response = saveUserDetails(accountFromMnemonic.address).then(async (response)=>{
@@ -307,8 +309,10 @@ const ImportMultiCoinWalletModal = ({
                     mnemonic: trimmedPhrase,
                     name: accountName,
                     xrp: {
-                      address: xrpWallet.classicAddress,
-                      privateKey: xrpWallet.seed,
+                      // address: xrpWallet.classicAddress, // UNCOMMENT
+                      // privateKey: xrpWallet.seed,  // UNCOMMENT
+                      address: "000000000",
+                      privateKey: "000000000",
                     },
                     walletType: "Multi-coin",
                     wallets: wallets,
@@ -351,6 +355,7 @@ const ImportMultiCoinWalletModal = ({
 
                 let result = [];
               } catch (e) {
+                console.log("--====000---",e)
                 alert("error", e);
                 setLoading(false);
                 setWalletVisible(false);
