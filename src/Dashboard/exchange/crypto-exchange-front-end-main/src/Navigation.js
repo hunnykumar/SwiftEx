@@ -32,8 +32,8 @@ export function ExchangeNavigation() {
           let iconName;
           size = 27;
           if (route.name === "/") {
-            iconName = focused ? "ios-home-sharp" : "ios-home-sharp";
-            iconName = "ios-home-sharp";
+            iconName = focused ? "home-sharp" : "home-sharp";
+            iconName = "home-sharp";
           }
           // if (route.name === "Deposits") {
           //   iconName = focused ? "ios-home-sharp" : "ios-home-outline";

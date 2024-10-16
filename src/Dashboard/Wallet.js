@@ -57,7 +57,7 @@ const Wallet = ({ navigation }) => {
           height: hp(95),
           marginTop: "auto",
           backgroundColor: state.THEME.THEME===false?"#fff":"black",
-          borderRadius: 20,
+          borderRadius: 0,
         }}
       >
         <Animated.Image

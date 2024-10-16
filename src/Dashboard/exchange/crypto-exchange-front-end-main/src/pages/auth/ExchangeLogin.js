@@ -98,7 +98,18 @@ const FOCUSED=useIsFocused();
     // }
   // };
 
-
+ const save_token_inlocal=async(token_new)=>{
+  try {
+    await saveToken(token_new);
+    setLoading(false);
+    setEmail("");
+    setlogin_Passcode("");
+    navigation.navigate("exchange");
+    Showsuccesstoast(toast,"Success");
+  } catch (error) {
+    console.log("----===",error)
+  }
+ }
 
   const submitPhoneNumber = async () => {
      if(!Email||!login_Passcode)
@@ -138,14 +149,7 @@ const FOCUSED=useIsFocused();
             setLoading(false);
           }
           else{
-            saveToken(result.token);
-            setTimeout(()=>{
-              Showsuccesstoast(toast,"Success");
-            },400)
-            setLoading(false);
-            setEmail("");
-            setlogin_Passcode("");
-            navigation.navigate("exchange");
+            save_token_inlocal(result.token)
           }
 
       })

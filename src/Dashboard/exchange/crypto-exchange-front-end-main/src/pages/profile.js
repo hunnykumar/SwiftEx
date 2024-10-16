@@ -450,6 +450,17 @@ export const ProfileView = (props) => {
     Clipboard.setString(state.STELLAR_PUBLICK_KEY);
     alert("success", "Copied");
   };
+  const logout_functio=async()=>{
+    try {
+      console.log('clicked');
+      const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
+      await AsyncStorage.removeItem(LOCAL_TOKEN);
+      setmodalContainer_menu(false)
+      navigation.navigate('exchangeLogin');
+    } catch (error) {
+      console.log("--===9",error)
+    }
+  }
   return (
     <>
        <View style={{
@@ -549,13 +560,7 @@ export const ProfileView = (props) => {
       <Text style={[styles.modalContainer_option_text,{color:"white"}]}>Wallet</Text>
       </TouchableOpacity>
 
-                <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => {
-                  console.log('clicked');
-                  const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-                  AsyncStorage.removeItem(LOCAL_TOKEN);
-                  setmodalContainer_menu(false)
-                  navigation.navigate('exchangeLogin');
-                }}>
+                <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => {logout_functio()}}>
                   <Icon
                     name={"logout"}
                     type={"materialCommunity"}
