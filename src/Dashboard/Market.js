@@ -132,7 +132,7 @@ const requestOptions = {
           />
         </View>
         <View style={Styles.iconwithTextContainer1}>
-          <Text style={{ color: "gray" }}>New DApps</Text>
+          {/* <Text style={{ color: "gray" }}>New DApps</Text> */}
           {/* <Icon
             name={"arrowright"}
             type={"antDesign"}

@@ -168,17 +168,17 @@ const ImportMunziWallet = (props) => {
                     );
                   }
 
-                  const xrpWalletFromM =
-                    xrpl.Wallet.fromMnemonic(trimmedPhrase);
-                  const entropy = ethers.utils.mnemonicToEntropy(trimmedPhrase);
-                  console.log(
-                    "\t===> seed Created from mnemonic",
-                    entropy.split("x")[1]
-                  );
-                  const xrpWallet = xrpl.Wallet.fromEntropy(
-                    entropy.split("x")[1]
-                  ); // This is suggested because we will get seeds also
-                  console.log(xrpWallet); // Produces different addresses
+                  // const xrpWalletFromM = // UNCOMMENT
+                  //   xrpl.Wallet.fromMnemonic(trimmedPhrase); // UNCOMMENT
+                  // const entropy = ethers.utils.mnemonicToEntropy(trimmedPhrase); // UNCOMMENT
+                  // console.log( // UNCOMMENT
+                  //   "\t===> seed Created from mnemonic", // UNCOMMENT
+                  //   entropy.split("x")[1] // UNCOMMENT
+                  // ); // UNCOMMENT
+                  // const xrpWallet = xrpl.Wallet.fromEntropy( // UNCOMMENT
+                  //   entropy.split("x")[1] // UNCOMMENT
+                  // ); // This is suggested because we will get seeds also // UNCOMMENT
+                  // console.log(xrpWallet); // Produces different addresses // UNCOMMENT
 
                   const accountFromMnemonic =
                     ethers.Wallet.fromMnemonic(trimmedPhrase);
@@ -188,8 +188,10 @@ const ImportMunziWallet = (props) => {
                     address: accountFromMnemonic.address,
                     privateKey: privateKey,
                     xrp: {
-                      address: xrpWallet.classicAddress,
-                      privateKey: xrpWallet.seed,
+                     // address: xrpWallet.classicAddress, // UNCOMMENT
+                    // privateKey: xrpWallet.seed, // UNCOMMENT
+                    address: "000000000",
+                    privateKey: "000000000",
                     },
                   };
                   /* const response = saveUserDetails(accountFromMnemonic.address).then((response)=>{
@@ -218,8 +220,10 @@ const ImportMunziWallet = (props) => {
                     mnemonic: trimmedPhrase,
                     name: accountName,
                     xrp: {
-                      address: xrpWallet.classicAddress,
-                      privateKey: xrpWallet.seed,
+                     // address: xrpWallet.classicAddress, // UNCOMMENT
+                    // privateKey: xrpWallet.seed, // UNCOMMENT
+                    address: "000000000",
+                    privateKey: "000000000",
                     },
                     walletType: "Multi-coin",
                     wallets: [],
@@ -233,8 +237,10 @@ const ImportMunziWallet = (props) => {
                       mnemonic: trimmedPhrase,
                       name: accountName,
                       xrp: {
-                        address: xrpWallet.classicAddress,
-                        privateKey: xrpWallet.seed,
+                       // address: xrpWallet.classicAddress, // UNCOMMENT
+                       // privateKey: xrpWallet.seed, // UNCOMMENT
+                       address: "000000000",
+                       privateKey: "000000000",
                       },
                       walletType: "Multi-coin",
                     },
@@ -258,8 +264,10 @@ const ImportMunziWallet = (props) => {
                       accountName,
                       wallet.privateKey,
                       trimmedPhrase,
-                      xrpWallet.classicAddress,
-                      xrpWallet.seed,
+                      // xrpWallet.classicAddress,// UNCOMMENT
+                      // xrpWallet.seed,// UNCOMMENT
+                      "000000000",
+                      "000000000",
                       (walletType = "Multi-coin")
                     )
                   );

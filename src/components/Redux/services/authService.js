@@ -414,8 +414,9 @@ const Generate_Wallet2 = async () => {
   console.log("starting");
   const wallet = ethers.Wallet.createRandom();
   const words = wallet.mnemonic.phrase;
-  const entropy = ethers.utils.mnemonicToEntropy(words);
-  const xrpWallet = xrpl.Wallet.fromEntropy(entropy.split("x")[1]);
+  // const entropy = ethers.utils.mnemonicToEntropy(words);// UNCOMMENT
+  // const xrpWallet = xrpl.Wallet.fromEntropy(entropy.split("x")[1]);// UNCOMMENT
+
   let node = ethers.utils.HDNode.fromMnemonic(words);
   let account1 = node.derivePath("m/44'/60'/0'/0/0");
   const Wallet = {
@@ -423,8 +424,10 @@ const Generate_Wallet2 = async () => {
     privateKey: account1.privateKey,
     mnemonic: account1.mnemonic.phrase,
     xrp:{
-      address:xrpWallet.classicAddress,
-      privateKey:xrpWallet.seed
+      // address:xrpWallet.classicAddress, // UNCOMMENT
+      // privateKey:xrpWallet.seed // UNCOMMENT
+      address: "000000000",
+      privateKey: "000000000",
     },
     walletType: "Multi-coin",
   };
