@@ -17,7 +17,7 @@ import { Animated } from "react-native";
 import title_icon from "../../assets/title_icon.png";
 import { useDispatch, useSelector } from "react-redux";
 import { alert } from "./reusables/Toasts";
-import * as Clipboard from "@react-native-clipboard/clipboard";
+import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../icon";
 import { Button } from "native-base";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";

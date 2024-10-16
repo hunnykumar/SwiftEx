@@ -43,7 +43,7 @@ import Icon from "../../../../../icon";
 import { alert } from "../../../../reusables/Toasts";
 import { Chart, VerticalAxis, HorizontalAxis, Line, Area, Tooltip } from 'react-native-responsive-linechart';
 import { Platform,Modal} from "react-native";
-import * as Clipboard from "@react-native-clipboard/clipboard";
+import  Clipboard from "@react-native-clipboard/clipboard";
 import { useRef } from "react";
 import { RAPID_STELLAR, SET_ASSET_DATA } from "../../../../../components/Redux/actions/type";
 import SelectWallet from "../../../../Modals/SelectWallet";

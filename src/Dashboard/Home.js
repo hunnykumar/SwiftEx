@@ -92,19 +92,19 @@ const Dashboard = ({ navigation }) => {
 
           switch (route.name) {
             case "Home":
-              iconName = "ios-home-sharp";
+              iconName = "home-sharp";
               break;
             case "Wallet":
-              iconName = "ios-wallet-sharp";
+              iconName = "wallet-sharp";
               break;
             case "Assets":
               iconName = "ios-pie-chart-sharp";
               break;
             case "Market":
-              iconName = "ios-bar-chart-sharp";
+              iconName = "bar-chart-sharp";
               break;
             case "Settings":
-              iconName = "ios-settings-sharp";
+              iconName = "settings-sharp";
               break;
             case "Exchange":
               iconName = "swap-vertical-outline";
@@ -131,7 +131,7 @@ const Dashboard = ({ navigation }) => {
                 color: iconColor,
                 fontSize: 18,
                 textAlign: "center",
-                marginBottom: Platform.OS === "android" ? 10 : 10,
+                marginBottom: Platform.OS === "android" ? 10 : 1,
               }}
             >
               {route.name}

@@ -7,7 +7,7 @@ import { Alert } from 'react-native'
 //import { FirebaseSendNotification } from './firebasePushMessages'
 import {SendNotification} from "./pushController"
 import AsyncStorageLib from '@react-native-async-storage/async-storage'
-import * as Clipboard from "@react-native-clipboard/clipboard";
+import  Clipboard from "@react-native-clipboard/clipboard";
 import { firebaseNotification } from './firebasePushMessages'
 
 
