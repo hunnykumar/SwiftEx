@@ -27,7 +27,7 @@ import ModalHeader from "../reusables/ModalHeader";
 import { utils } from "xrpl-accountlib";
 import { alert } from "../reusables/Toasts";
 import { Paste } from "../../utilities/utilities";
-import * as Clipboard from "@react-native-clipboard/clipboard";
+import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../../icon";
 
 const ImportXrpWalletModal = ({

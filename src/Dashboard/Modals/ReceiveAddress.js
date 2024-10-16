@@ -25,7 +25,7 @@ import xrpImage from "../../../assets/xrp.png";
 import stellar from "../../../assets/Stellar_(XLM).png";
 import Modal from "react-native-modal";
 import QRCode from "react-native-qrcode-svg";
-import * as Clipboard from "@react-native-clipboard/clipboard";
+import  Clipboard from "@react-native-clipboard/clipboard";
 import Moralis from "moralis";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";

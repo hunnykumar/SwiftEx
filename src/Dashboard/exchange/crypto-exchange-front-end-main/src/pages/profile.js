@@ -35,7 +35,7 @@ import { LinearGradient } from "react-native-linear-gradient";
 import { NewAccountModal } from "../components/newAccount.model";
 import BankModel from "../components/bankModel";
 import idCard from "../../../../../../assets/idCard.png";
-import * as Clipboard from "@react-native-clipboard/clipboard";
+import  Clipboard from "@react-native-clipboard/clipboard";
 import { alert } from "../../../../reusables/Toasts";
 const VERIFICATION_STATUS = {
   VERIFIED: "VERIFIED",

@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import AsyncStorageLib from '@react-native-async-storage/async-storage';
 import Web3 from 'web3';
 import { useNavigation } from '@react-navigation/native';
-import * as Clipboard from "@react-native-clipboard/clipboard";
+import  Clipboard from "@react-native-clipboard/clipboard";
 import React from 'react';
 var ethers = require('ethers');
 

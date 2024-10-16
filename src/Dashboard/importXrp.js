@@ -39,7 +39,7 @@ import { genUsrToken } from "./Auth/jwtHandler";
 import { utils } from "xrpl-accountlib";
 import { ethers } from "ethers";
 import { alert } from "./reusables/Toasts";
-import * as Clipboard from "@react-native-clipboard/clipboard";
+import  Clipboard from "@react-native-clipboard/clipboard";
 
 const ImportXrp = (props) => {
   const [loading, setLoading] = useState(false);

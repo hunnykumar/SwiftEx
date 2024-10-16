@@ -234,6 +234,21 @@ const Settings = (props) => {
    }
    insilize_data()
   },[focused,state.THEME.THEME,Checked])
+
+  const logout_from_app=async()=>{
+    try {
+      const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
+            //AsyncStorageLib.removeItem('user')
+            AsyncStorageLib.removeItem(LOCAL_TOKEN);
+            props.navigation.navigate("Passcode");
+            /* dispatch(logout()).then((res)=>{
+      }).catch((e)=>{
+        console.log(e)
+      })*/
+    } catch (error) {
+      console.log("(--)---",error)
+    }
+  }
   return (
     <SafeAreaView>
     <ScrollView contentContainerStyle={[styles.container,{backgroundColor:state.THEME.THEME===false?"white":"black"}]}>
@@ -440,17 +455,7 @@ const Settings = (props) => {
       
       <TouchableOpacity
           style={styles.accountBox}
-          onPress={() => {
-            const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-            //AsyncStorageLib.removeItem('user')
-            AsyncStorageLib.removeItem(LOCAL_TOKEN);
-            props.navigation.navigate("Passcode");
-            /* dispatch(logout()).then((res)=>{
-      }).catch((e)=>{
-        console.log(e)
-      })*/
-          }}
-        >
+          onPress={() => {logout_from_app()}}>
           <Icon name="chevron-right" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} />
           <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Log Out</Text>
         </TouchableOpacity>

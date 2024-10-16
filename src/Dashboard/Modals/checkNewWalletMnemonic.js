@@ -205,7 +205,7 @@ const CheckNewWalletMnemonic = ({
       >
         <View style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
           {/* <ModalHeader Function={closeModal} name={'Check Mnemonic'}/> */}
-          <Icon type={'entypo'} name='cross' color={'#fff'} size={24} style={style.crossIcon} onPress={onCrossPress}/>
+          <Icon type={'ionicon'} name='close-outline' color={'#fff'} size={24} style={style.crossIcon} onPress={onCrossPress}/>
           <Text style={style.verifyText}>Verify Secret Phrase</Text>
           <Text style={style.wordText}>
            Please top on the correct answer of the below seed phrases.

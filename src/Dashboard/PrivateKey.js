@@ -18,7 +18,7 @@ import { Animated } from "react-native";
 import title_icon from "../../assets/title_icon.png";
 import { useDispatch, useSelector } from "react-redux";
 import { alert } from "./reusables/Toasts";
-import * as Clipboard from "@react-native-clipboard/clipboard";
+import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../icon";
 import { Button } from "native-base";
 const PrivateKey = (props) => {
@@ -40,16 +40,19 @@ const PrivateKey = (props) => {
     alert("success","Copied");
   };
 
-  useEffect(async () => {
+  useEffect( () => {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,
     }).start();
 
+   const fetch_new=async()=>{
     console.log(props.route.params.wallet.wallet.mnemonic);
     const mnemonic = props.route.params.wallet.wallet.mnemonic.match(/\b(\w+)'?(\w+)?\b/g)
     console.log("My mnemonic",mnemonic)
     setMnemonic(mnemonic)
+   }
+   fetch_new()
   }, []);
   
   const RenderItem = ({ item, index }) => {

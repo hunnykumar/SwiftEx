@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Text, View, Button, Platform, Alert } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
-import * as Clipboard from "@react-native-clipboard/clipboard";
+import  Clipboard from "@react-native-clipboard/clipboard";
 
 const copyToClipboard = (text) => {
   Clipboard.setString(text);

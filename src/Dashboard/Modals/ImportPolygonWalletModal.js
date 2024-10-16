@@ -34,7 +34,7 @@ import Modal from "react-native-modal";
 import ModalHeader from "../reusables/ModalHeader";
 import { alert } from "../reusables/Toasts";
 import { Paste } from "../../utilities/utilities";
-import * as Clipboard from "@react-native-clipboard/clipboard";
+import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../../icon";
 
 const ImportPolygonWalletModal = ({
