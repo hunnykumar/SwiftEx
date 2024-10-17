@@ -1030,7 +1030,14 @@ export const getAllDataAndShow = async (senderId) => {
   }
   
   export const Paste = async (func) => {
-    const text = await Clipboard.getStringAsync();
-    func(text);
-    return text
+    try {
+      const text = await Clipboard.getString();
+      if (func && typeof func === 'function') {
+        func(text);
+      }
+      return text;
+    } catch (error) {
+      console.error("Error accessing clipboard:", error);
+      return null;
+    }
   };

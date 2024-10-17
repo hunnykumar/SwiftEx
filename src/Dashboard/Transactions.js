@@ -164,7 +164,7 @@ try{
                     <View style={styles.flatView}>
                       <Image source={LeftContent} style={styles.img} />
                       <View style={{ marginHorizontal: wp(3) }}>
-                        <View style={{flexDirection:"row",width:"70%",justifyContent:"space-between"}}>
+                        <View style={{flexDirection:"row",width:wp(70),justifyContent:"space-between"}}>
                           <Text style={{color: state.THEME.THEME===false?"black":"#fff"}}>{item.type}</Text>
                           {item.type==="Send"?Platform.OS==="android"?<View style={{transform:[{rotate:'46deg'}]}}><Icon name="arrow-up" size={23} color="red"/></View>:<View style={{transform:[{rotate:'46deg'}]}}><Icon name="arrow-up" size={23} color="red"/></View>:<></>}
                           {item.type==="Recieved"?Platform.OS==="android"?<View style={{transform:[{rotate:'230deg'}],marginLeft:"91%"}}><Icon name="arrow-up" size={23} color="green"/></View>:<View style={{transform:[{rotate:'230deg'}],marginLeft:"91%"}}><Icon name="arrow-up" size={23} color="green"/></View>:<></>}

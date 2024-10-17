@@ -536,7 +536,7 @@ const checkPermission = async () => {
                 }},
               ])
             }
-            if(status==="READY")
+            if (status === "READY" && isModalVisible)
               {
                 setModalVisible(true)
               }
@@ -676,7 +676,7 @@ const style = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingHorizontal: 16,
-    height: 60,
+    height: hp(10)
   },
   backIcon: {
     marginRight:wp(28),
