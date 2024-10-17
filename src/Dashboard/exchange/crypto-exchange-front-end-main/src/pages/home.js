@@ -347,14 +347,14 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
     fetchProfileData();
     getOffersData();
     getBidsData();
-    syncDevice();
+    // syncDevice();
   }, []);
   useEffect(() => {
     getData()
     fetchProfileData();
     getOffersData();
     getBidsData();
-    syncDevice();
+    // syncDevice();
   }, [change]);
 
   const syncDevice = async () => {

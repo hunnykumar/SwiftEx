@@ -346,7 +346,7 @@ const FOCUSED=useIsFocused();
     </TouchableWithoutFeedback>
   );
 
-  useFocusEffect(() => {
+  useEffect(() => {
     console.log("focus changed");
     try {
       if (props.route.params) {
@@ -363,7 +363,7 @@ const FOCUSED=useIsFocused();
     } catch (e) {
       console.log(e);
     }
-  });
+  },[]);
 
   useEffect(() => {
     setreset_otp(false)

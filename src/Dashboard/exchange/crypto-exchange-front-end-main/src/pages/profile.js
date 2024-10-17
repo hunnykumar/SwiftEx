@@ -24,7 +24,7 @@ import walletImg from "../../../../../../assets/walletImg.png";
 import copyRide from "../.././../../../../assets/copyRide.png";
 import { REACT_APP_LOCAL_TOKEN } from "../ExchangeConstants";
 import darkBlue from "../../../../../../assets/darkBlue.png";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -353,9 +353,10 @@ export const ProfileView = (props) => {
   ]);
   const [expire_plan, setexpire_plan] = useState("");
   const [subscription_id,setsubscription_id]=useState(0);
+  const FOUCUSED=useIsFocused();
   useEffect(() => {
     fetchProfileData();
-  }, []);
+  }, [FOUCUSED]);
   
   useEffect(() => {
     // setsubscription_id(1)
