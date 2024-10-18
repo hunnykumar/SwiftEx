@@ -6,6 +6,8 @@ import {
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { useSelector } from "react-redux";
+import { Wallet_screen_header } from "./src/Dashboard/reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
 // const YOUR_WYRE_API_KEY = "TEST-AK-N9EEWWLD-X2RDAMBG-3PRVGN9Q-RT8PA37X";
 // const YOUR_WYRE_SECRET_KEY = "TEST-SK-LD2CJA4U-GQMQ3J4F-NLBVE8QP-FZL4WRRY";
 //TEST-AK-Q9FG94D6-GCHZ4EVP-UD7QURJM-ENDGATVZ
@@ -15,8 +17,10 @@ export default function Generate() {
   const [url, setUrl] = useState("https://www.moonpay.com/buy");
   const [loading, setLoading] = useState(false);
   const state = useSelector((state) => state);
+  const navigation=useNavigation();
   return (
     <View style={[styles.container,{backgroundColor:state.THEME.THEME===false?"black":"#fff"}]}>
+      <Wallet_screen_header title="Buy" onLeftIconPress={() => navigation.goBack()} />
       {loading&&<ActivityIndicator size="large" color={"blue"} />}
        <WebView
        source={{ uri: url }}

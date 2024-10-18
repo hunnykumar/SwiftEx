@@ -172,8 +172,7 @@ const Dashboard = ({ navigation }) => {
         name="Wallet"
         component={Wallet}
         options={{
-          header: () => Header3("Wallet"),
-          headerShown: true,
+          headerShown: false,
           unmountOnBlur: true,
         }}
       />

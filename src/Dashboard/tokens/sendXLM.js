@@ -35,6 +35,7 @@ import { RNCamera } from 'react-native-camera';
 import { REACT_APP_LOCAL_TOKEN } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import { useToast } from "native-base";
 import { STELLAR_URL } from "../constants";
+import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 const StellarSdK = require('stellar-base');
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
@@ -266,28 +267,7 @@ const SendXLM = (props) => {
 
     return (
         <>
-            {Platform.OS === "ios" ? <View style={{ backgroundColor: state.THEME.THEME===false?"#4CA6EA":"black", flexDirection: "row", height: hp(8),borderBottomColor:"gray",borderColor:state.THEME.THEME===false?"#4CA6EA":"black",borderWidth:0.5 }}>
-                <Icon type={'antDesign'} name='left' size={29} color={'white'} onPress={() => { navigation.goBack() }} style={{ padding: hp(1.5), marginTop: '3%' }} />
-                <Text style={{ color: "white", alignSelf: "center", marginLeft: "19%", marginTop: '9%', fontSize: 19 }}>Transaction Details</Text>
-                <TouchableOpacity onPress={() => { navigation.navigate("Home") }}>
-                    <Image source={darkBlue} style={{
-                        height: hp("9"),
-                        width: wp("12"),
-                        marginLeft: Platform.OS === "ios" ? wp(11) : wp(6)
-                    }} />
-                </TouchableOpacity>
-            </View> :
-                <View style={{ backgroundColor: state.THEME.THEME===false?"#4CA6EA":"black", flexDirection: "row",borderBottomColor:"gray",borderColor:state.THEME.THEME===false?"gray":"black",borderWidth:0.5 }}>
-                    <Icon type={'antDesign'} name='left' size={29} color={'white'} onPress={() => { navigation.goBack() }} style={{ padding: hp(1.5), marginTop: '3%' }} />
-                    <Text style={{ color: "white", alignSelf: "center", marginLeft: "20%", fontWeight: 'bold', fontSize: 17 }}>Transaction Details</Text>
-                    <TouchableOpacity onPress={() => { navigation.navigate("Home") }}>
-                        <Image source={darkBlue} style={{
-                            height: hp("9"),
-                            width: wp("12"),
-                            marginLeft: wp(15)
-                        }} />
-                    </TouchableOpacity>
-                </View>}
+          <Wallet_screen_header title="Send" onLeftIconPress={() => navigation.goBack()} />
 
             <View style={{ backgroundColor: state.THEME.THEME===false?"#fff":"black", height: hp(100) }}>
                 <View style={style.inputView}>

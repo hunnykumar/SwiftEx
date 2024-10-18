@@ -132,17 +132,7 @@ const AuthStack = () => (
       <Stack.Screen
         name="MyWallet"
         component={MyWallet}
-        options={{
-          header: () => {
-            return (
-              <WalletHeader
-                title={"Wallet"}
-                IconName="delete"
-                IconType="material"
-              />
-            );
-          },
-        }}
+        options={{headerShown:false}}
       />
       <Stack.Screen
         name="CreateWallet"
@@ -198,15 +188,7 @@ const AuthStack = () => (
         component={Generate}
         // options={{ headerShown: true ,headerStyle:{backgroundColor:"#4CA6EA"},headerTintColor:"white"}}
         options={{
-          header: () => {
-            return (
-              <WalletHeader
-                title={"Buy"}
-                IconName="delete"
-                IconType="material"
-              />
-            );
-          },
+          headerShown:false
         }}
       />
 

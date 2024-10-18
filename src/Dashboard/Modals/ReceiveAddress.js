@@ -495,10 +495,11 @@ const RecieveAddress = ({ modalVisible, setModalVisible, iconType }) => {
             // backgroundColor: "#4CA6EA",
           }}
         >
-          <Icon
+         <View style={{flexDirection:"row",alignItems:"center"}}>
+         <Icon
             // name={"left"}
-            name={"close"}
-            type={"antDesign"}
+            name={"arrow-left"}
+            type={"materialCommunity"}
             size={30}
             // color={"#fff"}
             color={state.THEME.THEME===false?"black":"#fff"}
@@ -506,20 +507,22 @@ const RecieveAddress = ({ modalVisible, setModalVisible, iconType }) => {
               setModalVisible(false);
             }}
           />
+          <Text style={{fontSize:22,fontWeight: 'bold',color:state.THEME.THEME===false?"black":"#fff",marginLeft:wp(3)}}>Recieve {iconType}</Text>
+         </View>
         </TouchableOpacity>
-        <View style={[style.barCode,{backgroundColor:state.THEME.THEME===false?"#fff":"black",borderColor: "#4169e",borderWidth:1}]}>
           <TouchableOpacity style={style.flatView}>
             <Image
-              style={{ width: wp(10), height: hp(5) }}
+              style={{ width: wp(14.3), height: hp(7) }}
               source={
                 iconType === "BNB"? Bnbimage: iconType === "ETH"? Etherimage: iconType === "Xrp"? xrpImage: iconType==="XLM"?stellar:maticImage
               }
             />
 
-            <Text style={{ marginHorizontal: wp(2), color: "#4169e1" }}>
+            {/* <Text style={{ marginHorizontal: wp(2), color: "#4169e1" }}>
               {iconType}
-            </Text>
+            </Text> */}
           </TouchableOpacity>
+        <View style={[style.barCode,{backgroundColor:state.THEME.THEME===false?"#fff":"black",borderColor: "#4169e",borderWidth:1}]}>
 
           <View style={{ alignSelf: "center", marginTop: hp(1) }}>
             <QRCode

@@ -29,6 +29,7 @@ import "@ethersproject/shims";
 import NewWalletModal from "./Modals/newWallet";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { useIsFocused } from "@react-navigation/native";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 var ethers = require("ethers");
 const xrpl = require("xrpl");
 
@@ -52,6 +53,7 @@ const Wallet = ({ navigation }) => {
   return (
     <Animated.View>
       {Platform.OS === 'ios' &&  <StatusBar hidden={true}/>}
+      <Wallet_screen_header title="Wallet" onLeftIconPress={() => navigation.goBack()} />
       <View
         style={{
           height: hp(95),
