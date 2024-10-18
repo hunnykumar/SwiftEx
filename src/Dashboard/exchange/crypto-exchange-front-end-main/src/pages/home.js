@@ -49,6 +49,7 @@ import { RAPID_STELLAR, SET_ASSET_DATA } from "../../../../../components/Redux/a
 import SelectWallet from "../../../../Modals/SelectWallet";
 import SELECT_WALLET_EXC from "../../../../Modals/SELECT_WALLET_EXC";
 import { STELLAR_URL } from "../../../../constants";
+import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 // import StellarSdk from '@stellar/stellar-sdk';
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
@@ -70,9 +71,10 @@ export const HomeView = ({ setPressed }) => {
   ])
   const [chart_index,setchart_index]=useState(0);
   const chooseRenderItem_1 = ({ item }) => (
-    <TouchableOpacity onPress={() => {setchart_index(item.id),setopen_chart_api(false)}} style={[styles.chooseItemContainer,{borderRadius:5,height:hp(6),justifyContent:"flex-start"}]}>
+    <TouchableOpacity onPress={() => {setchart_index(item.id),setopen_chart_api(false)}} style={[styles.chooseItemContainer,{borderRadius:5,height:hp(6),justifyContent:'space-around'}]}>
       <Image source={ { uri: item.img_0 }} style={{width:wp(7.7),height:hp(3.5)}}/>
-      <Text style={[styles.chooseItemText]}>{item.name}   vs</Text>
+      <Text style={[styles.chooseItemText]}>{item.name}</Text>
+      <Text style={{color:"#fff",fontSize:19}}>VS</Text>
       <Image source={ { uri: item.img }} style={{width:wp(7.7),height:hp(3.5),marginLeft:wp(3)}}/>
       <Text style={[styles.chooseItemText]}>{item.name_0}</Text>
     </TouchableOpacity>
@@ -575,202 +577,8 @@ useFocusEffect(
 
   return (
     <>
- <View style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      // padding: 10,
-      backgroundColor: '#4CA6EA',
-      elevation: 4,
-    }}>
-      {/* Left Icon */}
-      <Icon
-              name={"left"}
-              type={"antDesign"}
-              size={28}
-              color={"white"}
-              style={{marginLeft:wp(2)}}
-              onPress={() =>navigation.navigate("Home")}
-            />
+    <Exchange_screen_header title="Home" onLeftIconPress={() => navigation.navigate("Home")} onRightIconPress={() => console.log('Pressed')} />
 
-      {/* Middle Text */}
-      <Text style={{
-        fontSize: 20,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        color:"#fff",
-        flex: 1,
-        marginLeft:wp(13),
-        marginTop:Platform.OS==="ios"?hp(3):hp(0)
-      }}>Home</Text>
-
-      {/* Right Image and Menu Icon */}
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-      }}>
-         <TouchableOpacity onPress={() => navigation.navigate("Home")}>
-        <Image
-          source={darkBlue}
-          style={{
-            height: hp("8"),
-            width: wp("12"),
-            marginRight: 10,
-            borderRadius: 15,
-          }}
-        />
-        </TouchableOpacity>
-        <TouchableOpacity
-            onPress={() => {
-              setmodalContainer_menu(true)
-            }}
-          >
-        <Icon
-              name={"menu"}
-              type={"materialCommunity"}
-              size={30}
-              color={"#fff"}
-            />
-        </TouchableOpacity>
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={modalContainer_menu}>
-
-            <TouchableOpacity style={styles.modalContainer_option_top} onPress={() => { setmodalContainer_menu(false) }}>
-              <View style={styles.modalContainer_option_sub}>
-
-
-
-                <TouchableOpacity style={styles.modalContainer_option_view}>
-                  <Icon
-                    name={"anchor"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"gray"}
-                  />
-                  <Text style={styles.modalContainer_option_text}>Anchor Settings</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view}>
-                  <Icon
-                    name={"badge-account-outline"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"gray"}
-                  />
-                  <Text style={styles.modalContainer_option_text}>KYC</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view}>
-                  <Icon
-                    name={"playlist-check"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"gray"}
-                  />
-                  <Text style={styles.modalContainer_option_text}>My Subscription</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => {
-                  console.log('clicked');
-                  const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-                  AsyncStorage.removeItem(LOCAL_TOKEN);
-                  setmodalContainer_menu(false)
-                  navigation.navigate('exchangeLogin');
-                }}>
-                  <Icon
-                    name={"logout"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"#fff"}
-                  />
-                  <Text style={[styles.modalContainer_option_text, { color: "#fff" }]}>Logout</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => { setmodalContainer_menu(false) }}>
-                  <Icon
-                    name={"close"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"#fff"}
-                  />
-                  <Text style={[styles.modalContainer_option_text, { color: "#fff" }]}>Close Menu</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </Modal>
-      </View>
-    </View>
-<Modal
-      animationType="fade"
-      transparent={true}
-      visible={modalContainer_menu}>
-       
-      <TouchableOpacity style={styles.modalContainer_option_top}  onPress={()=>{setmodalContainer_menu(false)}}> 
-      <View style={styles.modalContainer_option_sub}>
-     
-
-      <TouchableOpacity style={styles.modalContainer_option_view}>
-      <Icon
-        name={"anchor"}
-        type={"materialCommunity"}
-        size={30}
-        color={"gray"}
-      />
-      <Text style={styles.modalContainer_option_text}>Anchor Settings</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.modalContainer_option_view}>
-      <Icon
-        name={"badge-account-outline"}
-        type={"materialCommunity"}
-        size={30}
-        color={"gray"}
-      />
-      <Text style={styles.modalContainer_option_text}>KYC</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.modalContainer_option_view} onPress={()=>{navigation.navigate("Home")}}>
-      <Icon
-        name={"wallet-outline"}
-        type={"materialCommunity"}
-        size={30}
-        color={"white"}
-      />
-      <Text style={[styles.modalContainer_option_text,{color:"white"}]}>Wallet</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.modalContainer_option_view}   onPress={() => {
-        console.log('clicked');
-        const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-        AsyncStorage.removeItem(LOCAL_TOKEN);
-        setmodalContainer_menu(false)
-        navigation.navigate('exchangeLogin');
-      }}>
-      <Icon
-        name={"logout"}
-        type={"materialCommunity"}
-        size={30}
-        color={"#fff"}
-      />
-      <Text style={[styles.modalContainer_option_text,{color:"#fff"}]}>Logout</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.modalContainer_option_view} onPress={()=>{setmodalContainer_menu(false)}}>
-      <Icon
-        name={"close"}
-        type={"materialCommunity"}
-        size={30}
-        color={"#fff"}
-      />
-      <Text style={[styles.modalContainer_option_text,{color:"#fff"}]}>Close Menu</Text>
-      </TouchableOpacity>
-      </View>
-      </TouchableOpacity>
-    </Modal>
-
-      
     <ScrollView
     style={{ backgroundColor: "#011434"}}
       contentContainerStyle={{
@@ -812,12 +620,12 @@ useFocusEffect(
                 </TouchableOpacity>
                </View>
 
-      <ScrollView ref={AnchorViewRef} horizontal style={{backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",padding:8,borderRadius:10,marginHorizontal:19,marginLeft:wp(6)}} showsHorizontalScrollIndicator={false} onContentSizeChange={(width) => setContentWidth(width)} onScroll={handleScroll_new}>
+      <ScrollView ref={AnchorViewRef} horizontal style={{paddingVertical:hp(1),padding:3,borderRadius:10,marginHorizontal:wp(0.1),marginLeft:wp(0.1)}} showsHorizontalScrollIndicator={false} onContentSizeChange={(width) => setContentWidth(width)} onScroll={handleScroll_new}>
               {Anchor.map((list, index) => {
                 return (
                   <View>
                     <TouchableOpacity  onPress={()=>{setAnchor_modal(true),setindex_Anchor(index)}} style={[styles.card,{backgroundColor:list.status==="Pending"?"#2b3c57":"#011434"}]} key={index}>
-                      <View style={{ width: "30%", height: "27%", borderBottomLeftRadius: 10, borderColor: 'rgba(122, 59, 144, 1)rgba(100, 115, 197, 1)', borderWidth: 1.9, position: "absolute", alignSelf: "flex-end", borderTopRightRadius: 10,zIndex:20 }}>
+                      <View style={{ width: "30%", height: "27%", position: "absolute", alignSelf: "flex-end",zIndex:20 }}>
                         <Icon name={list.status === "Pending" ? "clock-time-two-outline" : "check-circle-outline"} type={"materialCommunity"} color={list.status === "Pending" ? "yellow" : "#35CA1D"} size={24} />
                       </View>
                      <View style={styles.image}>
@@ -940,42 +748,46 @@ useFocusEffect(
                   </View>
                 </View>
                 <View style={{}}>
-                  <View style={{flexDirection:"row",marginTop:19}}>
+                <View style={{marginVertical:hp(1),borderBottomColor:"gray",borderColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",borderWidth:2}}>
                     <Text style={styles.textColor}>Ethereum Address </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60),borderColor:"#485DCA",borderWidth:0.9,paddingVertical:2.2,borderRadius:5}}>
-                   <Text style={[styles.textColor,styles.width_scrroll]}>{state.wallet.address}</Text>
-                    </ScrollView>
-                    <TouchableOpacity onPress={()=>{copyToClipboard(state.wallet.address)}}>
-                    <Icon
-                      name={"content-copy"}
-                      type={"materialCommunity"}
-                      color={"rgba(129, 108, 255, 0.97)"}
-                      size={24}
-                      style={{marginTop:0.3,marginLeft:2.9}}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={()=>{navigation.navigate("AllWallets")}}>
-                    <Text style={{color:"#4CA6EA",marginLeft:wp(1),marginTop:hp(0.5),paddingHorizontal:(1.5)}}>Manage</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: "row" }}>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 2.2, borderRadius: 5 }}>
+                        <Text style={[styles.textColor, styles.width_scrroll]}>{state.wallet.address}</Text>
+                      </ScrollView>
+                      <TouchableOpacity onPress={() => { copyToClipboard(state.wallet.address) }}>
+                        <Icon
+                          name={"content-copy"}
+                          type={"materialCommunity"}
+                          color={"rgba(129, 108, 255, 0.97)"}
+                          size={24}
+                          style={{ marginTop: 0.3, marginLeft: 2.9 }}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => { navigation.navigate("AllWallets") }}>
+                        <Text style={{ color: "#4CA6EA", marginLeft: wp(1), marginTop: hp(0.5), paddingHorizontal: (1.5) }}>Manage</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View> 
 
-                  <View style={{flexDirection:"row",marginTop:10}}>
-                    <Text style={styles.textColor}>Stellar Public Key   </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60),borderColor:"#485DCA",borderWidth:0.9,paddingVertical:2.9,borderRadius:5}}>
-                   <Text style={[styles.textColor,styles.width_scrroll]}>{steller_key}</Text>
-                    </ScrollView>
-                    <TouchableOpacity onPress={()=>{copyToClipboard(steller_key)}}>
-                    <Icon
-                      name={"content-copy"}
-                      type={"materialCommunity"}
-                      color={"rgba(129, 108, 255, 0.97)"}
-                      size={24}
-                      style={{marginTop:0.3,marginLeft:wp(1)}}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={()=>{setVISIBLE_SELECT(true)}}>
-                    <Text style={{color:"#4CA6EA",marginLeft:wp(1),marginTop:hp(0.5),marginRight:wp(3)}}>Import</Text>
-                    </TouchableOpacity>
+                  <View style={{marginVertical:hp(1),borderBottomColor:"gray",borderColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",borderWidth:2}}>
+                    <Text style={styles.textColor}>Stellar Public Key</Text>
+                    <View style={{flexDirection:"row"}}>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 2.9, borderRadius: 5 }}>
+                        <Text style={[styles.textColor, styles.width_scrroll]}>{steller_key}</Text>
+                      </ScrollView>
+                      <TouchableOpacity onPress={() => { copyToClipboard(steller_key) }}>
+                        <Icon
+                          name={"content-copy"}
+                          type={"materialCommunity"}
+                          color={"rgba(129, 108, 255, 0.97)"}
+                          size={24}
+                          style={{ marginTop: 0.3, marginLeft: wp(1) }}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => { setVISIBLE_SELECT(true) }}>
+                        <Text style={{ color: "#4CA6EA", marginLeft: wp(1), marginTop: hp(0.5), marginRight: wp(3) }}>Import</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View> 
 
                   
@@ -1015,7 +827,7 @@ useFocusEffect(
                         Offer_condition(Offer_active)
                     }}
                   >
-                    <Text style={{ color: "#fff",fontSize:19,fontWeight:"bold" }}>Trade</Text>
+                    <Text style={{ color: "#fff",fontSize:19,fontWeight:"bold",marginTop:hp(0.5) }}>Trade</Text>
                   </TouchableOpacity>
                   
                   {/* <NewOfferModal
@@ -1158,7 +970,7 @@ useFocusEffect(
       >
         <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setopen_chart_api(false)}>
           <View style={[styles.chooseModalContent]}>
-          <Text style={{fontSize:21,color:"#fff"}}>Select Assets Pair</Text>
+          <Text style={{fontSize:21,color:"#fff",fontWeight:"bold"}}>Select Assets Pair</Text>
             <FlatList
               data={chart_api}
               renderItem={chooseRenderItem_1}
@@ -1192,6 +1004,7 @@ const styles = StyleSheet.create({
   },
   textColor: {
     color: "#fff",
+    marginVertical:hp(0.3)
   },
   iconwithTextContainer: {
     flexDirection: "row",
@@ -1343,14 +1156,14 @@ const styles = StyleSheet.create({
     width:"94%",
     // alignItems: 'center',
     // justifyContent: 'center',
-    backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
+    // backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
     margin:10,
     borderRadius:10
   },
   card: {
     marginRight: 10,
-    borderWidth: 1.9,
-    borderColor: 'rgba(122, 59, 144, 1)rgba(100, 115, 197, 1)',
+    // borderWidth: 1.9,
+    // borderColor: 'rgba(122, 59, 144, 1)rgba(100, 115, 197, 1)',
     borderRadius: 10,
     padding: 8,
     backgroundColor:"#011434"
@@ -1430,16 +1243,18 @@ marginStart:5
 },
 chooseModalContainer: {
   flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
+  justifyContent: 'flex-end',
+  alignItems: 'flex-end',
   backgroundColor: 'rgba(0, 0, 0, 0.5)',
 },
 chooseModalContent: {
   backgroundColor: 'rgba(33, 43, 83, 1)',
   padding: 20,
-  borderRadius: 10,
-  width: '80%',
+  borderRadius: 20,
+  width: "100%",
   maxHeight: '80%',
+  borderTopColor:"rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
+  borderWidth:2
 },
 chooseItemContainer: {
   marginVertical: 3,
@@ -1453,7 +1268,7 @@ chooseItemContainer: {
 chooseItemText: {
   fontSize: 19,
   color: '#fff',
-  marginLeft:wp(3)
+  marginLeft:wp(-10)
 },
   
 });

@@ -62,13 +62,13 @@ export function ExchangeNavigation() {
 
           return <Ionicons name={iconName} size={size} color={color} style={{marginLeft:route.name==="On/Off Ramp"?17:0}} />;
         },
-        tabBarActiveTintColor: "blue",
+        tabBarActiveTintColor: "#145DA0",
         tabBarInactiveTintColor: "white",
         tabBarStyle: {
           // position: "absolute",
           backgroundColor: "white",
           height: hp(9.4),
-          backgroundColor: "#4CA6EA",
+          backgroundColor: "#011434",
         },
         headerTitleAlign: "center",
 

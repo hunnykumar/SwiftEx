@@ -14,6 +14,7 @@ import QRCode from "react-native-qrcode-svg";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { useSelector } from "react-redux";
 import { RNCamera } from 'react-native-camera';
+import { Exchange_screen_header } from "../../../../../reusables/ExchangeHeader";
 
 
 const send_recive = ({route}) => {
@@ -58,116 +59,7 @@ const send_recive = ({route}) => {
     }, [FOCUSED])
     return (
         <>
-            <View style={styles.headerContainer1_TOP}>
-                <View
-                    style={{
-                        justifyContent: "space-around",
-                        flexDirection: "row",
-                        alignItems: "center",
-                    }}
-                >
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <Icon
-                            name={"left"}
-                            type={"antDesign"}
-                            size={28}
-                            color={"white"}
-                        />
-                    </TouchableOpacity>
-                </View>
-
-                {Platform.OS === "android" ? (
-                    <Text style={[styles.text_TOP, { marginStart: wp(28) }]}>Transaction</Text>
-                ) : (
-                    <Text style={[styles.text_TOP, styles.text1_ios_TOP]}>Transaction</Text>
-                )}
-
-                <TouchableOpacity onPress={() => navigation.navigate("Home")}>
-                    <Image source={darkBlue} style={[styles.logoImg_TOP, { marginLeft: Platform.OS==="android"?wp(16):wp(13) }]} />
-                </TouchableOpacity>
-
-                <View style={{ alignItems: "center" }}>
-
-                    <TouchableOpacity
-                        onPress={() => {
-                            setmodalContainer_menu(true)
-                        }}
-                    >
-                        <Icon
-                            name={"menu"}
-                            type={"materialCommunity"}
-                            size={30}
-                            color={"#fff"}
-                        />
-                    </TouchableOpacity>
-                    <Modal
-                        animationType="fade"
-                        transparent={true}
-                        visible={modalContainer_menu}>
-
-                        <TouchableOpacity style={styles.modalContainer_option_top} onPress={() => { setmodalContainer_menu(false) }}>
-                            <View style={styles.modalContainer_option_sub}>
-
-                                <TouchableOpacity style={styles.modalContainer_option_view}>
-                                    <Icon
-                                        name={"anchor"}
-                                        type={"materialCommunity"}
-                                        size={30}
-                                        color={"gray"}
-                                    />
-                                    <Text style={styles.modalContainer_option_text}>Anchor Settings</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.modalContainer_option_view}>
-                                    <Icon
-                                        name={"badge-account-outline"}
-                                        type={"materialCommunity"}
-                                        size={30}
-                                        color={"gray"}
-                                    />
-                                    <Text style={styles.modalContainer_option_text}>KYC</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.modalContainer_option_view}>
-                                    <Icon
-                                        name={"playlist-check"}
-                                        type={"materialCommunity"}
-                                        size={30}
-                                        color={"gray"}
-                                    />
-                                    <Text style={styles.modalContainer_option_text}>My Subscription</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => {
-                                    console.log('clicked');
-                                    const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-                                    AsyncStorage.removeItem(LOCAL_TOKEN);
-                                    setmodalContainer_menu(false)
-                                    navigation.navigate('exchangeLogin');
-                                }}>
-                                    <Icon
-                                        name={"logout"}
-                                        type={"materialCommunity"}
-                                        size={30}
-                                        color={"#fff"}
-                                    />
-                                    <Text style={[styles.modalContainer_option_text, { color: "#fff" }]}>Logout</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => { setmodalContainer_menu(false) }}>
-                                    <Icon
-                                        name={"close"}
-                                        type={"materialCommunity"}
-                                        size={30}
-                                        color={"#fff"}
-                                    />
-                                    <Text style={[styles.modalContainer_option_text, { color: "#fff" }]}>Close Menu</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </TouchableOpacity>
-                    </Modal>
-                </View>
-            </View>
+     <Exchange_screen_header title="Transaction" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
 
             <View style={styles.main_con}>
                 <View style={styles.mode_con}>
