@@ -57,13 +57,13 @@ export const NewOfferModal = () => {
   const [loading, setloading] = useState(false)
   const [show, setshow] = useState(false)
   const [activ,setactiv]=useState(false);
-  const [selectedValue, setSelectedValue] = useState("native");
-  const [SelectedBaseValue, setSelectedBaseValue] = useState("USDC");
+  const [selectedValue, setSelectedValue] = useState("USDC");
+  const [SelectedBaseValue, setSelectedBaseValue] = useState("native");
   const [Balance, setbalance] = useState('');
   const [offer_amount, setoffer_amount] = useState('');
   const [offer_price, setoffer_price] = useState('');
   const [AssetIssuerPublicKey, setAssetIssuerPublicKey] = useState("GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN");
-  const [route, setRoute] = useState("BUY");
+  const [route, setRoute] = useState("SELL");
   const [Loading, setLoading] = useState(false);
   const [open_offer, setopen_offer] = useState(false);
   const [show_trust_modal,setshow_trust_modal]=useState(false);
@@ -123,7 +123,7 @@ const getAccountDetails = async () => {
 
 const chooseItemList = [
   { id: 1, name: "XLM/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"XLM",visible_1:"USDC",asset_dom:"steller.org",asset_dom_1:"centre.io"},
-  { id: 2, name: "USDC/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"USDC",visible_1:"XLM",asset_dom:"centre.io",asset_dom_1:"steller.org"},
+  // { id: 2, name: "USDC/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"USDC",visible_1:"XLM",asset_dom:"centre.io",asset_dom_1:"steller.org"},
   // { id: 2, name: "ETH/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"ETH",visible_1:"USDC",asset_dom:"allbridge.io",asset_dom_1:"allbridge.io"},
   // { id: 3, name: "BNB/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"BNB",visible_1:"XLM",asset_dom:"allbridge.io",asset_dom_1:"allbridge.io"},
   // { id: 4, name: "SWIFTEX/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"SWIFTEX",visible_1:"XLM",asset_dom:"swiftex",asset_dom_1:"steller.org"},
@@ -144,7 +144,7 @@ const chooseFilteredItemList = chooseItemList.filter(
   item => item.name.toLowerCase().includes(chooseSearchQuery.toLowerCase())
 );
 const chooseRenderItem = ({ item }) => (
-  <TouchableOpacity onPress={() => {setvisible_value(item.name),settop_value(item.visible_0),settop_domain(item.asset_dom),settop_domain_0(item.asset_dom_1),settop_value_0(item.visible_1),setSelectedValue(item.base_value),setSelectedBaseValue(item.counter_value),setchooseModalPair(false)}} style={styles.chooseItemContainer}>
+  <TouchableOpacity onPress={() => { setRoute("SELL"),setvisible_value(item.name),settop_value(item.visible_0),settop_domain(item.asset_dom),settop_domain_0(item.asset_dom_1),settop_value_0(item.visible_1),setSelectedValue(item.base_value),setSelectedBaseValue(item.counter_value),setchooseModalPair(false)}} style={styles.chooseItemContainer}>
     <Text style={styles.chooseItemText}>{item.name}</Text>
   </TouchableOpacity>
 );
@@ -250,7 +250,10 @@ const chooseRenderItem_1 = ({ item }) => (
       return 'Sell Offer placed successfully';
     } catch (error) {
       console.error('Error occurred:', error.response ? error.response.data.extras.result_codes : error);
-      ShowErrotoast(toast,"Sell Offer not-created.");
+      const errMessage = error.response && error.response.data.extras ? 
+      error.response.data.extras.result_codes.operations.join(', ') : 
+      "An error occurred while creating the sell offer.";
+      ShowErrotoast(toast,errMessage==="op_low_reserve"?SelectedBaseValue==="native"?"XLM low reserve in account":SelectedBaseValue +"low reserve in account":"Sell Offer not-created");
       setLoading(false)
     }
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -301,7 +304,10 @@ const chooseRenderItem_1 = ({ item }) => (
       // setOpen(false);
       return 'Sell Offer placed successfully';
     } catch (error) {
-      ShowErrotoast(toast,"Buy offer not-created.");
+      const errMessage = error.response && error.response.data.extras ? 
+      error.response.data.extras.result_codes.operations.join(', ') : 
+      "An error occurred while creating the sell offer.";
+      ShowErrotoast(toast,errMessage==="op_low_reserve"?SelectedBaseValue==="native"?"XLM low reserve in account":SelectedBaseValue +"low reserve in account":"Buy offer not-created.");
       setLoading(false)
       console.error('Error occurred:', error.response ? error.response.data.extras.result_codes : error);
     }
@@ -657,7 +663,7 @@ const change_Trust_New = async () => {
           type="materialCommunity"
           color="rgba(129, 108, 255, 0.97)"
           size={29}
-          onPress={() => { reves_fun(top_value, top_value_0); }}
+          // onPress={() => { reves_fun(top_value, top_value_0); }}
         />
       </View>
       <View style={{ flex: 1, alignItems: "flex-start", paddingLeft: 10 }}>
