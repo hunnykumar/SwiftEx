@@ -34,9 +34,11 @@ import IconWithCircle from "../Screens/iconwithCircle";
 import Icon from "../icon";
 import { Area, Chart, HorizontalAxis, Line, Tooltip, VerticalAxis } from "react-native-responsive-linechart";
 import { delay } from "lodash";
+import { useNavigation } from "@react-navigation/native";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 
 export const CoinDetails = (props) => {
-
+  const navigation=useNavigation();
   const [load,setload]=useState(false);
   const [trades, setTrades] = useState();
   const [percent, setPercent] = useState(1);
@@ -310,6 +312,7 @@ const transformedData = resp.map(item => ({
 
   return (
     <ScrollView style={{backgroundColor:state.THEME.THEME===false?"#fff":"black"}}>
+    <Wallet_screen_header title="Coin-Detail" onLeftIconPress={() => navigation.goBack()} />
     {/* // <ScrollView
     //   contentContainerStyle={{ backgroundColor: "white"}}
     // > */}

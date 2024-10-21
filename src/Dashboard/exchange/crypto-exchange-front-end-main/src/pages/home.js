@@ -50,6 +50,7 @@ import SelectWallet from "../../../../Modals/SelectWallet";
 import SELECT_WALLET_EXC from "../../../../Modals/SELECT_WALLET_EXC";
 import { STELLAR_URL } from "../../../../constants";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
+import { Exchange_single_loading } from "../../../../reusables/Exchange_loading";
 // import StellarSdk from '@stellar/stellar-sdk';
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
@@ -97,7 +98,8 @@ export const HomeView = ({ setPressed }) => {
     }
   };
   const Focused_screen=useIsFocused();
-  const [steller_key,setsteller_key]=useState("Updating keys...");
+  const [steller_key,setsteller_key]=useState();
+  const [loading,setloading]=useState(true);
   const state = useSelector((state) => state);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState();
@@ -280,6 +282,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
 
   const getData = async () => {
     try {
+      setloading(true)
       const data = await AsyncStorageLib.getItem('myDataKey');
       // if (data) {
         // const parsedData = JSON.parse(data);
@@ -294,8 +297,10 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
       // } else {
         // console.log('No data found for key steller keys');
       // }
+      setloading(false)
     } catch (error) {
       console.error('Error getting data for key steller keys:', error);
+      setloading(true)
     }
     // try {
     //   const storedData = await AsyncStorageLib.getItem('myDataKey');
@@ -751,9 +756,13 @@ useFocusEffect(
                 <View style={{marginVertical:hp(1),borderBottomColor:"gray",borderColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",borderWidth:2}}>
                     <Text style={styles.textColor}>Ethereum Address </Text>
                     <View style={{ flexDirection: "row" }}>
+                    {loading&&!steller_key?<View style={{width: wp(70)}}>
+                           <Exchange_single_loading/>
+                        </View>:
                       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 2.2, borderRadius: 5 }}>
                         <Text style={[styles.textColor, styles.width_scrroll]}>{state.wallet.address}</Text>
                       </ScrollView>
+                      }
                       <TouchableOpacity onPress={() => { copyToClipboard(state.wallet.address) }}>
                         <Icon
                           name={"content-copy"}
@@ -772,9 +781,12 @@ useFocusEffect(
                   <View style={{marginVertical:hp(1),borderBottomColor:"gray",borderColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",borderWidth:2}}>
                     <Text style={styles.textColor}>Stellar Public Key</Text>
                     <View style={{flexDirection:"row"}}>
+                    {loading&&!steller_key?<View style={{width: wp(70)}}>
+                           <Exchange_single_loading/>
+                        </View>:
                       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 2.9, borderRadius: 5 }}>
                         <Text style={[styles.textColor, styles.width_scrroll]}>{steller_key}</Text>
-                      </ScrollView>
+                      </ScrollView>}
                       <TouchableOpacity onPress={() => { copyToClipboard(steller_key) }}>
                         <Icon
                           name={"content-copy"}

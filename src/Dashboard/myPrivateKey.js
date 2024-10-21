@@ -21,7 +21,10 @@ import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../icon";
 import { Button } from "native-base";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
 const MyPrivateKey = (props) => {
+  const navi=useNavigation()
     const state = useSelector((state)=>state)
   const [accountName, setAccountName] = useState("");
   const [visible, setVisible] = useState(false);
@@ -129,6 +132,7 @@ const MyPrivateKey = (props) => {
 }
   return (
     <View style={{ backgroundColor:state.THEME.THEME===false?"#fff":"black", height: hp(100) }}>
+          <Wallet_screen_header title="Secret Key" onLeftIconPress={() => navi.goBack()} />
       <Animated.View // Special animatable View
         style={{ opacity: fadeAnim }}
       >

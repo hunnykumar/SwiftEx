@@ -183,6 +183,26 @@ export const Wallet_screen_header = ({ title, onLeftIconPress }) => {
   );
 };
 
+export const Exchange_Login_screen = ({ title, onLeftIconPress }) => {
+  const state = useSelector((state) => state);
+  return (
+    <>
+      <View style={[styles.exchangeheaderContainer, { backgroundColor:"#131E3A",height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
+        <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
+          <Icon
+            name={"arrow-left"}
+            type={"materialCommunity"}
+            size={30}
+            color={state.THEME.THEME===false?"black":"#fff"}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:state.THEME.THEME===false?"black":"#fff" }]}>{title}</Text>
+      <View style={styles.exchangerightIconContainer} />
+      </View>
+    </>
+  );
+};
+
 const styles = StyleSheet.create({
   mainContainer: {
     backgroundColor: "#fff",

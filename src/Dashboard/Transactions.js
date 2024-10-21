@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Icon from 'react-native-vector-icons/FontAwesome'
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   StyleSheet,
@@ -24,8 +24,10 @@ import Xrpimage from "../../assets/xrp.png";
 import Maticimage from "../../assets/matic.png";
 import title_icon from "../../assets/title_icon.png";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 
 const Transactions = (props) => {
+  const navi=useNavigation();
   const [transactions, setTransactions] = useState("");
   const state = useSelector((state) => state);
   const isFocused=useIsFocused();
@@ -102,6 +104,7 @@ try{
         backgroundColor: state.THEME.THEME===false?"#fff":"black",
       }}
     >
+      <Wallet_screen_header title="Transactions" onLeftIconPress={() => navi.goBack()} />
       <View style={[styles.footer,{backgroundColor: state.THEME.THEME===false?"#fff":"black"}]}>
         <View elevation={5} style={{ height: hp(100) }}>
           <ScrollView

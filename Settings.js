@@ -215,8 +215,10 @@ import { Switch } from "react-native-paper";
 import { REACT_APP_LOCAL_TOKEN } from "./src/Dashboard/exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import Icon from "./src/icon";
 import { SET_APP_THEME } from "./src/components/Redux/actions/type";
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { Wallet_screen_header } from "./src/Dashboard/reusables/ExchangeHeader";
 const Settings = (props) => {
+  const navi=useNavigation();
   const focused=useIsFocused();
   const [Checked, setCheckBox] = useState(false);
   const [PUSH_NOTIFICATION,setPUSH_NOTIFICATION]=useState(false)
@@ -251,8 +253,9 @@ const Settings = (props) => {
   }
   return (
     <SafeAreaView>
+    <Wallet_screen_header title="Settings" onLeftIconPress={() => navi.goBack()} />
     <ScrollView contentContainerStyle={[styles.container,{backgroundColor:state.THEME.THEME===false?"white":"black"}]}>
-      <Text style={[styles.setHeading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Settings</Text>
+      {/* <Text style={[styles.setHeading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Settings</Text> */}
       <TouchableOpacity
         onPress={() => {
           props.navigation.navigate("AllWallets");

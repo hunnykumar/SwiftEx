@@ -30,6 +30,7 @@ import { ExchangeHeaderIcon } from "../../../../../header";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { REACT_APP_HOST } from "../../ExchangeConstants";
 import { useToast } from "native-base";
+import { Exchange_Login_screen } from "../../../../../reusables/ExchangeHeader";
 
 export const ExchangeLogin = (props) => {
   const toast=useToast();
@@ -445,7 +446,7 @@ const FOCUSED=useIsFocused();
   return (
     <>
      {lodaing_ver==true?alert("success","Email Verifying...."):<></>}
-      <ExchangeHeaderIcon title="Exchange " isLogOut={false} />
+    <Exchange_Login_screen title="" onLeftIconPress={() => navigation.navigate("Home")} />
       <SafeAreaView style={styles.container}>
         <TouchableWithoutFeedback onPress={()=>{Keyboard.dismiss()}}
           // style={styles.container}
@@ -456,11 +457,11 @@ const FOCUSED=useIsFocused();
               <View style={{ marginTop: hp(3), borderRadius: hp(2) }}>
                 <Image style={styles.tinyLogo} source={darkBlue} />
 
-                <Text style={styles.text}>Welcome Back!</Text>
+                <Text style={styles.text}>Hi, Welcome Back! 👋</Text>
                 <Text
                   style={{
                     color: "#FFFFFF",
-                    fontSize: 16,
+                    fontSize: 19,
                     textAlign: "center",
                     marginTop: hp(1),
                     marginBottom: hp(3),
@@ -468,9 +469,18 @@ const FOCUSED=useIsFocused();
                 >
                   {active_forgot===true?"Recover to your account":"Login to your account"}
                 </Text>
-               
-                <TextInput autoCapitalize="none" textContentType="emailAddress" placeholder={"Email Adderss"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16 }} value={Email} onChangeText={(text) => { onChangelmail(text) }} />
-                {active_forgot===false?<TextInput autoCapitalize="none" placeholder={"Password"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,marginTop:19 }} value={login_Passcode} onChangeText={(text) => { setlogin_Passcode(text) }} secureTextEntry={true} />:<></>}                
+               <Text style={{
+                    color: "#FFFFFF",
+                    fontSize: 16,
+                    textAlign: 'left',
+                    paddingVertical:5,
+                    fontWeight:"500"
+                  }}>Email</Text>
+                <TextInput autoCapitalize="none" textContentType="emailAddress" placeholder={"Email Adderss"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,color:"black" }} value={Email} onChangeText={(text) => { onChangelmail(text) }} />
+                {active_forgot===false?
+                <>
+                 <Text style={{fontWeight:"500",color: "#FFFFFF",fontSize: 16,textAlign: 'left',paddingVertical:5,marginTop:10}}>Password</Text>
+                <TextInput autoCapitalize="none" placeholder={"Password"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,marginTop:5,color:"black" }} value={login_Passcode} onChangeText={(text) => { setlogin_Passcode(text) }} secureTextEntry={true} /></>:<></>}                
                 <TouchableOpacity style={styles.PresssableBtn}
                 disabled={VERFIY_OTP}
                   onPress={() => {
@@ -531,7 +541,7 @@ const FOCUSED=useIsFocused();
               )}
 
               <View style={{
-    marginTop: active_forgot===false?Platform.OS==="android"?hp(10):hp(16):hp(25),
+    marginTop: active_forgot===false?Platform.OS==="android"?hp(10):hp(16):hp(21),
     height: hp(6),
     width: 400,
     backgroundColor: "#003166",
@@ -572,7 +582,7 @@ const FOCUSED=useIsFocused();
                 {passcode_view === false ? <><Text style={{ marginVertical: 15, color: "white" }}>Verification OTP</Text>
                   <TextInput
                     placeholderTextColor="gray"
-                    style={styles.input}
+                    style={[styles.input,{color:"black"}]}
                     theme={{ colors: { text: "white" } }}
                     value={otp}
                     placeholder={"OTP"}
@@ -589,7 +599,7 @@ const FOCUSED=useIsFocused();
                   <TextInput
                   secureTextEntry={true}
                     placeholderTextColor="gray"
-                    style={styles.input}
+                    style={[styles.input,{color:"black"}]}
                     // theme={{ colors: { text: "white" } }}
                     value={passcode}
                     placeholder={"ABC@!123"}
@@ -604,7 +614,7 @@ const FOCUSED=useIsFocused();
                   <TextInput
                     secureTextEntry={true}
                     placeholderTextColor="gray"
-                    style={styles.input}
+                    style={[styles.input,{color:"black"}]}
                     // theme={{ colors: { text: "white" } }}
                     value={con_passcode}
                     placeholder={"ABC@!123"}
@@ -699,7 +709,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "#FFFFFF",
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "700",
     // paddingVertical: 10,
     textAlign: "center",

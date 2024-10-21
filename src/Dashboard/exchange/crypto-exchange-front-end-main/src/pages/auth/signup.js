@@ -24,6 +24,9 @@ import { signup } from "../../api";
 import { useSelector } from "react-redux";
 import {ShowErrotoast, alert} from '../../../../../reusables/Toasts'
 import { useToast } from "native-base";
+import { Exchange_Login_screen } from "../../../../../reusables/ExchangeHeader";
+import darkBlue from "../../../../../../../assets/darkBlue.png";
+import Icon from "../../../../../../icon";
 
 export const ExchangeRegister = (props) => {
   const toast=useToast();
@@ -104,6 +107,7 @@ export const ExchangeRegister = (props) => {
 
   return (
     <>
+    <Exchange_Login_screen title="" onLeftIconPress={() => navigation.goBack()} />
       <KeyboardAvoidingView style={styles.container} behavior="height">
         <ScrollView>
           <View
@@ -116,7 +120,8 @@ export const ExchangeRegister = (props) => {
               color: "white",
             }}
           >
-            <Text style={{ color: "#fff", marginBottom: 20, fontSize: 16,textAlign:"center",marginTop:hp(3) ,fontWeight:"700"}}>
+            <Image style={styles.tinyLogo} source={darkBlue} />
+            <Text style={{ color: "#fff", paddingVertical:hp(0.4), fontSize: 20,textAlign:"center" ,fontWeight:"700"}}>
               Create your exchange account
             </Text>
 
@@ -142,7 +147,7 @@ export const ExchangeRegister = (props) => {
 
 
             <View style={styles.inp}>
-                <Text style={styles.text}>Last name</Text>
+                <Text style={styles.text}>Last Name</Text>
               <TextInput
                 placeholderTextColor="gray"
                 style={styles.input}
@@ -157,7 +162,7 @@ export const ExchangeRegister = (props) => {
             
             <View style={styles.inp}>
                 <Text style={styles.text}>
-                  Email address
+                  Email Address
                 </Text>
               <TextInput
                 placeholderTextColor="gray"
@@ -180,15 +185,18 @@ export const ExchangeRegister = (props) => {
               >{formContent.walletAddress}
               </Text>
             </View>
-           <View style={{height:32}}>
-           {showMessage ? (
-              // <Text style={{ color: "white",marginStart:13}}>{message}</Text>
-              <Text style={{ color: "white",marginStart:13}}></Text>
-            ) : (
-              <View></View>
-            )}
-           </View>
-
+            <View style={{ flexDirection:"row",alignSelf:"flex-start",marginHorizontal:wp(10),marginTop:hp(3)}}>
+              <Icon name={"information-outline"} type={"materialCommunity"} size={27} color={"gray"} />
+              <Text style={{ color: "gray",fontSize:19,marginLeft:wp(2) }}>First Name should not be empty</Text>
+            </View>
+            <View style={{ flexDirection:"row",alignSelf:"flex-start",marginHorizontal:wp(10),marginTop:hp(1)}}>
+              <Icon name={"information-outline"} type={"materialCommunity"} size={27} color={"gray"} />
+              <Text style={{ color: "gray",fontSize:19,marginLeft:wp(2) }}>Last Name should not be empty</Text>
+            </View>
+            <View style={{ flexDirection:"row",alignSelf:"flex-start",marginHorizontal:wp(10),marginTop:hp(1)}}>
+              <Icon name={"information-outline"} type={"materialCommunity"} size={27} color={"gray"} />
+              <Text style={{ color: "gray",fontSize:19,marginLeft:wp(2) }}>Email  should not be empty</Text>
+            </View>
 <TouchableOpacity
   onPress={() => {
     handleSubmit();
@@ -235,14 +243,13 @@ export const ExchangeRegister = (props) => {
 const styles = StyleSheet.create({
   input: {
     height: hp("5%"),
-    marginBottom: hp("2"),
-    color: "#fff",
-    marginTop: hp("1"),
-    width: wp("70"),
-    paddingRight: wp("7"),
-    backgroundColor: "#131E3A",
-    borderRadius: wp("20"),
+    color: "black",
+    marginTop: hp(0.5),
+    width: wp(80),
+    backgroundColor: "#fff",
+    borderRadius: 4,
     marginLeft: wp("10"),
+    fontSize:18
   },
   content: {
     display: "flex",
@@ -256,6 +263,12 @@ const styles = StyleSheet.create({
     marginTop: hp(3),
     color: "#FFF",
    
+  },
+  tinyLogo: {
+    width: wp("20"),
+    height: hp("13"),
+    marginTop: hp(0.3),
+    alignSelf: "center",
   },
   btn: {
     width: wp("80"),
@@ -275,11 +288,11 @@ const styles = StyleSheet.create({
     marginBottom: wp("5"),
     fontSize: hp("5"),
   },
-  tinyLogo: {
-    width: wp("5"),
-    height: hp("5"),
-    padding: 20,
-  },
+  // tinyLogo: {
+  //   width: wp("5"),
+  //   height: hp("5"),
+  //   padding: 20,
+  // },
   icon: {
     display: "flex",
     flexDirection: "row",
@@ -322,7 +335,7 @@ const styles = StyleSheet.create({
     // fontSize: 24,
   },
   lowerbox: {
-    marginTop: hp(8),
+    marginTop: hp(1.5),
     height:hp(6),
     width: 400,
     backgroundColor: "#003166",

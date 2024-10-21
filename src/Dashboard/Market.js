@@ -21,6 +21,8 @@ import Icon from "../icon";
 import { alert } from "./reusables/Toasts";
 import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import { useSelector } from "react-redux";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { Wallet_market_loading } from "./reusables/Exchange_loading";
 
 const Market = (props) => {
   const state=useSelector((state)=>state);
@@ -33,6 +35,7 @@ const Market = (props) => {
   const [refreshing, setRefreshing] = useState(false);
   const [updatedData, setUpdatedData] = useState([])
   const [searchItem, setSearchItem] = useState('')
+  const [Load_new_data,setLoad_new_data]=useState(true);
   const navigation = useNavigation();
   const fetchKline = async (
     setData,
@@ -43,6 +46,7 @@ const Market = (props) => {
     setImageUrl
   ) => {
     try {
+      setLoad_new_data(true)
 const raw = "";
 const requestOptions = {
   method: "GET",
@@ -60,6 +64,7 @@ const requestOptions = {
           setPrice(responseJson[0].MarketData[0].current_price);
           setPercent(responseJson[0].MarketData[0].price_change_percentage_24h);
           setImageUrl(responseJson[0].MarketData[0].image);
+          setLoad_new_data(false)
     })
       .catch((error) =>{ 
        setLoading(false);
@@ -89,6 +94,7 @@ const requestOptions = {
   useEffect(() => {
    const fetch_token_data=async()=>{
     try {
+      setLoad_new_data(true)
       await fetchKline(
         setData,
         setLoading,
@@ -107,6 +113,7 @@ const requestOptions = {
 
   return (
     <View style={{ backgroundColor: state.THEME.THEME===false?"#fff":"black" }}>
+    <Wallet_screen_header title="Market" onLeftIconPress={() => navigation.goBack()} />
     {Platform.OS === 'ios' &&  <StatusBar hidden={true} />}
       <View style={{ height: hp(100) }}>
         <View style={Styles.searchContainer}>
@@ -131,7 +138,7 @@ const requestOptions = {
             }}
           />
         </View>
-        <View style={Styles.iconwithTextContainer1}>
+        {/* <View style={Styles.iconwithTextContainer1}> */}
           {/* <Text style={{ color: "gray" }}>New DApps</Text> */}
           {/* <Icon
             name={"arrowright"}
@@ -139,8 +146,9 @@ const requestOptions = {
             size={hp(3)}
             color={"gray"}
           /> */}
-        </View>
-        <View style={{height:hp(63)}}>
+        {/* </View> */}
+        {Load_new_data?<Wallet_market_loading/>:
+        <View style={{height:hp(75),paddingBottom: hp(5)}}>
         <ScrollView
           alwaysBounceVertical={true}
           contentContainerStyle={{ marginBottom: hp(2) }}
@@ -184,7 +192,7 @@ const requestOptions = {
             </View>
           )}
         </ScrollView>
-        </View>
+        </View>}
       </View>
     </View>
   );

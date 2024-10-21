@@ -675,7 +675,7 @@ const change_Trust_New = async () => {
        <View style={{flexDirection:"row",justifyContent:"space-between",padding:Platform.OS==="android"?10:19}}>
        <View style={{ width: '40%', marginTop: 19 }}>
                 <Text style={{color:"#fff",fontSize:21,textAlign:"center",marginLeft:Platform.OS==="android"&&30}}>{Platform.OS==="android"?"Trading Pair":"Trading Pair"}</Text>
-                <TouchableOpacity  style={Platform.OS === "ios" ? { marginTop: 10, width: '90%', borderColor:"'rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",borderWidth:1, marginLeft: 15,paddingVertical:7.6,alignItems:"center",borderRadius:6 } : { marginTop: 13, width: "90%", color: "white", marginLeft:30,borderColor:"'rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",borderWidth:1,height:"19%",justifyContent:"center",alignItems:"center",borderRadius:5 }} onPress={()=>{setchooseModalPair(true)}}>
+                <TouchableOpacity  style={Platform.OS === "ios" ? { marginTop: 10, width: '90%', borderColor:"'rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",borderWidth:1, marginLeft: 15,paddingVertical:7.6,alignItems:"center",borderRadius:6 } : { height:hp(4),marginTop: 13, width: "90%", color: "white", marginLeft:30,borderColor:"'rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",borderWidth:1,justifyContent:"center",alignItems:"center",borderRadius:5 }} onPress={()=>{setchooseModalPair(true)}}>
                   <Text style={{fontSize:15,color:"#fff"}}>{top_value+"/"+top_value_0}</Text>
                 </TouchableOpacity>
                 
@@ -744,7 +744,7 @@ const change_Trust_New = async () => {
           style={{
             display: "flex",
             alignItems: "center",
-            marginTop:Platform.OS==="ios"?30:-80
+            marginTop:Platform.OS==="ios"?30:30
           }}
         >
           <View
@@ -824,11 +824,12 @@ const change_Trust_New = async () => {
                     </View>:<></>}
              </View>
               <TextInput
-                style={[styles.input,{backgroundColor:"silver"}]}
+                style={[styles.input,{backgroundColor:"#fff",color:"black"}]}
                 keyboardType="numeric"
                 returnKeyType="done"
                 value={offer_amount}
                 placeholder={SelectedBaseValue==="native"?"Amount of XLM":"Amount of "+SelectedBaseValue}
+                placeholderTextColor={"gray"}
                 onChangeText={(text) => {
                   onChangeamount(text)
                   // setoffer_amount(text)
@@ -864,11 +865,12 @@ const change_Trust_New = async () => {
                 </View> : <></>}
               </View>
               <TextInput
-                style={[styles.input,{backgroundColor:"silver"}]}
+                style={[styles.input,{backgroundColor:"#fff",color:"black"}]}
                 returnKeyType="done"
                 keyboardType="numeric"
                 value={offer_price}
                 placeholder={"Price of " + route.toLocaleLowerCase()}
+                placeholderTextColor={"gray"}
                 onChangeText={(text) => {
                   onChangename(text)
                 }}

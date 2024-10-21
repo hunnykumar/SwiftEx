@@ -180,8 +180,7 @@ const Dashboard = ({ navigation }) => {
         name="Market"
         component={Market}
         options={{
-          header: () => Header3("Market"),
-          headerShown: true,
+          headerShown: false,
           unmountOnBlur: true,
         }}
       />
@@ -208,8 +207,7 @@ const Dashboard = ({ navigation }) => {
         name="Settings"
         component={Settings}
         options={{
-          header: () => Header3("Settings"),
-          headerShown: true,
+          headerShown: false,
         }}
       />
     </Tab.Navigator>

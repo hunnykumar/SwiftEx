@@ -197,9 +197,10 @@ const AuthStack = () => (
         component={CoinDetails}
         options={{
           gestureEnabled:true,
-          header: () => {
-            return <WalletHeader title="Coin-Detail" />;
-          },
+          headerShown:false
+          // header: () => {
+          //   return <WalletHeader title="Coin-Detail" />;
+          // },
         }}
       />
 
@@ -376,9 +377,7 @@ const AuthStack = () => (
         name="My PrivateKey"
         component={MyPrivateKey}
         options={{
-          header: () => {
-            return <WalletHeader title="Secret Key" />;
-          },
+          headerShown:false
         }}
       />
 
@@ -419,9 +418,7 @@ const AuthStack = () => (
         name="Transactions"
         component={Transactions}
         options={{
-          header: () => {
-            return <WalletHeader title="Transaction" />;
-          },
+          headerShown:false
         }}
       />
       <Stack.Screen
@@ -429,9 +426,7 @@ const AuthStack = () => (
         component={AllWallets}
         options={{
           gestureEnabled:true,
-          header: () => {
-            return <WalletHeader title="All Wallets" />;
-          },
+          headerShown:false
         }}
       />
       <Stack.Screen
@@ -439,14 +434,6 @@ const AuthStack = () => (
         component={BiometricPage}
         options={{
           headerShown: false,
-          headerTitleAlign:"center",
-          headerTitle:"Authentication",
-          // headerStyle: { backgroundColor: "#000C66" },
-          headerStyle: { backgroundColor: "#4CA6EA"},
-          headerTintColor: "white",
-          headerTitleStyle: {
-            fontWeight: "bold",
-          },
         }}
       />
       <Stack.Screen
@@ -460,11 +447,7 @@ const AuthStack = () => (
         name="exchangeRegister"
         component={ExchangeRegister}
         options={{
-          header: () => {
-            return (
-              <ExchangeHeaderIcon isLogOut={false} title="Exchange " />
-            );
-          },
+          headerShown:false
         }}
       />
       <Stack.Screen

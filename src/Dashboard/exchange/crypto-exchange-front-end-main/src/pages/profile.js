@@ -38,6 +38,7 @@ import idCard from "../../../../../../assets/idCard.png";
 import  Clipboard from "@react-native-clipboard/clipboard";
 import { alert } from "../../../../reusables/Toasts";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
+import {Exchange_profile_loading} from "../../../../reusables/Exchange_loading";
 const VERIFICATION_STATUS = {
   VERIFIED: "VERIFIED",
   UNVERIFIED: "UNVERIFIED",
@@ -333,6 +334,7 @@ export const ProfileView = (props) => {
   const { emailStyle } = props;
   const [modalVisible, setModalVisible] = useState(false);
   const [isSubmit, setIsSubmit] = useState(false);
+  const [Load, setLoad] = useState(true);
   const state = useSelector((state) => state);
   const [profile, setProfile] = useState({
     isVerified: false,
@@ -416,12 +418,15 @@ export const ProfileView = (props) => {
 
   const fetchProfileData = async () => {
     try {
+      setLoad(true)
       const { res, err } = await authRequest("/users/getUserDetails", GET);
-      if (err) return [navigation.navigate("exchangeLogin"),setMessage(`${err.status}: ${err.message}`)];
+      if (err) return [setLoad(true),navigation.navigate("exchangeLogin"),setMessage(`${err.status}: ${err.message}`)];
       setProfile(res);
+      setLoad(false)
     } catch (err) {
       console.log(err);
       setMessage(err.message || "Something went wrong");
+      setLoad(true);
     }
   };
 
@@ -468,7 +473,11 @@ export const ProfileView = (props) => {
     <Exchange_screen_header title="Profile" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
     <View>
       <View style={styles.content}>
-          <View style={styles.profileContainer}>
+        <View style={styles.profileContainer}>
+        {Load?
+      <Exchange_profile_loading/>
+      :  
+      <>
             <Icon
               name={"account-circle-outline"}
               type={"materialCommunity"}
@@ -486,6 +495,8 @@ export const ProfileView = (props) => {
               <Text style={{ color: "white", fontSize: 16 }}>Email</Text>
               <Text style={{ color: "white", marginTop: 4, fontSize: 16 }}>{profile.email}</Text>
             </View>
+            </>
+            }
           </View>
 
           <View>
