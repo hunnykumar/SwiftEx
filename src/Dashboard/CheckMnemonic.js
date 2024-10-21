@@ -383,6 +383,8 @@ import "@ethersproject/shims";
 import { ethers } from "ethers";
 import { genrateAuthToken, genUsrToken } from "./Auth/jwtHandler";
 import { alert } from "./reusables/Toasts";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
 const StellarSdk = require('stellar-sdk');
 const storeData = async (publicKey,secretKey,Ether_address) => {
   try {
@@ -431,6 +433,7 @@ const getData = async () => {
 };
 
 const CheckMnemonic = (props) => {
+  const navi=useNavigation();
   console.log("||||||||||||||||||||||||||||||||||||||||||||||",props.route.params.wallet.addres)
   const wallet_Men = props.route.params.wallet.mnemonic.split(' ');
 
@@ -536,6 +539,7 @@ const CheckMnemonic = (props) => {
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
+    <Wallet_screen_header title="Check Mnemonic" onLeftIconPress={() => navi.goBack()} />
       <View style={style.Body}>
         <Text style={style.verifyText}>Verify Secret Phrase</Text>
         <Text style={style.wordText}>

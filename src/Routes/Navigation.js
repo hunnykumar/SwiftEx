@@ -284,9 +284,7 @@ const AuthStack = () => (
         name="PrivateKey"
         component={PrivateKey}
         options={{
-          header: () => {
-            return <WalletHeader title="Private-Key" />;
-          },
+          headerShown:false
         }}
       />
 
@@ -366,10 +364,7 @@ const AuthStack = () => (
         name="Check Mnemonic"
         component={CheckMnemonic}
         options={{
-          header: () => {
-            // return <WalletHeader title="Check-Mneumonic" />;
-            return <WalletHeader title="Check-Mnemonic"/>;
-          },
+          headerShown:false
         }}
       />
 

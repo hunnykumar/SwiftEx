@@ -344,22 +344,22 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
     {
       active_account()
     }
-    getData()
     getAccountDetails();
     getData_new_Kyc()
+    getData()
   },[Focused_screen]);
   useEffect(() => {
-    getData()
     getAccountDetails();
     fetchProfileData();
+    getData()
     getOffersData();
     getBidsData();
     // syncDevice();
   }, []);
   useEffect(() => {
-    getData()
     fetchProfileData();
     getOffersData();
+    getData()
     getBidsData();
     // syncDevice();
   }, [change]);

@@ -14,14 +14,14 @@ import {
   Image,
   Animated,
   Easing,
-  FlatList
+  FlatList,
+  TextInput
 } from "react-native";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import Modal from "react-native-modal";
-import { TextInput } from "react-native-paper";
 import { useDispatch, useSelector } from "react-redux";
 import { _getCurrencyOptions } from "./newAccount.model";
 import { ShowErrotoast, Showsuccesstoast, alert } from "../../../../reusables/Toasts";
@@ -824,7 +824,7 @@ const change_Trust_New = async () => {
                     </View>:<></>}
              </View>
               <TextInput
-                style={[styles.input,{backgroundColor:"#fff",color:"black"}]}
+                style={[styles.input,{backgroundColor:"#fff",color:"black",borderRadius:5}]}
                 keyboardType="numeric"
                 returnKeyType="done"
                 value={offer_amount}
@@ -865,7 +865,7 @@ const change_Trust_New = async () => {
                 </View> : <></>}
               </View>
               <TextInput
-                style={[styles.input,{backgroundColor:"#fff",color:"black"}]}
+                style={[styles.input,{backgroundColor:"#fff",color:"black",borderRadius:5}]}
                 returnKeyType="done"
                 keyboardType="numeric"
                 value={offer_price}
@@ -963,6 +963,7 @@ const styles = StyleSheet.create({
     marginTop: hp("1"),
     borderBottomWidth: 1,
     width: wp(80),
+    fontSize:16
   },
   content: {
     display: "flex",

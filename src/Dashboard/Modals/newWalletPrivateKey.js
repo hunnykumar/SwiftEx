@@ -231,7 +231,7 @@ const NewWalletPrivateKey = ({
               onChangeText={(text) => {
                 setAccountName(text);
               }}
-              style={{ width: wp("78%") }}
+              style={{ width: wp("78%"),color:"black" }}
               placeholder={user ? user : "Enter your account name"}
               placeholderTextColor={"gray"}
               maxLength={20}

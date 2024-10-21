@@ -193,7 +193,7 @@ export const Exchange_Login_screen = ({ title, onLeftIconPress }) => {
             name={"arrow-left"}
             type={"materialCommunity"}
             size={30}
-            color={state.THEME.THEME===false?"black":"#fff"}
+            color={"#fff"}
           />
         </TouchableOpacity>
         <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:state.THEME.THEME===false?"black":"#fff" }]}>{title}</Text>

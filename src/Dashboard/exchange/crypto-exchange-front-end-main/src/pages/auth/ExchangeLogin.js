@@ -481,6 +481,16 @@ const FOCUSED=useIsFocused();
                 <>
                  <Text style={{fontWeight:"500",color: "#FFFFFF",fontSize: 16,textAlign: 'left',paddingVertical:5,marginTop:10}}>Password</Text>
                 <TextInput autoCapitalize="none" placeholder={"Password"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,marginTop:5,color:"black" }} value={login_Passcode} onChangeText={(text) => { setlogin_Passcode(text) }} secureTextEntry={true} /></>:<></>}                
+                <TouchableOpacity style={{alignSelf:"flex-end",marginTop:15}} onPress={()=>{active_forgot===false?forgot_pass():[setactive_forgot(false),setEmail("")]}}>
+                {active_forgot===false?<Text style={{color:"red",fontWeight:"300",fontSize:15,fontWeight:"400"}}>Forgot Password</Text>:<Text style={{color:"red",fontWeight:"300",fontSize:15,fontWeight:"400"}}>Login</Text>}
+                </TouchableOpacity>
+                {loading ? (
+                <View style={{ marginTop: 5 }}>
+                  <ActivityIndicator size="large" color="white" />
+                </View>
+              ) : (
+                <Text> </Text>
+              )}
                 <TouchableOpacity style={styles.PresssableBtn}
                 disabled={VERFIY_OTP}
                   onPress={() => {
@@ -527,26 +537,17 @@ const FOCUSED=useIsFocused();
                 ) : (
                   <Text></Text>
                 )} */}
-                <TouchableOpacity style={{alignSelf:"center",marginTop:15}} onPress={()=>{active_forgot===false?forgot_pass():[setactive_forgot(false),setEmail("")]}}>
+                {/* <TouchableOpacity style={{alignSelf:"center",marginTop:15}} onPress={()=>{active_forgot===false?forgot_pass():[setactive_forgot(false),setEmail("")]}}>
                 {active_forgot===false?<Text style={{color:"white"}}>Forgot Password</Text>:<Text style={{color:"white"}}>Login</Text>}
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
 
-              {loading ? (
-                <View style={{ marginTop: 10 }}>
-                  <ActivityIndicator size="large" color="white" />
-                </View>
-              ) : (
-                <Text> </Text>
-              )}
+              
 
               <View style={{
-    marginTop: active_forgot===false?Platform.OS==="android"?hp(10):hp(16):hp(21),
-    height: hp(6),
+    marginTop: hp(0.1),
+    height: hp(5),
     width: 400,
-    backgroundColor: "#003166",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
     display: "flex",
     alignItems: "center",
     textAlign: "center",
@@ -582,7 +583,7 @@ const FOCUSED=useIsFocused();
                 {passcode_view === false ? <><Text style={{ marginVertical: 15, color: "white" }}>Verification OTP</Text>
                   <TextInput
                     placeholderTextColor="gray"
-                    style={[styles.input,{color:"black"}]}
+                    style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
                     theme={{ colors: { text: "white" } }}
                     value={otp}
                     placeholder={"OTP"}
@@ -599,7 +600,7 @@ const FOCUSED=useIsFocused();
                   <TextInput
                   secureTextEntry={true}
                     placeholderTextColor="gray"
-                    style={[styles.input,{color:"black"}]}
+                    style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
                     // theme={{ colors: { text: "white" } }}
                     value={passcode}
                     placeholder={"ABC@!123"}
@@ -614,7 +615,7 @@ const FOCUSED=useIsFocused();
                   <TextInput
                     secureTextEntry={true}
                     placeholderTextColor="gray"
-                    style={[styles.input,{color:"black"}]}
+                    style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
                     // theme={{ colors: { text: "white" } }}
                     value={con_passcode}
                     placeholder={"ABC@!123"}

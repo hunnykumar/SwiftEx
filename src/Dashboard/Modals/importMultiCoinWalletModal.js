@@ -175,7 +175,7 @@ const ImportMultiCoinWalletModal = ({
             <TextInput
               value={accountName}
               onChangeText={(text) => setAccountName(text)}
-              style={{ width: wp("78%") }}
+              style={{ width: wp("78%"),color:"black" }}
               placeholder={accountName ? accountName : "Wallet 1"}
               placeholderTextColor={"gray"}
             />
@@ -195,7 +195,7 @@ const ImportMultiCoinWalletModal = ({
             <Text>Phrase</Text>
             <TextInput
               placeholder={"Please enter your mnemonic phrase here"}
-              style={style.input}
+              style={[style.input,{color:"black"}]}
               value={mnemonic}
               onChangeText={(text) => {
                 setMnemonic(text);
@@ -501,7 +501,8 @@ const style = StyleSheet.create({
     textAlign: "center",
     marginTop: hp(1.5),
     fontSize: 15,
-    fontWeight: "700"
+    fontWeight: "700",
+    color:"black"
   },
   inputView: {
     borderWidth: 1,

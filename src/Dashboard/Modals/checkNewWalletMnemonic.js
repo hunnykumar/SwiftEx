@@ -230,7 +230,7 @@ const CheckNewWalletMnemonic = ({
                   }}
                   onPress={() => handleAnswer(index, option)}
                 >
-                  <Text>{option}</Text>
+                  <Text style={{color:"black"}}>{option}</Text>
                 </TouchableOpacity>
               ))}
              </View>

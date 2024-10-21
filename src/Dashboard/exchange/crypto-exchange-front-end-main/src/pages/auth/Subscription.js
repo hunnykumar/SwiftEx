@@ -1,5 +1,4 @@
 import { Keyboard, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Icon from "../../../../../../icon";
 import {
    widthPercentageToDP as wp,
    heightPercentageToDP as hp,
@@ -7,6 +6,7 @@ import {
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useState } from "react";
 import { useEffect } from "react";
+import Icon from "../../../../../../icon";
 
 const Subscription = () => {
    const FOCUSED = useIsFocused();
@@ -45,7 +45,7 @@ const Subscription = () => {
          <View style={styles.plan_container} >
             {avl_plan.map((list, index) => {
                return (
-                  <TouchableOpacity style={[styles.plan_info, { backgroundColor: higlight === index ? "rgba(42, 84, 156, 1)rgba(43, 82, 147, 1)" : "#011434", }]} onPress={() => { sethiglight(index) }} onLongPress={()=>{navigation.navigate("Subscription_det",{ID:index})}}>
+                  <TouchableOpacity key={index} style={[styles.plan_info, { backgroundColor: higlight === index ? "rgba(42, 84, 156, 1)rgba(43, 82, 147, 1)" : "#011434", }]} onPress={() => { sethiglight(index) }} onLongPress={()=>{navigation.navigate("Subscription_det",{ID:index})}}>
                      <View>
                         {
                            higlight === index &&
@@ -53,10 +53,10 @@ const Subscription = () => {
                            <Icon name={"check"} type={"materialCommunity"} size={30} color={"#fff"}/>
                            </View>
                         }
-                        <View style={{ flexDirection: "row", justifyContent: list.id !== 1 && "center", alignItems: "center", marginTop: list.id !== 1 && hp(3), marginHorizontal: wp(3) }}>
+                        <View style={{ flexDirection: "row", justifyContent: list.id !== 1 ? "center":"flex-start", alignItems: "center", marginTop: list.id !== 1 && hp(3), marginHorizontal: wp(3) }}>
                            <Text style={styles.comman_text}>{list.month}</Text>
                            {list.id !== 1 && <View style={styles.sub_type}>
-                              <Text style={{ fontSize: 11, textAlign: "center" }}>{list.subscriber_type}</Text>
+                              <Text style={{ fontSize: 11, textAlign: "center",color:"#fff" }}>{list.subscriber_type}</Text>
                            </View>}
                         </View>
                         <Text style={[styles.comman_text_1, { fontWeight: "300", fontSize: 16, marginHorizontal: wp(3) }]}>+Save {list.save_on_price}%</Text>
@@ -138,7 +138,8 @@ const styles = StyleSheet.create({
       backgroundColor: "rgba(230, 114, 41, 1)rgba(183, 154, 30, 1)",
       height: hp(2.5),
       borderRadius: 5,
-      padding: 4,
+      paddingHorizontal:4,
+      paddingVertical:2,
       marginLeft: wp(4)
    },
    right_container: {
@@ -171,7 +172,7 @@ const styles = StyleSheet.create({
       color: "rgba(255, 255, 255, 0.77)",
       fontWeight: "600",
       alignSelf: "center",
-      marginTop: hp(4)
+      marginTop: hp(2)
    },
    line_half: {
       height: "39%",

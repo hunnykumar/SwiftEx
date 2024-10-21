@@ -213,7 +213,7 @@ const ImportEthereumModal = ({
               onChangeText={(text) => {
                 setAccountName(text);
               }}
-              style={{ width: wp("78%") }}
+              style={{ width: wp("78%"),color:"black" }}
               placeholder={accountName ? accountName : "Wallet 1"}
               placeholderTextColor={"gary"}
             />
@@ -247,7 +247,7 @@ const ImportEthereumModal = ({
             </TouchableOpacity>
             <Text>Phrase</Text>
             <TextInput
-              style={style.input}
+              style={[style.input,{color:"black"}]}
               value={text}
               onChangeText={(text) => {
                 if (label === "privateKey") {
@@ -279,6 +279,7 @@ const ImportEthereumModal = ({
               <TextInput
                 style={{
                   display: optionVisible === false ? "none" : "flex",
+                  color:"black"
                 }}
                 value={jsonKey}
                 onChangeText={(text) => {

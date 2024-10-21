@@ -213,7 +213,7 @@ const ImportBinanceWallet = ({
               onChangeText={(text) => {
                 setAccountName(text);
               }}
-              style={{ width: wp("78%") }}
+              style={{ width: wp("78%"),color:"black" }}
               placeholder={accountName ? accountName : "Wallet 1"}
               placeholderTextColor={"gray"}
             />
@@ -247,9 +247,9 @@ const ImportBinanceWallet = ({
             >
               <Text style={style.paste}>Paste</Text>
             </TouchableOpacity>
-            <Text>Phrase</Text>
+            <Text style={{color:"black"}}>Phrase</Text>
             <TextInput
-              style={style.input}
+              style={[style.input,{color:"black"}]}
               value={text}
               onChangeText={(text) => {
                 if (label === "privateKey") {
@@ -280,6 +280,7 @@ const ImportBinanceWallet = ({
           <TextInput
             style={{
               display: optionVisible === false ? "none" : "flex",
+              color:"black"
             }}
             value={jsonKey}
             onChangeText={(text) => {
@@ -756,7 +757,8 @@ const style = StyleSheet.create({
     textAlign:"center",
     fontSize:15,
     fontWeight:"700",
-    marginTop:hp(1)
+    marginTop:hp(1),
+    color:"black"
   },
   crossIcon:{
     alignSelf:"flex-end",

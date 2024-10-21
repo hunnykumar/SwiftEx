@@ -9,6 +9,7 @@ import {
   FlatList,
   Pressable,
   ScrollView,
+  Keyboard,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -21,7 +22,11 @@ import { alert } from "./reusables/Toasts";
 import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../icon";
 import { Button } from "native-base";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
 const PrivateKey = (props) => {
+  const navi=useNavigation();
+  const [text_input_up,settext_input_up]=useState(false);
   const [accountName, setAccountName] = useState("");
   const [visible, setVisible] = useState(false);
   const[ mnemonic,setMnemonic]= useState()
@@ -54,6 +59,20 @@ const PrivateKey = (props) => {
    }
    fetch_new()
   }, []);
+
+  useEffect(()=>{
+    const  Keybord_state_cls=Keyboard.addListener('keyboardDidHide',()=>{
+      settext_input_up(false);
+    });
+    const  Keybord_state_opn=Keyboard.addListener('keyboardDidShow',()=>{
+      settext_input_up(true);
+    });
+    
+    return ()=>{
+      Keybord_state_cls.remove();
+      Keybord_state_opn.remove();
+    }
+  },[]);
   
   const RenderItem = ({ item, index }) => {
     console.log("-------------", item);
@@ -61,15 +80,16 @@ const PrivateKey = (props) => {
       <Pressable style={style.pressable} onPress={()=>{
         console.log("Hello World")
       }}>
-        <Text style={style.pressText}>{index + 1}</Text>
+        <Text style={[style.pressText,{color:"black"}]}>{index + 1}</Text>
 
-        <Text style={style.itemText}>{item}</Text>
+        <Text style={[style.itemText,{color:"black"}]}>{item}</Text>
       </Pressable>
     );
   };
 
   return (
-    <ScrollView>
+    <>
+    <Wallet_screen_header title="Private Key" onLeftIconPress={() => navi.goBack()} />
     <View style={{ backgroundColor: "white", height: hp(100),marginBottom:hp(15) }}>
       <Animated.View // Special animatable View
         style={{ opacity: fadeAnim }}
@@ -128,7 +148,7 @@ const PrivateKey = (props) => {
         <Text style={style.accountText}> Account Name</Text>
 
         <TextInput
-          style={style.input}
+          style={[style.input,{color:"black",marginTop:text_input_up?"-60%":38}]}
           placeholder="Enter your account name"
           value={accountName}
           onChangeText={(text) => setAccountName(text)}
@@ -172,7 +192,7 @@ const PrivateKey = (props) => {
         {/* </View> */}
       </Animated.View>
     </View>
-    </ScrollView>
+    </>
   );
 };
 

@@ -165,7 +165,7 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
             <Text>Secret Key</Text>
             <TextInput
               placeholder={"Enter your secret Key here"}
-              style={style.input}
+              style={[style.input,{color:"black"}]}
               value={secretkey}
               onChangeText={(text) => {
                 setsecretkey(text)
