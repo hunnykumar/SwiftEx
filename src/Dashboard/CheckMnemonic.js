@@ -677,7 +677,7 @@ const CheckMnemonic = (props) => {
                 genrate_keypair(props.route.params.wallet.address)
                 console.log("navigating to home screen");
                 props.navigation.navigate("HomeScreen");
-                alert("success", "correct mnemonic");
+                alert("success", "Mnemonic validated successfully!");
                 getData();      
             } catch (e) {
               console.log(e);

@@ -162,9 +162,10 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
             >
               <Text style={style.paste}>Paste</Text>
             </TouchableOpacity>
-            <Text>Secret Key</Text>
+            <Text style={{color:"#4CA6EA"}}>Secret Key</Text>
             <TextInput
               placeholder={"Enter your secret Key here"}
+              placeholderTextColor={"gray"}
               style={[style.input,{color:"black"}]}
               value={secretkey}
               onChangeText={(text) => {
@@ -224,7 +225,8 @@ const style = StyleSheet.create({
     textAlign: "center",
     marginTop: hp(1.5),
     fontSize: 15,
-    fontWeight: "700"
+    fontWeight: "700",
+    color:"black"
   },
   inputView: {
     borderWidth: 1,

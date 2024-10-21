@@ -245,7 +245,7 @@ const ImportEthereumModal = ({
             >
               <Text style={style.paste}>Paste</Text>
             </TouchableOpacity>
-            <Text>Phrase</Text>
+            <Text style={{color:"#4CA6EA"}}>Phrase</Text>
             <TextInput
               style={[style.input,{color:"black"}]}
               value={text}
@@ -731,7 +731,8 @@ const style = StyleSheet.create({
     textAlign: "center",
     marginTop: hp(1),
     fontSize: 15,
-    fontWeight: "700"
+    fontWeight: "700",
+    color:"black"
   },
   crossIcon: {
     alignSelf: "flex-end",

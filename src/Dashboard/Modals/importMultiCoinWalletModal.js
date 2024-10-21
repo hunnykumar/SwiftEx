@@ -192,7 +192,7 @@ const ImportMultiCoinWalletModal = ({
             >
               <Text style={style.paste}>Paste</Text>
             </TouchableOpacity>
-            <Text>Phrase</Text>
+            <Text style={{color:"#4CA6EA"}}>Phrase</Text>
             <TextInput
               placeholder={"Please enter your mnemonic phrase here"}
               style={[style.input,{color:"black"}]}

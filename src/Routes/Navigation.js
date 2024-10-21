@@ -294,9 +294,7 @@ const AuthStack = () => (
         name="Import"
         component={ImportAccount}
         options={{
-          header: () => {
-            return <WalletHeader title="Import" />;
-          },
+         headerShown:false
         }}
       />
 
@@ -304,9 +302,7 @@ const AuthStack = () => (
         name="Import Multi-Coin Wallet"
         component={ImportMunziWallet}
         options={{
-          header: () => {
-            return <WalletHeader title="Import Multi-Chain Wallet" />;
-          },
+         headerShown:false
         }}
       />
 
@@ -314,9 +310,7 @@ const AuthStack = () => (
         name="Import Ethereum"
         component={ImportOtherWallets}
         options={{
-          header: () => {
-            return <WalletHeader title="Import Ethereum" />;
-          },
+         headerShown:false
         }}
       />
 
@@ -324,9 +318,7 @@ const AuthStack = () => (
         name="Import Binance"
         component={ImportBscWallet}
         options={{
-          header: () => {
-            return <WalletHeader title="Import Binance" />;
-          },
+         headerShown:false
         }}
       />
 

@@ -247,7 +247,7 @@ const ImportBinanceWallet = ({
             >
               <Text style={style.paste}>Paste</Text>
             </TouchableOpacity>
-            <Text style={{color:"black"}}>Phrase</Text>
+            <Text style={{color:"#4CA6EA"}}>Phrase</Text>
             <TextInput
               style={[style.input,{color:"black"}]}
               value={text}
