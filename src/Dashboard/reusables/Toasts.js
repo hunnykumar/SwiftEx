@@ -19,33 +19,19 @@ export const ShowToast = (toast,message)=>{
 }
 
 export const ShowErrotoast = (toast,message)=>{
-    return (
-        toast.show({
-          placement: "top",
-          render: () => {
-            return (
-              <View style={{ backgroundColor: "red", paddingHorizontal: 16, paddingVertical: 16, borderRadius: 15 }}>
-                <Text style={{ color: "white",fontWeight:'bold',fontSize:13 }}>{message}</Text>
-              </View>
-            );
-          }
-        })
-      );
+  Snackbar.show({
+    text: message,
+    duration: Snackbar.LENGTH_SHORT,
+    backgroundColor:'red',
+});
 }
 
 export const Showsuccesstoast = (toast,message)=>{
-    return (
-        toast.show({
-          placement: "top",
-          render: () => {
-            return (
-              <View style={{ backgroundColor: "green", paddingHorizontal: 16, paddingVertical: 16, borderRadius: 15 }}>
-                <Text style={{ color: "white",fontWeight:'bold',fontSize:13 }}>{message}</Text>
-              </View>
-            );
-          }
-        })
-      );
+  Snackbar.show({
+    text: message,
+    duration: Snackbar.LENGTH_SHORT,
+    backgroundColor:'green',
+});
 }
 
 export function alert(type,message){

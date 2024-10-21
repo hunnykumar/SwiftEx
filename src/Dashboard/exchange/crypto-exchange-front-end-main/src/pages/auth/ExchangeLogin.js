@@ -177,10 +177,10 @@ const FOCUSED=useIsFocused();
         },400)
         setOtp(null);
       } else {
+        setpasscode_view(true);
         setOtp(null);
         setIsOtpSent(false);
         setMessage("");
-        setpasscode_view(true);
       }
     } catch (err) {
       setMessage(err.message);
@@ -300,7 +300,8 @@ const FOCUSED=useIsFocused();
         fetch(REACT_APP_HOST +"/users/forgot_passcode", requestOptions)
           .then((response) => response.json())
           .then((result) => {
-            if (result.message === "Otp Send successfully") {
+            console.log(result)
+            if (result.message === "Otp Send successfully"&&result.statusCode===200) {
               setlodaing_ver(false);
               setLoading_fog(true);
               setEmail("");
@@ -313,17 +314,39 @@ const FOCUSED=useIsFocused();
                 phoneNumber: Email,
               });
             }
-            else {
+            if(result.statusCode===400)
+            {
               setlodaing_ver(false);
               setLoading_fog(true);
               setEmail("");
               setLoading_fog(false);
               setTimeout(()=>{
-                ShowErrotoast(toast,"User not found.");
+                ShowErrotoast(toast,result.message);
               },400)
               setVERFIY_OTP(false);
             }
-            console.log(result)
+            if(result?.errorMessage==="User not found")
+            {
+              setlodaing_ver(false);
+              setLoading_fog(true);
+              setEmail("");
+              setLoading_fog(false);
+              setTimeout(()=>{
+                ShowErrotoast(toast,"User not found");
+              },400)
+              setVERFIY_OTP(false);
+            }
+            if(result.statusCode===500)
+            {
+              setlodaing_ver(false);
+              setLoading_fog(true);
+              setEmail("");
+              setLoading_fog(false);
+              setTimeout(()=>{
+                ShowErrotoast(toast,"Something went worng.");
+              },400)
+              setVERFIY_OTP(false);
+            }
           })
           .catch((error) => console.error(error));
       } catch (err) {
@@ -445,7 +468,7 @@ const FOCUSED=useIsFocused();
   }
   return (
     <>
-     {lodaing_ver==true?alert("success","Email Verifying...."):<></>}
+     {/* {lodaing_ver==true?alert("success","Email Verifying...."):<></>} */}
     <Exchange_Login_screen title="" onLeftIconPress={() => navigation.navigate("Home")} />
       <SafeAreaView style={styles.container}>
         <TouchableWithoutFeedback onPress={()=>{Keyboard.dismiss()}}

@@ -117,11 +117,11 @@ const requestOptions = {
     {Platform.OS === 'ios' &&  <StatusBar hidden={true} />}
       <View style={{ height: hp(100) }}>
         <View style={Styles.searchContainer}>
-          <Icon name="search1" type="antDesign" size={hp(2.4)} />
+          <Icon name="search1" type="antDesign" size={25} color={"black"} />
           <TextInput
             placeholder="Search Crypto"
             placeholderTextColor={"gray"}
-            style={Styles.input}
+            style={[Styles.input,{width:wp(80),fontSize:18}]}
             onChangeText={(input) => {
               setSearchItem(input)
               let UpdatedData = []

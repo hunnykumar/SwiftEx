@@ -187,11 +187,12 @@ const styles = StyleSheet.create({
   },
   Wallet_loadBlock:{
     height: 25,
-    width:"80%",
+    width:"50%",
     marginHorizontal:10,
     marginVertical:3,
-    backgroundColor: 'silver',
-    borderRadius: 4,
+    backgroundColor: 'gray',
+    opacity:5,
+    borderRadius: 13,
     overflow: 'hidden',
   },
   container: {
@@ -209,7 +210,8 @@ const styles = StyleSheet.create({
   loadCircle: {
     width: 60,
     height: 60,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: 'gray',
+    opacity:5,
     borderRadius: 30,
     overflow: 'hidden',
     alignSelf:"center",
