@@ -177,7 +177,8 @@ const FOCUSED=useIsFocused();
         },400)
         setOtp(null);
       } else {
-        setpasscode_view(true);
+        // setpasscode_view(true);
+        navigation.navigate("Setup_password",{Email:Email})
         setOtp(null);
         setIsOtpSent(false);
         setMessage("");
@@ -304,14 +305,13 @@ const FOCUSED=useIsFocused();
             if (result.message === "Otp Send successfully"&&result.statusCode===200) {
               setlodaing_ver(false);
               setLoading_fog(true);
-              setEmail("");
               setTimeout(()=>{
                 Showsuccesstoast(toast,"OTP sent successfully in your mail.");
               },400)
               setLoading_fog(false);
               setVERFIY_OTP(false);
-              navigation.navigate("exchangeLogin", {
-                phoneNumber: Email,
+              navigation.navigate("Exchange_otp", {
+                Email: Email,
               });
             }
             if(result.statusCode===400)

@@ -73,6 +73,8 @@ import Asset_info from "../Dashboard/Asset_info";
 import Subscription from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Subscription";
 import Subscription_det from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Subscription_det";
 import Subcription_payment from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Subcription_payment";
+import Setup_password from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Setup_password";
+import Exchange_otp from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Exchange_otp";
 
 const Stack = createNativeStackNavigator();
 
@@ -426,6 +428,20 @@ const AuthStack = () => (
       <Stack.Screen
         name="exchangeLogin"
         component={ExchangeLogin}
+        options={{
+          headerShown: false,gestureEnabled:false,
+        }}
+      />
+       <Stack.Screen
+        name="Setup_password"
+        component={Setup_password}
+        options={{
+          headerShown: false,gestureEnabled:false,
+        }}
+      />
+      <Stack.Screen
+        name="Exchange_otp"
+        component={Exchange_otp}
         options={{
           headerShown: false,gestureEnabled:false,
         }}

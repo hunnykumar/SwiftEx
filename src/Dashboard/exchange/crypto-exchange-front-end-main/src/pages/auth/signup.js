@@ -9,8 +9,9 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  TextInput,
 } from "react-native";
-import { TextInput } from "react-native-paper";
+
 import { LinearGradient } from "react-native-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -57,15 +58,19 @@ export const ExchangeRegister = (props) => {
 
   const handleSubmit = async () => {
     setLoading(true);
-    const { err } = await signup({
+    const { err,res } = await signup({
       ...formContent,
       phoneNumber: `${formContent.email}`,
     });
     setLoading(false);
     console.log(err)
+    if(err.message==="Otp not Send.")
+    {
+      ShowErrotoast(toast,"Something went wrong.");
+    }
     if (err.message === "Otp Send successfully") {
-        navigation.navigate("exchangeLogin", {
-        phoneNumber: formContent.email,
+      navigation.navigate("Exchange_otp", {
+        Email: formContent.email,
       });
     }
     if(err.message==="Email already registered")
@@ -180,10 +185,12 @@ export const ExchangeRegister = (props) => {
                 <Text style={styles.text}>
                   Wallet Address
                 </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.input}>
               <Text
-                style={styles.input}
-              >{formContent.walletAddress}
+                style={{ color: "black",fontSize:18,textAlign:"center",marginTop:hp(1.3)}}
+                >{formContent.walletAddress}
               </Text>
+                </ScrollView>
             </View>
             <View style={{ flexDirection:"row",alignSelf:"flex-start",marginHorizontal:wp(10),marginTop:hp(3)}}>
               <Icon name={"information-outline"} type={"materialCommunity"} size={27} color={"gray"} />
@@ -198,6 +205,7 @@ export const ExchangeRegister = (props) => {
               <Text style={{ color: "gray",fontSize:19,marginLeft:wp(2) }}>Email  should not be empty</Text>
             </View>
 <TouchableOpacity
+  disabled={loading}
   onPress={() => {
     handleSubmit();
   }}
@@ -211,9 +219,7 @@ export const ExchangeRegister = (props) => {
               > */}
                   <Text style={styles.buttonText}>
                     {loading ? (
-                      <View style={{display:'flex', alignContent:'center', alignItems:'center', alignSelf:'center', marginLeft:wp(70)}}>
                         <ActivityIndicator size="small" color="white" />
-                      </View>
                     ) : (
                       "Create my account"
                     )}
@@ -249,7 +255,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 4,
     marginLeft: wp("10"),
-    fontSize:18
+    fontSize:18,
+    paddingHorizontal:wp(1)
   },
   content: {
     display: "flex",
@@ -332,7 +339,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     textAlign: "center",
-    // fontSize: 24,
+    fontSize: 16,
   },
   lowerbox: {
     marginTop: hp(0.2),
