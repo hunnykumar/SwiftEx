@@ -241,7 +241,7 @@ useEffect(() => {
           }
           customRightButton={
               showRemoveButton ? (
-                <Icon name={"ios-backspace"} size={36} color={"gray"} />
+                <Icon name={"backspace"} size={36} color={"gray"} />
               ) : undefined
             }
             // customRightButton={
