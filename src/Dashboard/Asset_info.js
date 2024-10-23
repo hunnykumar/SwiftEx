@@ -15,9 +15,10 @@ import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { GET, authRequest } from "./exchange/crypto-exchange-front-end-main/src/api";
 import { delay } from "lodash";
 import { alert } from "./reusables/Toasts";
-import { Grid, LineChart, XAxis, YAxis } from "react-native-svg-charts";
 import { Area, Chart, HorizontalAxis, Line, Tooltip, VerticalAxis } from "react-native-responsive-linechart";
 import { useSelector } from "react-redux";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { LineChart } from "react-native-gifted-charts";
 const Asset_info = ({ route }) => {
   const state = useSelector((state) => state);
     const FOUCUSED = useIsFocused();
@@ -30,6 +31,7 @@ const Asset_info = ({ route }) => {
     const [chart_show, setchart_show] = useState(true);
     const [final, setfinal] = useState([]);
     const [chart, setchart] = useState([]);
+    const [lineColor, setlineColor] = useState();
     const [Profile, setProfile] = useState({
         isVerified: false,
         firstName: "jane",
@@ -138,26 +140,18 @@ const Asset_info = ({ route }) => {
     async function getChart(name) {
 
         await fetch(
-            `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1h&limit=5`,
+            `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1h&limit=30`,
             {
                 method: "GET",
             }
         )
             .then((resp) => resp.json())
             .then((resp) => {
-                const trades = resp.map((interval) => parseFloat(interval[1]));
-                //   setchart(trades)
-                const firstTrade = trades[0];
-                const lastTrade = trades.slice(-1)[0];
-                const percent = (
-                    ((lastTrade - firstTrade) / firstTrade) *
-                    100
-                ).toFixed(2);
-                //   setchart(trades)
-                const transformedData = resp.map(item => ({
-                    x: new Date(item[0]), // Use the timestamp for x
-                    y: parseFloat(item[4]) // Use the closing price for y
-                }));
+                const transformedData = resp.map(item => {
+                    const timestamp = new Date(item[0]).toLocaleDateString(); // Converts epoch to readable date
+                    const closePrice = parseFloat(item[4]); // Close price
+                    return { date: timestamp, value: closePrice };
+                  });
 
                 console.log("8******************_____", transformedData);
                 setchart(transformedData)
@@ -242,61 +236,85 @@ const Asset_info = ({ route }) => {
 
     }
 
-
+    useEffect(()=>{
+        const fetch_color=async()=>{
+         try {
+          const last_Value = chart[chart.length - 1].y;
+          const second_LastValue = chart[chart.length - 2].y;
+          const line_Color = last_Value > second_LastValue ? "green" : "red";
+          setlineColor(line_Color)
+         } catch (error) {
+          console.log("*----",error)
+         }
+        }
+        fetch_color()
+      },[chart])
     return (
         <>
-            <View style={[styles.container,{backgroundColor:state.THEME.THEME===false?"#4CA6EA":"black",borderBottomColor:"gray",borderWidth:0.5}]}>
-                <TouchableOpacity onPress={(() => navigation.goBack())}>
-                    <Icon type={'antDesign'} name='left' size={29} color={'white'} style={styles.icon} />
-                </TouchableOpacity>
-                <Text style={styles.text}>{asset_type}</Text>
-                <TouchableOpacity onPress={(() => navigation.navigate("Home"))}>
-                    <Image source={darkBlue} style={styles.image} />
-                </TouchableOpacity>
-            </View>
+        <Wallet_screen_header title={asset_type} onLeftIconPress={() => navigation.goBack()} />
             <ScrollView style={[styles.main_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
                 <View style={[styles.chart_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-                    {chart_show === false ? <Chart
-                        style={{ height: hp(35), width: wp(99), padding: 1 }}
-                        data={chart}
-                        padding={{ left: 40, bottom: 30, right: 20, top: 30 }}
-                        xDomain={{ min: new Date(chart[0].x).getTime(), max: new Date(chart[chart.length - 1].x).getTime() }}
-                        yDomain={{ min: Math.min(...chart.map(d => d.y)), max: Math.max(...chart.map(d => d.y)) }}
-                    >
-                        <VerticalAxis tickCount={10} theme={{ grid:{visible:false},labels: { formatter: (v) => v.toFixed(2),label:{color:state.THEME.THEME===false?"black":"#fff"} } }} />
-                        <HorizontalAxis tickCount={10} theme={{
-                            grid:{visible:false},
-                            labels: {
-                                formatter: (v) => {
-                                    const date = new Date(v);
-                                    return `${date.getHours()}:${date.getMinutes()}`;
-                                },
-                                label:{color:state.THEME.THEME===false?"black":"#fff"}
-                            },
-                        }} />
-                        <Area theme={{ gradient: { from: { color: '#44bd32' }, to: { color: '#44bd32', opacity: 0.2 } } }} />
-                        <Line
-                            tooltipComponent={<Tooltip theme={{ label: {
-                                color: 'white',
-                                fontSize: 12,
-                                fontWeight: 700,
-                                textAnchor: 'middle',
-                                opacity: 1,
-                                dx: 0,
-                                dy: 16.5,
-                              },
-                              shape: {
-                                width: 50,
-                                height: 20,
-                                dx: 0,
-                                dy: 20,
-                                rx: 4,
-                                color: 'black',
-                              },
-                              }}/>}
-                            theme={{ stroke: { color: '#44bd32', width: 5 }, scatter: { default: { width: 8, height: 8, rx: 4, color: '#44ad32' }, selected: { color: 'red' } } }}
-                        />
-                    </Chart> : <ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} />}
+                    {chart_show === false ? 
+                    <View>
+                        <LineChart
+                    areaChart
+                    data={chart}
+                    rotateLabel
+                    width={wp(75)}
+                    hideDataPoints
+                    spacing={10}
+                    color={lineColor}
+                    thickness={6}
+                    startFillColor={lineColor==="red"?"#bd3e30":"#327532"}
+                    endFillColor={lineColor==="red"?"#bd3e30":"#327532"}
+                    startOpacity={0.9}
+                    endOpacity={0.2}
+                    initialSpacing={0}
+                    noOfSections={6}
+                    yAxisColor={state.THEME.THEME===false?"#fff":"black"}
+                    yAxisThickness={10}
+                    hideRules
+                    yAxisTextStyle={{ color: state.THEME.THEME===false?"black":"#fff" }}
+                    yAxisSide='right'
+                    xAxisColor="lightgray"
+                    scrollEnabled 
+                    pointerConfig={{
+                      pointerStripHeight: 160,
+                      pointerStripColor: 'lightgray',
+                      pointerStripWidth: 2,
+                      pointerColor: 'lightgray',
+                      radius: 6,
+                      pointerLabelWidth: 100,
+                      pointerLabelHeight: 90,
+                      activatePointersOnLongPress: true,
+                      autoAdjustPointerLabelPosition: false,
+                      pointerLabelComponent: items => {
+                        return (
+                          <View
+                            style={{
+                              height: 90,
+                              width: 100,
+                              justifyContent: 'center',
+                              marginTop: -2,
+                              marginLeft: -40,
+                            }}>
+                            <Text style={{ color: state.THEME.THEME===false?"black":"#fff", fontSize: 14, marginBottom: 6, textAlign: 'center' }}>
+                              {items[0].date}
+                            </Text>
+            
+                            <View style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: 'white' }}>
+                              <Text style={{ fontWeight: 'bold', textAlign: 'center',color: 'black' }}>
+                                {'$' + items[0].value}
+                              </Text>
+                            </View>
+                          </View>
+                        );
+                      },
+                    }}
+                  />
+
+                    </View>
+                     : <ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} />}
 
                 </View>
                 <View style={[styles.opt_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black",borderColor:"gray",borderWidth:0.5}]}>
@@ -480,7 +498,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
         alignSelf: "center",
         borderRadius: 10,
-        marginTop: -25,
+        marginTop: -65,
         justifyContent: "space-around",
         alignItems: "center"
     },
