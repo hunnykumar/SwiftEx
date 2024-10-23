@@ -87,6 +87,7 @@
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^1.10.3",
     "react-native-get-random-values": "^1.11.0",
+    "react-native-gifted-charts": "^1.4.46",
     "react-native-image-avatars": "^1.1.6",
     "react-native-image-base64": "^0.1.4",
     "react-native-image-picker": "^7.1.2",

@@ -177,6 +177,49 @@ export function Exchange_profile_loading () {
   );
 };
 
+export function Charts_Loadings () {
+  const shimmerAnimation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const startShimmer = () => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(shimmerAnimation, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shimmerAnimation, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    };
+
+    startShimmer();
+  }, []);
+
+  const shimmerTranslateX = shimmerAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-200, 200],
+  });
+
+  return (
+    <View style={styles.load_block_container}>
+      <View style={styles.load_block}>
+        <Animated.View
+          style={[
+            styles.load_block_shimmer,
+            { transform: [{ translateX: shimmerTranslateX }] },
+          ]}
+        />
+      </View>
+    </View>
+  );
+};
+
 
 const styles = StyleSheet.create({
   Wallet_container:{
@@ -218,6 +261,26 @@ const styles = StyleSheet.create({
     marginBottom:19
   },
   shimmer: {
+    width: 200,
+    height: '100%',
+    backgroundColor: '#f0f0f0',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    opacity: 0.5,
+  },
+  load_block_container: {
+    backgroundColor:"#011434",
+    width:'90%',
+  },
+  load_block: {
+    height: 250,
+    backgroundColor: 'silver',
+    borderRadius: 4,
+    marginBottom: 10,
+    overflow: 'hidden',
+  },
+  load_block_shimmer:{
     width: 200,
     height: '100%',
     backgroundColor: '#f0f0f0',

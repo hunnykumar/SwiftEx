@@ -36,6 +36,7 @@ import { Area, Chart, HorizontalAxis, Line, Tooltip, VerticalAxis } from "react-
 import { delay } from "lodash";
 import { useNavigation } from "@react-navigation/native";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { LineChart } from "react-native-gifted-charts";
 
 export const CoinDetails = (props) => {
   const navigation=useNavigation();
@@ -49,6 +50,7 @@ export const CoinDetails = (props) => {
   const [Data, setData] = useState();
   const [timeFrame, setTimeFrame] = useState("30m");
   const [pressed, setPressed] = useState();
+  const [lineColor, setlineColor] = useState();
   const [timeData, setTimeData] = useState([
     "5m",
     "10m",
@@ -71,6 +73,11 @@ export const CoinDetails = (props) => {
 
     return setStyle("rgba(0,153,51,0.8)");
   }
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp);
+    return `${date.getHours()}:${date.getMinutes()}`;  // Format as HH:mm
+  };
+   
   useEffect(() => {
     const fetch = async () => {
       try {
@@ -95,6 +102,19 @@ export const CoinDetails = (props) => {
    }
    time_fetch()
   }, [timeFrame]);
+  useEffect(()=>{
+    const fetch_color=async()=>{
+     try {
+      const last_Value = Data[Data.length - 1].y;
+      const second_LastValue = Data[Data.length - 2].y;
+      const line_Color = last_Value > second_LastValue ? "green" : "red";
+      setlineColor(line_Color)
+     } catch (error) {
+      console.log("*----",error)
+     }
+    }
+    fetch_color()
+  },[Data])
 
   // useEffect(()=>{
   //   setTimeout(()=>{
@@ -110,7 +130,7 @@ export const CoinDetails = (props) => {
       }
 
       await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1h&limit=5`,
+        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1h&limit=35`,
         {
           method: "GET",
         }
@@ -129,7 +149,11 @@ export const CoinDetails = (props) => {
             x: new Date(item[0]), // Use the timestamp for x
             y: parseFloat(item[4]) // Use the closing price for y
         }));
-          setData(transformedData);
+        const ptData = transformedData.map(item => ({
+          value: item.y,
+          date: formatDate(item.x)
+        })); 
+        setData(ptData);
           console.log("----1st---",transformedData)
           delay(()=>{
             setload("true");
@@ -146,7 +170,7 @@ export const CoinDetails = (props) => {
       }
 
       await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=12h&limit=5`,
+        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=12h&limit=35`,
         {
           method: "GET",
         }
@@ -166,7 +190,11 @@ export const CoinDetails = (props) => {
             x: new Date(item[0]), // Use the timestamp for x
             y: parseFloat(item[4]) // Use the closing price for y
         }));
-          setData(transformedData);
+        const ptData = transformedData.map(item => ({
+          value: item.y,
+          date: formatDate(item.x)
+        })); 
+          setData(ptData)
           console.log("---2nd----",transformedData)
           delay(()=>{
             setload("true");
@@ -183,7 +211,7 @@ export const CoinDetails = (props) => {
       }
 
       await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1d&limit=5`,
+        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1d&limit=35`,
         {
           method: "GET",
         }
@@ -202,7 +230,11 @@ export const CoinDetails = (props) => {
             x: new Date(item[0]), // Use the timestamp for x
             y: parseFloat(item[4]) // Use the closing price for y
         }));
-          setData(transformedData);
+          const ptData = transformedData.map(item => ({
+            value: item.y,
+            date: formatDate(item.x)
+          })); 
+          setData(ptData);
           console.log("----3rd---",transformedData)
           delay(()=>{
             setload("true");
@@ -219,7 +251,7 @@ export const CoinDetails = (props) => {
       }
 
       await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=30m&limit=5`,
+        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=30m&limit=35`,
         {
           method: "GET",
         }
@@ -239,7 +271,11 @@ const transformedData = resp.map(item => ({
                     x: new Date(item[0]), // Use the timestamp for x
                     y: parseFloat(item[4]) // Use the closing price for y
                 }));
-          setData(transformedData);
+          const ptData = transformedData.map(item => ({
+            value: item.y,
+            date: formatDate(item.x)
+          })); 
+          setData(ptData);
           console.log("----4th---",transformedData)
           delay(()=>{
             setload("true");
@@ -440,56 +476,67 @@ const transformedData = resp.map(item => ({
       /> */}
 
 {load===false?<ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} style={{marginTop:hp(13),marginLeft:110}}/>:
-    //   <LineChart
-    //   style={{ flex: 1 }}
-    //   data={Data ? Data : data}
-    //   svg={{ stroke: 'rgb(134, 65, 244)' }}
-    //   contentInset={{ top: 10, bottom: 10 }}
-    //   >
-    //   <Grid />
-    // </LineChart>
-    <Chart
-                        style={{ height: hp(39), width: wp(95), padding: 1 }}
-                        data={Data}
-                        padding={{ left: 45, bottom: 30, right: 20, top: 30 }}
-                        xDomain={{ min: new Date(Data[0].x).getTime(), max: new Date(Data[Data.length - 1].x).getTime() }}
-                        yDomain={{ min: Math.min(...Data.map(d => d.y)), max: Math.max(...Data.map(d => d.y)) }}
-                    >
-                        <VerticalAxis tickCount={10} theme={{ labels: { formatter: (v) => v.toFixed(0) ,label: { color:state.THEME.THEME===false?"black":"#fff" }} }} />
-                        <HorizontalAxis  tickCount={10} theme={{
-                          labels: {
-                            formatter: (v) => {
-                              const date = new Date(v);
-                              return `${date.getHours()}:${date.getMinutes()}`;
-                            },
-                            label: { color:state.THEME.THEME===false?"black":"#fff" }
-                          },
-                        }} />
-                        <Area theme={{ gradient: { from: { color: '#44bd32' }, to: { color: '#44bd32', opacity: 0.2 } } }} />
-                        <Line
-                            tooltipComponent={<Tooltip theme={{ label: {
-                              color: 'white',
-                              fontSize: 12,
-                              fontWeight: 700,
-                              textAnchor: 'middle',
-                              opacity: 1,
-                              dx: 0,
-                              dy: 16.5,
-                            },
-                            shape: {
-                              width: 70,
-                              height: 20,
-                              dx: 0,
-                              dy: 20,
-                              rx: 4,
-                              color: 'black',
-                            },
-                            }}/>}
-                            theme={{ stroke: { color: '#44bd32', width: 5 }, scatter: { default: { width: 8, height: 8, rx: 4, color: '#44ad32' }, selected: { color: 'red' } } }}
-                        />
-                    </Chart>
-}
-          </View>
+    <View
+    style={{ height: hp(39), width: wp(95), padding: 1 ,backgroundColor: state.THEME.THEME===false?"#fff":"black",justifyContent:"center"
+    }}>
+ <LineChart
+        areaChart
+        data={Data}
+        rotateLabel
+        width={wp(75)}
+        hideDataPoints
+        spacing={10}
+        color={lineColor}
+        thickness={6}
+        startFillColor={lineColor==="red"?"#bd3e30":"#327532"}
+        endFillColor={lineColor==="red"?"#bd3e30":"#327532"}
+        startOpacity={0.9}
+        endOpacity={0.2}
+        initialSpacing={0}
+        noOfSections={6}
+        yAxisColor={state.THEME.THEME===false?"#fff":"black"}
+        yAxisThickness={10}
+        hideRules
+        yAxisTextStyle={{ color: state.THEME.THEME===false?"black":"#fff" }}
+        yAxisSide='right'
+        xAxisColor="lightgray"
+        scrollEnabled 
+        pointerConfig={{
+          pointerStripHeight: 160,
+          pointerStripColor: 'lightgray',
+          pointerStripWidth: 2,
+          pointerColor: 'lightgray',
+          radius: 6,
+          pointerLabelWidth: 100,
+          pointerLabelHeight: 90,
+          activatePointersOnLongPress: true,
+          autoAdjustPointerLabelPosition: false,
+          pointerLabelComponent: items => {
+            return (
+              <View
+                style={{
+                  height: 90,
+                  width: 100,
+                  justifyContent: 'center',
+                  marginTop: -2,
+                  marginLeft: -40,
+                }}>
+                <Text style={{ color: 'white', fontSize: 14, marginBottom: 6, textAlign: 'center' }}>
+                  {items[0].date}
+                </Text>
+
+                <View style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: 'white' }}>
+                  <Text style={{ fontWeight: 'bold', textAlign: 'center',color: 'black' }}>
+                    {'$' + items[0].value.toFixed(2)}
+                  </Text>
+                </View>
+              </View>
+            );
+          },
+        }}
+      />
+    </View>}
+    </View>
       {/* <AreaChart
         style={{
           height: hp(30),
@@ -505,7 +552,7 @@ const transformedData = resp.map(item => ({
       >
         <Grid />
       </AreaChart> */}
-    <View style={{ marginTop: hp(9) }}>
+    <View style={{ marginTop: hp(4) }}>
     <View style={[styles.iconText,{backgroundColor:state.THEME.THEME===false?"#f2f2f2":"black"}]}>
           <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}> Last 24h :</Text>
           <View style={styles.arrowText}>

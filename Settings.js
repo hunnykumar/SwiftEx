@@ -252,7 +252,7 @@ const Settings = (props) => {
     }
   }
   return (
-    <SafeAreaView>
+    <>
     <Wallet_screen_header title="Settings" onLeftIconPress={() => navi.goBack()} />
     <ScrollView contentContainerStyle={[styles.container,{backgroundColor:state.THEME.THEME===false?"white":"black"}]}>
       {/* <Text style={[styles.setHeading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Settings</Text> */}
@@ -463,7 +463,7 @@ const Settings = (props) => {
           <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Log Out</Text>
         </TouchableOpacity>
     </ScrollView>
-    </SafeAreaView>
+    </>
   );
 };
 
