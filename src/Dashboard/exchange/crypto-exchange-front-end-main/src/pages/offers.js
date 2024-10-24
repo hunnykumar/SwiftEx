@@ -35,6 +35,7 @@ import { REACT_APP_LOCAL_TOKEN } from "../ExchangeConstants";
 import { useIsFocused } from '@react-navigation/native';
 import WebView from "react-native-webview";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
+import Offers_manages from "./Offers_manages";
 
 
 
@@ -307,12 +308,7 @@ export const OfferView = () => {
  
  <Exchange_screen_header title="Offers" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
       <View style={{ height: hp(100), backgroundColor: "#131E3A" }}>
-        <OfferListViewHome
-          self={true}
-          profile={profile}
-          offers={offers}
-          setChange={setChange}
-        />
+      <Offers_manages/>
       </View>
     </>
   );
