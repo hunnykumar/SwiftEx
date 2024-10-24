@@ -74,10 +74,10 @@ export const HomeView = ({ setPressed }) => {
   const [chart_index,setchart_index]=useState(0);
   const chooseRenderItem_1 = ({ item }) => (
     <TouchableOpacity onPress={() => {setchart_index(item.id),setopen_chart_api(false)}} style={[styles.chooseItemContainer,{borderRadius:5,height:hp(6),justifyContent:'space-around'}]}>
-      <Image source={ { uri: item.img_0 }} style={{width:wp(7.7),height:hp(3.5)}}/>
+      <Image source={ { uri: item.img_0 }} style={{width:wp(8),height:hp(4)}}/>
       <Text style={[styles.chooseItemText]}>{item.name}</Text>
       <Text style={{color:"#fff",fontSize:19}}>VS</Text>
-      <Image source={ { uri: item.img }} style={{width:wp(7.7),height:hp(3.5),marginLeft:wp(3)}}/>
+      <Image source={ { uri: item.img }} style={{width:wp(8),height:hp(4),marginLeft:wp(3)}}/>
       <Text style={[styles.chooseItemText]}>{item.name_0}</Text>
     </TouchableOpacity>
   );
@@ -168,16 +168,16 @@ export const HomeView = ({ setPressed }) => {
   useEffect(()=>{
     const fetch_color=async()=>{
      try {
-      const last_Value = Data[Data.length - 1].y;
-      const second_LastValue = Data[Data.length - 2].y;
-      const line_Color = last_Value > second_LastValue ? "green" : "red";
+      const last_Value = Data[Data.length - 1].value;
+      const second_LastValue = Data[Data.length - 2].value;
+      const line_Color = last_Value > second_LastValue ? "green" : "red";      
       setlineColor(line_Color)
-     } catch (error) {
+    } catch (error) {
       console.log("*----",error)
-     }
     }
-    fetch_color()
-  },[Data])
+  }
+  fetch_color()
+},[Data])
   //activate stellar account function
   const active_account=async()=>{
     console.log("<<<<<<<clicked");
@@ -476,7 +476,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
         value: parseFloat(item.avg), // Convert avg from string to number
         date: formatDate(item.timestamp) // Format the timestamp
       }));
-      setData(ptData);
+      setData(ptData.reverse());
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -727,29 +727,29 @@ useEffect(() => {
                           marginLeft:10}}
                       />
                      </View>
-                     <Text style={{fontSize:19,textAlign:"center",marginTop:19,fontWeight:"bold"}}>{list.name}</Text>
+                     <Text style={{fontSize:19,textAlign:"center",marginTop:19,fontWeight:"bold",color:"black"}}>{list.name}</Text>
                      </View>
                      <View style={{flexDirection:"row",marginStart:10,marginTop:10,borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
                        <Icon name={"map-marker"} type={"materialCommunity"} size={30} color={"#212B53"}/>
                        <ScrollView style={{height:hp(14)}}>
-                        <Text style={{marginStart:10,marginTop:5}}>{list.city}</Text>
+                        <Text style={{marginStart:10,marginTop:5,color:"black"}}>{list.city}</Text>
                        </ScrollView>
                       <View>
                       </View>
                      </View>
                      <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
-                     <Text style={{marginStart:21,marginTop:5,fontSize:20}}>Crypto Assets</Text>
-                      <Text style={{marginStart:29,marginTop:9,fontSize:16}}>{list.Crypto_Assets}</Text>
+                     <Text style={{marginStart:21,marginTop:5,fontSize:20,color:"black"}}>Crypto Assets</Text>
+                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Crypto_Assets}</Text>
                      </View>
 
                      <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
-                     <Text style={{marginStart:26,marginTop:5,fontSize:20}}>Fiat Assets</Text>
-                      <Text style={{marginStart:29,marginTop:9,fontSize:16}}>{list.Fiat_Assets}</Text>
+                     <Text style={{marginStart:26,marginTop:5,fontSize:20,color:"black"}}>Fiat Assets</Text>
+                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Fiat_Assets}</Text>
                      </View>
 
                      <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
-                     <Text style={{marginStart:26,marginTop:5,fontSize:20}}>Payment Rails</Text>
-                      <Text style={{marginStart:29,marginTop:9,fontSize:16}}>{list.Payment_Rails}</Text>
+                     <Text style={{marginStart:26,marginTop:5,fontSize:20,color:"black"}}>Payment Rails</Text>
+                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Payment_Rails}</Text>
                      </View>
                     </View>
                   )
@@ -1357,7 +1357,8 @@ chooseModalContainer: {
 chooseModalContent: {
   backgroundColor: 'rgba(33, 43, 83, 1)',
   padding: 20,
-  borderRadius: 20,
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
   width: "100%",
   maxHeight: '80%',
   borderTopColor:"rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
@@ -1368,8 +1369,8 @@ chooseItemContainer: {
   flexDirection: 'row',
   alignItems: 'center',
   borderColor: 'rgba(28, 41, 77, 1)',
-  borderWidth: 0.9,
-  borderBottomColor: '#fff',
+  borderBottomWidth:0.9,
+  borderBlockEndColor: '#fff',
   marginBottom: 4,
 },
 chooseItemText: {

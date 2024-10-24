@@ -105,8 +105,8 @@ export const CoinDetails = (props) => {
   useEffect(()=>{
     const fetch_color=async()=>{
      try {
-      const last_Value = Data[Data.length - 1].y;
-      const second_LastValue = Data[Data.length - 2].y;
+      const last_Value = Data[Data.length - 1].value;
+      const second_LastValue = Data[Data.length - 2].value;
       const line_Color = last_Value > second_LastValue ? "green" : "red";
       setlineColor(line_Color)
      } catch (error) {
@@ -481,7 +481,7 @@ const transformedData = resp.map(item => ({
     }}>
  <LineChart
         areaChart
-        data={Data}
+        data={Data.reverse()}
         rotateLabel
         width={wp(75)}
         hideDataPoints

@@ -239,8 +239,8 @@ const Asset_info = ({ route }) => {
     useEffect(()=>{
         const fetch_color=async()=>{
          try {
-          const last_Value = chart[chart.length - 1].y;
-          const second_LastValue = chart[chart.length - 2].y;
+          const last_Value = chart[chart.length - 1].value;
+          const second_LastValue = chart[chart.length - 2].value;
           const line_Color = last_Value > second_LastValue ? "green" : "red";
           setlineColor(line_Color)
          } catch (error) {

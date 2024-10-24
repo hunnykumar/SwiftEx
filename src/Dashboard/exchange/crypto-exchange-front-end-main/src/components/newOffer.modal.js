@@ -144,13 +144,17 @@ const chooseFilteredItemList = chooseItemList.filter(
   item => item.name.toLowerCase().includes(chooseSearchQuery.toLowerCase())
 );
 const chooseRenderItem = ({ item }) => (
-  <TouchableOpacity onPress={() => { setRoute("SELL"),setvisible_value(item.name),settop_value(item.visible_0),settop_domain(item.asset_dom),settop_domain_0(item.asset_dom_1),settop_value_0(item.visible_1),setSelectedValue(item.base_value),setSelectedBaseValue(item.counter_value),setchooseModalPair(false)}} style={styles.chooseItemContainer}>
+  <TouchableOpacity onPress={() => { setRoute("SELL"),setvisible_value(item.name),settop_value(item.visible_0),settop_domain(item.asset_dom),settop_domain_0(item.asset_dom_1),settop_value_0(item.visible_1),setSelectedValue(item.base_value),setSelectedBaseValue(item.counter_value),setchooseModalPair(false)}} style={[styles.chooseItemContainer,{
+    borderBottomWidth:0.9,
+    borderBlockEndColor: '#fff',
+    paddingVertical:hp(1.5)
+  }]}>
     <Text style={styles.chooseItemText}>{item.name}</Text>
   </TouchableOpacity>
 );
 const chooseRenderItem_1 = ({ item }) => (
-  <TouchableOpacity onPress={() => {setRoute(item.name),reves_fun(top_value, top_value_0),setopen_offer(false)}} style={[styles.chooseItemContainer,{backgroundColor:item.name==="BUY"?"green":"red",borderRadius:5,height:hp(6),justifyContent:"center"}]}>
-    <Text style={[styles.chooseItemText,{marginLeft:5}]}>{item.name}</Text>
+  <TouchableOpacity onPress={() => {setRoute(item.name),reves_fun(top_value, top_value_0),setopen_offer(false)}} style={[styles.chooseItemContainer,{backgroundColor:item.name==="BUY"?"green":"red",borderRadius:15,height:hp(8),justifyContent:"center"}]}>
+    <Text style={[styles.chooseItemText,{marginLeft:5,fontWeight:"500"}]}>{item.name}</Text>
   </TouchableOpacity>
 );
   ///////////////////////////////////start offer function
@@ -686,14 +690,15 @@ const change_Trust_New = async () => {
       >
         <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setchooseModalPair(false)}>
           <View style={styles.chooseModalContent}>
-            <TextInput
+          <Text style={styles.chooseItem_text}>Select Trading Pair</Text>
+            {/* <TextInput
               style={styles.searchInput}
               placeholder="Search..."
               placeholderTextColor={"gray"}
               onChangeText={text => setChooseSearchQuery(text)}
               value={chooseSearchQuery}
               autoCapitalize='none'
-            />
+            /> */}
             <FlatList
               data={chooseFilteredItemList}
               renderItem={chooseRenderItem}
@@ -718,6 +723,7 @@ const change_Trust_New = async () => {
       >
         <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setopen_offer(false)}>
           <View style={[styles.chooseModalContent]}>
+          <Text style={styles.chooseItem_text}>Select Offer</Text>
             <FlatList
               data={chooseItemList_1}
               renderItem={chooseRenderItem_1}
@@ -1183,16 +1189,27 @@ marginStart:5
 },
 chooseModalContainer: {
   flex: 1,
-  justifyContent: 'center',
+  justifyContent: 'flex-end',
   alignItems: 'center',
   // backgroundColor: 'rgba(0, 0, 0, 0.5)',
 },
 chooseModalContent: {
   backgroundColor: 'rgba(33, 43, 83, 1)',
-  padding: 20,
-  borderRadius: 10,
-  width: '80%',
+  paddingVertical: 5,
+  paddingHorizontal: 20,
+  borderTopLeftRadius: 10,
+  borderTopRightRadius:10,
+  width: wp(99),
   maxHeight: '80%',
+  borderColor: 'rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)',
+  borderTopWidth:3,
+},
+chooseItem_text:{
+  color:"#fff",
+  fontSize:21,
+  textAlign:"left",
+  marginVertical:hp(2),
+  fontWeight:"500"
 },
 searchInput: {
   height: 40,
@@ -1206,10 +1223,7 @@ searchInput: {
     marginVertical: 3,
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: 'rgba(28, 41, 77, 1)',
-    borderWidth: 0.9,
-    borderBottomColor: '#fff',
-    marginBottom: 4,
+    marginBottom: 4
   },
   chooseItemText: {
     marginLeft: 10,

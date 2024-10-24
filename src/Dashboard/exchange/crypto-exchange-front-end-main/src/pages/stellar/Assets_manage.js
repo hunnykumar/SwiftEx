@@ -262,7 +262,10 @@ const styles = StyleSheet.create({
     assets_card: {
         flexDirection: "row",
         justifyContent: "space-between",
-        marginTop: 10
+        marginTop: 10,
+        borderBottomWidth:0.9,
+        borderBlockEndColor: '#fff',
+        paddingBottom:hp(1)
     },
     assets_con: {
         width: wp(90),
