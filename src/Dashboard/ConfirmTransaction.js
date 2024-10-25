@@ -27,6 +27,7 @@ import { alert, ShowToast } from "./reusables/Toasts";
 import { CommonActions } from "@react-navigation/native";
 import Icon from "../icon";
 import { EthereumSecret } from "./constants";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 const { Alchemy, Network, Wallet, Utils } = require("alchemy-sdk");
 
 var ethers = require("ethers");
@@ -232,51 +233,53 @@ const ConfirmTransaction = (props) => {
   }, [fadeAnim]);
 
   return (
-    <View style={style.mainContainer}>
-      <View style={style.BttView}>
-        <Text style={{ marginHorizontal: wp(3) }}>
-          {props?.route?.params?.info?.amount}
-          {/* -100 BTT */}
-          {/* <Text style={{ fontSize: 10 }}>($0.02)</Text> */}
-        </Text>
-      </View>
+    <>
+    <Wallet_screen_header title="Confirm Transaction" onLeftIconPress={() => navigation.goBack()} />
 
-      <Text style={style.fromTxt}>From</Text>
-      <Text style={style.fromAdd}>
-        {props?.route?.params?.info?.addressFrom}
-      </Text>
+      <View style={[style.mainContainer, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black" }]}>
+        <View style={{ borderColor: "gray", borderWidth: 1, marginHorizontal: 10, borderRadius: 10,marginTop:40 }}>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: "black", width: wp(90), alignSelf: "center", paddingBottom: hp(1) }}>
+            <Text style={[style.fromTxt, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>From</Text>
+            <Text style={style.fromAdd} numberOfLines={1}>
+              {props?.route?.params?.info?.addressFrom}
+            </Text>
+          </View>
 
-      <Text style={style.fromTxt}>To</Text>
-      <Text style={style.toAdd}>
-        {props?.route?.params?.info?.addressTo}
-      </Text>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: "black", width: wp(90), alignSelf: "center" }}>
+            <Text style={[style.fromTxt, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>To</Text>
+            <Text style={style.toAdd} numberOfLines={1}>
+              {props?.route?.params?.info?.addressTo}
+            </Text>
+          </View>
 
-      <View style={style.networkTxt}>
-        <Text>Network fee</Text>
-        <Text style={style.dollarTxt}>
-          {/* 0.1 TRX ($0.00) */}
-          {Cost ? Cost : "evaluating fees"} {props?.route?.params?.info?.type}
-        </Text>
-      </View>
+         <View style={{backgroundColor:"#B9CEF37D",width:wp(90),alignSelf:"center",padding:5,margin:13,borderRadius:10}}>
+         <View style={style.networkTxt}>
+            <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff" }}>Network fee</Text>
+            <Text style={style.dollarTxt}>
+              {/* 0.1 TRX ($0.00) */}
+              {Cost ? Cost : "evaluating fees"} {props?.route?.params?.info?.type}
+            </Text>
+          </View>
 
-      <View
-        style={{
-          backgroundColor: "#eeeeee",
-          marginTop: hp(3),
-          width: wp(100),
-          alignSelf: "center",
-          flexDirection: "row",
-          justifyContent: "space-between",
-          paddingVertical: hp(1.6),
-          paddingHorizontal: wp(5.5),
-        }}
-      >
-        <Text>Max Total</Text>
-        <Text style={style.dollarTxt}>
-          {/* $0.03 */}
-          (Amount+fee) : {props?.route?.params?.info?.finalAmount}
-        </Text>
-      </View>
+          <View style={style.networkTxt}>
+            <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff" }}>Max Total</Text>
+            <Text style={style.dollarTxt}>
+              (Amount+fee) : {props?.route?.params?.info?.finalAmount}
+            </Text>
+          </View>
+
+          <View style={style.networkTxt}>
+            <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff" }}>Amount</Text>
+
+            <Text style={style.dollarTxt}>
+              {props?.route?.params?.info?.amount}
+            </Text>
+          </View>
+         </View>
+
+        </View>
+
+     
       {Loading ? (
         <View style={{ marginBottom: hp("-4") }}>
           <ActivityIndicator size="small" color="white" />
@@ -324,6 +327,7 @@ const ConfirmTransaction = (props) => {
         setDisable={setDisable}
       />
     </View>
+    </>
   );
 };
 
@@ -367,29 +371,30 @@ const style = StyleSheet.create({
   },
   fromTxt: {
     color: "black",
-    fontWeight: "700",
-    marginHorizontal: wp(6),
+    fontWeight: "500",
+    marginHorizontal: wp(1),
     marginTop: hp(2),
     fontSize: 15,
   },
   fromAdd: {
-    marginHorizontal: wp(6),
+    marginHorizontal: wp(1),
     color: "gray",
     marginTop: hp(1),
   },
   toAdd: {
-    marginHorizontal: wp(6),
+    marginHorizontal: wp(1),
     color: "gray",
     borderBottomWidth: 0.3,
-    paddingVertical: 12,
+    paddingVertical: 9,
   },
   networkTxt: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: wp(90),
+    width:wp(85),
     alignItems: "center",
     alignSelf: "center",
-    marginTop: hp(2),
+    marginTop: hp(1),
+    paddingHorizontal:wp(1)
   },
   dollarTxt: { color: "gray", fontSize: 12 },
   doneBtn: {

@@ -6,8 +6,11 @@ import {
 import { WebView } from "react-native-webview";
 import {  useSelector } from "react-redux";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
 
 export const TxDetail = (props) => {
+  const navi=useNavigation();
   const type = useSelector((state) => state.walletType);
   const [walletType, setWalletType] = useState();
   const url = `https://testnet.bscscan.com/tx/${props?.route?.params?.data?.hash}`;
@@ -55,6 +58,8 @@ export const TxDetail = (props) => {
     fetch_wallets()
   }, []);
   return (
+    <>
+    <Wallet_screen_header title="Transactions Detail" onLeftIconPress={() => navi.goBack()} />
     <View style={styles.container}>
       <WebView
         source={{
@@ -71,6 +76,7 @@ export const TxDetail = (props) => {
         }}
       /> 
     </View>
+    </>
   );
 };
 

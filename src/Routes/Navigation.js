@@ -251,9 +251,7 @@ const AuthStack = () => (
         name="TxDetail"
         component={TxDetail}
         options={{
-          header: () => {
-            return <ExchangeHeaderIcon isLogOut={false} title="Tx-Detail" />;
-          },
+          headerShown:false
         }}
       />
       <Stack.Screen
@@ -397,9 +395,7 @@ const AuthStack = () => (
         name="Confirm Tx"
         component={ConfirmTransaction}
         options={{
-          header: () => {
-            return <WalletHeader title="Confirm Tx" />;
-          },
+           headerShown:false
         }}
       />
 

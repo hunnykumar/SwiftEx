@@ -128,7 +128,7 @@ try{
                   LeftContent = Xrpimage;
                 } else if (item.walletType == "Matic") {
                   LeftContent = Maticimage;
-                } else if (item.walletType === "Multi-coin") {
+                } else if (item.walletType === "Multi-coin"||item.walletType === "") {
                   if (item.chainType === "Eth") {
                     LeftContent = Etherimage;
                   } else if (item.chainType === "BSC") {
