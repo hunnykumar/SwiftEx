@@ -1,5 +1,3 @@
-// const STELLAR_ACCOUNT_SECRET = 'SCMOMUR2JNSSFMLP522LOSMAXI7PJ4FPL3CIWGJJH666CRAJUFZ33ET4';
-// const STELLAR_ACCOUNT_PUBLIC='GAYL7JNZXPUMMRXQMZGR4JDT2HX4WO75KEJE2KHGZB2LBYNH2YUTMIAS'
 import { useIsFocused } from '@react-navigation/native';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
@@ -14,15 +12,16 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Modal,
+  Keyboard,
 } from 'react-native';
+import { useSelector } from 'react-redux';
 import StellarSdk from 'stellar-sdk';
+import Icon from '../../../../../icon';
 
 const STELLAR_NETWORK = StellarSdk.Networks.TESTNET;
 
-const STELLAR_ACCOUNT_SECRET = 'SCMOMUR2JNSSFMLP522LOSMAXI7PJ4FPL3CIWGJJH666CRAJUFZ33ET4'; 
-const STELLAR_ACCOUNT_PUBLIC = 'GAYL7JNZXPUMMRXQMZGR4JDT2HX4WO75KEJE2KHGZB2LBYNH2YUTMIAS'; 
-
 const Offers_manages = () => {
+  const state = useSelector((state) => state);
   const isFocused = useIsFocused();
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,10 +32,19 @@ const Offers_manages = () => {
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [newAmount, setNewAmount] = useState('');
   const [newPrice, setNewPrice] = useState('');
+  const [STELLAR_ACCOUNT_PUBLIC,setSTELLAR_ACCOUNT_PUBLIC]=useState('');
+  const [STELLAR_ACCOUNT_SECRET,setSTELLAR_ACCOUNT_SECRET]=useState('');
+  const [loading_del,setloading_del]=useState(false);
+  const [loading_edi,setloading_edi]=useState(false);
+
 
   const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
 
   useEffect(() => {
+    setloading_del(false);
+    setloading_edi(false);
+    setSTELLAR_ACCOUNT_PUBLIC(state.STELLAR_PUBLICK_KEY);
+    setSTELLAR_ACCOUNT_SECRET(state.STELLAR_SECRET_KEY);
     fetchOffers();
   }, [isFocused]);
 
@@ -68,7 +76,6 @@ const Offers_manages = () => {
         setBuyingAssetCode(buyingAssetCode); 
         setBuyingAssetIssuer(buyingAssetIssuer); 
       }
-
       setOffers(fetchedOffers);
     } catch (error) {
       console.error('Error fetching offer data:', error);
@@ -90,6 +97,7 @@ const Offers_manages = () => {
   };
 
   const deleteOffer = async (offerId) => {
+    setloading_del(true);
     const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
     try {
       const account = await server.loadAccount(keypair.publicKey());
@@ -112,9 +120,11 @@ const Offers_manages = () => {
 
       const response = await server.submitTransaction(transaction);
       console.log('Offer deleted:', response);
+      setloading_del(false);
       fetchOffers(); 
       Alert.alert('Success', 'Offer deleted successfully.');
     } catch (error) {
+      setloading_del(false);
       console.error("Error deleting offer:", error);
       Alert.alert('Error', 'Failed to delete the offer: ' + error.message);
     }
@@ -128,6 +138,8 @@ const Offers_manages = () => {
   };
 
   const updateOffer = async () => {
+    Keyboard.dismiss()
+    setloading_edi(true);
     const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
     try {
       const account = await server.loadAccount(keypair.publicKey());
@@ -150,10 +162,12 @@ const Offers_manages = () => {
 
       const response = await server.submitTransaction(transaction);
       console.log('Offer updated:', response);
+      setloading_edi(false);
       fetchOffers(); 
       Alert.alert('Success', 'Offer updated successfully.');
       setModalVisible(false);
     } catch (error) {
+      setloading_edi(false);
       console.error("Error updating offer:", error);
       Alert.alert('Error', 'Failed to update the offer: ' + error.message);
     }
@@ -161,15 +175,31 @@ const Offers_manages = () => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.offerItem}>
-      <Text style={styles.offerText}>Offer ID: {item.id}</Text>
-      <Text style={styles.offerText}>Asset Selling: {item.selling.asset_type}</Text>
-      <Text style={styles.offerText}>Asset Buying: {item.buying.asset_code}</Text>
-      <Text style={styles.offerText}>Amount: {item.amount}</Text>
-      <Text style={styles.offerText}>Price: {item.price}</Text>
-      <Text style={styles.offerText}>Status: Active</Text>
+      <View style={styles.offer_id_con}>
+        <Text style={styles.offerText}>Offer ID: {item.id}</Text>
+        <View style={styles.active_text}>
+          <Text style={[styles.offerText, { color: "#2DAA20" }]}>Active</Text>
+        </View>
+      </View>
+      <View style={styles.container_sub}>
+      <Text style={styles.offerText}>Asset Selling</Text>
+      <Text style={styles.offerText}>{item.selling.asset_type}</Text>
+      </View>
+      <View style={styles.container_sub}>
+      <Text style={styles.offerText}>Asset Buying</Text>
+      <Text style={styles.offerText}>{item.buying.asset_code}</Text>
+      </View>
+      <View style={styles.container_sub}>
+      <Text style={styles.offerText}>Amount</Text>
+      <Text style={styles.offerText}>{item.amount}</Text>
+      </View>
+      <View style={styles.container_sub}>
+      <Text style={styles.offerText}>Price</Text>
+      <Text style={styles.offerText}>{item.price}</Text>
+      </View>
       <View style={styles.buttonContainer}>
-        <Button title="Edit" onPress={() => handleEdit(item)} />
-        <Button title="Delete" onPress={() => handleDelete(item.id)} />
+        {loading_edi?<ActivityIndicator color={"green"} size={"small"}/>:<Button disabled={loading_del} title="Edit" onPress={() => handleEdit(item)} />}
+        {loading_del?<ActivityIndicator color={"green"} size={"small"}/>:<Button disabled={loading_edi} title="Delete" onPress={() => handleDelete(item.id)} />}
       </View>
     </TouchableOpacity>
   );
@@ -179,14 +209,17 @@ const Offers_manages = () => {
       <Text style={styles.title}>Active Offers</Text>
     
       {loading ? (
-        <ActivityIndicator color={"green"} size={"large"}/>
+        <ActivityIndicator color={"gray"} size={"large"}/>
       ) : (
-        <FlatList
+        offers.length>0?<FlatList
           data={offers}
           renderItem={renderItem}
           keyExtractor={item => item.id}
           style={styles.offerList}
-        />
+        />:
+        <View style={styles.error_cont}>
+          <Text style={styles.error_text}>No Active Offers</Text>
+        </View>
       )}
 
       <Modal
@@ -199,25 +232,36 @@ const Offers_manages = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
+          <TouchableOpacity style={{alignSelf:"flex-end"}} onPress={()=>{setModalVisible(false)}}>
+          <Icon name={"close"} type={"antDesign"} size={25} color={"#fff"}/>
+          </TouchableOpacity>
+            <View style={styles.container_sub}>
             <Text style={styles.modalTitle}>Edit Offer</Text>
+            <Text style={styles.modalTitle}>ID: {selectedOffer?.id}</Text>
+            </View>
             <TextInput
+              editable={!loading_edi}
               style={styles.input}
               placeholder="New Amount"
+              placeholderTextColor={"gray"}
               value={newAmount}
               onChangeText={setNewAmount}
               keyboardType="numeric"
+              returnKeyType='done'
             />
             <TextInput
+              editable={!loading_edi}
               style={styles.input}
               placeholder="New Price"
+              placeholderTextColor={"gray"}
               value={newPrice}
               onChangeText={setNewPrice}
               keyboardType="numeric"
+              returnKeyType='done'
             />
-            <View style={styles.buttonContainer}>
-              <Button title="Update Offer" onPress={updateOffer} />
-              <Button title="Cancel" onPress={() => setModalVisible(false)} />
-            </View>
+            <TouchableOpacity style={styles.update_btn} disabled={loading_edi} onPress={()=>{updateOffer()}}>
+              {loading_edi?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={{color:"#4B84ED",fontSize:19}}>Update Offer</Text>}
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -229,14 +273,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#e9ecef',
+    backgroundColor: '#011434',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 23,
+    fontWeight: '500',
     marginBottom: 20,
-    textAlign: 'center',
-    color: '#343a40',
+    textAlign: 'left',
+    color: '#fff',
   },
   input: {
     height: 50,
@@ -246,11 +290,11 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     paddingHorizontal: 15,
     backgroundColor: '#fff',
+    color:"black"
   },
   offerItem: {
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 8,
+    borderRadius: 15,
     marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: {
@@ -263,36 +307,81 @@ const styles = StyleSheet.create({
   },
   offerText: {
     fontSize: 16,
-    marginBottom: 5,
-    color: '#495057',
+    color: '#000000CC',
   },
   offerList: {
     marginTop: 10,
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   modalContent: {
-    width: '80%',
+    width: '100%',
+    height:"70%",
     padding: 20,
     borderRadius: 10,
-    backgroundColor: '#fff',
+    backgroundColor: '#1F2022',
     elevation: 5,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '500',
     marginBottom: 15,
     textAlign: 'center',
+    color:"#fff"
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     marginTop: 10,
+    backgroundColor:"#4B84ED1A",
+    borderBottomLeftRadius:15,
+    borderBottomRightRadius:15,
+    paddingHorizontal:10
   },
+  error_cont:{
+    justifyContent:"center",
+    alignSelf:"center",
+    alignItems:"center",
+    paddingVertical:90
+  },
+  error_text:{
+    color:"gray",
+    fontSize:20
+  },
+  container_sub:{
+    justifyContent:"space-between",
+    flexDirection:"row",
+    marginBottom:10,
+    paddingHorizontal: 15,
+  },
+  offer_id_con:{
+    justifyContent:"space-between",
+    flexDirection:"row",
+    paddingVertical:21,
+    paddingBottom:20,
+    paddingHorizontal: 15,
+  },
+  active_text:{
+    backgroundColor:"#2DAA2033",
+    paddingHorizontal:16,
+    alignItems:"center",
+    justifyContent:"center",
+    borderRadius:10
+  },
+  update_btn:{
+    alignSelf:"center",
+    alignItems:"center",
+    width:"90%",
+    padding:15,
+    borderColor:"#fff",
+    borderWidth:1,
+    borderRadius:15,
+    marginTop:13
+  }
 });
 
 export default Offers_manages;

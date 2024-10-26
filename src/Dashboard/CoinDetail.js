@@ -51,6 +51,8 @@ export const CoinDetails = (props) => {
   const [timeFrame, setTimeFrame] = useState("30m");
   const [pressed, setPressed] = useState();
   const [lineColor, setlineColor] = useState();
+  const [points_data,setpoints_data]=useState();
+  const [points_data_time,setpoints_data_time]=useState();
   const [timeData, setTimeData] = useState([
     "5m",
     "10m",
@@ -151,9 +153,11 @@ export const CoinDetails = (props) => {
         }));
         const ptData = transformedData.map(item => ({
           value: item.y,
-          date: formatDate(item.x)
+          date: new Date(item.x).toLocaleTimeString()
         })); 
         setData(ptData);
+        setpoints_data(ptData[ptData?.length-1]?.value);
+        setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("----1st---",transformedData)
           delay(()=>{
             setload("true");
@@ -192,9 +196,11 @@ export const CoinDetails = (props) => {
         }));
         const ptData = transformedData.map(item => ({
           value: item.y,
-          date: formatDate(item.x)
+          date: new Date(item.x).toLocaleTimeString()
         })); 
-          setData(ptData)
+          setData(ptData);
+          setpoints_data(ptData[ptData?.length-1]?.value);
+          setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("---2nd----",transformedData)
           delay(()=>{
             setload("true");
@@ -232,9 +238,11 @@ export const CoinDetails = (props) => {
         }));
           const ptData = transformedData.map(item => ({
             value: item.y,
-            date: formatDate(item.x)
+            date: new Date(item.x).toLocaleTimeString()
           })); 
           setData(ptData);
+          setpoints_data(ptData[ptData?.length-1]?.value);
+          setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("----3rd---",transformedData)
           delay(()=>{
             setload("true");
@@ -273,9 +281,11 @@ const transformedData = resp.map(item => ({
                 }));
           const ptData = transformedData.map(item => ({
             value: item.y,
-            date: formatDate(item.x)
+            date: new Date(item.x).toLocaleTimeString()
           })); 
           setData(ptData);
+          setpoints_data(ptData[ptData?.length-1]?.value);
+          setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("----4th---",transformedData)
           delay(()=>{
             setload("true");
@@ -349,18 +359,57 @@ const transformedData = resp.map(item => ({
   return (
     <ScrollView style={{backgroundColor:state.THEME.THEME===false?"#fff":"black"}}>
     <Wallet_screen_header title="Coin-Detail" onLeftIconPress={() => navigation.goBack()} />
-    {/* // <ScrollView
-    //   contentContainerStyle={{ backgroundColor: "white"}}
-    // > */}
-      {/* <View style={{flexDirection:"row",alignItems:"center",marginHorizontal:wp(7),marginTop:hp(2)}}>
-  <Image source={{uri: image}} style={{height:hp(3),width:wp(6)}}/>
-  <Avatar.Image {...props} source={{ uri: image }} />
-  <Text style={{marginHorizontal:wp(3)}}>wallet:{props?.route?.params?.data?.name}</Text>
-</View> */}
+   
+      <View style={{ alignItems: "flex-start", marginHorizontal: wp(7), marginTop: hp(2) }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Image source={{ uri: image }} style={{ height: hp(3), width: wp(6) }} />
+          <Text style={{ marginHorizontal: wp(1),color: state.THEME.THEME === false ? "black" : "#fff",fontSize:19,fontWeight:"400" }}>{props?.route?.params?.data?.name}</Text>
+        </View>
+        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 34, fontWeight: "600", marginVertical: hp(0.1) }}>$ {points_data} </Text>
+        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 13, fontWeight: "600", marginVertical: hp(0.1) }}>{points_data_time} </Text>
+        <View style={{flexDirection:"row",alignItems:"center"}}>
+          <Icon name="trending-down" type={"materialCommunity"} size={20} color={props?.route?.params?.data?.price_change_percentage_24h.toFixed(1) > 0 ? "green" : "red"} />
+          <Text style={{ color: props?.route?.params?.data?.price_change_percentage_24h.toFixed(1) > 0 ? "green" : "red", fontSize: 13, fontWeight: "600", marginVertical: hp(0.1) }}> {props?.route?.params?.data?.price_change_percentage_24h.toFixed(1)}%</Text>
+        </View>
 
+      </View>
 
-
-      <View style={styles.btnView}>
+  
+    <View style={{
+          height: hp(30),
+          width: wp(70),
+          marginLeft:hp(-13),
+          alignSelf: "center",
+        }}>
+{load===false?<ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} style={{marginTop:hp(13),marginLeft:110}}/>:
+    <View
+    style={{ height: hp(28), width: wp(95), padding: 1 ,backgroundColor: state.THEME.THEME===false?"#fff":"black",justifyContent:"center"
+    }}>
+            <LineChart
+              hideRules
+              data={Data}
+              hideDataPoints
+              adjustToWidth
+              spacing={wp(90) / Data.length-1}
+              isAnimated={true}
+              curved
+              color={lineColor}
+              xAxisLabelsHeight={-15}
+              hideYAxisText
+              yAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
+              xAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
+              pointerConfig={{
+                pointerStripColor: lineColor,
+                pointerColor: lineColor,
+                pointerLabelComponent: item => {
+                  setpoints_data(item[0].value)
+                  setpoints_data_time(item[0].date)
+                }
+              }}
+            />
+    </View>}
+    </View>
+    <View style={styles.btnView}>
         <TouchableOpacity
           style={
             pressed == "1"
@@ -423,120 +472,6 @@ const transformedData = resp.map(item => ({
           <Text style={{ color: pressed == "3" ? "#fff" : "grey" }}>3d</Text>
         </TouchableOpacity>
       </View>
-      {/* <YAxis
-        data={Data ? Data : data}
-        style={{
-          // marginRight: wp(59),
-          // marginLeft: wp(-4),
-          height: hp(36),
-          width: wp(15),
-          marginTop: hp(9),
-          position: "absolute",
-          zIndex: 10,
-          marginLeft:wp(3),
-        }}
-        contentInset={{ top: 10,bottom:20 }}
-        // contentInset={contentInset}
-        svg={{
-          fill: "gray",
-          fontSize: 12,
-          fontWeight: "500"
-        }}
-        numberOfTicks={8}
-        formatLabel={(value) => `${value}`}
-      />
-
-      <XAxis
-        data={Data ? Data : data}
-
-        style={styles.xAxis}
-        formatLabel={(value, index) => timeData[index]}
-        contentInset={{ left: 18, right: 18 }}
-        svg={{
-          fill: "gray",
-          fontSize: 12,
-          fontWeight: "500"
-        }}
-      /> */}
-    <View style={{
-          height: hp(30),
-          width: wp(70),
-          marginLeft:hp(-13),
-          alignSelf: "center",
-        }}>
-           {/* <LineChart
-        style={{
-          height: hp(30),
-          width: wp(70),
-          alignSelf: "center",
-        }}
-        data={Data ? Data : data}
-        svg={{ stroke: "rgb(134, 65, 244)" }}
-        contentInset={{ top: 10, bottom: 10 }}
-      /> */}
-
-{load===false?<ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} style={{marginTop:hp(13),marginLeft:110}}/>:
-    <View
-    style={{ height: hp(39), width: wp(95), padding: 1 ,backgroundColor: state.THEME.THEME===false?"#fff":"black",justifyContent:"center"
-    }}>
- <LineChart
-        areaChart
-        data={Data.reverse()}
-        rotateLabel
-        width={wp(75)}
-        hideDataPoints
-        spacing={10}
-        color={lineColor}
-        thickness={6}
-        startFillColor={lineColor==="red"?"#bd3e30":"#327532"}
-        endFillColor={lineColor==="red"?"#bd3e30":"#327532"}
-        startOpacity={0.9}
-        endOpacity={0.2}
-        initialSpacing={0}
-        noOfSections={6}
-        yAxisColor={state.THEME.THEME===false?"#fff":"black"}
-        yAxisThickness={10}
-        hideRules
-        yAxisTextStyle={{ color: state.THEME.THEME===false?"black":"#fff" }}
-        yAxisSide='right'
-        xAxisColor="lightgray"
-        scrollEnabled 
-        pointerConfig={{
-          pointerStripHeight: 160,
-          pointerStripColor: 'lightgray',
-          pointerStripWidth: 2,
-          pointerColor: 'lightgray',
-          radius: 6,
-          pointerLabelWidth: 100,
-          pointerLabelHeight: 90,
-          activatePointersOnLongPress: true,
-          autoAdjustPointerLabelPosition: false,
-          pointerLabelComponent: items => {
-            return (
-              <View
-                style={{
-                  height: 90,
-                  width: 100,
-                  justifyContent: 'center',
-                  marginTop: -2,
-                  marginLeft: -40,
-                }}>
-                <Text style={{ color: 'white', fontSize: 14, marginBottom: 6, textAlign: 'center' }}>
-                  {items[0].date}
-                </Text>
-
-                <View style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: 'white' }}>
-                  <Text style={{ fontWeight: 'bold', textAlign: 'center',color: 'black' }}>
-                    {'$' + items[0].value.toFixed(2)}
-                  </Text>
-                </View>
-              </View>
-            );
-          },
-        }}
-      />
-    </View>}
-    </View>
       {/* <AreaChart
         style={{
           height: hp(30),
@@ -552,48 +487,60 @@ const transformedData = resp.map(item => ({
       >
         <Grid />
       </AreaChart> */}
-    <View style={{ marginTop: hp(4) }}>
-    <View style={[styles.iconText,{backgroundColor:state.THEME.THEME===false?"#f2f2f2":"black"}]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}> Last 24h :</Text>
-          <View style={styles.arrowText}>
-            <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>
-              {props?.route?.params?.data?.price_change_percentage_24h}%
-            </Text>
-            <Icon name="arrow-up-right" type={"feather"} size={20}  color={state.THEME.THEME===false?"black":"#fff"} />
-          </View>
-        </View>
+      <View style={[styles.market_data, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black" }]}>
+        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 17,paddingBottom:hp(1.6) }}>{props?.route?.params?.data?.name} Price (24H) </Text>
+
+
         <View style={[styles.iconText]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>USD :</Text>
+          <Text style={{ color: "gray"}}>Price USD</Text>
           <View style={styles.arrowText}>
-            <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>$ {props?.route?.params?.data?.current_price}</Text>
-            <Icon name="arrow-up-right" type={"feather"} size={20} color={state.THEME.THEME===false?"black":"#fff"} />
+            <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.current_price}</Text>
           </View>
         </View>
 
-        <View style={[styles.iconText,{backgroundColor:state.THEME.THEME===false?"#f2f2f2":"black"}]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>Market Cap : </Text>
-          <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}> ${props?.route?.params?.data?.market_cap}</Text>
-        </View>
-
         <View style={[styles.iconText]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>Total Supply :</Text>
-          <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>${props?.route?.params?.data?.total_supply}</Text>
-        </View>
-
-        <View style={[styles.iconText,{backgroundColor:state.THEME.THEME===false?"#f2f2f2":"black"}]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}> 24H high :</Text>
-          <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>${props?.route?.params?.data?.high_24h} </Text>
+          <Text style={{ color: "gray"}}>24H high </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.high_24h}
+          <Icon name="arrow-up-right" type={"feather"} size={20} color={state.THEME.THEME===false?"black":"#fff"} /></Text>
         </View>
         <View style={[styles.iconText]}>
+          <Text style={{ color: "gray"}}>24H low </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.low_24h}
+          <Icon name="arrow-down-left" type={"feather"} size={20} color={state.THEME.THEME===false?"black":"#fff"} /></Text>
+        </View>
+        <View style={[styles.iconText]}>
+          <Text style={{ color: "gray"}}>Price change 24H </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff"}]}>{props?.route?.params?.data?.price_change_percentage_24h}%</Text>
+        </View>
 
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}> 24H low :</Text>
-          <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>${props?.route?.params?.data?.low_24h}</Text>
-        </View>
-        <View style={[styles.iconText,{backgroundColor:state.THEME.THEME===false?"#f2f2f2":"black"}]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}> All Time High :</Text>
-          <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>${props?.route?.params?.data?.ath}</Text>
-        </View>
       </View>
+
+      <View style={[styles.market_data, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black" ,marginTop:hp(1),marginBottom:hp(2)}]}>
+        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 17,paddingBottom:hp(1.6) }}>Market stats</Text>
+        <View style={[styles.iconText]}>
+          <Text style={{ color: "gray"}}>Market Cap Rank </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>{props?.route?.params?.data?.market_cap_rank}</Text>
+        </View>
+      <View style={[styles.iconText]}>
+          <Text style={{ color: "gray"}}>Market Cap </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}> ${props?.route?.params?.data?.market_cap}</Text>
+        </View>
+        <View style={[styles.iconText]}>
+          <Text style={{ color: "gray"}}>Volume </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.total_volume}</Text>
+        </View>
+        <View style={[styles.iconText]}>
+          <Text style={{ color: "gray"}}>Total Supply </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.total_supply}</Text>
+        </View>
+
+ 
+        <View style={[styles.iconText]}>
+          <Text style={{ color: "gray"}}>All Time High </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.ath}</Text>
+        </View>
+
+        </View>
 
   {/* </ScrollView> */}
   </ScrollView>
@@ -614,11 +561,9 @@ const styles = StyleSheet.create({
   iconText: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignSelf: "center",
-    width: wp(88),
-    marginTop: hp(1),
-    // backgroundColor:"gray",
-    padding:10
+    alignSelf: "flex-start",
+    width: wp(80),
+    marginVertical:hp(0.6)
   },
   arrowText: {
     flexDirection: "row",
@@ -651,5 +596,15 @@ const styles = StyleSheet.create({
     // paddingVertical: hp(0.6),
     justifyContent: "space-between",
   },
-  heading: { color: "black", fontSize: 14, fontWeight: "700" }
+  heading: { color: "black", fontSize: 14, fontWeight: "700" },
+  market_data: {
+    marginTop: hp(4),
+    paddingHorizontal: wp(3),
+    paddingVertical:hp(1),
+    borderRadius: 19,
+    borderColor: "gray",
+    borderWidth: 0.8,
+    width: wp(90),
+    alignSelf: "center"
+  }
 });

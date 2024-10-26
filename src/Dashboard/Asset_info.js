@@ -19,6 +19,11 @@ import { Area, Chart, HorizontalAxis, Line, Tooltip, VerticalAxis } from "react-
 import { useSelector } from "react-redux";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { LineChart } from "react-native-gifted-charts";
+import Ether_image from "../../assets/ethereum.png";
+import Stellar_image from "../../assets/Stellar_(XLM).png";
+import Bnb_image from "../../assets/bnb-icon2_2x.png";
+
+
 const Asset_info = ({ route }) => {
   const state = useSelector((state) => state);
     const FOUCUSED = useIsFocused();
@@ -32,6 +37,8 @@ const Asset_info = ({ route }) => {
     const [final, setfinal] = useState([]);
     const [chart, setchart] = useState([]);
     const [lineColor, setlineColor] = useState();
+    const [points_data,setpoints_data]=useState();
+    const [points_data_time,setpoints_data_time]=useState();
     const [Profile, setProfile] = useState({
         isVerified: false,
         firstName: "jane",
@@ -148,13 +155,15 @@ const Asset_info = ({ route }) => {
             .then((resp) => resp.json())
             .then((resp) => {
                 const transformedData = resp.map(item => {
-                    const timestamp = new Date(item[0]).toLocaleDateString(); // Converts epoch to readable date
+                    const timestamp = new Date(item[0]).toLocaleTimeString(); // Converts epoch to readable date
                     const closePrice = parseFloat(item[4]); // Close price
                     return { date: timestamp, value: closePrice };
                   });
 
                 console.log("8******************_____", transformedData);
                 setchart(transformedData)
+                setpoints_data(transformedData[transformedData?.length-1]?.value);
+                setpoints_data_time(transformedData[transformedData?.length-1]?.date);
                 setchart_show(false)
             })
             .catch((err) => {
@@ -253,79 +262,73 @@ const Asset_info = ({ route }) => {
         <>
         <Wallet_screen_header title={asset_type} onLeftIconPress={() => navigation.goBack()} />
             <ScrollView style={[styles.main_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
+               <View style={{flexDirection:"row",paddingHorizontal:wp(4),paddingVertical:hp(0.3),alignItems:"center"}}>
+               <Image source={asset_type==="ETH"?Ether_image:asset_type==="XLM"?Stellar_image:Bnb_image} style={{width:wp(6.5),height:hp(3)}}/>
+               <Text style={[styles.chart_top,{color: state.THEME.THEME === false ? "black" : "#fff",fontSize:13,marginHorizontal:hp(0.3)}]}>{asset_type==="ETH"?"Ethereum":asset_type==="XLM"?"Lumens":"Binance"}</Text>
+               </View>
+                <Text style={[styles.chart_top,{color: state.THEME.THEME === false ? "black" : "#fff",marginVertical: hp(-0.5),}]}>$ {!points_data?0.00:points_data} </Text>
+                <Text style={[styles.chart_top,{color: state.THEME.THEME === false ? "black" : "#fff",fontSize:13}]}>{points_data_time} </Text>
                 <View style={[styles.chart_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
                     {chart_show === false ? 
-                    <View>
-                        <LineChart
-                    areaChart
-                    data={chart}
-                    rotateLabel
-                    width={wp(75)}
-                    hideDataPoints
-                    spacing={10}
-                    color={lineColor}
-                    thickness={6}
-                    startFillColor={lineColor==="red"?"#bd3e30":"#327532"}
-                    endFillColor={lineColor==="red"?"#bd3e30":"#327532"}
-                    startOpacity={0.9}
-                    endOpacity={0.2}
-                    initialSpacing={0}
-                    noOfSections={6}
-                    yAxisColor={state.THEME.THEME===false?"#fff":"black"}
-                    yAxisThickness={10}
-                    hideRules
-                    yAxisTextStyle={{ color: state.THEME.THEME===false?"black":"#fff" }}
-                    yAxisSide='right'
-                    xAxisColor="lightgray"
-                    scrollEnabled 
-                    pointerConfig={{
-                      pointerStripHeight: 160,
-                      pointerStripColor: 'lightgray',
-                      pointerStripWidth: 2,
-                      pointerColor: 'lightgray',
-                      radius: 6,
-                      pointerLabelWidth: 100,
-                      pointerLabelHeight: 90,
-                      activatePointersOnLongPress: true,
-                      autoAdjustPointerLabelPosition: false,
-                      pointerLabelComponent: items => {
-                        return (
-                          <View
-                            style={{
-                              height: 90,
-                              width: 100,
-                              justifyContent: 'center',
-                              marginTop: -2,
-                              marginLeft: -40,
-                            }}>
-                            <Text style={{ color: state.THEME.THEME===false?"black":"#fff", fontSize: 14, marginBottom: 6, textAlign: 'center' }}>
-                              {items[0].date}
-                            </Text>
-            
-                            <View style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: 'white' }}>
-                              <Text style={{ fontWeight: 'bold', textAlign: 'center',color: 'black' }}>
-                                {'$' + items[0].value}
-                              </Text>
-                            </View>
-                          </View>
-                        );
-                      },
-                    }}
-                  />
+                        <View>
+                            <LineChart
+                                hideRules
+                                data={chart}
+                                hideDataPoints
+                                adjustToWidth
+                                spacing={wp(90) / chart.length - 1}
+                                isAnimated={true}
+                                curved
+                                color={lineColor}
+                                xAxisLabelsHeight={-15}
+                                hideYAxisText
+                                yAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
+                                xAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
+                                pointerConfig={{
+                                    pointerStripColor: lineColor,
+                                    pointerColor: lineColor,
+                                    pointerLabelComponent: item => {
+                                        setpoints_data(item[0].value)
+                                        setpoints_data_time(item[0].date)
+                                    }
+                                }}
+                            />
 
-                    </View>
+                        </View>
                      : <ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} />}
 
                 </View>
-                <View style={[styles.opt_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black",borderColor:"gray",borderWidth:0.5}]}>
-                    <TouchableOpacity onPress={() => { settooltip_info_0(true),settooltip_info_1(false),settooltip_info_2(false) }} style={styles.tooltip_con}>
+                <View style={[styles.opt_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
+                    <TouchableOpacity onPress={() => { settooltip_info_0(true),settooltip_info_1(false),settooltip_info_2(false) }} style={[styles.tooltip_con,{marginLeft: wp(50)}]}>
                         {tooltip_info_0 ? <View style={[styles.tooltip_con_txt,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
                             <Text style={{color:state.THEME.THEME===false?"black":"#fff",textAlign:"center"}}>Allbridge enables cross-chain asset transfers between multiple blockchain networks.</Text>
                         </View> :
                             <Icon
-                                name={"information-outline"}
+                                name={"information"}
                                 type={"materialCommunity"}
-                                color={"rgba(129, 108, 255, 0.97)"}
+                                color={"#2F7DFF"}
+                                size={21}
+                            />}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => { settooltip_info_0(false),settooltip_info_1(true),settooltip_info_2(false) }} style={[styles.tooltip_con,{marginLeft: wp(70)}]}>
+                        {tooltip_info_1 ? <View style={[styles.tooltip_con_txt,{backgroundColor:state.THEME.THEME===false?"#fff":"black",}]}>
+                            <Text style={{color:state.THEME.THEME===false?"black":"#fff",textAlign:"center"}}>Trading involves buying, selling, or exchanging cryptocurrencies for profit.</Text>
+                        </View> :
+                            <Icon
+                                name={"information"}
+                                type={"materialCommunity"}
+                                color={"#2F7DFF"}
+                                size={21}
+                            />}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => { settooltip_info_0(false),settooltip_info_1(false),settooltip_info_2(true) }} style={[styles.tooltip_con,{marginLeft: wp(89),}]}>
+                        {tooltip_info_2 ? <View style={[styles.tooltip_con_txt,{backgroundColor:state.THEME.THEME===false?"#fff":"black", marginLeft:wp(-30),}]}>
+                            <Text style={{color:state.THEME.THEME===false?"black":"#fff",textAlign:"center"}}>Cashout involves converting assets or cryptocurrencies into fiat money.</Text>
+                        </View> :
+                            <Icon
+                                name={"information"}
+                                type={"materialCommunity"}
+                                color={"#2F7DFF"}
                                 size={21}
                             />}
                     </TouchableOpacity>
@@ -335,104 +338,94 @@ const Asset_info = ({ route }) => {
                                 token: asset_type === "ETH" ? "Ethereum" : asset_type,
                             })
                     }}>
-                        <Icon type={'materialCommunity'} name='arrow-top-right' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"} style={styles.opt_icon} />
+                        <View style={styles.opt_icon}>
+                        <Icon type={'materialCommunity'} name='arrow-top-right' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"}/>
+                        </View>
                         <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Send</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity  style={styles.opt_cons} disabled={chart_show&&Loading||asset_type==="XRP"} onPress={async() => { await trade_bridge() }}>
-                        <Image source={brridge_new} style={styles.image_brige} />
-                        {/* <Icon type={'materialCommunity'} name='swap-horizontal-variant' size={25} color={"#4CA6EA"} style={styles.opt_icon} /> */}
-                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Bridge & Trade</Text>
                     </TouchableOpacity>
                     <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_cons} onPress={() => {
                         setVisible(true);
                         seticonType(asset_type);
                     }}>
-                        <Icon type={'materialCommunity'} name='arrow-bottom-left' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"} style={styles.opt_icon} />
+                        <View style={styles.opt_icon}>
+                        <Icon type={'materialCommunity'} name='arrow-bottom-left' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"}  />
+                        </View>
                         <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Request</Text>
                     </TouchableOpacity>
+                    <TouchableOpacity  style={styles.opt_cons} disabled={chart_show&&Loading||asset_type==="XRP"} onPress={async() => { await trade_bridge() }}>
+                    <View style={styles.opt_icon}>
+                        <Image source={brridge_new} style={styles.image_brige} />
+                        </View>
+                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff",textAlign:"center"}]}>Bridge &{`\n`}Trade</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_cons} onPress={async() => { await  trade_manage() }}>
+                        <View style={styles.opt_icon}>
+                            <Icon type={'materialCommunity'} name='chart-timeline-variant' size={25} color={chart_show && Loading ? "gray" : "#4CA6EA"} />
+                        </View>
+                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Trade</Text>
+                    </TouchableOpacity>
+
+                       <TouchableOpacity disabled={chart_show&&Loading}  style={styles.opt_cons} onPress={async() => { await cashout_manage() }}>
+                        <View style={styles.opt_icon}>
+                            <Icon type={'materialCommunity'} name='cash' size={25} color={chart_show && Loading ? "gray" : "#4CA6EA"} />
+                        </View>
+                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Cashout</Text>
+                    </TouchableOpacity>
+                  
                 </View>
                 <View style={[styles.opt_other,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-                    <View style={[styles.T_C_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-                    <TouchableOpacity onPress={() => { settooltip_info_0(false),settooltip_info_1(true),settooltip_info_2(false) }} style={[styles.tooltip_con,{marginLeft: wp(30),}]}>
-                        {tooltip_info_1 ? <View style={[styles.tooltip_con_txt,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-                            <Text style={{color:state.THEME.THEME===false?"black":"#fff",textAlign:"center"}}>Trading involves buying, selling, or exchanging cryptocurrencies for profit.</Text>
-                        </View> :
-                            <Icon
-                                name={"information-outline"}
-                                type={"materialCommunity"}
-                                color={"rgba(129, 108, 255, 0.97)"}
-                                size={21}
-                            />}
-                    </TouchableOpacity>
-                        <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_other_cons} onPress={async() => { await  trade_manage() }}>
-                            <Icon type={'materialCommunity'} name='chart-timeline-variant' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"} style={styles.opt_icon} />
-                            <Text style={[styles.opt_other_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Trade</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => { settooltip_info_0(false),settooltip_info_1(false),settooltip_info_2(true) }} style={[styles.tooltip_con,{marginLeft: wp(70),}]}>
-                        {tooltip_info_2 ? <View style={[styles.tooltip_con_txt,{backgroundColor:state.THEME.THEME===false?"#fff":"black",marginLeft: wp(-20)}]}>
-                            <Text style={{color:state.THEME.THEME===false?"black":"#fff",textAlign:"center"}}>Cashout involves converting assets or cryptocurrencies into fiat money.</Text>
-                        </View> :
-                            <Icon
-                                name={"information-outline"}
-                                type={"materialCommunity"}
-                                color={"rgba(129, 108, 255, 0.97)"}
-                                size={21}
-                            />}
-                    </TouchableOpacity>
-                        <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_other_cons} onPress={async() => { await cashout_manage() }}>
-                            <Icon type={'materialCommunity'} name='cash' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"} style={styles.opt_icon} />
-                            <Text style={[styles.opt_other_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Cashout</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <View style={styles.horizontalLine} />
+                    {/* <View style={styles.horizontalLine} /> */}
                     {Loading === true ? <ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} style={{ alignSelf: "center" }} /> :
                         final.map((list, index) => {
                             return (
                                 <>
+                                    <View style={[styles.opt_other_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
                                     <Text style={[styles.opt_market_head, { marginTop: hp(1),color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type} price (24H)</Text>
-                                    <View style={{ flexDirection: "row", padding: 4 }}>
-                                        <View style={{ width: wp(40) }}>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Price</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.current_price : asset_type === "XLM" ? list.current_price : list.current_price} price (24H)</Text>
+                                        <View style={{ padding: 4 }}>
+                                        <View style={{ flexDirection: "row",alignItems:"center" }}>
+                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 14, color: "gray",width:wp(35) }]}>Price</Text>
+                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>{asset_type === "XLM" ? list.current_price : asset_type === "XLM" ? list.current_price : list.current_price} price (24H)</Text>
+                                            </View>
+                                            <View style={{ flexDirection: "row",alignItems:"center" }}>
+                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 14, color: "gray",width:wp(35) }]}>Price (USD)</Text>
+                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type === "XLM" ? list.current_price : list.current_price}</Text>
+                                            </View>
+                                            <View style={{ flexDirection: "row",alignItems:"center" }}>
+                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 14, color: "gray",width:wp(35) }]}>24H high</Text>
+                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type === "XLM" ? list.high_24h : list.high_24h}</Text>
+                                            </View>
+                                            <View style={{ flexDirection: "row",alignItems:"center" }}>
+                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 14, color: "gray",width:wp(35) }]}>24H low</Text>
+                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type === "XLM" ? list.low_24h : list.low_24h}</Text>
+                                            </View>
                                         </View>
-                                        <View>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Price (USD)</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.current_price : list.current_price}$</Text>
-                                        </View>
-                                    </View>
-                                    <View style={{ flexDirection: "row", marginLeft: 1.9 }}>
-                                        <View style={{ width: wp(40) }}>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>24H high</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.high_24h : list.high_24h}$</Text>
-                                        </View>
-                                        <View>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>24H low</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.low_24h : list.low_24h}$</Text>
-                                        </View>
-                                    </View>
-
+                                </View>
                                     {/* Market */}
-                                    <View style={styles.horizontalLine} />
+                                    <View style={[styles.opt_other_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
                                     <Text style={[styles.opt_market_head, { marginTop: hp(1), marginLeft: 1 ,color:state.THEME.THEME===false?"black":"#fff"}]}>Market stats</Text>
-                                    <View style={{ flexDirection: "row", padding: 4 }}>
-                                        <View style={{ width: wp(40) }}>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Market cap</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.market_cap : list.market_cap}$</Text>
-                                        </View>
-                                        <View>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Volume</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.total_volume : list.total_volume}</Text>
+                                        <View style={{ padding: 4 }}>
+
+                                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: "gray", width: wp(35) }]}>Market cap</Text>
+                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type === "XLM" ? list.market_cap : list.market_cap}</Text>
+                                            </View>
+                                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: "gray", width: wp(35) }]}>Volume</Text>
+                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" , width: wp(35) }]}>{asset_type === "XLM" ? list.total_volume : list.total_volume}</Text>
+                                            </View>
+
+                                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+
+
+                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: "gray", width: wp(35) }]}>Supply</Text>
+                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" , width: wp(40) }]}>{asset_type === "XLM" ? list.total_supply : list.total_supply}</Text>
+                                            </View>
+                                            <View style={{ flexDirection: "row",alignItems:"center" }}>
+                                            <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: "gray", width: wp(35) }]}>changes 24h</Text>
+                                            <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" , width: wp(35) }]}>{asset_type === "XLM" ? list.price_change_percentage_24h : list.price_change_percentage_24h}</Text>
                                         </View>
                                     </View>
-                                    <View style={{ flexDirection: "row", marginLeft: 1.9 }}>
-                                        <View style={{ width: wp(40) }}>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Supply</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.total_supply : list.total_supply}</Text>
-                                        </View>
-                                        <View>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Price changes % 24h</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.price_change_percentage_24h : list.price_change_percentage_24h}</Text>
-                                        </View>
                                     </View>
                                 </>
                             )
@@ -494,7 +487,7 @@ const styles = StyleSheet.create({
     opt_con: {
         height: hp(10.5),
         flexDirection: "row",
-        width: wp(95),
+        width: wp(99),
         backgroundColor: "#fff",
         alignSelf: "center",
         borderRadius: 10,
@@ -503,16 +496,20 @@ const styles = StyleSheet.create({
         alignItems: "center"
     },
     opt_other: {
-        // height: hp(9.5),
-        width: wp(95),
-        backgroundColor: "#fff",
+        width: wp(99),
         alignSelf: "center",
-        borderRadius: 10,
-        marginTop: 13,
         alignItems: "flex-start",
         paddingLeft: 19,
-        marginBottom: hp(3),
-        paddingBottom: hp(1)
+    },
+    opt_other_con: {
+        width: wp(90),
+        borderRadius: 10,
+        alignItems: "flex-start",
+        paddingLeft: 10,
+        borderColor:"gray",
+        borderWidth:1,
+        paddingBottom:10,
+        marginTop:10
     },
     T_C_con: {
         flexDirection: "row",
@@ -528,6 +525,12 @@ const styles = StyleSheet.create({
     },
     opt_icon: {
         paddingVertical: hp(1),
+        width:wp(11),
+        height:hp(5),
+        borderRadius:wp(10),
+        justifyContent:"center",
+        alignItems:"center",
+        backgroundColor:"#2F7DFF1A"
     },
     opt_cons: {
         alignItems: "center",
@@ -564,15 +567,22 @@ const styles = StyleSheet.create({
         position: "absolute",
         zIndex: 10,
         alignSelf: "flex-start",
-        marginLeft: wp(40),
-        marginTop: hp(2)
+        marginLeft: wp(47),
+        marginTop: hp(1)
     },
     tooltip_con_txt:{
-        marginTop: hp(-2),
+        marginTop: hp(-10),
+        marginLeft:wp(-19),
         width:wp(35),
         borderRadius:14,
         borderColor: "#4CA6EA",
         borderWidth:3
+    },
+    chart_top:{
+        fontSize: 34,
+        fontWeight: "600",
+        marginVertical: hp(0.1),
+        marginHorizontal:wp(5)
     }
 });
 
