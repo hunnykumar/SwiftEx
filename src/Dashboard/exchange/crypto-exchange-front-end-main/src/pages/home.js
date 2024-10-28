@@ -143,7 +143,9 @@ export const HomeView = ({ setPressed }) => {
   const [con_modal,setcon_modal]=useState(false)
   const [api_data_loading,setapi_data_loading]=useState(false)
   const [lineColor, setlineColor] = useState();
-  const [Data, setData] = useState();
+  const [Data, setData] = useState([]);
+  const [points_data,setpoints_data]=useState();
+  const [points_data_time,setpoints_data_time]=useState();
 
   const bootstrapStyleSheet = new BootstrapStyleSheet();
   const { s, c } = bootstrapStyleSheet;
@@ -477,6 +479,9 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
         date: formatDate(item.timestamp) // Format the timestamp
       }));
       setData(ptData.reverse());
+      const temp_data=ptData.reverse();
+      setpoints_data(temp_data[0].value)
+      setpoints_data_time(temp_data[0].date)
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -915,80 +920,37 @@ useEffect(() => {
                     {/* <Text style={{ color: "#fff",fontSize:18,fontWeight:"bold" }}>Assets</Text> */}
                   </TouchableOpacity>
         </View>
-
-  <View style={Platform.OS === "ios" ?{justifyContent:'center',alignItems:'center',backgroundColor:"#011434"} :{justifyContent:'center',alignItems:'center',backgroundColor:"#011434"}}>
-    <View style={{position:"relative",zIndex:20,marginBottom:-30,marginTop:10,alignSelf:"flex-end",marginRight:25}}>
-    <Icon
-        name={"chevron-down"}
-        type={"materialCommunity"}
-        size={28}
-        color={"white"}
-        onPress={()=>{setopen_chart_api(true)}}
-      />
-    </View>
-
-    
+        <View style={{justifyContent:'center',alignItems:'center',backgroundColor:"#011434",padding:10}}>
+    <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 25, fontWeight: "600", marginVertical: hp(0.1) }}>$ {points_data}</Text>
+      <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 13, fontWeight: "600", marginVertical: hp(0.1) }}>{points_data_time}</Text>
+      </View>
+  <View style={{justifyContent:'center',alignItems:'center',backgroundColor:"#011434",padding:10,height:200}}>
     { api_data_loading?<Charts_Loadings/>:
-    <View style={{width:wp(90)}}>
-      <LineChart
-    areaChart
-    data={Data}
-    rotateLabel
-    width={wp(75)}
-    hideDataPoints
-    spacing={10}
-    color={lineColor}
-    thickness={6}
-    startFillColor={lineColor==="red"?"#bd3e30":"#327532"}
-    endFillColor={lineColor==="red"?"#bd3e30":"#327532"}
-    yAxisLabelWidth={wp(10)}
-    startOpacity={0.9}
-    endOpacity={0.2}
-    initialSpacing={0}
-    noOfSections={6}
-    yAxisLabelContainerStyle={{marginLeft:5}}
-    yAxisColor={"#011434"}
-    yAxisThickness={10}
-    hideRules
-    yAxisTextStyle={{ color: state.THEME.THEME===false?"black":"#fff" }}
-    yAxisSide='right'
-    xAxisColor="lightgray"
-    scrollEnabled 
-    pointerConfig={{
-      pointerStripHeight: 160,
-      pointerStripColor: 'lightgray',
-      pointerStripWidth: 2,
-      pointerColor: 'lightgray',
-      radius: 6,
-      pointerLabelWidth: 100,
-      pointerLabelHeight: 90,
-      activatePointersOnLongPress: true,
-      autoAdjustPointerLabelPosition: false,
-      pointerLabelComponent: items => {
-        return (
-          <View
-            style={{
-              height: 90,
-              width: 100,
-              justifyContent: 'center',
-              marginTop: -16,
-              marginLeft: -40,
-            }}>
-            <Text style={{ color: 'white', fontSize: 14, marginBottom: 6, textAlign: 'center' }}>
-              {items[0].date}
-            </Text>
 
-            <View style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: 'white' }}>
-              <Text style={{ fontWeight: 'bold', textAlign: 'center',color:"black" }}>
-                {'$' + items[0].value.toFixed(5)}
-              </Text>
-            </View>
-          </View>
-        );
-      },
-    }}
-  />
-    </View>
+              <LineChart
+                hideRules
+                data={Data}
+                hideDataPoints
+                adjustToWidth
+                spacing={Data.length > 0 &&wp(90) / Data.length-1}
+                isAnimated={true}
+                curved
+                color={lineColor}
+                hideYAxisText
+                yAxisOffset={Data.length > 0 ? Data[0].value : 100}
+                height={20}
+                width={350}
+                yAxisColor={"#011434"}
+                xAxisColor={"#011434"}
+                pointerConfig={{
+                  pointerStripColor: lineColor,
+                  pointerColor: lineColor,
+                  pointerLabelComponent: item => {
+                    setpoints_data(item[0].value)
+                    setpoints_data_time(item[0].date)
+                  }
+                }}
+              />
     // <Chart
     //   style={{  width:370,height:310, padding: 1 }}
     //   data={chartData}
@@ -1057,7 +1019,8 @@ useEffect(() => {
     //   />
     // </Chart>
     }
-
+        </View> 
+<View style={{backgroundColor:"#011434"}}>
         <TouchableOpacity style={{backgroundColor: "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
     padding: hp(0.5),
     width: wp(95),
@@ -1069,12 +1032,11 @@ useEffect(() => {
     >
               <Text style={{fontSize: 19,color: "white",textAlign:"center",fontWeight:"500"}}>Trade between {chart_api[chart_index].name==="USDC"?chart_api[chart_index].name+"  ":chart_api[chart_index].name}vs  {chart_api[chart_index].name_0}</Text>
         </TouchableOpacity>
-        </View> 
         <Modal
         animationType="slide"
         transparent={true}
         visible={open_chart_api}
-      >
+        >
         <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setopen_chart_api(false)}>
           <View style={[styles.chooseModalContent]}>
           <Text style={{fontSize:21,color:"#fff",fontWeight:"bold"}}>Select Assets Pair</Text>
@@ -1082,10 +1044,11 @@ useEffect(() => {
               data={chart_api}
               renderItem={chooseRenderItem_1}
               keyExtractor={(item) => item.id.toString()}
-            />
+              />
           </View>
         </TouchableOpacity>
       </Modal>
+              </View>
             <OfferListViewHome/>
     </ScrollView>
     </>

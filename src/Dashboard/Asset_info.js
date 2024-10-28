@@ -282,6 +282,8 @@ const Asset_info = ({ route }) => {
                                 color={lineColor}
                                 xAxisLabelsHeight={-15}
                                 hideYAxisText
+                                yAxisOffset={chart[0].value}
+                                height={hp(14)}
                                 yAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
                                 xAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
                                 pointerConfig={{

@@ -396,6 +396,8 @@ const transformedData = resp.map(item => ({
               color={lineColor}
               xAxisLabelsHeight={-15}
               hideYAxisText
+              yAxisOffset={Data[0].value}
+              height={50}
               yAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
               xAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
               pointerConfig={{

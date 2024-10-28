@@ -51,7 +51,7 @@ const Offers_manages = () => {
   const fetchOffers = async () => {
     setLoading(true);
     try {
-      const apiUrl = `https://horizon-testnet.stellar.org/accounts/${STELLAR_ACCOUNT_PUBLIC}/offers?limit=200&order=desc`;
+      const apiUrl = `https://horizon-testnet.stellar.org/accounts/${state?.STELLAR_PUBLICK_KEY}/offers?limit=200&order=desc`;
       const response = await axios.get(apiUrl);
       const fetchedOffers = response.data._embedded?.records || [];
 
