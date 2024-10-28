@@ -170,8 +170,8 @@ export const HomeView = ({ setPressed }) => {
   useEffect(()=>{
     const fetch_color=async()=>{
      try {
-      const last_Value = Data[Data.length - 1].value;
-      const second_LastValue = Data[Data.length - 2].value;
+      const last_Value = Data[Data.length - 1]?.close;
+      const second_LastValue = Data[Data.length - 2].close;
       const line_Color = last_Value > second_LastValue ? "green" : "red";      
       setlineColor(line_Color)
     } catch (error) {
@@ -474,24 +474,24 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
       const apiResponse = await response.json();
       const records = apiResponse._embedded.records;
       setAPI_data(records);
-      const ptData = records.map(item => ({
-        value: parseFloat(item.avg), // Convert avg from string to number
-        date: formatDate(item.timestamp) // Format the timestamp
-      }));
-      setData(ptData.reverse());
-      const temp_data=ptData.reverse();
-      setpoints_data(temp_data[0].value)
-      setpoints_data_time(temp_data[0].date)
+      setData(records[0])
+      setpoints_data(records[0]?.close)
+      setpoints_data_time(new Date(parseInt(records[0]?.timestamp)).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+      }))
+
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
-  // Transform data for the chart
-  // const chartData = API_data.map(item => ({
-  //   x: new Date(parseInt(item.timestamp)).getTime(), // Convert timestamp to milliseconds
-  //   y: parseFloat(item.close), // Use the 'close' value for the y-axis
-  //   avg: parseFloat(item.avg) // Include the 'avg' value
-  // }));
+  
+  const chartData = API_data.map(item => ({
+    x: new Date(parseInt(item.timestamp)).getTime(), // Convert timestamp to milliseconds
+    y: parseFloat(item.close), // Use the 'close' value for the y-axis
+    avg: parseFloat(item.avg) // Include the 'avg' value
+  }));
 
   useEffect(() => {
     fetchData()
@@ -607,11 +607,10 @@ useFocusEffect(
   }, [])
 );
 
-const formatDate = (timestamp) => {
-  const date = new Date(Number(timestamp)); // Convert string timestamp to number
-  return `${date.getHours()}:${date.getMinutes()}`; // Format as HH:mm
-};
-
+// const formatDate = (timestamp) => {
+//   const date = new Date(Number(timestamp)); // Convert string timestamp to number
+//   return `${date.getHours()}:${date.getMinutes()}`; // Format as HH:mm
+// };
 
 useEffect(() => {
   if (API_data.length === 0) {
@@ -916,110 +915,58 @@ useEffect(() => {
                     }}
                   >
             <Text style={{ color: "#fff", fontSize: 17, fontWeight: "bold",textAlign:"center"}}>Assets</Text>
-
-                    {/* <Text style={{ color: "#fff",fontSize:18,fontWeight:"bold" }}>Assets</Text> */}
                   </TouchableOpacity>
         </View>
-        <View style={{justifyContent:'center',alignItems:'center',backgroundColor:"#011434",padding:10}}>
-    <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 25, fontWeight: "600", marginVertical: hp(0.1) }}>$ {points_data}</Text>
-      <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 13, fontWeight: "600", marginVertical: hp(0.1) }}>{points_data_time}</Text>
-      </View>
-  <View style={{justifyContent:'center',alignItems:'center',backgroundColor:"#011434",padding:10,height:200}}>
-    { api_data_loading?<Charts_Loadings/>:
+        <View style={{ justifyContent: 'center', alignItems: 'flex-start', backgroundColor: "#011434", paddingVertical: 1,paddingLeft:wp(5) }}>
+          <Text style={{ color: "#fff", fontSize: 19,fontWeight:"600" }}>${points_data || 0.00}</Text>
+          <Text style={{ color: "#fff", fontSize: 14 }}>{points_data_time || 0.00}</Text>
+        </View>
+        <View style={{justifyContent:'center',alignItems:'center',backgroundColor:"#011434",}}>
 
-              <LineChart
-                hideRules
-                data={Data}
-                hideDataPoints
-                adjustToWidth
-                spacing={Data.length > 0 &&wp(90) / Data.length-1}
-                isAnimated={true}
-                curved
-                color={lineColor}
-                hideYAxisText
-                yAxisOffset={Data.length > 0 ? Data[0].value : 100}
-                height={20}
-                width={350}
-                yAxisColor={"#011434"}
-                xAxisColor={"#011434"}
-                pointerConfig={{
-                  pointerStripColor: lineColor,
-                  pointerColor: lineColor,
-                  pointerLabelComponent: item => {
-                    setpoints_data(item[0].value)
-                    setpoints_data_time(item[0].date)
+    { api_data_loading?<Charts_Loadings/>:
+              <Chart
+              style={{ width: 370, height: 230 }}
+              data={chartData}
+              padding={{ left: 10, bottom: 30, right: 20, top: 30 }}
+              xDomain={{ 
+                min: Math.min(...chartData.map(d => d.x)), 
+                max: Math.max(...chartData.map(d => d.x)) 
+              }}
+              yDomain={{ 
+                min: Math.min(...chartData.map(d => d.y)) - (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))), // 10% padding below
+                max: Math.max(...chartData.map(d => d.y)) + (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))) // 10% padding above
+              }}
+            >
+              <Line
+                tooltipComponent={
+                  <Tooltip theme={{formatter: ({ y,x }) =>{setpoints_data(y),setpoints_data_time(x)
+                    setpoints_data_time(new Date(parseInt(x)).toLocaleTimeString([], { 
+                      hour: '2-digit', 
+                      minute: '2-digit', 
+                      second: '2-digit' 
+                    }))
+                  },
+                  shape: {
+                    width: 0,
+                    height: 0,
+                    dx: 0,
+                    dy: 0,
+                    color: 'black',
+                  }
+                }}/>
+                }
+                theme={{
+                  stroke: { color: lineColor || '#44bd32', width: 2 },
+                  scatter: {
+                    selected: { width: 8, height: 8, rx: 4,color: 'red' }
                   }
                 }}
+                smoothing="bezier" 
               />
-    // <Chart
-    //   style={{  width:370,height:310, padding: 1 }}
-    //   data={chartData}
-    //   padding={{ left: 40, bottom: 30, right: 20, top: 30 }}
-    //   xDomain={{ min: Math.min(...chartData.map(d => d.x)), max: Math.max(...chartData.map(d => d.x)) }}
-    //   yDomain={{ min: Math.min(...chartData.map(d => d.y)), max: Math.max(...chartData.map(d => d.y)) }}
-    // >
-    //   <VerticalAxis
-    //     tickCount={10}
-    //     theme={{
-    //       grid:{visible:false},
-    //       labels: {
-    //         formatter: (v) => v.toFixed(1),
-    //         label: { color: "#fff" }
-    //       },
-    //     }}
-    //   />
-    //   <HorizontalAxis
-    //     tickCount={10}
-    //     theme={{
-    //       grid:{visible:false},
-    //       labels: {
-    //         formatter: (v) => {
-    //           const date = new Date(v);
-    //           return `${date.getHours()}:${date.getMinutes()}`;
-    //         },
-    //         label: { color: "#fff" }
-    //       }
-    //     }}
-    //   />
-    //   <Area
-    //     theme={{ gradient: { from: { color: '#44bd32' }, to: { color: '#44bd32', opacity: 0.2 } } }}
-    //   />
-    //   <Line
-    //     tooltipComponent={
-    //       <Tooltip
-    //         theme={{
-    //           label: {
-    //             color: 'white',
-    //             fontSize: 11,
-    //             fontWeight: 700,
-    //             textAnchor: 'middle',
-    //             opacity: 1,
-    //             dx: 0,
-    //             dy: 16.5,
-    //           },
-    //           shape: {
-    //             width: 80,
-    //             height: 30,
-    //             dx: 0,
-    //             dy: 20,
-    //             rx: 4,
-    //             color: 'black',
-    //           }
-    //         }}
-    //         formatter={(d) => `Close: ${d.y.toFixed(10)}\nAvg: ${d.avg.toFixed(10)}`}
-    //       />
-    //     }
-    //     theme={{
-    //       stroke: { color: '#44bd32', width: 5 },
-    //       scatter: {
-    //         default: { width: 8, height: 8, rx: 4, color: '#44ad32' },
-    //         selected: { color: 'red' }
-    //       }
-    //     }}
-    //   />
-    // </Chart>
-    }
-        </View> 
+            </Chart>
+}
+</View>
+        {/* </View>  */}
 <View style={{backgroundColor:"#011434"}}>
         <TouchableOpacity style={{backgroundColor: "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
     padding: hp(0.5),
