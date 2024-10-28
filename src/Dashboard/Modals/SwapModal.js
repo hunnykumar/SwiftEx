@@ -14,6 +14,7 @@ import {
   Keyboard,
   Image,
   ScrollView,
+  Platform,
 } from "react-native";
 import "@ethersproject/shims";
 import { ethers } from "ethers";
@@ -1404,7 +1405,7 @@ fetchData();
           setModalVisible(false);
         }}
       >
-        <View style={[styles.mainContainermodal,{backgroundColor:state.THEME.THEME===false?"white":"black"}]}>
+        <View style={[styles.mainContainermodal,{backgroundColor:state.THEME.THEME===false?"white":"black",paddingTop:Platform.OS==="ios"?0:hp(5)}]}>
         <Wallet_screen_header title="Swap" onLeftIconPress={() => {setModalVisible(!modalVisible),setTrade(0)}} />
           <View style={styles.cardBoxContainer}>
             {/* <TokenHeader setVisible={setModalVisible} name={name} /> */}

@@ -137,6 +137,16 @@ const CustomDrawer = ({ isVisible, onClose }) => {
     }
   }
   return (
+    <Animated.View style={{
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      height: '100%',
+      width: "100%",
+      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+      zIndex: 100,
+      transform: [{ translateX }]
+    }}>
     <Animated.View style={[styles.exchangedrawerContainer, { transform: [{ translateX }] }]}>
       <TouchableOpacity onPress={onClose} style={[styles.exchangecloseButton, { alignSelf: Platform.OS === "ios" ? "flex-end" : "flex-start" }]}>
         <Icon name={"arrow-right-circle-outline"} type={"materialCommunity"} size={33} color={"#fff"} />
@@ -159,6 +169,7 @@ const CustomDrawer = ({ isVisible, onClose }) => {
       </TouchableOpacity>
       
     </Animated.View>
+    </Animated.View >
   );
 };
 

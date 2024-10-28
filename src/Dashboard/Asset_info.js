@@ -261,7 +261,7 @@ const Asset_info = ({ route }) => {
     return (
         <>
         <Wallet_screen_header title={asset_type} onLeftIconPress={() => navigation.goBack()} />
-            <ScrollView style={[styles.main_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
+            <View style={[styles.main_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
                <View style={{flexDirection:"row",paddingHorizontal:wp(4),paddingVertical:hp(0.3),alignItems:"center"}}>
                <Image source={asset_type==="ETH"?Ether_image:asset_type==="XLM"?Stellar_image:Bnb_image} style={{width:wp(6.5),height:hp(3)}}/>
                <Text style={[styles.chart_top,{color: state.THEME.THEME === false ? "black" : "#fff",fontSize:13,marginHorizontal:hp(0.3)}]}>{asset_type==="ETH"?"Ethereum":asset_type==="XLM"?"Lumens":"Binance"}</Text>
@@ -377,6 +377,7 @@ const Asset_info = ({ route }) => {
                   
                 </View>
                 <View style={[styles.opt_other,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
+                    <ScrollView style={{paddingBottom:hp(10)}}>
                     {/* <View style={styles.horizontalLine} /> */}
                     {Loading === true ? <ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} style={{ alignSelf: "center" }} /> :
                         final.map((list, index) => {
@@ -432,7 +433,7 @@ const Asset_info = ({ route }) => {
                                 </>
                             )
                         })}
-
+                    </ScrollView>
                 </View>
                 <RecieveAddress
                     modalVisible={visible}
@@ -440,7 +441,7 @@ const Asset_info = ({ route }) => {
                     iconType={iconType}
                 />
 
-            </ScrollView>
+            </View>
         </>
     )
 }
@@ -499,9 +500,10 @@ const styles = StyleSheet.create({
     },
     opt_other: {
         width: wp(99),
+        height:hp(40),
         alignSelf: "center",
-        alignItems: "flex-start",
-        paddingLeft: 19,
+        alignItems: "center",
+        paddingLeft: 14,
     },
     opt_other_con: {
         width: wp(90),

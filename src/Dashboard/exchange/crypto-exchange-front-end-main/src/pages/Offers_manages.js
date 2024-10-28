@@ -198,8 +198,10 @@ const Offers_manages = () => {
       <Text style={styles.offerText}>{item.price}</Text>
       </View>
       <View style={styles.buttonContainer}>
-        {loading_edi?<ActivityIndicator color={"green"} size={"small"}/>:<Button disabled={loading_del} title="Edit" onPress={() => handleEdit(item)} />}
-        {loading_del?<ActivityIndicator color={"green"} size={"small"}/>:<Button disabled={loading_edi} title="Delete" onPress={() => handleDelete(item.id)} />}
+        {loading_edi?<ActivityIndicator color={"green"} size={"small"}/>:
+        <TouchableOpacity style={{alignContent:"center",justifyContent:"center",width:50,height:35}} disabled={loading_del} onPress={() => handleEdit(item)}><Text style={{color:"blue",fontSize:15}}>Edit</Text></TouchableOpacity> }
+        {loading_del?<ActivityIndicator color={"green"} size={"small"}/>:
+        <TouchableOpacity style={{alignContent:"center",justifyContent:"center",width:50,height:35}} disabled={loading_edi} onPress={() => handleDelete(item.id)}><Text style={{color:"blue",fontSize:15}}>Delete</Text></TouchableOpacity>}
       </View>
     </TouchableOpacity>
   );

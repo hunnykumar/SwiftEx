@@ -357,7 +357,7 @@ const transformedData = resp.map(item => ({
 
 
   return (
-    <ScrollView style={{backgroundColor:state.THEME.THEME===false?"#fff":"black"}}>
+    <View style={{backgroundColor:state.THEME.THEME===false?"#fff":"black"}}>
     <Wallet_screen_header title="Coin-Detail" onLeftIconPress={() => navigation.goBack()} />
    
       <View style={{ alignItems: "flex-start", marginHorizontal: wp(7), marginTop: hp(2) }}>
@@ -368,7 +368,7 @@ const transformedData = resp.map(item => ({
         <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 34, fontWeight: "600", marginVertical: hp(0.1) }}>$ {points_data} </Text>
         <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 13, fontWeight: "600", marginVertical: hp(0.1) }}>{points_data_time} </Text>
         <View style={{flexDirection:"row",alignItems:"center"}}>
-          <Icon name="trending-down" type={"materialCommunity"} size={20} color={props?.route?.params?.data?.price_change_percentage_24h.toFixed(1) > 0 ? "green" : "red"} />
+          <Icon name={props?.route?.params?.data?.price_change_percentage_24h.toFixed(1) > 0 ?"trending-up":"trending-down"} type={"materialCommunity"} size={20} color={props?.route?.params?.data?.price_change_percentage_24h.toFixed(1) > 0 ? "green" : "red"} />
           <Text style={{ color: props?.route?.params?.data?.price_change_percentage_24h.toFixed(1) > 0 ? "green" : "red", fontSize: 13, fontWeight: "600", marginVertical: hp(0.1) }}> {props?.route?.params?.data?.price_change_percentage_24h.toFixed(1)}%</Text>
         </View>
 
@@ -489,6 +489,8 @@ const transformedData = resp.map(item => ({
       >
         <Grid />
       </AreaChart> */}
+      <View style={{height:hp(40)}}>
+      <ScrollView style={{paddingBottom:hp(10)}}>
       <View style={[styles.market_data, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black" }]}>
         <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 17,paddingBottom:hp(1.6) }}>{props?.route?.params?.data?.name} Price (24H) </Text>
 
@@ -543,9 +545,13 @@ const transformedData = resp.map(item => ({
         </View>
 
         </View>
+      </ScrollView>
+      </View>
+
+
 
   {/* </ScrollView> */}
-  </ScrollView>
+  </View>
   );
 };
 
