@@ -283,7 +283,7 @@ const Asset_info = ({ route }) => {
                                 xAxisLabelsHeight={-15}
                                 hideYAxisText
                                 yAxisOffset={chart[0].value}
-                                height={hp(14)}
+                                height={asset_type==="XLM"?50:hp(14)}
                                 yAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
                                 xAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
                                 pointerConfig={{
