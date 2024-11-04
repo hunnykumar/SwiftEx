@@ -48,14 +48,7 @@ const Asset_info = ({ route }) => {
         isEmailVerified: false,
     });
     const [token, settoken] = useState("");
-    const [timeData, setTimeData] = useState([
-        "5m",
-        "10m",
-        "15m",
-        "20m",
-        "25m",
-        "30m",
-    ]);
+    const [chartData, setchartData] = useState([]);
     const [tooltip_info_0, settooltip_info_0] = useState(false);
     const [tooltip_info_1, settooltip_info_1] = useState(false);
     const [tooltip_info_2, settooltip_info_2] = useState(false);
@@ -147,7 +140,7 @@ const Asset_info = ({ route }) => {
     async function getChart(name) {
 
         await fetch(
-            `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1h&limit=30`,
+            `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1m&limit=30`,
             {
                 method: "GET",
             }
@@ -164,7 +157,13 @@ const Asset_info = ({ route }) => {
                 setchart(transformedData)
                 setpoints_data(transformedData[transformedData?.length-1]?.value);
                 setpoints_data_time(transformedData[transformedData?.length-1]?.date);
+                const chart_Data = resp.map(item => ({
+                    x: new Date(parseInt(item[0])).getTime(),
+                    y: parseFloat(item[4])
+                  }));
+                  setchartData(chart_Data)
                 setchart_show(false)
+
             })
             .catch((err) => {
                 console.log(err);
@@ -271,7 +270,7 @@ const Asset_info = ({ route }) => {
                 <View style={[styles.chart_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
                     {chart_show === false ? 
                         <View>
-                            <LineChart
+                            {/* <LineChart
                                 hideRules
                                 data={chart}
                                 hideDataPoints
@@ -294,8 +293,45 @@ const Asset_info = ({ route }) => {
                                         setpoints_data_time(item[0].date)
                                     }
                                 }}
-                            />
-
+                            /> */}
+                            <Chart
+                                style={{ width: wp(98), height: 230 }}
+                                data={chartData}
+                                padding={{ left: 10, bottom: 30, right: 20, top: 30 }}
+                                xDomain={{
+                                    min: Math.min(...chartData.map(d => d.x)),
+                                    max: Math.max(...chartData.map(d => d.x))
+                                }}
+                                yDomain={{
+                                    min: Math.min(...chartData.map(d => d.y)) - (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))), // 10% padding below
+                                    max: Math.max(...chartData.map(d => d.y)) + (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))) // 10% padding above
+                                }}
+                            >
+                                <Line
+                                    tooltipComponent={
+                                        <Tooltip theme={{
+                                            formatter: ({ y, x }) => {
+                                                setpoints_data(y), setpoints_data_time(x)
+                                                setpoints_data_time(new Date(parseInt(x)).toLocaleString())
+                                            },
+                                            shape: {
+                                                width: 0,
+                                                height: 0,
+                                                dx: 0,
+                                                dy: 0,
+                                                color: 'black',
+                                            }
+                                        }} />
+                                    }
+                                    theme={{
+                                        stroke: { color: lineColor || '#44bd32', width: 2 },
+                                        scatter: {
+                                            selected: { width: 10, height: 11, rx: 5, color: '#2F7DFF' }
+                                        }
+                                    }}
+                                    smoothing="bezier"
+                                />
+                            </Chart>
                         </View>
                      : <ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} />}
 

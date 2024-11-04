@@ -48,6 +48,7 @@ export const CoinDetails = (props) => {
   // const data = props?.route?.params?.data?.name;
   const state = useSelector((state) => state);
   const [Data, setData] = useState();
+  const [chartData, setchartData] = useState([]);
   const [timeFrame, setTimeFrame] = useState("30m");
   const [pressed, setPressed] = useState();
   const [lineColor, setlineColor] = useState();
@@ -155,7 +156,12 @@ export const CoinDetails = (props) => {
           value: item.y,
           date: new Date(item.x).toLocaleTimeString()
         })); 
+        const pt_Data = resp.map(item => ({
+          x: new Date(parseInt(item[0])).getTime(),
+          y: parseFloat(item[4])
+        }));
         setData(ptData);
+          setchartData(pt_Data)
         setpoints_data(ptData[ptData?.length-1]?.value);
         setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("----1st---",transformedData)
@@ -198,7 +204,12 @@ export const CoinDetails = (props) => {
           value: item.y,
           date: new Date(item.x).toLocaleTimeString()
         })); 
-          setData(ptData);
+        const pt_Data = resp.map(item => ({
+          x: new Date(parseInt(item[0])).getTime(),
+          y: parseFloat(item[4])
+        }));
+        setData(ptData);
+          setchartData(pt_Data)
           setpoints_data(ptData[ptData?.length-1]?.value);
           setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("---2nd----",transformedData)
@@ -240,7 +251,12 @@ export const CoinDetails = (props) => {
             value: item.y,
             date: new Date(item.x).toLocaleTimeString()
           })); 
+          const pt_Data = resp.map(item => ({
+            x: new Date(parseInt(item[0])).getTime(),
+            y: parseFloat(item[4])
+          }));
           setData(ptData);
+          setchartData(pt_Data)
           setpoints_data(ptData[ptData?.length-1]?.value);
           setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("----3rd---",transformedData)
@@ -259,7 +275,7 @@ export const CoinDetails = (props) => {
       }
 
       await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=30m&limit=35`,
+        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1m&limit=35`,
         {
           method: "GET",
         }
@@ -283,7 +299,12 @@ const transformedData = resp.map(item => ({
             value: item.y,
             date: new Date(item.x).toLocaleTimeString()
           })); 
+          const pt_Data = resp.map(item => ({
+            x: new Date(parseInt(item[0])).getTime(),
+            y: parseFloat(item[4])
+          }));
           setData(ptData);
+          setchartData(pt_Data)
           setpoints_data(ptData[ptData?.length-1]?.value);
           setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("----4th---",transformedData)
@@ -385,7 +406,7 @@ const transformedData = resp.map(item => ({
     <View
     style={{ height: hp(28), width: wp(95), padding: 1 ,backgroundColor: state.THEME.THEME===false?"#fff":"black",justifyContent:"center"
     }}>
-            <LineChart
+            {/* <LineChart
               hideRules
               data={Data}
               hideDataPoints
@@ -408,7 +429,45 @@ const transformedData = resp.map(item => ({
                   setpoints_data_time(item[0].date)
                 }
               }}
-            />
+            /> */}
+              <Chart
+                                style={{ width: wp(98), height: 230 }}
+                                data={chartData}
+                                padding={{ left: 10, bottom: 30, right: 20, top: 30 }}
+                                xDomain={{
+                                    min: Math.min(...chartData.map(d => d.x)),
+                                    max: Math.max(...chartData.map(d => d.x))
+                                }}
+                                yDomain={{
+                                    min: Math.min(...chartData.map(d => d.y)) - (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))), // 10% padding below
+                                    max: Math.max(...chartData.map(d => d.y)) + (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))) // 10% padding above
+                                }}
+                            >
+                                <Line
+                                    tooltipComponent={
+                                        <Tooltip theme={{
+                                            formatter: ({ y, x }) => {
+                                                setpoints_data(y), setpoints_data_time(x)
+                                                setpoints_data_time(new Date(parseInt(x)).toLocaleString())
+                                            },
+                                            shape: {
+                                                width: 0,
+                                                height: 0,
+                                                dx: 0,
+                                                dy: 0,
+                                                color: 'black',
+                                            }
+                                        }} />
+                                    }
+                                    theme={{
+                                        stroke: { color: lineColor || '#44bd32', width: 2 },
+                                        scatter: {
+                                            selected: { width: 10, height: 11, rx: 5, color: '#2F7DFF' }
+                                        }
+                                    }}
+                                    smoothing="bezier"
+                                />
+                            </Chart>
     </View>}
     </View>
     <View style={styles.btnView}>
