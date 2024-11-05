@@ -17,7 +17,10 @@ import Modal from "react-native-modal";
 import { alert } from "../reusables/Toasts";
 import { Paste } from "../../utilities/utilities";
 import Icon from "../../icon";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { STELLAR_URL } from "../constants";
+import { RAPID_STELLAR, SET_ASSET_DATA } from "../../components/Redux/actions/type";
+import { getEthBalance } from "../../components/Redux/actions/auth";
 const StellarSdk = require('stellar-sdk');
 const ImportStellarModal = ({
   setWalletVisible,
@@ -28,7 +31,7 @@ const ImportStellarModal = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [secretkey, setsecretkey] = useState("");
   const navigation = useNavigation();
-
+  const dispatch = useDispatch()
 
 const add_wallet=()=>{
     if(!secretkey)
@@ -96,11 +99,54 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
     console.log('Updated userTransactions:', userTransactions);
     alert('success', "Account Imported.");
     setWalletVisible(false);
-    setTimeout(() => {
-      navigation.navigate("Home");
-    }, 2000);
+    try {
+      StellarSdk.Network.useTestNetwork();
+      const server = new StellarSdk.Server(STELLAR_URL.URL);
+      server.loadAccount(publicKey)
+        .then(account => {
+          dispatch({
+            type: SET_ASSET_DATA,
+            payload: account.balances,
+          })
+          account.balances.forEach(balance => {
+          dispatch({
+            type: RAPID_STELLAR,
+            payload: {
+              ETH_KEY:Ether_address,
+              STELLAR_PUBLICK_KEY:publicKey,
+              STELLAR_SECRET_KEY:secretKey,
+              STELLAR_ADDRESS_STATUS:true
+            },
+          })
+          dispatch(getEthBalance(Ether_address))
+          console.log("==Dispacthed+Waller+success==")
+          setTimeout(() => {
+            navigation.navigate("Home");
+          }, 1000);
+          });
+        })
+        .catch(error => {
+          console.log('Error +loading +account:', error);
+          dispatch({
+            type: RAPID_STELLAR,
+            payload: {
+              ETH_KEY:Ether_address,
+              STELLAR_PUBLICK_KEY:publicKey,
+              STELLAR_SECRET_KEY:secretKey,
+              STELLAR_ADDRESS_STATUS:false
+            },
+          })
+          console.log("==Dispacthed+success==")
+          console.log(':===ERROR +STELLER ACCOUNT NEED TO ACTIVATE===:');
+          setTimeout(() => {
+            navigation.navigate("Home");
+          }, 1000);
+        });
+    } catch (error) {
+      console.log("Error in +get_stellar")
+    }
   } catch (error) {
-    console.error('Error saving payout:', error);
+    console.error('Error saving +payout:', error);
     throw error;
   }
 };
