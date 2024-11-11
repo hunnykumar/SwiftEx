@@ -127,7 +127,7 @@ const getOffersData = async () => {
   const manage_swap = async (wallet_type, asset_type, receive_token) => {
     const receivetoken = wallet_type === "Ethereum" && asset_type === "USDT" && receive_token === null ? "USDC" : wallet_type === "BNB" && asset_type === "USDT" && receive_token === null ? "aeETH" : wallet_type === "Ethereum" && asset_type === "USDT" ? "aeETH" : wallet_type === "BNB" && asset_type === "USDT" ? "aeETH" : receive_token;
     setfianl_modal_loading(true);
-    let temp_bal = toInt(state.EthBalance)
+    let temp_bal = toInt(state?.EthBalance)
     let temp_amt = toInt(amount)
     if (temp_amt >= temp_bal || temp_amt === 0) {
       setfianl_modal_loading(false)
@@ -181,13 +181,13 @@ const getOffersData = async () => {
               <View style={{flexDirection:"row",alignItems:"center",width:wp(85)}}>
               <Text style={{fontSize:16,textAlign:"center",color:"#fff",fontSize:19}}>Address: </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%",borderRadius:10}}>
-                <Text style={{fontSize:17,color:"#fff" }}>{state.wallet.address}</Text>
+                <Text style={{fontSize:17,color:"#fff" }}>{state?.wallet?.address}</Text>
               </ScrollView>
               </View>
               <View style={{flexDirection:"row",alignItems:"center",width:wp(30)}}>
               <Text style={{fontSize:19,textAlign:"center",color:"#fff"}}>Balance: </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
-                <Text style={{color:"#fff",fontSize:19 }}>{state.EthBalance}</Text>
+                <Text style={{color:"#fff",fontSize:19 }}>{state?.EthBalance}</Text>
               </ScrollView>
               </View>
           </View>
@@ -305,7 +305,7 @@ const getOffersData = async () => {
             </View>
             <View style={styles.inputContainer}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%" }}>
-                <Text>{state.wallet.address}</Text>
+                <Text>{state?.wallet?.address}</Text>
               </ScrollView>
             </View>
             <View style={styles.inputContainer}>

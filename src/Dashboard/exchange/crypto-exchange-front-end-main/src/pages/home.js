@@ -65,6 +65,7 @@ export const HomeView = ({ setPressed }) => {
   const [ShowButtonLeft,setShowButtonLeft]=useState(false);
   const [open_chart_api,setopen_chart_api]=useState(false);
   const [VISIBLE_SELECT,setVISIBLE_SELECT]=useState(false);
+  const [Wallet_activation,setWallet_activation]=useState(false)
   const [chart_api,setchart_api]=useState([
     {id:0,name:"XLM  ",name_0:"USDC",url:"https://horizon.stellar.lobstr.co/trade_aggregations?base_asset_type=native&counter_asset_type=credit_alphanum4&counter_asset_code=USDC&counter_asset_issuer=GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN&start_time=1722320811000&resolution=60000&offset=0&limit=30&order=desc",img_0:'https://s2.coinmarketcap.com/static/img/coins/64x64/512.png',img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"},
     {id:1,name:"ETH  ",name_0:"USDC",url:"https://horizon.stellar.lobstr.co/trade_aggregations?base_asset_type=credit_alphanum4&base_asset_code=ETH&base_asset_issuer=GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC&counter_asset_type=credit_alphanum4&counter_asset_code=USDC&counter_asset_issuer=GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN&start_time=1722320811000&resolution=60000&offset=0&limit=30&order=desc",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",img_0:"https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png"},
@@ -186,6 +187,7 @@ export const HomeView = ({ setPressed }) => {
     const token = await getToken();
     console.log(token)
   try {
+    setWallet_activation(true)
     const storedData = await AsyncStorageLib.getItem('user_email');
     const postData={
       email: storedData,
@@ -213,6 +215,7 @@ export const HomeView = ({ setPressed }) => {
           },
         })
             // await changeTrust()
+    setWallet_activation(false)
      }
     if (response.ok) {
       console.log("===",data.success);
@@ -703,6 +706,18 @@ useEffect(() => {
                   </View>
                 )
               })}
+              <Modal
+                animationType="fade"
+                transparent={true}
+                visible={Wallet_activation}>
+                <View style={styles.kyc_Container}>
+                  <View style={[styles.kyc_Content,{width:wp(80)}]}>
+                    <Image source={darkBlue} style={styles.logoImg_kyc} />
+                    <Text style={styles.kyc_text}>Stellar Wallet Activating.</Text>
+                    <ActivityIndicator size="large" color="green" />
+                  </View>
+                </View>
+              </Modal>
       </ScrollView>
 
       <Modal
@@ -1214,7 +1229,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   kyc_Content: {
     backgroundColor: '#fff',

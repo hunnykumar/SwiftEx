@@ -131,7 +131,7 @@ const Dashboard = ({ navigation }) => {
             <Text
               style={{
                 color: iconColor,
-                fontSize: 17,
+                fontSize: 16,
                 textAlign: "center",
                 marginBottom: Platform.OS === "android" ? 10 : 1,
                 marginHorizontal:1
