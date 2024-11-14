@@ -75,6 +75,7 @@ import Subscription_det from "../Dashboard/exchange/crypto-exchange-front-end-ma
 import Subcription_payment from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Subcription_payment";
 import Setup_password from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Setup_password";
 import Exchange_otp from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Exchange_otp";
+import { App_Update } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/App_Update";
 
 const Stack = createNativeStackNavigator();
 
@@ -559,6 +560,11 @@ const AuthStack = () => (
           headerTintColor:'white'
         }}
         
+      />
+      <Stack.Screen
+        name="App_Update"
+        component={App_Update}
+        options={{headerShown:false}}
       />
     </Stack.Navigator>
   </NavigationContainer>

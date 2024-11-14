@@ -18,10 +18,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
 import { setPlatform } from "../components/Redux/actions/auth";
 import { useBiometrics } from "../biometrics/biometric";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { alert } from "./reusables/Toasts";
 import { SET_APP_THEME } from "../components/Redux/actions/type";
 import Icon from "../icon";
+import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 
 const Passcode = (props) => {
   const [pin, setPin] = useState("");
@@ -32,6 +33,7 @@ const Passcode = (props) => {
   const pinView = useRef(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const dispatch = useDispatch();
+  const navi=useNavigation();
 
   const Spin = new Animated.Value(0);
   const SpinValue = Spin.interpolate({
@@ -51,8 +53,25 @@ const Passcode = (props) => {
     }, [])
   );
 
+  const Check_app_verios=async()=>{
+    const requestOptions = {
+      method: "GET",
+      redirect: "follow"
+    };
+    
+    fetch(REACT_APP_HOST+"/users/app_version", requestOptions)
+      .then((response) => response.json())
+      .then((result) => {
+        if(result?.version!=="0.0.2")
+        {
+          navi.navigate("App_Update")
+        }
+      })
+      .catch((error) => console.log(error));
+  }
   useEffect(() => {
     const initializeApp = async () => {
+      // Check_app_verios()
       const Checked = await AsyncStorage.getItem("APP_THEME");
       dispatch({
         type: SET_APP_THEME,

@@ -182,51 +182,83 @@ export const HomeView = ({ setPressed }) => {
   fetch_color()
 },[Data])
   //activate stellar account function
-  const active_account=async()=>{
+  const active_account = async () => {
     console.log("<<<<<<<clicked");
-    const token = await getToken();
-    console.log(token)
-  try {
-    setWallet_activation(true)
-    const storedData = await AsyncStorageLib.getItem('user_email');
-    const postData={
-      email: storedData,
-      publicKey: state.STELLAR_PUBLICK_KEY,
-    }
-    const response = await fetch(REACT_APP_HOST+'/users/updatePublicKeyByEmail', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(postData),
-    });
-
-    const data = await response.json();
-     if(data.success===true)
-     {
-      dispatch_({
+    
+    try {
+      // Activate wallet feedback immediately
+      setWallet_activation(true);
+  
+      // Retrieve token and stored email in parallel
+      const [token, storedEmail] = await Promise.all([
+        getToken(),
+        AsyncStorageLib.getItem('user_email')
+      ]);
+  
+      console.log("Token:", token);
+  
+      const postData = {
+        email: storedEmail,
+        publicKey: state.STELLAR_PUBLICK_KEY,
+      };
+  
+      // Update public key by email
+      const response = await fetch(`${REACT_APP_HOST}/users/updatePublicKeyByEmail`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(postData),
+      });
+      
+      const data = await response.json();
+      console.log("--->>>>", data);
+  
+      if (data.message === "Funded successfully") {
+        // Dispatch success action and load account details from Stellar in parallel
+        dispatch_({
           type: RAPID_STELLAR,
           payload: {
-            ETH_KEY:state.ETH_KEY,
-            STELLAR_PUBLICK_KEY:state.STELLAR_PUBLICK_KEY,
-            STELLAR_SECRET_KEY:state.STELLAR_SECRET_KEY,
-            STELLAR_ADDRESS_STATUS:true
+            ETH_KEY: state.ETH_KEY,
+            STELLAR_PUBLICK_KEY: state.STELLAR_PUBLICK_KEY,
+            STELLAR_SECRET_KEY: state.STELLAR_SECRET_KEY,
+            STELLAR_ADDRESS_STATUS: true
           },
-        })
-            // await changeTrust()
-    setWallet_activation(false)
-     }
-    if (response.ok) {
-      console.log("===",data.success);
-    } else {
-      console.error('Error:', data);
-    }
-  } catch (error) {
-    console.error('Network error:', error);
-  }
+        });
   
-  }
+        // Load Stellar account data
+        await loadStellarAccountData(state.STELLAR_PUBLICK_KEY);
+        
+      } else if (data.message === "Error funding account") {
+        console.log("Error: Funding account failed.");
+      }
+  
+    } catch (error) {
+      console.error('Network or fetch error:', error);
+    } finally {
+      // Deactivate wallet UI feedback
+      setWallet_activation(false);
+    }
+  };
+  
+  // Helper function to load Stellar account data and dispatch balance
+  const loadStellarAccountData = async (publicKey) => {
+    try {
+      StellarSdk.Network.useTestNetwork();
+      const server = new StellarSdk.Server(STELLAR_URL.URL);
+      const account = await server.loadAccount(publicKey);
+  
+      console.log("--account--", account);
+      dispatch_({
+        type: SET_ASSET_DATA,
+        payload: account.balances,
+      });
+    } catch (error) {
+      console.log("Error loading Stellar account:", error);
+    }
+  };
+  
 
   
  
@@ -711,9 +743,9 @@ useEffect(() => {
                 transparent={true}
                 visible={Wallet_activation}>
                 <View style={styles.kyc_Container}>
-                  <View style={[styles.kyc_Content,{width:wp(80)}]}>
+                  <View style={[styles.kyc_Content,{width:wp(90)}]}>
                     <Image source={darkBlue} style={styles.logoImg_kyc} />
-                    <Text style={styles.kyc_text}>Stellar Wallet Activating.</Text>
+                    <Text style={styles.kyc_text}>Stellar Wallet Activating and funding.</Text>
                     <ActivityIndicator size="large" color="green" />
                   </View>
                 </View>
@@ -1241,6 +1273,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 16,
     fontWeight: 'bold',
+    color:"black"
   },
   logoImg_kyc: {
     height: hp("9"),

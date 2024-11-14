@@ -830,7 +830,7 @@ const change_Trust_New = async () => {
                     </View>:<></>}
              </View>
               <TextInput
-                style={[styles.input,{backgroundColor:"#fff",color:"black",borderRadius:5}]}
+                style={[styles.input,{backgroundColor:"#fff",color:"black",borderRadius:5,paddingHorizontal:5}]}
                 keyboardType="numeric"
                 returnKeyType="done"
                 value={offer_amount}
@@ -871,7 +871,7 @@ const change_Trust_New = async () => {
                 </View> : <></>}
               </View>
               <TextInput
-                style={[styles.input,{backgroundColor:"#fff",color:"black",borderRadius:5}]}
+                style={[styles.input,{backgroundColor:"#fff",color:"black",borderRadius:5,paddingHorizontal:5}]}
                 returnKeyType="done"
                 keyboardType="numeric"
                 value={offer_price}
