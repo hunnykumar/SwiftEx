@@ -477,7 +477,7 @@ const FOCUSED=useIsFocused();
         >
           {isOtpSent === false ? (
             <View style={styles.content}>
-              <View style={{ marginTop: hp(3), borderRadius: hp(2) }}>
+              <View style={{ marginTop: hp(1), borderRadius: hp(2) }}>
                 <Image style={styles.tinyLogo} source={darkBlue} />
 
                 <Text style={styles.text}>Hi, Welcome Back! 👋</Text>
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     textAlign: "center",
     // justifyContent: "space-evenly",
-    marginTop: hp("1"),
+    marginTop:0,
     color: "white",
   },
 
