@@ -1,5 +1,5 @@
 import { useIsFocused, useNavigation } from "@react-navigation/native";
-import { Alert, Image, Linking, Modal, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { ActivityIndicator, Alert, Image, Keyboard, Linking, Modal, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp,
@@ -15,11 +15,16 @@ import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { useSelector } from "react-redux";
 import { RNCamera } from 'react-native-camera';
 import { Exchange_screen_header } from "../../../../../reusables/ExchangeHeader";
-
+import { alert } from "../../../../../reusables/Toasts";
+import { STELLAR_URL } from "../../../../../constants";
+import { SaveTransaction } from "../../../../../../utilities/utilities";
+const StellarSdk = require('stellar-sdk');
+StellarSdk.Network.useTestNetwork();
 
 const send_recive = ({route}) => {
     const {bala,asset_name}=route.params;
-    console.log("---------------------------------",bala,asset_name)
+    console.log("----------------usdtAsse-----------------",bala,asset_name)
+    const usdtAsset = new StellarSdk.Asset("USDC", "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN");
   const cameraRef = useRef(null);
     const state = useSelector((state) => state);
     const FOCUSED = useIsFocused();
@@ -30,13 +35,13 @@ const send_recive = ({route}) => {
     const [recepi_memo, setrecepi_memo] = useState("");
     const [recepi_amount, setrecepi_amount] = useState("");
     const [qrData, setQrData] = useState('');
-
+    const [Payment_loading,setPayment_loading]=useState(false);
     const [qrvalue, setqrvalue] = useState("");
     const [isModalVisible, setModalVisible] = useState(false);
     const onBarCodeRead = (e) => {
         if (e.data !== qrData) { 
           setQrData(e.data);
-          Alert.alert("QR Code ","QR Code Decoded successfully..");
+          alert("success","QR Code Decoded successfully..")
           setrecepi_address("");
           setrecepi_address(e.data);
           toggleModal();
@@ -47,13 +52,109 @@ const send_recive = ({route}) => {
       };
 
     const get_data=async()=>{
-        // const storedData = await AsyncStorageLib.getItem('myDataKey');
-        //     const parsedData = JSON.parse(storedData);
-        //     const matchedData = parsedData.filter(item => item.Ether_address === state.wallet.address);
-        //     const publicKey = matchedData[0].publicKey;
             setqrvalue(state.STELLAR_PUBLICK_KEY)
     }
+    function validateStellarAddress(address) {
+      if (address.length !== 56 || address[0] !== 'G') {
+          return false;
+      }
+      try {
+          StellarSdk.StrKey.decodeEd25519PublicKey(address);
+          return true;
+      } catch (e) {
+          return false;
+      }
+  }
+  async function send_XLM(sourceSecret, destinationPublic, amount) {
+    Keyboard.dismiss();
+    try {
+    const server = new StellarSdk.Server(STELLAR_URL.URL);
+    StellarSdk.Networks.TESTNET;
+      // Load the source account
+      const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecret);
+      const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());
+  
+      // Create the transaction
+      const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+        fee: await server.fetchBaseFee(),
+        networkPassphrase: StellarSdk.Networks.TESTNET,
+      })
+        .addOperation(
+          StellarSdk.Operation.payment({
+            destination: destinationPublic,
+            asset: asset_name==="native"?StellarSdk.Asset.native():usdtAsset,
+            amount: amount,
+          })
+        )
+        .addMemo(StellarSdk.Memo.text(recepi_memo)) 
+        .setTimeout(30)
+        .build();
+  
+      // Sign the transaction
+      transaction.sign(sourceKeypair);
+  
+      // Submit the transaction
+      const transactionResult = await server.submitTransaction(transaction);
+      console.log('Transaction successful!', transactionResult);
+      alert("success","Transaction successful!");
+      setPayment_loading(false);
+      try {
+        const user_current = await state.user;
+        const type = "Send";
+        const chainType = "XLM";
+        const walletType=await state.walletType;
+        const saveTransaction = await SaveTransaction(
+          type,
+          transactionResult.hash,
+          user_current,
+          chainType,
+          walletType,
+          chainType
+        );
+        console.log(saveTransaction);
+        navigation.navigate("Transactions");
+      } catch (e) {
+        console.log(e);
+      }
+    } catch (error) {
+      console.error('Error sending XLM:', error);
+      alert("error","Transaction Failed");
+      setPayment_loading(false);
+    }
+  }
+
+
+  const Send_Asseet = async () => {
+    setPayment_loading(true);
+    try {
+      if (!recepi_address || !recepi_amount) {
+        alert("error", "Recipient Address and Amount Required.")
+        setPayment_loading(false);
+      }else {
+        if (validateStellarAddress(recepi_address)) {
+          alert("success", "Valid Stellar address");
+          if(parseFloat(recepi_amount)>bala)
+          {
+            alert("error", "Insuficint balance");
+            setPayment_loading(false);
+          }
+          else{
+            send_XLM(state.STELLAR_SECRET_KEY, recepi_address, recepi_amount)
+          }
+        } else {
+          alert("error", "Invalid Stellar address");
+          recepi_address('');
+          setPayment_loading(false);
+        }
+      }
+    } catch (error) {
+      console.log("---Send_Asset---", error)
+      setPayment_loading(false);
+    }
+  }
+
     useEffect(() => {
+        setPayment_loading(false)
         get_data()
         setmode_selected("SED");
     }, [FOCUSED])
@@ -90,8 +191,8 @@ const send_recive = ({route}) => {
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Transaction memo</Text>
                             <TextInput placeholder="Enter transaction memo" placeholderTextColor={"gray"} value={recepi_memo} style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_memo(value) }} />
 
-                            <TouchableOpacity disabled={recepi_address.length <= 0} style={[styles.mode_sele, { height: 60, backgroundColor: recepi_address.length <= 0 ? "#011434" : "green", marginTop: 40, alignSelf: "center" }]} onPress={() => { }}>
-                                <Text style={styles.mode_text}>Send</Text>
+                            <TouchableOpacity disabled={Payment_loading} style={[styles.mode_sele, { height: 60, backgroundColor: Payment_loading  ? "#011434" : "green", marginTop: 40, alignSelf: "center" }]} onPress={() => {Send_Asseet()}}>
+                                {Payment_loading?<ActivityIndicator color={"green"}/>:<Text style={styles.mode_text}>Send</Text>}
                             </TouchableOpacity>
                         </> :
                         <View style={styles.QR_con}>
