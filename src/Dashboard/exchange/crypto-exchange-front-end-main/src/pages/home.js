@@ -228,36 +228,32 @@ export const HomeView = ({ setPressed }) => {
         });
   
         // Load Stellar account data
-        await loadStellarAccountData(state.STELLAR_PUBLICK_KEY);
+        StellarSdk.Network.useTestNetwork();
+        const server = new StellarSdk.Server(STELLAR_URL.URL);
+        server.loadAccount(state.STELLAR_PUBLICK_KEY)
+            .then(account => {
+                dispatch_({
+                    type: SET_ASSET_DATA,
+                    payload: account.balances,
+                  })
+                  setWallet_activation(false);
+            })
+            .catch(error => {
+                console.log('Error loading ------ account:', error);
+                setWallet_activation(false);
+            });
         
       } else if (data.message === "Error funding account") {
         console.log("Error: Funding account failed.");
+        setWallet_activation(false);
       }
   
     } catch (error) {
       console.error('Network or fetch error:', error);
-    } finally {
-      // Deactivate wallet UI feedback
       setWallet_activation(false);
     }
   };
   
-  // Helper function to load Stellar account data and dispatch balance
-  const loadStellarAccountData = async (publicKey) => {
-    try {
-      StellarSdk.Network.useTestNetwork();
-      const server = new StellarSdk.Server(STELLAR_URL.URL);
-      const account = await server.loadAccount(publicKey);
-  
-      console.log("--account--", account);
-      dispatch_({
-        type: SET_ASSET_DATA,
-        payload: account.balances,
-      });
-    } catch (error) {
-      console.log("Error loading Stellar account:", error);
-    }
-  };
   
 
   
