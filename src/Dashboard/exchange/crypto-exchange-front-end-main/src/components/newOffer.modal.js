@@ -495,7 +495,7 @@ const chooseRenderItem_1 = ({ item }) => (
     const fetch_ins = async () => {
       try {
         setloading_trust_modal(false)
-        await setALL_STELLER_BALANCES(state?.assetData)
+        setALL_STELLER_BALANCES(state?.assetData)
         setshow_trust_modal(false);
         setactiv(false)
         setshow_bal(true)
@@ -514,7 +514,7 @@ const chooseRenderItem_1 = ({ item }) => (
 
   },[isFocused])
   useEffect(() => {
-    // setALL_STELLER_BALANCES(state.assetData)
+    setALL_STELLER_BALANCES(state.assetData)
     getAccountDetails();
     setinfo_(false);
     setinfo_amount(false);

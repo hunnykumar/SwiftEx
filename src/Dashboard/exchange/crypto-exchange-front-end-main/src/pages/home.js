@@ -217,7 +217,7 @@ export const HomeView = ({ setPressed }) => {
   
       if (data.message === "Funded successfully") {
         // Dispatch success action and load account details from Stellar in parallel
-        dispatch_({
+       await dispatch_({
           type: RAPID_STELLAR,
           payload: {
             ETH_KEY: state.ETH_KEY,
@@ -226,23 +226,12 @@ export const HomeView = ({ setPressed }) => {
             STELLAR_ADDRESS_STATUS: true
           },
         });
-  
-        // Load Stellar account data
-        StellarSdk.Network.useTestNetwork();
-        const server = new StellarSdk.Server(STELLAR_URL.URL);
-        server.loadAccount(state.STELLAR_PUBLICK_KEY)
-            .then(account => {
-                dispatch_({
-                    type: SET_ASSET_DATA,
-                    payload: account.balances,
-                  })
-                  setWallet_activation(false);
-            })
-            .catch(error => {
-                console.log('Error loading ------ account:', error);
-                setWallet_activation(false);
-            });
-        
+        await dispatch_({
+          type: SET_ASSET_DATA,
+          payload:[{"asset_type": "native", "balance": "5.0000000", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000"}],
+        })
+        setWallet_activation(false);
+
       } else if (data.message === "Error funding account") {
         console.log("Error: Funding account failed.");
         setWallet_activation(false);
