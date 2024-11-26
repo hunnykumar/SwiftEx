@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../../../../../../icon";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import {
@@ -14,6 +14,11 @@ import visa from "../../../../../../../assets/visa.png"
 import phonepe from "../../../../../../../assets/phonepe.png"
 import paytm from "../../../../../../../assets/paytm.png"
 import googlepay from "../../../../../../../assets/google-pay.png"
+import { getToken } from "../../api";
+import { REACT_APP_HOST } from "../../ExchangeConstants";
+import { STRIPE_URL } from "../../../../../constants";
+import { initPaymentSheet, presentPaymentSheet } from "@stripe/stripe-react-native";
+import { alert } from "../../../../../reusables/Toasts";
 
 
 
@@ -34,6 +39,8 @@ const Subcription_payment = ({ route }) => {
         { id: 3, url_img: googlepay, text_upi: "Google Pay" },
         { id: 4, url_img: googlepay, text_upi: "Enter UPI id" },
     ]);
+    const [Loading,setLoading]=useState(false)
+    const [api_loading,setapi_loading]=useState(false)
     const [selected, setselected] = useState(0);
     const PlanExpire = (time_line) => {
         let today = new Date();
@@ -64,9 +71,135 @@ const Subcription_payment = ({ route }) => {
         return `Valid till ${day} ${month} ${year}`;
     }
     useEffect(() => {
-        const res = PlanExpire(avl_plan[ID].month)
+        
+
+        const get_subcriptions = async() => {
+            setapi_loading(true)
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer "+await getToken());
+            const requestOptions = {
+               method: "GET",
+               headers: myHeaders,
+               redirect: "follow"
+            };
+     
+            fetch(REACT_APP_HOST+"/users/subscriptions", requestOptions)
+               .then((response) => response.json())
+               .then((result) => {
+                  console.log("-=--=>>>>>>",result)
+                  setavl_plan(result)
+                  setapi_loading(false)
+               })
+               .catch((error) =>{ console.log("-=-=<L:>",error)
+               setapi_loading(false)
+               });
+         }
+         get_subcriptions()
+         const res = PlanExpire(avl_plan[ID].month)
         setexpire_plan(res);
     }, [FOCUSED])
+    useEffect(() => {
+        initializeStripe();
+      }, []);
+    
+      const initializeStripe = async () => {
+        await initStripe({
+          publishableKey: STRIPE_URL.KEY,
+        });
+      };
+      const fetchPaymentSheetParams = async () => {
+        try {
+          const myHeaders = new Headers();
+          myHeaders.append("Content-Type", "application/json");
+          myHeaders.append("Authorization", "Bearer "+await getToken());
+      
+          const response = await fetch(`${REACT_APP_HOST}/users/card_pay`, {
+            method: "POST",
+            headers: myHeaders,
+            body: JSON.stringify({
+              packege_id: avl_plan[ID]._id,
+            }),
+          });
+      
+          const RES_DATA = await response.json();
+      
+          // Check for error status in the response
+          if (RES_DATA?.status === 400) {
+            console.log('API Error:', RES_DATA.message);
+      
+            // Handle specific error messages
+            if (RES_DATA.message === "Please add address.") {
+              navigation.navigate("AddressScreen"); // Navigate to the address screen
+              throw new Error("Address not added"); // Stop further execution
+            } else {
+              throw new Error(RES_DATA.message || "An error occurred while fetching payment data.");
+            }
+          }
+      
+          const { paymentIntent, ephemeralKey, customer } = RES_DATA;
+      
+          if (!paymentIntent || !ephemeralKey || !customer) {
+            throw new Error("Incomplete payment sheet parameters received.");
+          }
+      
+          return { paymentIntent, ephemeralKey, customer };
+        } catch (error) {
+          console.log("Error fetching payment sheet params:", error);
+          throw error; // Re-throw the error to handle it in the caller
+        }
+      };
+      
+      const initializePaymentSheet = async () => {
+        try {
+          const { paymentIntent, ephemeralKey, customer } = await fetchPaymentSheetParams();
+      
+          const { error } = await initPaymentSheet({
+            merchantDisplayName: "App",
+            customerId: customer,
+            customerEphemeralKeySecret: ephemeralKey,
+            paymentIntentClientSecret: paymentIntent,
+            allowsDelayedPaymentMethods: false,
+            style: "automatic",
+          });
+      
+          if (error) {
+            console.log("Error initializing payment sheet:", error);
+            Alert.alert("Error", "Payment sheet could not be initialized. Please try again.");
+            return false;
+          }
+      
+          return true;
+        } catch (error) {
+          console.log("Error in initializePaymentSheet:", error);
+          return false;
+        }
+      };
+      
+      const subscribe = async () => {
+        try {
+          setLoading(true);
+      
+          const isInitialized = await initializePaymentSheet();
+          if (!isInitialized) {
+            setLoading(false);
+            return; // Stop execution if initialization fails
+          }
+      
+          const { error } = await presentPaymentSheet();
+          if (error) {
+            console.log("Error presenting payment sheet:", error.message);
+            Alert.alert("Payment Failed", error.message);
+          } else {
+            navigation.navigate("exchange");
+          }
+        } catch (error) {
+          console.log("Error during subscription:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+
     return (
         <View style={styles.content} onPress={() => { Keyboard.dismiss() }}>
             <Icon
@@ -79,10 +212,15 @@ const Subcription_payment = ({ route }) => {
             />
             <Text style={styles.top_heading}>Payment</Text>
             <View style={styles.plan_container} >
+                    {
+                        api_loading?<ActivityIndicator color={"green"}/>:
+                
+                <>
                 <View style={styles.plan_details}>
                     <View style={styles.Check_box}>
                         <Icon name={"check"} type={"materialCommunity"} size={33} color={"#fff"} />
                     </View>
+                   
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginHorizontal: wp(5) }}>
                         <View style={[styles.right_container, { alignItems: "flex-start", }]}>
                             <Text style={styles.comman_text}>{avl_plan[ID].month}</Text>
@@ -98,7 +236,7 @@ const Subcription_payment = ({ route }) => {
 
                 <View style={styles.payment_methods} >
                     <Image source={upi_img} style={{ height: hp(3), width: wp(20) }} />
-                    {avl_payment.map((list, index) => {
+                    {/* {avl_payment.map((list, index) => {
                         return (
                             <TouchableOpacity style={styles.payment_method_selection} onPress={() => { setselected(index) }}>
                                 {list.id === 4 ? <Icon name={"add-circle-outline"} type={"ionicon"} size={26} color={"white"} /> : <Image source={list.url_img} style={{ height: hp(4), width: list.id === 1 ? wp(26) : wp(10), marginLeft: list.id === 1 && wp(-5) }} />}
@@ -106,9 +244,10 @@ const Subcription_payment = ({ route }) => {
                                 <TouchableOpacity style={{ height: 18, width: 18, borderColor: "#fff", borderWidth: wp(0.5), borderRadius: 10, backgroundColor: selected === index ? "green" : "#011434" }} onPress={() => { setselected(index) }} />
                             </TouchableOpacity>
                         )
-                    })}
+                    })} */}
                 </View>
-
+                </>
+ }
             </View>
             <View style={styles.cards_con}>
                 <TouchableOpacity style={styles.cards_con_add} onPress={() => { setselected(4) }}>
@@ -125,12 +264,12 @@ const Subcription_payment = ({ route }) => {
 
             <View style={styles.bottom_pay_con}>
                 <View style={styles.bottom_pay_price_con}>
-                    <Text style={styles.bottom_pay_price_txt}>{avl_plan[ID].current_price}</Text>
+                    <Text style={styles.bottom_pay_price_txt}>$ {avl_plan[ID].current_price}</Text>
                     <Text style={[styles.bottom_pay_price_txt, { fontSize: 15, fontWeight: "300" }]}>To be paid now</Text>
                 </View>
 
-                <TouchableOpacity style={styles.btn} onPress={()=>{navigation.navigate("exchange");}}>
-                    <Text style={styles.btn_txt}>Proceed to Pay</Text>
+                <TouchableOpacity style={styles.btn} disabled={Loading||api_loading} onPress={()=>{subscribe()}}>
+                    {Loading||api_loading?<ActivityIndicator color={"#fff"}/>:<Text style={styles.btn_txt}>Proceed to Pay</Text>}
                 </TouchableOpacity>
             </View>
         </View>
@@ -240,7 +379,7 @@ const styles = StyleSheet.create({
     bottom_pay_con:{
         position:"absolute",
         zIndex:10,
-        bottom:1,
+        bottom:hp(2),
         width:wp(98),
         alignSelf:"center",
         flexDirection:"row",
@@ -261,6 +400,7 @@ const styles = StyleSheet.create({
        paddingHorizontal: wp(9),
        paddingVertical: 19,
        borderRadius: 20,
+       width:wp(50)
     },
     btn_txt: {
        fontSize: 17,

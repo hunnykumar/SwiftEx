@@ -24,8 +24,8 @@ export const getToken = async () => {
   return TOKEN
 }
 
-export const saveToken = (token) => {
-  AsyncStorageLib.setItem(LOCAL_TOKEN, token) 
+export const saveToken =async (token) => {
+  await AsyncStorageLib.setItem(LOCAL_TOKEN, token) 
 }
 
 export const removeAuth = () => {

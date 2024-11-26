@@ -13,7 +13,8 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import Moralis from "moralis"
-import { API_KEYS, MORALIS_API_KEY } from "./src/Dashboard/constants";
+import { API_KEYS, MORALIS_API_KEY, STRIPE_URL } from "./src/Dashboard/constants";
+import { StripeProvider } from "@stripe/stripe-react-native";
 
 LogBox.ignoreLogs(["Setting a timer"]);
 
@@ -63,6 +64,11 @@ export default function App() {
 
  
   return (
+    <StripeProvider
+      publishableKey={STRIPE_URL.KEY}
+      // urlScheme="" // required for 3D Secure and bank redirects
+    >
+
     <StoreProvider store={store}>
       <NativeBaseProvider>
         <PaperProvider>
@@ -76,6 +82,7 @@ export default function App() {
         </PaperProvider>
       </NativeBaseProvider>
     </StoreProvider>
+  </StripeProvider>
   );
 }
 const styles = StyleSheet.create({

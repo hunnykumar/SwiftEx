@@ -76,6 +76,7 @@ import Subcription_payment from "../Dashboard/exchange/crypto-exchange-front-end
 import Setup_password from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Setup_password";
 import Exchange_otp from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Exchange_otp";
 import { App_Update } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/App_Update";
+import AddressScreen from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/AddressScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -446,6 +447,13 @@ const AuthStack = () => (
       <Stack.Screen
         name="exchangeRegister"
         component={ExchangeRegister}
+        options={{
+          headerShown:false
+        }}
+      />
+       <Stack.Screen
+        name="AddressScreen"
+        component={AddressScreen}
         options={{
           headerShown:false
         }}

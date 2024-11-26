@@ -1,4 +1,4 @@
-import { Keyboard, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Keyboard, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import {
    widthPercentageToDP as wp,
    heightPercentageToDP as hp,
@@ -7,27 +7,45 @@ import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useState } from "react";
 import { useEffect } from "react";
 import Icon from "../../../../../../icon";
+import { REACT_APP_HOST } from "../../ExchangeConstants";
+import { getToken, saveToken } from "../../api";
 
-const Subscription = () => {
+const Subscription = (props) => {
    const FOCUSED = useIsFocused();
    const navigation = useNavigation();
-   const [avl_plan, setavl_plan] = useState([
-      { id: 1, month: "1 month", save_on_price: 16, org_price: "5", current_price: "Free", type: "Mothly", subscriber_type: "" },
-      { id: 2, month: "3 month", save_on_price: 16, org_price: "15", current_price: "14.6", type: "Quarter", subscriber_type: "MOST POPULAR" },
-      { id: 3, month: "Yearly", save_on_price: 16, org_price: "60", current_price: "58", type: "Yearly", subscriber_type: "BEST VALUE" }
-   ]);
+   const [avl_plan, setavl_plan] = useState([]);
    const [higlight, sethiglight] = useState(0)
+   const [Loading,setLoading]=useState(false)
 
    useEffect(() => {
-      sethiglight(0)
-   }, [FOCUSED])
+      const get_subcriptions = async () => {
+         try {
+            setLoading(true);
+            const response = await fetch(REACT_APP_HOST + "/users/subscriptions", {
+               method: "GET",
+               headers: new Headers({
+                  "Authorization": "Bearer " +props.route.params.auth_token
+               }),
+            });
+            const result = await response.json();
+            setavl_plan(result);
+         } catch (error) {
+            console.log("Error fetching subscriptions:", error);
+            // Show a user-friendly error message or retry option
+         } finally {
+            setLoading(false);
+         }
+      };
+      get_subcriptions();
+   }, [FOCUSED]);
+   
 
    const manage_function_call = async (higligh) => {
       if (higligh===0) {
          navigation.navigate("exchange");
       }
       else{
-         navigation.navigate("Subcription_payment",{ID:higligh});
+         navigation.navigate("Subcription_payment",{ID:higligh,Auth:props.route.params.auth_token});
       }
    }
    return (
@@ -41,9 +59,11 @@ const Subscription = () => {
             onPress={() => navigation.navigate("Home")}
          />
          <Text style={styles.top_heading}>Choose Your Plan</Text>
-
+         {Loading?
+         <ActivityIndicator color={"green"}/>:
+         
          <View style={styles.plan_container} >
-            {avl_plan.map((list, index) => {
+            {avl_plan?.map((list, index) => {
                return (
                   <TouchableOpacity key={index} style={[styles.plan_info, { backgroundColor: higlight === index ? "rgba(42, 84, 156, 1)rgba(43, 82, 147, 1)" : "#011434", }]} onPress={() => { sethiglight(index) }} onLongPress={()=>{navigation.navigate("Subscription_det",{ID:index})}}>
                      <View>
@@ -53,14 +73,14 @@ const Subscription = () => {
                            <Icon name={"check"} type={"materialCommunity"} size={30} color={"#fff"}/>
                            </View>
                         }
-                        <View style={{ flexDirection: "row", justifyContent: list.id !== 1 ? "center":"flex-start", alignItems: "center", marginTop: list.id !== 1 && hp(3), marginHorizontal: wp(3) }}>
+                        <View style={{ flexDirection: "row", justifyContent: index !== 0 ? "center":"flex-start", alignItems: "center", marginTop: index !== 0 && hp(3), marginHorizontal: wp(3) }}>
                            <Text style={styles.comman_text}>{list.month}</Text>
-                           {list.id !== 1 && <View style={styles.sub_type}>
+                           {index !== 0 && <View style={styles.sub_type}>
                               <Text style={{ fontSize: 11, textAlign: "center",color:"#fff" }}>{list.subscriber_type}</Text>
                            </View>}
                         </View>
                         <Text style={[styles.comman_text_1, { fontWeight: "300", fontSize: 16, marginHorizontal: wp(3) }]}>+Save {list.save_on_price}%</Text>
-                        {list.id === 1 &&
+                        {index === 0 &&
                            <View style={{ width: wp(60), marginHorizontal: wp(3) }}>
                               <Text style={styles.sub_txt}>
                                  Enjoy free access for a limited time!{'\n'}
@@ -72,7 +92,7 @@ const Subscription = () => {
                      <View style={[styles.right_container, { marginTop: hp(2), marginRight: wp(2) }]}>
                         <View style={{ position: "relative" }}>
                            <Text style={[styles.comman_text_1,{color:"silver"}]}>${list.org_price}</Text>
-                           <View style={[styles.line_half, { width: list.id === 3 ? wp(16) : list.id === 2 ? wp(15) : wp(12), }]} />
+                           <View style={[styles.line_half, { width: index === 2 ? wp(16) : index === 1 ? wp(15) : wp(12), }]} />
                         </View>
                         <Text style={styles.comman_text_1}>${list.current_price}</Text>
                         <Text style={[styles.comman_text_1, { fontSize: 13, fontWeight: "400" }]}>{list.type}</Text>
@@ -88,6 +108,7 @@ const Subscription = () => {
             </TouchableOpacity>
             <Text style={styles.btom_txt}>Terms And Conditions / Privacy Police</Text>
          </View>
+            }
       </View>
    )
 }

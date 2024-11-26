@@ -70,6 +70,10 @@ export const STELLAR_URL={
   URL:"https://horizon-testnet.stellar.org"
 }
 
+export const STRIPE_URL={
+  KEY:"pk_test_51OSf1YSDyv8aVWPDclpxDs4c8DuJj9RzDYURt3jYhSp5yvfrcZitKTfqxcUZIzjIe9skBpiMLsq202J8yD4dYG4S00l37526tF"
+}
+
 //172.20.10.6:2000
 
 /*<WebView 

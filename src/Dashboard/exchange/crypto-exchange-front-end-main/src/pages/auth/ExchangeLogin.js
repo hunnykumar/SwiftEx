@@ -302,7 +302,7 @@ const FOCUSED=useIsFocused();
           .then((response) => response.json())
           .then((result) => {
             console.log(result)
-            if (result.message === "Otp Send successfully"&&result.statusCode===200) {
+            if (result.errorMessage === "Otp Send successfully"&&result.errorCode===200) {
               setlodaing_ver(false);
               setLoading_fog(true);
               setTimeout(()=>{
@@ -311,7 +311,8 @@ const FOCUSED=useIsFocused();
               setLoading_fog(false);
               setVERFIY_OTP(false);
               navigation.navigate("Exchange_otp", {
-                Email: Email,
+                Email:result.token,
+                type:"old_res"
               });
             }
             if(result.statusCode===400)

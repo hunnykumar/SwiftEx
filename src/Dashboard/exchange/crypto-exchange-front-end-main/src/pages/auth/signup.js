@@ -21,7 +21,7 @@ import {
 import { ScrollView } from "react-native-gesture-handler";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import PhoneInput from "react-native-phone-number-input";
-import { signup } from "../../api";
+import { saveToken, signup } from "../../api";
 import { useSelector } from "react-redux";
 import {ShowErrotoast, alert} from '../../../../../reusables/Toasts'
 import { useToast } from "native-base";
@@ -63,15 +63,16 @@ export const ExchangeRegister = (props) => {
       phoneNumber: `${formContent.email}`,
     });
     setLoading(false);
-    console.log(err)
+    console.log(err,res)
+    if (res.message === "Otp Send successfully") {
+      navigation.navigate("Exchange_otp", {
+        Email: res.token,
+        type:"new_res"
+      });
+    }
     if(err.message==="Otp not Send.")
     {
       ShowErrotoast(toast,"Something went wrong.");
-    }
-    if (err.message === "Otp Send successfully") {
-      navigation.navigate("Exchange_otp", {
-        Email: formContent.email,
-      });
     }
     if(err.message==="Email already registered")
     {

@@ -30,6 +30,7 @@
     "@react-navigation/native": "^6.0.10",
     "@react-navigation/native-stack": "^6.6.2",
     "@react-navigation/stack": "^6.4.1",
+    "@stripe/stripe-react-native": "^0.37.3",
     "@swc/helpers": "^0.5.13",
     "@tradle/react-native-http": "^2.0.1",
     "@uniswap/sdk": "^3.0.3",
