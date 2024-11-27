@@ -64,14 +64,16 @@ export const ExchangeRegister = (props) => {
     });
     setLoading(false);
     console.log(err)
+    console.log(err,res)
+    if (res.message === "Otp Send successfully") {
+      navigation.navigate("Exchange_otp", {
+        Email: res.token,
+        type:"new_res"
+      });
+    }
     if(err.message==="Otp not Send.")
     {
       ShowErrotoast(toast,"Something went wrong.");
-    }
-    if (err.message === "Otp Send successfully") {
-      navigation.navigate("Exchange_otp", {
-        Email: formContent.email,
-      });
     }
     if(err.message==="Email already registered")
     {

@@ -24,6 +24,8 @@
     "@react-native-clipboard/clipboard": "^1.14.2",
     "@react-native-community/cli-platform-ios": "^14.1.1",
     "@react-native-community/push-notification-ios": "^1.11.0",
+    "@react-native-firebase/app": "^21.6.1",
+    "@react-native-firebase/messaging": "^21.6.1",
     "@react-navigation/bottom-tabs": "^6.3.1",
     "@react-navigation/material-bottom-tabs": "^6.2.1",
     "@react-navigation/material-top-tabs": "^6.6.2",

@@ -4,7 +4,7 @@ import { Exchange_Login_screen } from "../../../../../reusables/ExchangeHeader";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import darkBlue from "../../../../../../../assets/darkBlue.png";
-import { getAuth } from "../../api";
+import { getAuth, saveToken } from "../../api";
 import { REACT_APP_HOST } from "../../ExchangeConstants";
 import { useEffect, useState } from "react";
 import { ShowErrotoast, Showsuccesstoast } from "../../../../../reusables/Toasts";
@@ -28,7 +28,10 @@ const Setup_password = (props) => {
         const formattedInput = input.replace(/\s/g, '');
         setcon_passcode(formattedInput);
     };
-
+    const saveTokeninLocal=async(token_data)=>{
+        console.log("-0987654321234567890------",token_data)
+        await saveToken(token_data);
+    }
     const submitpasscode = async () => {
       try {
         setLoading(true);
@@ -48,9 +51,8 @@ const Setup_password = (props) => {
                 console.log("-----",props.route.params.Email.toLowerCase())
                 const myHeaders = new Headers();
                 myHeaders.append("Content-Type", "application/json");
-                myHeaders.append("Authorization", "Bearer " + token);
+                myHeaders.append("Authorization", "Bearer " + props.route.params.Email);
                 const raw = JSON.stringify({
-                    "email": props.route.params.Email.toLowerCase(),
                     "passcode": con_passcode
                 });
                 const requestOptions = {
@@ -71,7 +73,18 @@ const Setup_password = (props) => {
                             setTimeout(() => {
                                 Showsuccesstoast(toast, "Choose a subscription and hold for more information.");
                             }, 400)
-                            navigation.navigate("Subscription");
+                            if(props?.route?.params?.type==="new_res")
+                            {
+                               saveTokeninLocal(props.route.params.Email)
+                                // navigation.navigate("Subscription",{auth_token:props.route.params.Email});
+                            navigation.navigate("exchange");
+
+                            }
+                            if(props?.route?.params?.type==="old_res")
+                            {
+                               saveTokeninLocal(props.route.params.Email)
+                                navigation.navigate("exchange");
+                            }
                         } else {
                             setpasscode("");
                             setcon_passcode("");

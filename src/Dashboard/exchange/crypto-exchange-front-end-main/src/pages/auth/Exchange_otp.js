@@ -34,21 +34,36 @@ const Exchange_otp = (props) => {
             },400)
           }
           console.log("--",props.route.params.Email)
-          const { err } = await verifyLoginOtp({
-            email: `${props.route.params.Email.toLowerCase()}`,
-            otp: otp,
-          });
-          if (err) {
-            setTimeout(()=>{
-            setLoading(false);
-              ShowErrotoast(toast,"Wrong OTP");
-            },400)
-            setOtp(null);
-          } else {
-            setLoading(false);
-            navigation.navigate("Setup_password",{Email:props.route.params.Email.toLowerCase()})
-            setOtp(null);
-          }
+          const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+            myHeaders.append("Authorization", "Bearer "+props.route.params.Email);
+            const raw = JSON.stringify({
+                otp: otp,
+            });
+            const requestOptions = {
+                method: "POST",
+                headers: myHeaders,
+                body: raw,
+                redirect: "follow"
+            };
+            fetch(REACT_APP_HOST+"/users/verifyLoginOtp", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    console.log(result)
+                      if (result.token) {
+                        setLoading(false);
+                        navigation.navigate("Setup_password",{Email:result.token,type:props.route.params.type})
+                        setOtp(null);
+                      } 
+                      else{
+                          setTimeout(()=>{
+                              setLoading(false);
+                              ShowErrotoast(toast,result.message);
+                            },400)
+                            setOtp(null);
+                        }
+                })
+                .catch((error) => console.error(error));
         } catch (err) {
             setLoading(false);
             console.log("---",err)

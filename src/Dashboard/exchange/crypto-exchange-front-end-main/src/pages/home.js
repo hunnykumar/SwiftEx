@@ -52,11 +52,13 @@ import { STELLAR_URL } from "../../../../constants";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import { Charts_Loadings, Exchange_single_loading } from "../../../../reusables/Exchange_loading";
 import { LineChart } from "react-native-gifted-charts";
+import useFirebaseCloudMessaging from "../../../../notifications/firebaseNotifications";
 // import StellarSdk from '@stellar/stellar-sdk';
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
 
 export const HomeView = ({ setPressed }) => {
+  const { FCM_getToken, requestUserPermission } = useFirebaseCloudMessaging();
   const dispatch_ = useDispatch()
   const [modalContainer_menu,setmodalContainer_menu]=useState(false);
   const AnchorViewRef = useRef(null);
@@ -393,37 +395,37 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
     getData()
     getOffersData();
     getBidsData();
-    // syncDevice();
+    syncDevice();
   }, []);
   useEffect(() => {
     fetchProfileData();
     getOffersData();
     getData()
     getBidsData();
-    // syncDevice();
+    syncDevice();
   }, [change]);
 
   const syncDevice = async () => {
-    const token = await getRegistrationToken();
+    const token = await FCM_getToken();
     console.log(token);
-    console.log("hi", token);
+    console.log("hi----->>>ttokenb", token);
     if(!token)
     {
-      const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-           AsyncStorage.removeItem(LOCAL_TOKEN);
-           Navigate()
+      // const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
+      //      AsyncStorage.removeItem(LOCAL_TOKEN);
+      //      Navigate()
            
-      navigation.navigate('exchangeLogin')
-      return
+      // navigation.navigate('exchangeLogin')
+      // return
     }
     try {
       const { res } = await authRequest(
-        `/users/getInSynced/${await getRegistrationToken()}`,
+        `/users/getInSynced/${token}`,
         GET
       );
       if (res.isInSynced) {
         const { err } = await authRequest("/users/syncDevice", POST, {
-          fcmRegToken: await getRegistrationToken(),
+          fcmRegToken: token,
         });
         if (err) return setMessage(`${err.message}`);
         return setMessage("Your device is synced");

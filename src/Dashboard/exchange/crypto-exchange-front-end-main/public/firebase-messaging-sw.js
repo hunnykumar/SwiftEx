@@ -4,13 +4,13 @@ importScripts('https://www.gstatic.com/firebasejs/8.2.0/firebase-messaging.js')
 
 // Initialize the Firebase app in the service worker by passing the generated config
 const firebaseConfig = {
-  apiKey: 'AIzaSyAexERzPR03F38U5IYCRwWx1MVP9jBOCGw',
-  authDomain: 'crypto-exchange-poc.firebaseapp.com',
-  projectId: 'crypto-exchange-poc',
-  storageBucket: 'crypto-exchange-poc.appspot.com',
-  messagingSenderId: '883312291340',
-  appId: '1:883312291340:web:1cc47b592fd08bf9a74829',
-  measurementId: 'G-1VQJ9XNECH',
+  apiKey: "AIzaSyAWxzGg2Jiy3clbfywr0TZKRwg1g0eeNd0",
+  authDomain: "proxy-server-99cc2.firebaseapp.com",
+  projectId: "proxy-server-99cc2",
+  storageBucket: "proxy-server-99cc2.firebasestorage.app",
+  messagingSenderId: "121537912071",
+  appId: "1:121537912071:web:07efa9bed63b89dce3b9a2",
+  measurementId: "G-V78H9W46GL"
 }
 
 firebase.initializeApp(firebaseConfig)

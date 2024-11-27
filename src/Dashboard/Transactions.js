@@ -33,7 +33,7 @@ const Transactions = (props) => {
   const isFocused=useIsFocused();
   const getTransactions = async () => {
     const user = await AsyncStorageLib.getItem("user");
-    await AsyncStorageLib.getItem(`${user}-transactions`).then(
+    await AsyncStorageLib.getItem(`App-transactions`).then(
       (transactions) => {
         const data = JSON.parse(transactions);
         if (data) {
@@ -169,9 +169,11 @@ try{
                       <View style={{ marginHorizontal: wp(3) }}>
                         <View style={{flexDirection:"row",width:wp(70),justifyContent:"space-between"}}>
                           <Text style={{color: state.THEME.THEME===false?"black":"#fff"}}>{item.type}</Text>
+                          <View>
                           {item.type==="Send"?Platform.OS==="android"?<View style={{transform:[{rotate:'46deg'}]}}><Icon name="arrow-up" size={23} color="red"/></View>:<View style={{transform:[{rotate:'46deg'}]}}><Icon name="arrow-up" size={23} color="red"/></View>:<></>}
-                          {item.type==="Recieved"?Platform.OS==="android"?<View style={{transform:[{rotate:'230deg'}],marginLeft:"91%"}}><Icon name="arrow-up" size={23} color="green"/></View>:<View style={{transform:[{rotate:'230deg'}],marginLeft:"91%"}}><Icon name="arrow-up" size={23} color="green"/></View>:<></>}
-                          {item.type==="Swap"? <Icon type={"fa"} name="exchange" size={23} color="green" />:<></>}                
+                          {item.type==="Received"?Platform.OS==="android"?<View style={{transform:[{rotate:'230deg'}]}}><Icon name="arrow-up" size={23} color="green"/></View>:<View style={{transform:[{rotate:'230deg'}],marginLeft:"91%"}}><Icon name="arrow-up" size={23} color="green"/></View>:<></>}
+                          {item.type==="Swap"? <Icon type={"fa"} name="exchange" size={23} color="green" />:<></>}
+                          </View>                
                         </View>
                         <Text style={[styles.text,{color: state.THEME.THEME===false?"black":"#fff"}]} numberOfLines={1}>
                           {item.hash}
