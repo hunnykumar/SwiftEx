@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Alert } from 'react-native'
+import { Alert, PermissionsAndroid, Platform } from 'react-native'
 import messaging from '@react-native-firebase/messaging'
 //import { useNavigation } from '@react-navigation/native'
 //import { firebaseNotification } from './firebasePushMessages'
@@ -76,14 +76,20 @@ const useFirebaseCloudMessaging = (navigation) => {
   }
   
   const requestUserPermission = async () => {
-    const authStatus = await messaging().requestPermission()
-    const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL
-
-    if (enabled) {
-      console.log('Authorization status:', authStatus)
+    if (Platform.OS === 'android' && Platform.Version >= 33) {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+      );
+  
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('Notification permission granted ');
+      } else {
+        console.log('Notification permission denied');
+      }
+    } else {
+      console.log('No need to request notification permission');
     }
+  
   }
 
   useEffect(() => {

@@ -47,6 +47,7 @@ import { reject } from "lodash";
 import store from "././../../src/components/Redux/Store"
 import PushNotification from 'react-native-push-notification';
 import { WSS_TEST } from "./constants";
+import useFirebaseCloudMessaging from "./notifications/firebaseNotifications";
  
   const handleLocalNotification = (msg) => {
     PushNotification.localNotification({
@@ -118,7 +119,7 @@ const Home2 = ({ navigation }) => {
     { key: "second", title: "Tokens" },
   ]);
   const Navigation = useNavigation();
-  // const { getToken, requestUserPermission } = useFirebaseCloudMessaging();
+  const { getToken, requestUserPermission } = useFirebaseCloudMessaging();
   const isFocused = useIsFocused();
   const getAllBalance = async () => {
     try {
@@ -486,8 +487,8 @@ const Home2 = ({ navigation }) => {
   );
 
   useEffect(() => {
-    // requestUserPermission();
-    // getToken();
+    requestUserPermission();
+    getToken();
   }, []);
   useEffect(() => {
     
