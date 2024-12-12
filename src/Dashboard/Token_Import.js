@@ -94,7 +94,7 @@ import { Wallet_market_loading } from './reusables/Exchange_loading';
           symbol: fetchedSymbol || symbol, 
           balance: formattedBalance, 
           address, 
-          img_url: img_url || 'https://assets.coingecko.com/coins/images/13469/thumb/1inch-token.png?1608803028' // Fallback image
+          img_url: img_url
         };
       } catch (error) {
         console.error(`Error fetching token info for ${address}:`, error);
@@ -200,13 +200,17 @@ import { Wallet_market_loading } from './reusables/Exchange_loading';
                 keyExtractor={(item) => item.address}
                 renderItem={({ item }) => (
                   <View style={[styles.tokenCard,{color:state.THEME.THEME===false?"#fff":"black"}]}>
-                    <Image
-                      source={{ uri: item.img_url || 'https://assets.coingecko.com/coins/images/13469/thumb/1inch-token.png?1608803028' }} // Use fallback if img_url is empty
-                      style={styles.tokenImage}
-                    />
+                    {item.img_url ?
+                      <Image
+                        source={{ uri: item.img_url }}
+                        style={styles.tokenImage}
+                      /> :
+                      <View style={[styles.tokenImage,{borderRadius:30,backgroundColor:"#a855f7",justifyContent:"center",alignItems:"center"}]}>
+                        <Text style={[styles.tokenName,{color:"#fff",fontSize:28}]}>{item?.name?.charAt(0)}</Text>
+                      </View>}
                     <View>
-                      <Text style={[styles.tokenName,{color:state.THEME.THEME===false?"black":"#fff"}]}>{item.name} ({item.symbol})</Text>
-                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>Balance: {item.balance}</Text>
+                      <Text style={[styles.tokenName,{color:state.THEME.THEME===false?"black":"#fff"}]}>{item?.name} ({item?.symbol})</Text>
+                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>Balance: {item?.balance}</Text>
                     </View>
                   </View>
                 )}
