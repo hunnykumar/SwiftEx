@@ -23,6 +23,8 @@ import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/Ex
 import { useSelector } from "react-redux";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { Wallet_market_loading } from "./reusables/Exchange_loading";
+import monkey from "../../assets/monkey.png"
+
 
 const Market = (props) => {
   const state=useSelector((state)=>state);
@@ -156,7 +158,7 @@ const requestOptions = {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {data ? (
+          {data.length>0 ? (
             data.map((item,index) => {
               const image = item.image;
               const color = item.price_change_24h > 0 ? "green" : "red";
@@ -188,7 +190,7 @@ const requestOptions = {
             })
           ) : (
             <View>
-              <ActivityIndicator size="large" color="blue"/>
+                <Image source={monkey} style={Styles.monkey_img}/>
             </View>
           )}
         </ScrollView>
@@ -220,6 +222,12 @@ const Styles = StyleSheet.create({
   img: {
     height: hp(5),
     width: wp(10),
+  },
+  monkey_img:{
+    width:hp(20),
+    height:hp(20),
+    alignSelf:"center",
+    marginTop:hp(13)
   },
   searchContainer: {
     flexDirection: "row",

@@ -33,7 +33,7 @@ const Transactions = (props) => {
   const isFocused=useIsFocused();
   const getTransactions = async () => {
     const user = await AsyncStorageLib.getItem("user");
-    await AsyncStorageLib.getItem(`App-transactions`).then(
+    await AsyncStorageLib.getItem(`${user}-transactions`).then(
       (transactions) => {
         const data = JSON.parse(transactions);
         if (data) {
