@@ -134,6 +134,7 @@ const Assets_manage = () => {
                 });
         } catch (error) {
             console.error(`Error changing trust:`, error);
+            setLoading(false)
             Snackbar.show({
                 text: 'USDC faild to added',
                 duration: Snackbar.LENGTH_SHORT,
@@ -224,7 +225,7 @@ const Assets_manage = () => {
                                 <TouchableOpacity style={styles.btn} disabled={Loading} onPress={()=>{
                                     list.name==="USDC"?changeTrust():alert_message(list.name+' Added Soon.')
                                 }}>
-                                    <Text style={[styles.modal_sub_heading]}>{Loading&&index==0?(<ActivityIndicator color={"green"}/>):("Add Asset")}</Text>
+                                    {Loading&&index==0?<ActivityIndicator color={"green"}/>:<Text style={[styles.modal_sub_heading]}>Add Asset</Text>}
                                 </TouchableOpacity>
                                 }
                             </View>

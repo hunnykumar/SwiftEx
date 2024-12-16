@@ -628,6 +628,7 @@ const change_Trust_New = async () => {
           });
   } catch (error) {
       console.error(`Error changing trust:`, error);
+      setloading_trust_modal(false)
       Snackbar.show({
           text: 'USDC faild to added',
           duration: Snackbar.LENGTH_SHORT,
