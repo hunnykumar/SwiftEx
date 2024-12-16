@@ -478,22 +478,30 @@ export const ProfileView = (props) => {
       <Exchange_profile_loading/>
       :  
       <>
-            <Icon
+            {/* <Icon
               name={"account-circle-outline"}
               type={"materialCommunity"}
               color={"white"}
               size={60}
               style={{ marginTop: 10 }}
-            />
+            /> */}
+                <LinearGradient
+                  colors={['#3b82f6', '#8b5cf6']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={[styles.tokenImage, { borderRadius: 30, justifyContent: "center", alignItems: "center" }]}
+                >
+                  <Text style={[styles.tokenName, { color: "#fff", fontSize: 28 }]}>{profile?.firstName?.charAt(0)?.toLocaleUpperCase()}</Text>
+                </LinearGradient>
             <View style={[styles.fnlnTextView]}>
-              <Text style={{ fontSize: hp(2), color: "white", fontSize: hp(2.3), width: wp(63),marginLeft:wp(1.2) }}>{profile.firstName + " " + profile.lastName}</Text>
+              <Text style={{ fontSize: hp(2), color: "white", fontSize: hp(2.3), width: wp(63),marginLeft:wp(1.2) }}>{profile?.firstName + " " + profile?.lastName}</Text>
               <View style={styles.verifiedTextCon}>
                 <Text style={styles.verifiedText}>Verified!</Text>
               </View>
             </View>
             <View style={styles.emailphoneView}>
               <Text style={{ color: "white", fontSize: 16 }}>Email</Text>
-              <Text style={{ color: "white", marginTop: 4, fontSize: 16 }}>{profile.email}</Text>
+              <Text style={{ color: "white", marginTop: 4, fontSize: 16 }}>{profile?.email}</Text>
             </View>
             </>
             }
@@ -1124,5 +1132,15 @@ heading_text:{
   fontSize: 19,
   fontWeight: "600",
   paddingVertical:hp(1.4)
-}
+},
+tokenImage: {
+  width: 53,
+  height: 53,
+  marginTop: 10,
+},
+tokenName: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  textAlign:"center"
+},
 });

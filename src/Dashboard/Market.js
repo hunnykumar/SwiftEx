@@ -155,7 +155,7 @@ const requestOptions = {
           alwaysBounceVertical={true}
           contentContainerStyle={{ marginBottom: hp(2) }}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl tintColor={"#4CA6EA"} refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
           {data.length>0 ? (

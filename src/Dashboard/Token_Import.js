@@ -38,6 +38,7 @@
     heightPercentageToDP as hp,
   } from "react-native-responsive-screen";
 import { Wallet_market_loading } from './reusables/Exchange_loading';
+import LinearGradient from 'react-native-linear-gradient';
 
   const ERC20_ABI = [
     "function name() view returns (string)",
@@ -205,9 +206,14 @@ import { Wallet_market_loading } from './reusables/Exchange_loading';
                         source={{ uri: item.img_url }}
                         style={styles.tokenImage}
                       /> :
-                      <View style={[styles.tokenImage,{borderRadius:30,backgroundColor:"#a855f7",justifyContent:"center",alignItems:"center"}]}>
+                      <LinearGradient
+                      colors={['#3b82f6', '#8b5cf6']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[styles.tokenImage, { borderRadius: 30, justifyContent: "center", alignItems: "center" }]}
+                    >
                         <Text style={[styles.tokenName,{color:"#fff",fontSize:28}]}>{item?.name?.charAt(0)}</Text>
-                      </View>}
+                      </LinearGradient>}
                     <View>
                       <Text style={[styles.tokenName,{color:state.THEME.THEME===false?"black":"#fff"}]}>{item?.name} ({item?.symbol})</Text>
                       <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>Balance: {item?.balance}</Text>
