@@ -97,7 +97,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
 
           <Text style={style.welcomeText}> Back up you wallet now </Text>
           <Text style={style.welcomeText}>
-            In the next page , you will see your secret phrase
+            In the next page, you will see your secret phrase
           </Text>
           <TouchableOpacity
             style={{
@@ -117,7 +117,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
             />
             <View style={{ marginLeft: 10 }}>
             <Text style={style.welcomeText2}>
-              If i loose my private key , my funds will be lost
+              If I loose my private key, my funds will be lost
             </Text>
               {/* <Switch
                 value={Checked}
@@ -144,7 +144,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
           />
             <View style={{ marginLeft: 10 }}>
             <Text style={style.welcomeText2}>
-              If i share my private key , my funds can get stolen
+              If I share my private key, my funds can get stolen
             </Text>
               {/* <Switch
                 value={Checked2}
@@ -155,8 +155,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
           {loading ? (
             <ActivityIndicator size="large" color="white" />
           ) : (
-            <Text> </Text>
-          )}
+            
 <TouchableOpacity
             style={[style.PresssableBtn,{width:wp(30),alignItems:"center",backgroundColor:  Checked && Checked2? "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)":"gray"}]}
               disabled={loading ? true : Checked && Checked2 ? false : true}
@@ -207,6 +206,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
               <Text style={{ color: "white" }}>Continue</Text>
           {/* </LinearGradient> */}
             </TouchableOpacity>
+          )}
           </View>
           {/* <ModalHeader Function={closeModal} name={"Import"} /> */}
           
@@ -234,7 +234,7 @@ const style = StyleSheet.create({
     paddingBottom:hp(8),
     justifyContent: "center",
     borderRadius: hp(2),
-    width: wp(94),
+    width: wp(99),
     // alignItems: "center",
     alignSelf:"center",
     textAlign: "center",
@@ -249,7 +249,7 @@ const style = StyleSheet.create({
     fontWeight: "300",
     color: "white",
     marginTop: hp(1),
-    width: wp(70),
+    width: wp(75),
   },
   Button: {
     marginTop: hp(10),

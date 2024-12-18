@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -507,7 +507,11 @@ const Home2 = ({ navigation }) => {
       }
     }, [])
   );*/
-
+  useFocusEffect(
+    useCallback(() => {
+      setIndex(0);
+    }, [])
+  );
   return (
     <View style={{ backgroundColor: "#000C66" }}>
       <View style={Styles.container}>

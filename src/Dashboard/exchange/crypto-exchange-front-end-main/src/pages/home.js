@@ -925,7 +925,7 @@ useEffect(() => {
                 </View>
               ) : (
                <View style={{flexDirection:"row",justifyContent:"center",marginVertical:5}}>
-                <Text style={styles.kycText}>FATCHING UPDATING {profile.isVerified===false?kyc():""}</Text>
+                <Text style={styles.kycText}>FETCHING UPDATES {profile.isVerified===false?kyc():""}</Text>
                 <ActivityIndicator color={"green"}/>
                </View>
               )}

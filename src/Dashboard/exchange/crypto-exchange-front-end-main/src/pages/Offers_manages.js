@@ -78,8 +78,7 @@ const Offers_manages = () => {
       }
       setOffers(fetchedOffers);
     } catch (error) {
-      console.error('Error fetching offer data:', error);
-      Alert.alert('Error', 'Failed to fetch offers: ' + error.message);
+      console.log('Error fetching offer data:', error);
     } finally {
       setLoading(false);
     }
@@ -125,8 +124,8 @@ const Offers_manages = () => {
       Alert.alert('Success', 'Offer deleted successfully.');
     } catch (error) {
       setloading_del(false);
-      console.error("Error deleting offer:", error);
-      Alert.alert('Error', 'Failed to delete the offer: ' + error.message);
+      console.log("Error deleting offer:", error);
+      Alert.alert('Info', 'Failed to delete the offer');
     }
   };
 
@@ -168,8 +167,8 @@ const Offers_manages = () => {
       setModalVisible(false);
     } catch (error) {
       setloading_edi(false);
-      console.error("Error updating offer:", error);
-      Alert.alert('Error', 'Failed to update the offer: ' + error.message);
+      console.log("Error updating offer:", error);
+      Alert.alert('Info', 'Failed to update the offer');
     }
   };
 

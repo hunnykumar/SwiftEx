@@ -441,9 +441,11 @@ const AllWallets = (props) => {
                     flexDirection: "row",
                     alignItems: "center"
                   }}>
-                  <Text style={{ textAlign:"center",marginRight:wp(2),backgroundColor:"green",padding:wp(0.9),color:"#fff",borderRadius:5 }} left={LeftContent}>
+                   <View style={{backgroundColor:"green",padding:wp(1),marginRight:wp(2),borderRadius:8}}>
+                 <Text style={{color:"#fff",fontSize:17 }}>
                     Active
                   </Text>
+                 </View>
                   <Icon
                     name="check-decagram"
                     type={"materialCommunity"}

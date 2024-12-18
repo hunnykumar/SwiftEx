@@ -1,12 +1,12 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, Dimensions, Animated } from "react-native";
-import React, { useState } from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, Dimensions, Animated, TouchableWithoutFeedback } from "react-native";
+import React, { useCallback, useState } from "react";
 import Icon from "../../icon";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import darkBlue from "../../../assets/darkBlue.png";
 import { REACT_APP_LOCAL_TOKEN } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import { useSelector } from "react-redux";
@@ -87,6 +87,13 @@ export const Exchange_screen_header = ({ title, onLeftIconPress, onRightIconPres
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      setDrawerVisible(false);
+      return () => setDrawerVisible(false);
+    }, [])
+  );
+
   return (
     <>
       <View style={[styles.exchangeheaderContainer, { height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
@@ -137,39 +144,43 @@ const CustomDrawer = ({ isVisible, onClose }) => {
     }
   }
   return (
+    <TouchableWithoutFeedback onPress={onClose}>
     <Animated.View style={{
-      position: 'absolute',
-      right: 0,
-      top: 0,
-      height: '100%',
-      width: "100%",
-      backgroundColor: 'rgba(0, 0, 0, 0.1)',
-      zIndex: 100,
-      transform: [{ translateX }]
-    }}>
-    <Animated.View style={[styles.exchangedrawerContainer, { transform: [{ translateX }] }]}>
-      <TouchableOpacity onPress={onClose} style={[styles.exchangecloseButton, { alignSelf: Platform.OS === "ios" ? "flex-end" : "flex-start" }]}>
-        <Icon name={"arrow-right-circle-outline"} type={"materialCommunity"} size={33} color={"#fff"} />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.exchangetextcont}>
-        <Icon name={"anchor"} type={"materialCommunity"} size={28} color={"gray"} />
-        <Text style={[styles.exchangedrawerText,{color:"gray"}]}>Anchor Settings</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.exchangetextcont}>
-        <Icon name={"card-account-details"} type={"materialCommunity"} size={28} color={"gray"} />
-        <Text style={[styles.exchangedrawerText,{color:"gray"}]}>KYC</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.exchangetextcont} onPress={() => {handle_nav("Wallet")}}>
-        <Icon name={"wallet"} type={"materialCommunity"} size={28} color={"#fff"} />
-        <Text style={styles.exchangedrawerText}>Wallet</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.exchangetextcont} onPress={() => {handle_logout()}}>
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        height: '100%',
+        width: "100%",
+        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        zIndex: 100,
+        transform: [{ translateX }]
+      }}>
+      <TouchableWithoutFeedback>
+        <Animated.View style={[styles.exchangedrawerContainer, { transform: [{ translateX }] }]}>
+          <TouchableOpacity onPress={onClose} style={[styles.exchangecloseButton, { alignSelf: Platform.OS === "ios" ? "flex-end" : "flex-start" }]}>
+            <Icon name={"arrow-right-circle-outline"} type={"materialCommunity"} size={33} color={"#fff"} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.exchangetextcont}>
+            <Icon name={"anchor"} type={"materialCommunity"} size={28} color={"gray"} />
+            <Text style={[styles.exchangedrawerText,{color:"gray"}]}>Anchor Settings</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.exchangetextcont}>
+            <Icon name={"card-account-details"} type={"materialCommunity"} size={28} color={"gray"} />
+            <Text style={[styles.exchangedrawerText,{color:"gray"}]}>KYC</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.exchangetextcont} onPress={() => {handle_nav("Wallet")}}>
+          <Icon name={"wallet"} type={"materialCommunity"} size={28} color={"#fff"} />
+            <Text style={styles.exchangedrawerText}>Wallet</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.exchangetextcont} onPress={() => {handle_logout()}}>
         <Icon name={"logout"} type={"materialCommunity"} size={28} color={"#fff"} />
         <Text style={styles.exchangedrawerText}>Logout</Text>
       </TouchableOpacity>
-      
-    </Animated.View>
+
+        </Animated.View>
+      </TouchableWithoutFeedback>
     </Animated.View >
+  </TouchableWithoutFeedback>
   );
 };
 

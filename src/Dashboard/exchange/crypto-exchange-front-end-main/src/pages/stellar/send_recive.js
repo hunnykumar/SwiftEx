@@ -18,6 +18,7 @@ import { Exchange_screen_header } from "../../../../../reusables/ExchangeHeader"
 import { alert } from "../../../../../reusables/Toasts";
 import { STELLAR_URL } from "../../../../../constants";
 import { SaveTransaction } from "../../../../../../utilities/utilities";
+import Snackbar from "react-native-snackbar";
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
 
@@ -96,7 +97,11 @@ const send_recive = ({route}) => {
       // Submit the transaction
       const transactionResult = await server.submitTransaction(transaction);
       console.log('Transaction successful!', transactionResult);
-      alert("success","Transaction successful!");
+      Snackbar.show({
+        text: "Transaction successful!",
+        duration: Snackbar.LENGTH_LONG,
+        backgroundColor:'green', 
+    });
       setPayment_loading(false);
       try {
         const user_current = await state.user;
@@ -118,31 +123,52 @@ const send_recive = ({route}) => {
       }
     } catch (error) {
       console.error('Error sending XLM:', error);
-      alert("error","Transaction Failed");
+      Snackbar.show({
+        text: "Transaction Failed",
+        duration: Snackbar.LENGTH_LONG,
+        backgroundColor:'red', 
+    });
       setPayment_loading(false);
     }
   }
 
 
   const Send_Asseet = async () => {
+    Keyboard.dismiss()
     setPayment_loading(true);
     try {
       if (!recepi_address || !recepi_amount) {
-        alert("error", "Recipient Address and Amount Required.")
+        Snackbar.show({
+          text: "Recipient Address and Amount Required.",
+          duration: Snackbar.LENGTH_LONG,
+          backgroundColor:'red', 
+      });
         setPayment_loading(false);
       }else {
         if (validateStellarAddress(recepi_address)) {
-          alert("success", "Valid Stellar address");
+          Snackbar.show({
+            text: "Valid Stellar address",
+            duration: Snackbar.LENGTH_LONG,
+            backgroundColor:'green', 
+        });
           if(parseFloat(recepi_amount)>bala)
           {
-            alert("error", "Insuficint balance");
+            Snackbar.show({
+              text: "Insuficint balance",
+              duration: Snackbar.LENGTH_LONG,
+              backgroundColor:'red', 
+          });
             setPayment_loading(false);
           }
           else{
             send_XLM(state.STELLAR_SECRET_KEY, recepi_address, recepi_amount)
           }
         } else {
-          alert("error", "Invalid Stellar address");
+          Snackbar.show({
+            text: "Invalid Stellar address",
+            duration: Snackbar.LENGTH_LONG,
+            backgroundColor:'red', 
+        });
           recepi_address('');
           setPayment_loading(false);
         }

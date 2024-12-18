@@ -26,8 +26,8 @@
     // }
   // ];
 
-  import React, { useState, useEffect } from 'react';
-  import { View, Text, Button, TextInput, StyleSheet, FlatList, Image, Alert, RefreshControl, TouchableOpacity } from 'react-native';
+  import React, { useState, useEffect, useCallback } from 'react';
+  import { View, Text, Button, TextInput, StyleSheet, FlatList, Image, Alert, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
   import AsyncStorage from '@react-native-async-storage/async-storage';
   import { ethers } from 'ethers';
   import { RPC } from './constants';
@@ -39,6 +39,7 @@
   } from "react-native-responsive-screen";
 import { Wallet_market_loading } from './reusables/Exchange_loading';
 import LinearGradient from 'react-native-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 
   const ERC20_ABI = [
     "function name() view returns (string)",
@@ -153,7 +154,7 @@ import LinearGradient from 'react-native-linear-gradient';
         Alert.alert('Error', 'Token already added.');
         return;
       }
-  
+      
       setIsLoading(true);
       try {
         // Fetch token info and update UI
@@ -168,6 +169,8 @@ import LinearGradient from 'react-native-linear-gradient';
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedAddresses));
   
         setNewTokenAddress('');
+        Alert.alert("Info","Token Adding completed.")
+        setIsLoading(false);
       } catch (error) {
         Alert.alert('Error', 'Failed to fetch token information. Please check the address.');
       } finally {
@@ -186,6 +189,12 @@ import LinearGradient from 'react-native-linear-gradient';
     useEffect(() => {
       fetchDefaultAndStoredTokens();
     }, [WALLET_ADDRESS]);
+    useFocusEffect(
+      useCallback(() => {
+        setShowTokenList(false);
+        return () => setShowTokenList(false);
+      }, [])
+    );
   
     return (
       <View style={[styles.container,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
@@ -255,7 +264,7 @@ import LinearGradient from 'react-native-linear-gradient';
             </View>
               <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
                 <TouchableOpacity disabled={!newTokenAddress} style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: !newTokenAddress ? "gray" : "green" }]} onPress={() => { handleAddToken() }}>
-                  <Text style={[styles.text, { color: state.THEME.THEME === false ? "#fff" : "#fff" }]}>Add Asset</Text>
+                 {isLoading?<ActivityIndicator color='#fff'/>:<Text style={[styles.text, { color: state.THEME.THEME === false ? "#fff" : "#fff" }]}>Add Asset</Text>}
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: "green" }]} onPress={() => { setShowTokenList(true) }}>
                   <Text style={[styles.text, { color: state.THEME.THEME === false ? "#fff" : "#fff" }]}>View</Text>
