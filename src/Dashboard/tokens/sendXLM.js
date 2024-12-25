@@ -59,25 +59,41 @@ const SendXLM = (props) => {
     const navigation = useNavigation();
     const [isModalVisible, setModalVisible] = useState(false);
     const [token, settoken] = useState("");
+    const [lastScannedData, setLastScannedData] = useState(null);
     const toggleModal = () => {
         checkPermission();
     };
 
     const onBarCodeRead = (e) => {
-        // if (e.data !== qrData) {
-            // setQrData(e.data);
-            alert("success","QR Code Decoded successfully..");
-            setAddress("");
-            setAddress(e.data);
-            toggleModal();
-            if(!validateStellarAddress(e.data))
-            {
-              setAddress("");
-              Alert.alert("Address Info","Invalid Address");
-            }
-        // }
+      if (e.data && e.data !== lastScannedData) {
+        setLastScannedData(e.data); // Update the last scanned data
+        alert("success", "QR Code Decoded successfully..");
+        setAddress("");
+        setAddress(e.data);
+        setModalVisible(false);
+    
+        if (!validateStellarAddress(e.data)) {
+          setAddress("");
+          Alert.alert("Address Info", "Invalid Address");
+        }
+      }
     };
-
+    
+    const handleCameraStatus = (status) => {
+      if (status === "NOT_AUTHORIZED") {
+        setModalVisible(false);
+        Alert.alert(
+          "Camera Permissions Required.",
+          "Please enable camera permissions in settings to scan QR code.",
+          [
+            { text: "Close", style: "cancel" },
+            { text: "Open", onPress: () => Linking.openSettings() },
+          ]
+        );
+      }
+      // No need to explicitly toggle modal visibility on "READY"
+      // Let `toggleModal` or user actions handle visibility
+    };
     useEffect(() => {
     const insilize=async()=>{
       try {
@@ -234,11 +250,17 @@ const SendXLM = (props) => {
                 );
                 console.log(saveTransaction);
                 await get_stellar(steller_key);
+                setAmount('')
+                setAddress('')
                 navigation.navigate("Transactions");
               } catch (e) {
                 console.log(e);
+                setAmount('')
+                setAddress('')
               }
             } catch (error) {
+              setAmount('')
+              setAddress('')
               console.error('Error sending XLM:', error);
               ShowErrotoast(toast,"Transaction Failed");
               setdisable(false);
@@ -269,7 +291,12 @@ const SendXLM = (props) => {
               token ?[setACTIVATION_MODAL(false),navigation.navigate("exchange")]:[setACTIVATION_MODAL(false),navigation.navigate("exchangeLogin")]
             }
 
-
+// Reset lastScannedData when modal is closed
+useEffect(() => {
+  if (!isModalVisible) {
+    setLastScannedData(null);
+  }
+}, [isModalVisible]);
     return (
         <>
           <Wallet_screen_header title="Send" onLeftIconPress={() => navigation.goBack()} />
@@ -385,46 +412,27 @@ const SendXLM = (props) => {
         visible={isModalVisible}
         onRequestClose={toggleModal}
       >
-         <RNCamera
-      ref={cameraRef}
-      style={style.preview}
-      onBarCodeRead={onBarCodeRead}
-      captureAudio={false}
-    >
-            {({ status }) => {
-              if (status==="NOT_AUTHORIZED")
-              {
-                setModalVisible(false),
-                Alert.alert("Camera Permissions Required.","Please enable camera permissions in settings to scan QR code.",
-                [
-                  {text:"Close",style:"cancel"},
-                  {text:"Open",onPress:()=>{
-                      Linking.openSettings()
-                  }},
-                ])
-              }
-              if (status === "READY" && isModalVisible)
-              {
-                setModalVisible(true)
-              }
-              return (
-                <>
-                  <View style={style.header}>
-                    <TouchableOpacity onPress={() => { setModalVisible(false) }}>
-                      <Icon name="arrow-left" size={24} color="#fff" style={style.backIcon} />
-                    </TouchableOpacity>
-                    <Text style={[style.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
-                  </View>
-                  <View style={style.rectangleContainer}>
-                    <View style={style.rectangle}>
-                      <View style={style.innerRectangle} />
-                    </View>
-                  </View>
-                </>
-              )
-            }}
-         
-    </RNCamera>
+          <RNCamera
+            ref={cameraRef}
+            style={style.preview}
+            onBarCodeRead={onBarCodeRead}
+            captureAudio={false}
+            onStatusChange={({ status }) => handleCameraStatus(status)} // Use onStatusChange
+          >
+            <>
+              <View style={style.header}>
+                <TouchableOpacity onPress={() => { setModalVisible(false); }}>
+                  <Icon name="arrow-left" size={24} color="#fff" style={style.backIcon} />
+                </TouchableOpacity>
+                <Text style={[style.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
+              </View>
+              <View style={style.rectangleContainer}>
+                <View style={style.rectangle}>
+                  <View style={style.innerRectangle} />
+                </View>
+              </View>
+            </>
+          </RNCamera>
         {/* <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
           <View style={{ backgroundColor: '#145DA0', padding: 20, borderRadius: 10,width:"90%",height:"50%" }}>
             <Text style={{color:"white",fontWeight:"700",alignSelf:"center",fontSize:19}} onPress={()=>{

@@ -685,13 +685,26 @@ const CheckMnemonic = (props) => {
             }
           }
           else {
-            Snackbar.show({
-              text: 'Incorrect Answers, please try again',
-              duration: Snackbar.LENGTH_SHORT,
-              backgroundColor:'red',
-          });
-            setAnswers(Array(4).fill(null));
-            shuffleQuestions();
+                  const hasNull = answers.some((answer) => answer === null);
+                  if (hasNull) {
+                    Snackbar.show({
+                      text: 'Please provide all answers before submitting.',
+                      duration: Snackbar.LENGTH_SHORT,
+                      backgroundColor: 'red',
+                    });
+                    setAnswers(Array(4).fill(null));
+                    shuffleQuestions();
+                  }
+                  else{
+
+                    Snackbar.show({
+                      text: 'Incorrect Answers, please try again',
+                      duration: Snackbar.LENGTH_SHORT,
+                      backgroundColor:'red',
+                    });
+                    setAnswers(Array(4).fill(null));
+                    shuffleQuestions();
+                  }
           }
           }}
         >

@@ -65,16 +65,42 @@ const SendTokens = (props) => {
   const dispatch = useDispatch();
   const isFocused=useIsFocused();
   const [show,setshow]=useState(false);
+  const [lastScannedData, setLastScannedData] = useState(null);
   const navigation = useNavigation();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  
   const onBarCodeRead = (e) => {
-      alert("success","QR Code Decoded successfully..");
+    if (e.data && e.data !== lastScannedData) {
+      setLastScannedData(e.data); // Update the last scanned data
+      alert("success", "QR Code Decoded successfully..");
       setAddress("");
       setAddress(e.data);
-      toggleModal();
+      setModalVisible(false);
+  
+      if (!checkAddressValidity(e.data)) {
+        setAddress("");
+        Alert.alert("Address Info", "Invalid Address");
+      }
+    }
   };
 
+
+  const handleCameraStatus = (status) => {
+    if (status === "NOT_AUTHORIZED") {
+      setModalVisible(false);
+      Alert.alert(
+        "Camera Permissions Required.",
+        "Please enable camera permissions in settings to scan QR code.",
+        [
+          { text: "Close", style: "cancel" },
+          { text: "Open", onPress: () => Linking.openSettings() },
+        ]
+      );
+    }
+    // No need to explicitly toggle modal visibility on "READY"
+    // Let `toggleModal` or user actions handle visibility
+  };
   const getXrpBal = async (address) => {
     console.log(address);
 
@@ -278,7 +304,6 @@ const SendTokens = (props) => {
     if (address) {
       if (!valid) {
         setMessage("Please enter a valid address");
-        Alert.alert("Address Info","Invalid Address");
         setAddress("")
       } else {
         setMessage("");
@@ -339,6 +364,13 @@ const checkPermission = async () => {
   {
     
   }
+
+    // Reset lastScannedData when modal is closed
+    useEffect(() => {
+      if (!isModalVisible) {
+        setLastScannedData(null);
+      }
+    }, [isModalVisible]);
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
@@ -503,44 +535,27 @@ const checkPermission = async () => {
         visible={isModalVisible}
         onRequestClose={toggleModal}
       >
-         <RNCamera
-      ref={cameraRef}
-      style={style.preview}
-      onBarCodeRead={onBarCodeRead}
-      captureAudio={false}
-    >
-          {({ status }) => {
-            if (status==="NOT_AUTHORIZED") {
-              setModalVisible(false),
-              Alert.alert("Camera Permissions Required.","Please enable camera permissions in settings to scan QR code.",
-              [
-                {text:"Close",style:"cancel"},
-                {text:"Open",onPress:()=>{
-                    Linking.openSettings()
-                }},
-              ])
-            }
-            if (status === "READY" && isModalVisible)
-              {
-                setModalVisible(true)
-              }
-            return (
-              <>
-                <View style={style.header}>
-                  <TouchableOpacity onPress={() => { setModalVisible(false) }}>
-                    <Icon name="arrow-left" size={24} color="#fff" style={style.backIcon} />
-                  </TouchableOpacity>
-                  <Text style={[style.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
+          <RNCamera
+            ref={cameraRef}
+            style={style.preview}
+            onBarCodeRead={onBarCodeRead}
+            captureAudio={false}
+            onStatusChange={({ status }) => handleCameraStatus(status)} // Use onStatusChange
+          >
+            <>
+              <View style={style.header}>
+                <TouchableOpacity onPress={() => { setModalVisible(false); }}>
+                  <Icon name="arrow-left" size={24} color="#fff" style={style.backIcon} />
+                </TouchableOpacity>
+                <Text style={[style.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
+              </View>
+              <View style={style.rectangleContainer}>
+                <View style={style.rectangle}>
+                  <View style={style.innerRectangle} />
                 </View>
-                <View style={style.rectangleContainer}>
-                  <View style={style.rectangle}>
-                    <View style={style.innerRectangle} />
-                  </View>
-                </View>
-              </>
-            )
-          }}
-    </RNCamera>
+              </View>
+            </>
+          </RNCamera>
         {/* <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
           <View style={{ backgroundColor: '#145DA0', padding: 20, borderRadius: 10,width:"90%",height:"50%" }}>
             <Text style={{color:"white",fontWeight:"700",alignSelf:"center",fontSize:19}} onPress={()=>{

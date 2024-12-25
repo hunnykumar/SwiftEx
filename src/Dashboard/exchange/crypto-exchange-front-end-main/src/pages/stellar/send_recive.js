@@ -35,21 +35,39 @@ const send_recive = ({route}) => {
     const [recepi_address, setrecepi_address] = useState("");
     const [recepi_memo, setrecepi_memo] = useState("");
     const [recepi_amount, setrecepi_amount] = useState("");
-    const [qrData, setQrData] = useState('');
+    const [lastScannedData, setLastScannedData] = useState(null);
     const [Payment_loading,setPayment_loading]=useState(false);
     const [qrvalue, setqrvalue] = useState("");
     const [isModalVisible, setModalVisible] = useState(false);
-    const onBarCodeRead = (e) => {
-          alert("success","QR Code Decoded successfully..")
-          setrecepi_address("");
-          setrecepi_address(e.data);
-          toggleModal();
-          if(!validateStellarAddress(e.data))
-          {
-            setrecepi_address("");
-            Alert.alert("Address Info","Invalid Address");
-          }
-      };
+
+  const onBarCodeRead = (e) => {
+    if (e.data && e.data !== lastScannedData) {
+      setLastScannedData(e.data); // Update the last scanned data
+      alert("success", "QR Code Decoded successfully..");
+      setrecepi_address(e.data);
+      setModalVisible(false);
+  
+      if (!validateStellarAddress(e.data)) {
+        setrecepi_address("");
+        Alert.alert("Address Info", "Invalid Address");
+      }
+    }
+  };
+  const handleCameraStatus = (status) => {
+    if (status === "NOT_AUTHORIZED") {
+      setModalVisible(false);
+      Alert.alert(
+        "Camera Permissions Required.",
+        "Please enable camera permissions in settings to scan QR code.",
+        [
+          { text: "Close", style: "cancel" },
+          { text: "Open", onPress: () => Linking.openSettings() },
+        ]
+      );
+    }
+    // No need to explicitly toggle modal visibility on "READY"
+    // Let `toggleModal` or user actions handle visibility
+  };
     const toggleModal = () => {
         setModalVisible(!isModalVisible);
       };
@@ -103,7 +121,10 @@ const send_recive = ({route}) => {
         text: "Transaction successful!",
         duration: Snackbar.LENGTH_LONG,
         backgroundColor:'green', 
-    });
+      });
+      setrecepi_address('');
+      setrecepi_amount('');
+      setrecepi_memo('');
       setPayment_loading(false);
       try {
         const user_current = await state.user;
@@ -129,7 +150,10 @@ const send_recive = ({route}) => {
         text: "Transaction Failed",
         duration: Snackbar.LENGTH_LONG,
         backgroundColor:'red', 
-    });
+      });
+      setrecepi_address('');
+      setrecepi_amount('');
+      setrecepi_memo('');
       setPayment_loading(false);
     }
   }
@@ -171,7 +195,9 @@ const send_recive = ({route}) => {
             duration: Snackbar.LENGTH_LONG,
             backgroundColor:'red', 
         });
-          recepi_address('');
+          setrecepi_address('');
+          setrecepi_amount('');
+          setrecepi_memo('');
           setPayment_loading(false);
         }
       }
@@ -186,6 +212,13 @@ const send_recive = ({route}) => {
         get_data()
         setmode_selected("SED");
     }, [FOCUSED])
+
+  // Reset lastScannedData when modal is closed
+  useEffect(() => {
+    if (!isModalVisible) {
+      setLastScannedData(null);
+    }
+  }, [isModalVisible]);
     return (
         <>
      <Exchange_screen_header title="Transaction" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
@@ -250,43 +283,26 @@ const send_recive = ({route}) => {
         onRequestClose={toggleModal}
       >
          <RNCamera
-      ref={cameraRef}
-      style={styles.preview}
-      onBarCodeRead={onBarCodeRead}
-      captureAudio={false}
-    >
-          {({ status }) => {
-            if (status==="NOT_AUTHORIZED") {
-              setModalVisible(false),
-              Alert.alert("Camera Permissions Required.","Please enable camera permissions in settings to scan QR code.",
-              [
-                {text:"Close",style:"cancel"},
-                {text:"Open",onPress:()=>{
-                    Linking.openSettings()
-                }},
-              ])
-            }
-            if (status === "READY" && isModalVisible)
-              {
-                setModalVisible(true)
-              }
-            return (
-              <>
-                <View style={styles.header}>
-                  <TouchableOpacity onPress={() => { setModalVisible(false) }}>
-                    <Icon name="arrow-left" size={24} color="#fff" style={styles.backIcon} />
-                  </TouchableOpacity>
-                  <Text style={[styles.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
+            ref={cameraRef}
+            style={styles.preview}
+            onBarCodeRead={onBarCodeRead}
+            captureAudio={false}
+            onStatusChange={({ status }) => handleCameraStatus(status)} // Use onStatusChange
+          >
+            <>
+              <View style={styles.header}>
+                <TouchableOpacity onPress={() => { setModalVisible(false); }}>
+                  <Icon name="arrow-left" size={24} color="#fff" style={styles.backIcon} />
+                </TouchableOpacity>
+                <Text style={[styles.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
+              </View>
+              <View style={styles.rectangleContainer}>
+                <View style={styles.rectangle}>
+                  <View style={styles.innerRectangle} />
                 </View>
-                <View style={styles.rectangleContainer}>
-                  <View style={styles.rectangle}>
-                    <View style={styles.innerRectangle} />
-                  </View>
-                </View>
-              </>
-            )
-          }}
-    </RNCamera>
+              </View>
+            </>
+          </RNCamera>
     </Modal>
             </View>
         </>

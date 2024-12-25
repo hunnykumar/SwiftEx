@@ -137,13 +137,13 @@ const PrivateKey = (props) => {
         <View style={style.dotView}>
           <Icon name="dot-single" type={"entypo"} size={20} />
           <Text style={{ color: "black" }}>
-            Keep your Mnemonic in a safe place isolated from any network
+          Keep your mnemonic in a safe place, isolated from any network.
           </Text>
         </View>
         <View style={style.dotView1}>
           <Icon name="dot-single" type={"entypo"} size={20} />
           <Text style={style.welcomeText}>
-            Don't share such as email,photo,social apps,etc
+          Do not share it through email, photos, social media, apps, etc.
           </Text>
         </View>
 
@@ -288,7 +288,7 @@ const style = StyleSheet.create({
   dotView1: {
     flexDirection: "row",
     alignItems: "center",
-    width: wp(90),
+    width: wp(80),
     marginLeft: 18,
     marginTop: hp(2),
   },

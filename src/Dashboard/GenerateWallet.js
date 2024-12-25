@@ -206,10 +206,10 @@ const style = StyleSheet.create({
   txtStyle: {
     color: "white",
     textAlign: "center",
-    width: wp(58),
+    width: wp(70),
     textAlign: "left",
     fontSize: 15,
-    marginLeft:wp(4)
+    marginLeft:wp(2)
   },
   textview: {
     display: "flex",
