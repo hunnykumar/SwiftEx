@@ -13,7 +13,7 @@ import {
 } from "react-native";
 
 import { LinearGradient } from "react-native-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -28,6 +28,7 @@ import { useToast } from "native-base";
 import { Exchange_Login_screen } from "../../../../../reusables/ExchangeHeader";
 import darkBlue from "../../../../../../../assets/darkBlue.png";
 import Icon from "../../../../../../icon";
+import Snackbar from "react-native-snackbar";
 
 export const ExchangeRegister = (props) => {
   const toast=useToast();
@@ -55,56 +56,94 @@ export const ExchangeRegister = (props) => {
   const phoneInput = useRef(null);
 
   const navigation = useNavigation();
+  const FOCUSED=useIsFocused();
+
+useEffect(()=>{
+  setFormContent({
+    firstName: "",
+    lastName: "",
+    phoneNumber: email,
+    email: "",
+    accountAddress: "",
+    walletAddress: state.wallet ? state.wallet.address : "",
+    password: "",
+  })
+},[FOCUSED])
 
   const handleSubmit = async () => {
     setLoading(true);
-    const { err,res } = await signup({
-      ...formContent,
-      phoneNumber: `${formContent.email}`,
-    });
-    setLoading(false);
-    console.log(err)
-    console.log(err,res)
-    if (res.message === "Otp Send successfully") {
-      navigation.navigate("Exchange_otp", {
-        Email: res.token,
-        type:"new_res"
+    
+    try {
+      const { err, res } = await signup({
+        ...formContent,
+        phoneNumber: `${formContent.email}`,
+      });
+  
+      setLoading(false);
+      console.log(err);
+      console.log("----", err, res);
+  
+      if (res && res.message === "OTP sent successfully") {
+        navigation.navigate("Exchange_otp", {
+          Email: res.token,
+          type: "new_res",
+        });
+        return;
+      }
+  
+      if (err) {
+        handleErrorMessage(err);
+      }
+  
+    } catch (error) {
+      setLoading(false);
+      console.error('Error during signup:', error);
+      Snackbar.show({
+        text: "An unexpected error occurred.",
+        duration: Snackbar.LENGTH_SHORT,
+        backgroundColor: 'red',
       });
     }
-    if(err.message==="Otp not Send.")
-    {
-      ShowErrotoast(toast,"Something went wrong.");
-    }
-    if(err.message==="Email already registered")
-    {
-      ShowErrotoast(toast,"Email already registered");
-    }
-    if(err.message==="Wallet already registered")
-    {
-      ShowErrotoast(toast,"Wallet already registered");
-    }
-    if (Array.isArray(err.message) && err.message.includes("email must be an email")) {
-      ShowErrotoast(toast, "Email must be an email");
-    }
-    if (Array.isArray(err.message) && err.message.includes("lastName should not be empty")) {
-      ShowErrotoast(toast, "Last name should not be empty");
-    }
-    if (Array.isArray(err.message) && err.message.includes("firstName should not be empty")) {
-      ShowErrotoast(toast, "First name should not be empty");
-    }
-    
-    if (err) {
+  };
+  
+  const handleErrorMessage = (err) => {
+    if (err.message === "Otp not Send.") {
+      showSnackbar("Something went wrong.");
+    } else if (err.message === "Phone number already registered") {
+      showSnackbar("Email already registered.");
+    } else if (err.message === "Wallet already registered") {
+      showSnackbar("Wallet already registered.");
+    } else if (Array.isArray(err.message)) {
+      if (err.message.includes("email must be an email")) {
+        showSnackbar("Email must be a valid email.");
+      } else if (err.message.includes("lastName should not be empty")) {
+        showSnackbar("Last name should not be empty.");
+      } else if (err.message.includes("firstName should not be empty")) {
+        showSnackbar("First name should not be empty.");
+      }
+    } else {
       setShowMessage(true);
-      return setMessage(err.message);
+      setMessage(err.message);
     }
   };
+  
+  const showSnackbar = (message) => {
+    Snackbar.show({
+      text: message,
+      duration: Snackbar.LENGTH_SHORT,
+      backgroundColor: 'red',
+    });
+  };
+  
 
   const onChangename = (input) => {
-    const formattedInput = input.replace(/\s/g, '');
+    const formattedInput = input.replace(/\s/g, '')
+    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
     setFormContent({ ...formContent, firstName: formattedInput })
   };
   const onChangelast = (input) => {
-    const formattedInput = input.replace(/\s/g, '');
+    const formattedInput = input.replace(/\s/g, '')
+    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
     setFormContent({ ...formContent, lastName: formattedInput })
   };
   const onChangelmail = (input) => {

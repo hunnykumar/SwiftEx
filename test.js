@@ -77,7 +77,7 @@ const [info_price,setinfo_price]=useState(false);
 const [info_,setinfo_]=useState(false);
 const getAccountDetails = async () => {
     try {
-      const { res, err } = await authRequest("/users/getUserDetails", GET);
+      const { res, err } = await authRequest("/users/:id", GET);
       // console.log("_+++++++",res.email)
       setemail(res.email);
       if (err) return setMessage(` ${err.message} please log in again!`);

@@ -69,7 +69,7 @@ useEffect(()=>{
 },[])
   const for_trading = async () => {
     try {
-        const { res, err } = await authRequest("/users/getUserDetails", GET);
+        const { res, err } = await authRequest("/users/:id", GET);
         setProfile(res);
         await getOffersData()
     } catch (err) {

@@ -59,7 +59,7 @@ export const TxDetail = (props) => {
   }, []);
   return (
     <>
-    <Wallet_screen_header title="Transactions Detail" onLeftIconPress={() => navi.goBack()} />
+    <Wallet_screen_header title="Transaction Details" onLeftIconPress={() => navi.goBack()} />
     <View style={styles.container}>
       <WebView
         source={{

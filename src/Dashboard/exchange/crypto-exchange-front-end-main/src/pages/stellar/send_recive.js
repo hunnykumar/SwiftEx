@@ -40,13 +40,15 @@ const send_recive = ({route}) => {
     const [qrvalue, setqrvalue] = useState("");
     const [isModalVisible, setModalVisible] = useState(false);
     const onBarCodeRead = (e) => {
-        if (e.data !== qrData) { 
-          setQrData(e.data);
           alert("success","QR Code Decoded successfully..")
           setrecepi_address("");
           setrecepi_address(e.data);
           toggleModal();
-        }
+          if(!validateStellarAddress(e.data))
+          {
+            setrecepi_address("");
+            Alert.alert("Address Info","Invalid Address");
+          }
       };
     const toggleModal = () => {
         setModalVisible(!isModalVisible);
@@ -241,72 +243,51 @@ const send_recive = ({route}) => {
                             </Text>
                         </View>
                 }
-            <Modal
+           <Modal
         animationType="slide"
         transparent={true}
         visible={isModalVisible}
         onRequestClose={toggleModal}
       >
-        {/* <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <View style={{ backgroundColor: '#145DA0', padding: 20, borderRadius: 10,width:"90%",height:"50%" }}>
-            <Text style={{color:"white",fontWeight:"700",alignSelf:"center",fontSize:19}} onPress={()=>{
-              toggleModal();
-            }}>Scan QR.</Text>
-              <View style={styles.QR_scan_con}>
-                <RNCamera
-                  ref={cameraRef}
-                  style={styles.preview}
-                  onBarCodeRead={onBarCodeRead}
-                  captureAudio={false}
-                >
-                  <View style={styles.rectangleContainer}>
-                    <View style={styles.rectangle} />
-                  </View>
-                </RNCamera>
-              </View>
-          </View>
-        </View> */}
-       <RNCamera
+         <RNCamera
       ref={cameraRef}
       style={styles.preview}
       onBarCodeRead={onBarCodeRead}
       captureAudio={false}
-    >{({ status }) => {
-        console.log("****----",status)
-        if (status==="NOT_AUTHORIZED")
-        {
-          setModalVisible(false),
-          Alert.alert("Camera Permissions Required.","Please enable camera permissions in settings to scan QR code.",
-          [
-            {text:"Close",style:"cancel"},
-            {text:"Open",onPress:()=>{
-                Linking.openSettings()
-            }},
-          ])
-        }
-        if(status==="READY")
-        {
-            setModalVisible(true)
-        }
-        return (
-         <>
-         <View style={styles.header}>
-            <TouchableOpacity onPress={()=>{setModalVisible(false)}}>
-      <Icon name="arrow-left" size={24} color="#fff" style={styles.backIcon}/>
-            </TouchableOpacity>
-      <Text style={[styles.title,{marginTop:Platform.OS==="ios"?hp(5):0}]}>Scan QR Code</Text>
-    </View>
-      <View style={styles.rectangleContainer}>
-        <View style={styles.rectangle}>
-          <View style={styles.innerRectangle} />
-        </View>
-      </View>
-         </>
-          )
-        }}
+    >
+          {({ status }) => {
+            if (status==="NOT_AUTHORIZED") {
+              setModalVisible(false),
+              Alert.alert("Camera Permissions Required.","Please enable camera permissions in settings to scan QR code.",
+              [
+                {text:"Close",style:"cancel"},
+                {text:"Open",onPress:()=>{
+                    Linking.openSettings()
+                }},
+              ])
+            }
+            if (status === "READY" && isModalVisible)
+              {
+                setModalVisible(true)
+              }
+            return (
+              <>
+                <View style={styles.header}>
+                  <TouchableOpacity onPress={() => { setModalVisible(false) }}>
+                    <Icon name="arrow-left" size={24} color="#fff" style={styles.backIcon} />
+                  </TouchableOpacity>
+                  <Text style={[styles.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
+                </View>
+                <View style={styles.rectangleContainer}>
+                  <View style={styles.rectangle}>
+                    <View style={styles.innerRectangle} />
+                  </View>
+                </View>
+              </>
+            )
+          }}
     </RNCamera>
-        
-      </Modal>
+    </Modal>
             </View>
         </>
     )

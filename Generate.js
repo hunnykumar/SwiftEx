@@ -15,13 +15,15 @@ import { useNavigation } from "@react-navigation/native";
 
 export default function Generate() {
   const [url, setUrl] = useState("https://www.moonpay.com/buy");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const state = useSelector((state) => state);
   const navigation=useNavigation();
   return (
-    <View style={[styles.container,{backgroundColor:state.THEME.THEME===false?"black":"#fff"}]}>
+    <View style={[styles.container,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
       <Wallet_screen_header title="Buy" onLeftIconPress={() => navigation.goBack()} />
-      {loading&&<ActivityIndicator size="large" color={"blue"} />}
+      {loading&&<View style={{justifyContent:"center",alignSelf:"center",height:"100%",width:"100%"}}>
+        <ActivityIndicator size="large" color={"green"} />
+      </View>}
        <WebView
        source={{ uri: url }}
        onLoad={() => setLoading(true)}

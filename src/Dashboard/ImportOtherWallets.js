@@ -106,6 +106,13 @@ const ImportOtherWallets = (props) => {
     }
   }, [mnemonic, privateKey, json]);
 
+  const handleUsernameChange = (text) => {
+    // Remove whitespace from the username
+    const formattedUsername = text.replace(/\s/g, '')
+    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
+    setAccountName(formattedUsername);
+  };
+
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
@@ -177,10 +184,10 @@ const ImportOtherWallets = (props) => {
           <TextInput
             value={accountName}
             onChangeText={(text) => {
-              setAccountName(text);
+              handleUsernameChange(text);
             }}
             style={{ width: wp("78%"),color:"black" }}
-            placeholder={accountName?accountName: "Wallet 1"}
+            placeholder={accountName?accountName: "Wallet"}
             placeholderTextColor={"gray"}
           />
         </View>

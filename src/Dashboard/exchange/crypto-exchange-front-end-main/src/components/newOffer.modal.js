@@ -106,7 +106,7 @@ const getAccountDetails = async () => {
       console.log('Retrieved data:', matchedData);
       const publicKey = matchedData[0].publicKey;
     try {
-      const { res, err } = await authRequest("/users/getUserDetails", GET);
+      const { res, err } = await authRequest("/users/:id", GET);
       // console.log("_+++++++",res.email)
       setPostData({
         email: res.email,
@@ -591,7 +591,7 @@ const change_Trust_New = async () => {
       })
           .addOperation(
               StellarSdk.Operation.changeTrust({
-                  asset: new StellarSdk.Asset("USDC", "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"),
+                  asset: new StellarSdk.Asset("USDC", "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"),
               })
           )
           .setTimeout(30)
@@ -621,7 +621,7 @@ const change_Trust_New = async () => {
               console.log('Error loading account:', error);
               setloading_trust_modal(false)
               Snackbar.show({
-                  text: 'USDC faild to added',
+                  text: 'USDC failed to be added',
                   duration: Snackbar.LENGTH_SHORT,
                   backgroundColor:'red',
               });
@@ -630,7 +630,7 @@ const change_Trust_New = async () => {
       console.error(`Error changing trust:`, error);
       setloading_trust_modal(false)
       Snackbar.show({
-          text: 'USDC faild to added',
+          text: 'USDC failed to be added',
           duration: Snackbar.LENGTH_SHORT,
           backgroundColor:'red',
       });

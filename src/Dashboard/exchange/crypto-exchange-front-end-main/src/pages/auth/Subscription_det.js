@@ -47,7 +47,7 @@ export default function Subscription_det({ route }) {
           Early Access to New Features: Be the first to try out upcoming features and updates before anyone else{'\n\n'}
         </Text>
       </View>
-        <Text style={styles.btom_txt}>Terms And Conditions / Privacy Police</Text>
+        <Text style={styles.btom_txt}>Terms And Conditions / Privacy Policy</Text>
     </View>
   )
 }

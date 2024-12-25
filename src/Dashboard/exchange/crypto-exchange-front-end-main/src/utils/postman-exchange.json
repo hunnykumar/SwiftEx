@@ -79,7 +79,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{server}}/users/getUserDetails",
+							"raw": "{{server}}/users/:id",
 							"host": [
 								"{{server}}"
 							],

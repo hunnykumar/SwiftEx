@@ -98,7 +98,7 @@ const Assets_manage = () => {
             })
                 .addOperation(
                     StellarSdk.Operation.changeTrust({
-                        asset: new StellarSdk.Asset("USDC", "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"),
+                        asset: new StellarSdk.Asset("USDC", "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"),
                     })
                 )
                 .setTimeout(30)
@@ -127,7 +127,7 @@ const Assets_manage = () => {
                     console.log('Error loading account:', error);
                     setLoading(false)
                     Snackbar.show({
-                        text: 'USDC faild to added',
+                        text: 'USDC failed to be added',
                         duration: Snackbar.LENGTH_SHORT,
                         backgroundColor:'red',
                     });
@@ -136,7 +136,7 @@ const Assets_manage = () => {
             console.error(`Error changing trust:`, error);
             setLoading(false)
             Snackbar.show({
-                text: 'USDC faild to added',
+                text: 'USDC failed to be added',
                 duration: Snackbar.LENGTH_SHORT,
                 backgroundColor:'red',
             });

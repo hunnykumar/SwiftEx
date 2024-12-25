@@ -8,6 +8,7 @@ import { getAuth, verifyLoginOtp } from "../../api";
 import { REACT_APP_HOST } from "../../ExchangeConstants";
 import { useEffect, useState } from "react";
 import { ShowErrotoast } from "../../../../../reusables/Toasts";
+import Snackbar from "react-native-snackbar";
 
 const Exchange_otp = (props) => {
     const navigation = useNavigation();
@@ -28,11 +29,15 @@ const Exchange_otp = (props) => {
         try {
             setLoading(true);
           if (!otp) {
-            setTimeout(()=>{
+
             setLoading(false);
-              ShowErrotoast(toast,"OTP is required");
-            },400)
-          }
+              Snackbar.show({
+                text: "Otp required.",
+                duration: Snackbar.LENGTH_SHORT,
+                backgroundColor: 'red',
+              });
+          }else{
+
           console.log("--",props.route.params.Email)
           const myHeaders = new Headers();
             myHeaders.append("Content-Type", "application/json");
@@ -62,14 +67,16 @@ const Exchange_otp = (props) => {
                             },400)
                             setOtp(null);
                         }
-                })
-                .catch((error) => console.error(error));
+                    })
+                    .catch((error) => console.error(error));
+                }
         } catch (err) {
             setLoading(false);
             console.log("---",err)
         } finally {
           setLoading(false);
         }
+
       };
       
     return (

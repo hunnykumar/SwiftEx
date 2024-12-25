@@ -219,7 +219,7 @@ const Asset_info = ({ route }) => {
     }
     const for_trading = async () => {
         try {
-            const { res, err } = await authRequest("/users/getUserDetails", GET);
+            const { res, err } = await authRequest("/users/:id", GET);
             if (err) return [navigation.navigate("exchangeLogin")];
             setProfile(res);
             await getOffersData()

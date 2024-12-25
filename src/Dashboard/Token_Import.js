@@ -172,7 +172,9 @@ import { useFocusEffect } from '@react-navigation/native';
         Alert.alert("Info","Token Adding completed.")
         setIsLoading(false);
       } catch (error) {
-        Alert.alert('Error', 'Failed to fetch token information. Please check the address.');
+        Alert.alert('Error', 'Please check the token address.');
+        setNewTokenAddress('');
+        setIsLoading(false);
       } finally {
         setIsLoading(false);
       }
@@ -192,6 +194,7 @@ import { useFocusEffect } from '@react-navigation/native';
     useFocusEffect(
       useCallback(() => {
         setShowTokenList(false);
+        setNewTokenAddress("");
         return () => setShowTokenList(false);
       }, [])
     );

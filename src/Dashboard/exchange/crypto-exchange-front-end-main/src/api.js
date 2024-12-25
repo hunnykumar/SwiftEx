@@ -129,7 +129,7 @@ export const authRequest = async (url, request, body = {}) => {
       url,
       body: body,
       headers: {
-        authorization: await getToken(),
+        authorization:"Bearer "+await getToken(),
       },
     }
 

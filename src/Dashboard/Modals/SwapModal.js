@@ -66,6 +66,7 @@ import { SwapTokensToTokens, UniSwap } from "../tokens/UniswapFunctions";
 import { useBiometricsForSwapTransaction } from "../../biometrics/biometric";
 import { alert } from "../reusables/Toasts";
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
+import Snackbar from "react-native-snackbar";
 
 const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
   const FOCUSED=useIsFocused()
@@ -1025,10 +1026,17 @@ fetchData();
     if (amount != 0) {
       console.log(amount > balance);
       if (amount > balance) {
+        Keyboard.dismiss();
         setDisable(true);
         setMessage("Low Balance");
-        alert("error", "Low Balance");
+        Snackbar.show({
+          text: "Low Balance",
+          duration: Snackbar.LENGTH_SHORT,
+          backgroundColor: 'red',
+        });
+        setLoading2(false)
       } else if (!inputValidation && !inputValidation1) {
+        setLoading2(false)
         setMessage("Please enter a valid amount");
         alert("error", "Please enter a valid amount");
       } else {
@@ -1944,12 +1952,7 @@ fetchData();
               }
             }}
           >
-            <Text style={styles.addButtonText}>
-              {loading2 ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                "Swap"
-              )}
+            <Text style={styles.addButtonText}>Swap
             </Text>
           </TouchableOpacity>
         </View>

@@ -64,13 +64,18 @@ const SendXLM = (props) => {
     };
 
     const onBarCodeRead = (e) => {
-        if (e.data !== qrData) {
-            setQrData(e.data);
+        // if (e.data !== qrData) {
+            // setQrData(e.data);
             alert("success","QR Code Decoded successfully..");
             setAddress("");
             setAddress(e.data);
             toggleModal();
-        }
+            if(!validateStellarAddress(e.data))
+            {
+              setAddress("");
+              Alert.alert("Address Info","Invalid Address");
+            }
+        // }
     };
 
     useEffect(() => {
@@ -307,6 +312,7 @@ const SendXLM = (props) => {
                     <TextInput
                         value={amount}
                         keyboardType="numeric"
+                        returnKeyType="done"
                         onChangeText={(input) => {
                             console.log(input);
                             setAmount(input);
@@ -348,6 +354,7 @@ const SendXLM = (props) => {
                         disabled={disable}
                         style={[style.btnView,{backgroundColor:disable?"gray":"#3574B6"}]}
                         onPress={() => {
+                            Keyboard.dismiss()
                             setPayment_loading(true);
                            if(!address||!amount)
                            {
@@ -452,7 +459,7 @@ const SendXLM = (props) => {
                 color={"orange"}
               />
               <Text style={style.AccounheadingContainer}>{token ?" ":"Login to "}Activate Stellar Wallet</Text>
-              <View style={{ flexDirection: "row",justifyContent:"space-around",width:wp(80),marginTop:hp(3),alignItems:"center" }}>
+              <View style={{ flexDirection: "row",justifyContent:"space-around",width:wp(90),marginTop:hp(3),alignItems:"center" }}>
                 <TouchableOpacity style={style.AccounbtnContainer} onPress={() => {setACTIVATION_MODAL(false),navigation.goBack()}}>
                    <Text style={style.Accounbtntext}>Cancel</Text>
                 </TouchableOpacity>
@@ -583,12 +590,12 @@ const style = StyleSheet.create({
         padding: 20,
         borderRadius: 10,
         alignItems: 'center',
-        width: "90%",
+        width: "98%",
         height: "29%",
         justifyContent: "center"
       },
       AccounbtnContainer:{
-        width:wp(35),
+        width:wp(39),
         height:hp(5),
         backgroundColor:"rgba(33, 43, 83, 1)",
         alignItems:"center",

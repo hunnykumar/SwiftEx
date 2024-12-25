@@ -5,9 +5,11 @@ import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import darkBlue from "../../../../../../../assets/darkBlue.png";
 import { getAuth, saveToken } from "../../api";
-import { REACT_APP_HOST } from "../../ExchangeConstants";
+import { REACT_APP_HOST, REACT_APP_LOCAL_TOKEN } from "../../ExchangeConstants";
 import { useEffect, useState } from "react";
 import { ShowErrotoast, Showsuccesstoast } from "../../../../../reusables/Toasts";
+import Snackbar from "react-native-snackbar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Setup_password = (props) => {
     const navigation = useNavigation();
@@ -30,7 +32,8 @@ const Setup_password = (props) => {
     };
     const saveTokeninLocal=async(token_data)=>{
         console.log("-0987654321234567890------",token_data)
-        await saveToken(token_data);
+        await AsyncStorage.setItem(REACT_APP_LOCAL_TOKEN, token_data) 
+        // await saveToken(token_data);
     }
     const submitpasscode = async () => {
       try {
@@ -65,31 +68,42 @@ const Setup_password = (props) => {
                 fetch(REACT_APP_HOST + "/users/updatePasscode", requestOptions)
                     .then((response) => response.json())
                     .then((result) => {
-                        console.log(result);
+                        console.log("===>>>>>==",result);
                         setLoading(false);
                         if (result.success === true) {
                             setpasscode("");
                             setcon_passcode("");
                             setTimeout(() => {
-                                Showsuccesstoast(toast, "Choose a subscription and hold for more information.");
+                                Showsuccesstoast(toast, "Welcome to exchange.");
                             }, 400)
                             if(props?.route?.params?.type==="new_res")
                             {
-                               saveTokeninLocal(props.route.params.Email)
+                            //    saveTokeninLocal(props.route.params.Email)
+                            saveTokeninLocal(result.token)
                                 // navigation.navigate("Subscription",{auth_token:props.route.params.Email});
                             navigation.navigate("exchange");
 
                             }
                             if(props?.route?.params?.type==="old_res")
                             {
-                               saveTokeninLocal(props.route.params.Email)
+                            saveTokeninLocal(result.token)
+                            //    saveTokeninLocal(props.route.params.Email)
                                 navigation.navigate("exchange");
                             }
                         } else {
                             setpasscode("");
                             setcon_passcode("");
                             setTimeout(() => {
-                                ShowErrotoast(toast, "Something went worng.");
+                                if (Array.isArray(result?.message)) {
+                                        Snackbar.show({
+                                            text: "Please ensure your password follow correct format",
+                                            duration: Snackbar.LENGTH_SHORT,
+                                            backgroundColor: 'red',
+                                          });
+                                }else
+                                {
+                                    ShowErrotoast(toast, "Something went worng.");
+                                }
                             }, 400)
                         }
                     })
@@ -145,7 +159,7 @@ const Setup_password = (props) => {
                     autoCapitalize="none"
                     keyboardType="default"
                 />
-                {passcode.length < 8 || con_passcode.length < 8 ? <Text style={{ color: "#B51E14", marginTop: 6 }}>Your password must be at least 8 characters long.</Text> : <></>}
+                {passcode.length < 8 || con_passcode.length < 8 ? <Text style={{ color: "#B51E14", marginTop: 6 }}>Your password must be at least 8 characters long and must not contain any emojis.</Text> : <></>}
             </View>
 
             {Loading ? (

@@ -128,6 +128,7 @@ const NewWalletPrivateKey = ({
   console.log("My mnemonic", mnemonic);
 
   useEffect(() => {
+    setAccountName("")
     const fetch_wallet=async()=>{
       try {
         console.log(Wallet);
@@ -155,7 +156,12 @@ const NewWalletPrivateKey = ({
       </TouchableOpacity>
     );
   };
-
+  const handleUsernameChange = (text) => {
+    // Remove whitespace from the username
+    const formattedUsername = text.replace(/\s/g, '')
+    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
+    setAccountName(formattedUsername);
+  };
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
@@ -228,8 +234,9 @@ const NewWalletPrivateKey = ({
             <Text style={[style.label,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>Account Name</Text>
             <TextInput
               value={accountName}
+              returnKeyType="done"
               onChangeText={(text) => {
-                setAccountName(text);
+                handleUsernameChange(text)
               }}
               style={{ width: wp("78%"),color:"black" }}
               placeholder={user ? user : "Enter your account name"}

@@ -26,6 +26,7 @@ import { useNavigation } from "@react-navigation/native";
 import ModalHeader from "../reusables/ModalHeader";
 import { alert } from "../reusables/Toasts";
 import Icon from "../../icon";
+import Snackbar from "react-native-snackbar";
 const CheckNewWalletMnemonic = ({
   Wallet,
   Visible,
@@ -238,11 +239,11 @@ const CheckNewWalletMnemonic = ({
           ))}
       
 
-          {loading ? (
+          {loading ?
+            <View style={[style.ButtonView,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
             <ActivityIndicator size="large" color="green" />
-          ) : (
-            <Text> </Text>
-          )}
+            </View>
+         :
           <View
             style={{
               display: "flex",
@@ -340,7 +341,11 @@ const CheckNewWalletMnemonic = ({
                     alert("error", "Failed to import wallet. Please try again");
                   }
                 } else {
-                  alert("error","Incorrect Answers, please try again");
+                  Snackbar.show({
+                    text: 'Incorrect Answers, please try again',
+                    duration: Snackbar.LENGTH_SHORT,
+                    backgroundColor:'red',
+                });
                   setAnswers(Array(4).fill(null));
                   shuffleQuestions();
                 }
@@ -349,6 +354,7 @@ const CheckNewWalletMnemonic = ({
               <Text style={{ color: "white" }}>Import</Text>
             </TouchableOpacity>
           </View>
+          }
         </View>
       </Modal>
     </Animated.View>

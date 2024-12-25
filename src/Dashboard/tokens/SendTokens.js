@@ -69,13 +69,10 @@ const SendTokens = (props) => {
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const onBarCodeRead = (e) => {
-    if (e.data !== qrData) { 
-      setQrData(e.data);
       alert("success","QR Code Decoded successfully..");
       setAddress("");
       setAddress(e.data);
       toggleModal();
-    }
   };
 
   const getXrpBal = async (address) => {
@@ -281,6 +278,8 @@ const SendTokens = (props) => {
     if (address) {
       if (!valid) {
         setMessage("Please enter a valid address");
+        Alert.alert("Address Info","Invalid Address");
+        setAddress("")
       } else {
         setMessage("");
       }
@@ -389,6 +388,7 @@ const checkPermission = async () => {
           <TextInput
             value={amount}
             keyboardType="numeric"
+            returnKeyType="done"
             onChangeText={(input) => {
               if (amount && address) {
                 setDisable(false);

@@ -419,8 +419,9 @@ export const ProfileView = (props) => {
   const fetchProfileData = async () => {
     try {
       setLoad(true)
-      const { res, err } = await authRequest("/users/getUserDetails", GET);
-      if (err) return [setLoad(true),navigation.navigate("exchangeLogin"),setMessage(`${err.status}: ${err.message}`)];
+      const { res, err } = await authRequest("/users/:id", GET);
+      console.log("----ATAEWWW---",err,res)
+      if (err) return [setLoad(true),setMessage(`${err.status}: ${err.message}`)];
       setProfile(res);
       setLoad(false)
     } catch (err) {

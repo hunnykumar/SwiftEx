@@ -82,7 +82,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
         }}
       >
         <View style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
-          <TouchableOpacity disabled={loading} onPress={onCrossPress}>
+          <TouchableOpacity disabled={loading} onPress={()=>{onCrossPress(),setCheckBox2(false),setCheckBox(false)}}>
           <Icon type={'entypo'} name='cross' size={29} color={"white"} style={style.crossIcon} />
           </TouchableOpacity>
           <View style={{alignSelf:"center",alignItems:"center"}}>
@@ -116,7 +116,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
             onPress={() => setCheckBox(!Checked)}
             />
             <View style={{ marginLeft: 10 }}>
-            <Text style={style.welcomeText2}>
+            <Text style={[style.welcomeText2,{marginTop: hp(0)}]}>
               If I loose my private key, my funds will be lost
             </Text>
               {/* <Switch
@@ -171,6 +171,8 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
                         console.log(response.wallet);
                         const wallet = response.wallet;
                         setWallet(wallet);
+                        setCheckBox2(false)
+                        setCheckBox(false)
                         setNewWalletPrivateKey(true);
                       } else {
                         setLoading(false);
