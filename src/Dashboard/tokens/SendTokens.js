@@ -45,6 +45,7 @@ import { WalletHeader } from "../header";
 import { NavigationActions } from "react-navigation";
 import darkBlue from "../../../assets/darkBlue.png"
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
+import ErrorComponet from "../../utilities/ErrorComponet";
 var ethers = require("ethers");
 const xrpl = require("xrpl");
 //'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1644979850'
@@ -66,6 +67,7 @@ const SendTokens = (props) => {
   const isFocused=useIsFocused();
   const [show,setshow]=useState(false);
   const [lastScannedData, setLastScannedData] = useState(null);
+  const [ErroVisible,setErroVisible]=useState(false);
   const navigation = useNavigation();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -80,7 +82,7 @@ const SendTokens = (props) => {
   
       if (!checkAddressValidity(e.data)) {
         setAddress("");
-        Alert.alert("Address Info", "Invalid Address");
+        setErroVisible(true)
       }
     }
   };
@@ -241,6 +243,7 @@ const SendTokens = (props) => {
   useEffect(() => {
     const new_data=async()=>{
       try {
+          setErroVisible(false)
           console.log(props?.route?.params?.token);
           const Type = await AsyncStorageLib.getItem("walletType");
           setWallettype(JSON.parse(Type));
@@ -376,7 +379,11 @@ const checkPermission = async () => {
       style={{ opacity: fadeAnim }}
     >
     <Wallet_screen_header title="Send" onLeftIconPress={() => navigation.goBack()} />
-      {/* <WalletHeader title={props.route.params.token}/> */}
+    <ErrorComponet
+          isVisible={ErroVisible}
+          onClose={() => setErroVisible(false)}
+          message="The scanned QR code contains an invalid public key. Please make sure you're scanning the correct QR code and try again."
+        />
       <View style={{ backgroundColor:state.THEME.THEME===false?"#fff":"black", height: hp(100) }}>
         <View style={style.inputView}>
           <TextInput

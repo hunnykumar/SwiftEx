@@ -36,6 +36,7 @@ import { REACT_APP_LOCAL_TOKEN } from "../exchange/crypto-exchange-front-end-mai
 import { useToast } from "native-base";
 import { STELLAR_URL } from "../constants";
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
+import ErrorComponet from "../../utilities/ErrorComponet";
 const StellarSdK = require('stellar-base');
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
@@ -60,6 +61,7 @@ const SendXLM = (props) => {
     const [isModalVisible, setModalVisible] = useState(false);
     const [token, settoken] = useState("");
     const [lastScannedData, setLastScannedData] = useState(null);
+    const [ErroVisible,setErroVisible]=useState(false);
     const toggleModal = () => {
         checkPermission();
     };
@@ -74,7 +76,7 @@ const SendXLM = (props) => {
     
         if (!validateStellarAddress(e.data)) {
           setAddress("");
-          Alert.alert("Address Info", "Invalid Address");
+          setErroVisible(true)
         }
       }
     };
@@ -97,6 +99,7 @@ const SendXLM = (props) => {
     useEffect(() => {
     const insilize=async()=>{
       try {
+        setErroVisible(false)
         const token_1 = await AsyncStorageLib.getItem(REACT_APP_LOCAL_TOKEN);
         settoken(token_1)
         setACTIVATION_MODAL(false)
@@ -300,7 +303,11 @@ useEffect(() => {
     return (
         <>
           <Wallet_screen_header title="Send" onLeftIconPress={() => navigation.goBack()} />
-
+        <ErrorComponet
+          isVisible={ErroVisible}
+          onClose={() => setErroVisible(false)}
+          message="The scanned QR code contains an invalid public key. Please make sure you're scanning the correct QR code and try again."
+        />
             <View style={{ backgroundColor: state.THEME.THEME===false?"#fff":"black", height: hp(100) }}>
                 <View style={style.inputView}>
                     <TextInput

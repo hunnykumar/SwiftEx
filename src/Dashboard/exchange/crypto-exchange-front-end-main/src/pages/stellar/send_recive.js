@@ -19,6 +19,7 @@ import { alert } from "../../../../../reusables/Toasts";
 import { STELLAR_URL } from "../../../../../constants";
 import { SaveTransaction } from "../../../../../../utilities/utilities";
 import Snackbar from "react-native-snackbar";
+import ErrorComponet from "../../../../../../utilities/ErrorComponet";
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
 
@@ -39,6 +40,8 @@ const send_recive = ({route}) => {
     const [Payment_loading,setPayment_loading]=useState(false);
     const [qrvalue, setqrvalue] = useState("");
     const [isModalVisible, setModalVisible] = useState(false);
+    const [ErroVisible,setErroVisible]=useState(false);
+
 
   const onBarCodeRead = (e) => {
     if (e.data && e.data !== lastScannedData) {
@@ -49,7 +52,7 @@ const send_recive = ({route}) => {
   
       if (!validateStellarAddress(e.data)) {
         setrecepi_address("");
-        Alert.alert("Address Info", "Invalid Address");
+        setErroVisible(true)
       }
     }
   };
@@ -208,6 +211,7 @@ const send_recive = ({route}) => {
   }
 
     useEffect(() => {
+        setErroVisible(false)
         setPayment_loading(false)
         get_data()
         setmode_selected("SED");
@@ -222,7 +226,11 @@ const send_recive = ({route}) => {
     return (
         <>
      <Exchange_screen_header title="Transaction" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
-
+     <ErrorComponet
+          isVisible={ErroVisible}
+          onClose={() => setErroVisible(false)}
+          message="The scanned QR code contains an invalid public key. Please make sure you're scanning the correct QR code and try again."
+        />
             <View style={styles.main_con}>
                 <View style={styles.mode_con}>
                     <TouchableOpacity style={[styles.mode_sele, { backgroundColor: mode_selected === "SED" ? "green" : "#011434" }]} onPress={() => { setmode_selected("SED") }}>
