@@ -62,7 +62,7 @@ export const NewOfferModal = () => {
   const [Balance, setbalance] = useState('');
   const [offer_amount, setoffer_amount] = useState('');
   const [offer_price, setoffer_price] = useState('');
-  const [AssetIssuerPublicKey, setAssetIssuerPublicKey] = useState("GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN");
+  const [AssetIssuerPublicKey, setAssetIssuerPublicKey] = useState("GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID");
   const [route, setRoute] = useState("SELL");
   const [Loading, setLoading] = useState(false);
   const [open_offer, setopen_offer] = useState(false);
