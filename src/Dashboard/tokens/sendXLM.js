@@ -37,6 +37,8 @@ import { useToast } from "native-base";
 import { STELLAR_URL } from "../constants";
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 import ErrorComponet from "../../utilities/ErrorComponet";
+import { GetStellarAvilabelBalance } from "../../utilities/StellarUtils";
+import StellarAccountReserve from "../exchange/crypto-exchange-front-end-main/src/utils/StellarReserveComponent";
 const StellarSdK = require('stellar-base');
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
@@ -48,6 +50,7 @@ const SendXLM = (props) => {
     const [amount, setAmount] = useState();
     const [Loading, setLoading] = useState(false);
     const [balance, setBalance] = useState();
+    const [reservedBalance, setreservedBalance] = useState();
     const [steller_key, setsteller_key] = useState();
     const [steller_key_private, setsteller_key_private] = useState();
     const [disable, setdisable] = useState(false);
@@ -62,19 +65,23 @@ const SendXLM = (props) => {
     const [token, settoken] = useState("");
     const [lastScannedData, setLastScannedData] = useState(null);
     const [ErroVisible,setErroVisible]=useState(false);
+    const [reservedError, setreservedError] = useState(false);
     const toggleModal = () => {
         checkPermission();
     };
 
     const onBarCodeRead = (e) => {
-      if (e.data && e.data !== lastScannedData) {
-        setLastScannedData(e.data); // Update the last scanned data
+      if (e?.data && e?.data !== lastScannedData) {
+        setLastScannedData(e?.data); // Update the last scanned data
+        setErroVisible(false)
         alert("success", "QR Code Decoded successfully..");
         setAddress("");
-        setAddress(e.data);
+        setAddress(e?.data);
         setModalVisible(false);
     
-        if (!validateStellarAddress(e.data)) {
+        if (!validateStellarAddress(e?.data)) {
+        setModalVisible(false);
+          setErroVisible(false)
           setAddress("");
           setErroVisible(true)
         }
@@ -89,7 +96,7 @@ const SendXLM = (props) => {
           "Please enable camera permissions in settings to scan QR code.",
           [
             { text: "Close", style: "cancel" },
-            { text: "Open", onPress: () => Linking.openSettings() },
+            { text: "Open", onPress: () => Linking?.openSettings() },
           ]
         );
       }
@@ -99,6 +106,7 @@ const SendXLM = (props) => {
     useEffect(() => {
     const insilize=async()=>{
       try {
+        setreservedError(false)
         setErroVisible(false)
         const token_1 = await AsyncStorageLib.getItem(REACT_APP_LOCAL_TOKEN);
         settoken(token_1)
@@ -171,11 +179,19 @@ const SendXLM = (props) => {
             .then(account => {
                 account.balances.forEach(balance => {
                     if (balance.asset_type === "native") {
-                        console.log(`${balance.asset_code}: ${balance.balance}`);
-                        setBalance(balance.balance)
+                      GetStellarAvilabelBalance(steller_key).then((result) => {
+                        setBalance(result?.availableBalance)
+                        setreservedBalance(result?.totalReserved)
+                        setLoading(false);
+                        }).catch(error => {
+                          console.log('Error loading account:', error);
+                          setLoading(false);
+                      });
+                        // console.log(`${balance.asset_code}: ${balance.balance}`);
+                        // setBalance(balance.balance)
                     }
                 });
-                setLoading(false)
+                // setLoading(false)
             })
             .catch(error => {
                 console.log('Error loading account:', error);
@@ -293,7 +309,9 @@ const SendXLM = (props) => {
             const CHECK_LOGIN=async()=>{
               token ?[setACTIVATION_MODAL(false),navigation.navigate("exchange")]:[setACTIVATION_MODAL(false),navigation.navigate("exchangeLogin")]
             }
-
+            const handleCloseModal = () => {
+              setreservedError(false);
+            };
 // Reset lastScannedData when modal is closed
 useEffect(() => {
   if (!isModalVisible) {
@@ -308,6 +326,11 @@ useEffect(() => {
           onClose={() => setErroVisible(false)}
           message="The scanned QR code contains an invalid public key. Please make sure you're scanning the correct QR code and try again."
         />
+         <StellarAccountReserve
+                isVisible={reservedError}
+                onClose={handleCloseModal}
+                title="Reserved"
+              />
             <View style={{ backgroundColor: state.THEME.THEME===false?"#fff":"black", height: hp(100) }}>
                 <View style={style.inputView}>
                     <TextInput
@@ -342,6 +365,15 @@ useEffect(() => {
                         {Loading === true ? <ActivityIndicator color={"green"} style={{ marginTop: 15, marginLeft: 5 }} /> : <></>}
                     </View>
                 </View>
+          <TouchableOpacity style={style.extraInfoCon} onPress={() => {setreservedError(!reservedError)}}>
+            <Icon
+              name={"information-outline"}
+              type={"materialCommunity"}
+              color={"rgba(129, 108, 255, 0.97)"}
+              size={21}
+            />
+            <Text style={[{ color: state.THEME.THEME === false ? "black" : "#fff" }]}> {!reservedBalance?"":reservedBalance+" XLM are reserved"}</Text>
+          </TouchableOpacity>
                 <View style={style.inputView}>
                     <TextInput
                         value={amount}
@@ -550,6 +582,7 @@ const style = StyleSheet.create({
     pasteText: { color: "blue", marginHorizontal: wp(3) },
     balance: { marginLeft: wp(1), marginTop: hp(2) },
     balance_heading: { marginLeft: wp(5), marginTop: hp(2) },
+    extraInfoCon: { flexDirection:"row",alignItems:"center",marginLeft: wp(5), marginTop: hp(1.5),marginBottom:wp(-3) },
     input: {
         width: wp(70),
         alignSelf: "center",

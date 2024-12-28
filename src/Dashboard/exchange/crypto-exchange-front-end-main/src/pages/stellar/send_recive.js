@@ -20,13 +20,14 @@ import { STELLAR_URL } from "../../../../../constants";
 import { SaveTransaction } from "../../../../../../utilities/utilities";
 import Snackbar from "react-native-snackbar";
 import ErrorComponet from "../../../../../../utilities/ErrorComponet";
+import { GetStellarAvilabelBalance } from "../../../../../../utilities/StellarUtils";
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
 
 const send_recive = ({route}) => {
     const {bala,asset_name}=route.params;
     console.log("----------------usdtAsse-----------------",bala,asset_name)
-    const usdtAsset = new StellarSdk.Asset("USDC", "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN");
+    const usdtAsset = new StellarSdk.Asset("USDC", "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID");
   const cameraRef = useRef(null);
     const state = useSelector((state) => state);
     const FOCUSED = useIsFocused();
@@ -41,16 +42,21 @@ const send_recive = ({route}) => {
     const [qrvalue, setqrvalue] = useState("");
     const [isModalVisible, setModalVisible] = useState(false);
     const [ErroVisible,setErroVisible]=useState(false);
+    const [resStellarbal, setresStellarbal] = useState("");
+    const [Loading, setLoading] = useState(false);
 
 
   const onBarCodeRead = (e) => {
-    if (e.data && e.data !== lastScannedData) {
-      setLastScannedData(e.data); // Update the last scanned data
+    if (e?.data && e?.data !== lastScannedData) {
+      setLastScannedData(e?.data); // Update the last scanned data
+      setErroVisible(false)
       alert("success", "QR Code Decoded successfully..");
-      setrecepi_address(e.data);
+      setrecepi_address(e?.data);
       setModalVisible(false);
   
-      if (!validateStellarAddress(e.data)) {
+      if (!validateStellarAddress(e?.data)) {
+        setModalVisible(false);
+        setErroVisible(false)
         setrecepi_address("");
         setErroVisible(true)
       }
@@ -76,7 +82,15 @@ const send_recive = ({route}) => {
       };
 
     const get_data=async()=>{
-            setqrvalue(state.STELLAR_PUBLICK_KEY)
+        setLoading(true);
+            setqrvalue(state?.STELLAR_PUBLICK_KEY)
+            GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
+             setresStellarbal(result?.availableBalance)
+              setLoading(false);
+              }).catch(error => {
+                console.log('Error loading account:', error);
+                setLoading(false);
+            });
     }
     function validateStellarAddress(address) {
       if (address.length !== 56 || address[0] !== 'G') {
@@ -180,7 +194,7 @@ const send_recive = ({route}) => {
             duration: Snackbar.LENGTH_LONG,
             backgroundColor:'green', 
         });
-          if(parseFloat(recepi_amount)>bala)
+          if(parseFloat(recepi_amount)>(asset_name==="native"?resStellarbal:bala))
           {
             Snackbar.show({
               text: "Insuficint balance",
@@ -211,6 +225,7 @@ const send_recive = ({route}) => {
   }
 
     useEffect(() => {
+        setLoading(false)
         setErroVisible(false)
         setPayment_loading(false)
         get_data()
@@ -254,7 +269,7 @@ const send_recive = ({route}) => {
                             />
                             </TouchableOpacity>
                             </View>
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10 }]}>Available: {bala}</Text>
+                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10 }]}>Available: {asset_name==="native"?!resStellarbal?<ActivityIndicator/>:resStellarbal:bala}</Text>
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Amount</Text>
                             <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_amount(value) }} />
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Transaction memo</Text>

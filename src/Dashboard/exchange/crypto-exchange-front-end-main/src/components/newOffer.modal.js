@@ -40,6 +40,8 @@ import Snackbar from "react-native-snackbar";
 import { SET_ASSET_DATA } from "../../../../../components/Redux/actions/type";
 import { useToast } from "native-base";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
+import StellarAccountReserve from "../utils/StellarReserveComponent";
+import { GetStellarAvilabelBalance } from "../../../../../utilities/StellarUtils";
 const Web3 = require('web3');
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
@@ -96,6 +98,7 @@ const [modalContainer_menu,setmodalContainer_menu]=useState(false);
 const [chooseModalPair,setchooseModalPair]=useState(false);
 const [total_price,settotal_price]=useState(0);
 const [total_price_info,settotal_price_info]=useState(false);
+const [reservedError, setreservedError] = useState(false);
 
 
 
@@ -253,11 +256,11 @@ const chooseRenderItem_1 = ({ item }) => (
       // setOpen(false);
       return 'Sell Offer placed successfully';
     } catch (error) {
-      console.error('Error occurred:', error.response ? error.response.data.extras.result_codes : error);
+      console.error('Error occurred:---', error.response ? error.response.data.extras.result_codes : error);
       const errMessage = error.response && error.response.data.extras ? 
       error.response.data.extras.result_codes.operations.join(', ') : 
       "An error occurred while creating the sell offer.";
-      ShowErrotoast(toast,errMessage==="op_low_reserve"?SelectedBaseValue==="native"?"XLM low reserve in account":SelectedBaseValue +"low reserve in account":"Sell Offer not-created");
+      ShowErrotoast(toast,errMessage==="op_low_reserve"||errMessage==="op_underfunded"?SelectedBaseValue==="native"?"XLM low reserve in account":SelectedBaseValue +"low reserve in account":"Sell Offer not-created");
       setLoading(false)
     }
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -311,7 +314,7 @@ const chooseRenderItem_1 = ({ item }) => (
       const errMessage = error.response && error.response.data.extras ? 
       error.response.data.extras.result_codes.operations.join(', ') : 
       "An error occurred while creating the sell offer.";
-      ShowErrotoast(toast,errMessage==="op_low_reserve"?SelectedBaseValue==="native"?"XLM low reserve in account":SelectedBaseValue +"low reserve in account":"Buy offer not-created.");
+      ShowErrotoast(toast,errMessage==="op_low_reserve"||errMessage==="op_underfunded"?SelectedBaseValue==="native"?"XLM low reserve in account":SelectedBaseValue +" low reserve in account":"Buy offer not-created.");
       setLoading(false)
       console.error('Error occurred:', error.response ? error.response.data.extras.result_codes : error);
     }
@@ -358,6 +361,14 @@ const chooseRenderItem_1 = ({ item }) => (
                   setbalance(balance.balance)
                   setshow_bal(true)
                 }
+                if(asset==="native")
+                {
+                  GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
+                    setbalance(result?.availableBalance)
+                    }).catch(error => {
+                      console.log('Error loading account:', error);
+                  });
+                }
                 if(!ALL_STELLER_BALANCES.some((obj) => obj.hasOwnProperty('asset_code')))
                 {
                   setshow_trust_modal(true)
@@ -378,7 +389,8 @@ const chooseRenderItem_1 = ({ item }) => (
       setLoading(false)
     }
     else{
-      if(selectedValue==="USDC"||selectedValue==="XLM")
+      console.log("---selectedValue",selectedValue)
+      if(selectedValue==="USDC"||selectedValue==="XLM"||selectedValue==="native")
     {
     getData();
     if (titel!=="Activate Stellar Account for trading" && offer_amount !== "" && offer_price !== ""&& offer_amount !== "0"&& offer_price !== "0"&& offer_amount !== "."&& offer_price !== "."&& offer_amount !== ","&& offer_price !== ",") {
@@ -494,6 +506,7 @@ const chooseRenderItem_1 = ({ item }) => (
   useEffect(()=>{
     const fetch_ins = async () => {
       try {
+        setreservedError(false)
         setloading_trust_modal(false)
         setALL_STELLER_BALANCES(state?.assetData)
         setshow_trust_modal(false);
@@ -637,6 +650,10 @@ const change_Trust_New = async () => {
   }
 };
 
+const handleCloseModal = () => {
+  setreservedError(false);
+};
+
 
   return (
    
@@ -649,7 +666,6 @@ const change_Trust_New = async () => {
         }}
       >
       
-
       <View
       style={{
         width: "100%",
@@ -658,7 +674,7 @@ const change_Trust_New = async () => {
         marginTop: 19,
         marginLeft: 6
       }}
-    >
+      >
       <View style={{ flex: 1, alignItems: "flex-end", paddingRight: 10 }}>
         <Text style={{ fontSize: 24, color: "#fff" }}>{top_value}</Text>
         <Text style={{ fontSize: 10, color: "gray" }}>{top_domain}</Text>
@@ -670,7 +686,7 @@ const change_Trust_New = async () => {
           color="rgba(129, 108, 255, 0.97)"
           size={29}
           // onPress={() => { reves_fun(top_value, top_value_0); }}
-        />
+          />
       </View>
       <View style={{ flex: 1, alignItems: "flex-start", paddingLeft: 10 }}>
         <Text style={{ fontSize: 24, color: "#fff" }}>{top_value_0}</Text>
@@ -680,7 +696,18 @@ const change_Trust_New = async () => {
        
        <View style={{flexDirection:"row",justifyContent:"space-between",padding:Platform.OS==="android"?10:19}}>
        <View style={{ width: '40%', marginTop: 19 }}>
-                <Text style={{color:"#fff",fontSize:21,textAlign:"center",marginLeft:Platform.OS==="android"&&30}}>{Platform.OS==="android"?"Trading Pair":"Trading Pair"}</Text>
+               <View style={{flexDirection:"row"}}>
+               <Text style={{color:"#fff",fontSize:21,textAlign:"center",marginLeft:Platform.OS==="android"&&30}}>{Platform.OS==="android"?"Trading Pair":"Trading Pair"}</Text>
+                <TouchableOpacity onPress={() => { setreservedError(!reservedError)}}>
+                  <Icon
+                    name={"information-outline"}
+                    type={"materialCommunity"}
+                    color={"rgba(129, 108, 255, 0.97)"}
+                    size={21}
+                    style={{ marginLeft: 10 }}
+                  />
+                </TouchableOpacity>
+               </View>
                 <TouchableOpacity  style={Platform.OS === "ios" ? { marginTop: 10, width: '90%', borderColor:"'rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",borderWidth:1, marginLeft: 15,paddingVertical:7.6,alignItems:"center",borderRadius:6 } : { height:hp(4),marginTop: 13, width: "90%", color: "white", marginLeft:30,borderColor:"'rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",borderWidth:1,justifyContent:"center",alignItems:"center",borderRadius:5 }} onPress={()=>{setchooseModalPair(true)}}>
                   <Text style={{fontSize:15,color:"#fff"}}>{top_value+"/"+top_value_0}</Text>
                 </TouchableOpacity>
@@ -689,7 +716,7 @@ const change_Trust_New = async () => {
         animationType="slide"
         transparent={true}
         visible={chooseModalPair}
-      >
+        >
         <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setchooseModalPair(false)}>
           <View style={styles.chooseModalContent}>
           <Text style={styles.chooseItem_text}>Select Trading Pair</Text>
@@ -705,7 +732,7 @@ const change_Trust_New = async () => {
               data={chooseFilteredItemList}
               renderItem={chooseRenderItem}
               keyExtractor={(item) => item.id.toString()}
-            />
+              />
           </View>
         </TouchableOpacity>
       </Modal>
@@ -776,6 +803,11 @@ const change_Trust_New = async () => {
             >
 
             
+              <StellarAccountReserve
+                isVisible={reservedError}
+                onClose={handleCloseModal}
+                title="Reserved"
+              />
 
     <View style={{ flexDirection: "row",alignSelf:"center" }}>
               {activ===true?

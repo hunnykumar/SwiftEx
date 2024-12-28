@@ -30,6 +30,7 @@ const Offers_manages = () => {
   const [buyingAssetIssuer, setBuyingAssetIssuer] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState(null);
+  const [SelectedIndex, setSelectedIndex] = useState(null);
   const [newAmount, setNewAmount] = useState('');
   const [newPrice, setNewPrice] = useState('');
   const [STELLAR_ACCOUNT_PUBLIC,setSTELLAR_ACCOUNT_PUBLIC]=useState('');
@@ -41,6 +42,7 @@ const Offers_manages = () => {
   const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
 
   useEffect(() => {
+    setSelectedIndex(null)
     setloading_del(false);
     setloading_edi(false);
     setSTELLAR_ACCOUNT_PUBLIC(state.STELLAR_PUBLICK_KEY);
@@ -84,7 +86,8 @@ const Offers_manages = () => {
     }
   };
 
-  const handleDelete = (offerId) => {
+  const handleDelete = (offerId,index) => {
+    setSelectedIndex(index)
     Alert.alert(
       'Delete Offer',
       'Are you sure you want to delete this offer?',
@@ -129,7 +132,8 @@ const Offers_manages = () => {
     }
   };
 
-  const handleEdit = (offer) => {
+  const handleEdit = (offer,index) => {
+    setSelectedIndex(index)
     setSelectedOffer(offer);
     setNewAmount(offer.amount);
     setNewPrice(offer.price);
@@ -172,8 +176,8 @@ const Offers_manages = () => {
     }
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.offerItem}>
+  const renderItem = ({ item,index }) => (
+    <View style={styles.offerItem}>
       <View style={styles.offer_id_con}>
         <Text style={styles.offerText}>Offer ID: {item.id}</Text>
         <View style={styles.active_text}>
@@ -197,12 +201,12 @@ const Offers_manages = () => {
       <Text style={styles.offerText}>{item.price}</Text>
       </View>
       <View style={styles.buttonContainer}>
-        {loading_edi?<ActivityIndicator color={"green"} size={"small"}/>:
-        <TouchableOpacity style={{alignContent:"center",justifyContent:"center",width:50,height:35}} disabled={loading_del} onPress={() => handleEdit(item)}><Text style={{color:"blue",fontSize:15}}>Edit</Text></TouchableOpacity> }
-        {loading_del?<ActivityIndicator color={"green"} size={"small"}/>:
-        <TouchableOpacity style={{alignContent:"center",justifyContent:"center",width:50,height:35}} disabled={loading_edi} onPress={() => handleDelete(item.id)}><Text style={{color:"blue",fontSize:15}}>Delete</Text></TouchableOpacity>}
+      {loading_edi&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
+        <TouchableOpacity style={{alignContent:"center",justifyContent:"center",width:50,height:35}} disabled={loading_del} onPress={() => handleEdit(item,index)}><Text style={{color:"blue",fontSize:15}}>Edit</Text></TouchableOpacity> }
+        {loading_del&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
+        <TouchableOpacity style={{alignContent:"center",justifyContent:"center",width:50,height:35}} disabled={loading_edi} onPress={() => handleDelete(item.id,index)}><Text style={{color:"blue",fontSize:15}}>Delete</Text></TouchableOpacity>}
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   return (

@@ -73,14 +73,17 @@ const SendTokens = (props) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   
   const onBarCodeRead = (e) => {
-    if (e.data && e.data !== lastScannedData) {
-      setLastScannedData(e.data); // Update the last scanned data
+    if (e?.data && e?.data !== lastScannedData) {
+      setLastScannedData(e?.data); // Update the last scanned data
+      setErroVisible(false)
       alert("success", "QR Code Decoded successfully..");
       setAddress("");
-      setAddress(e.data);
+      setAddress(e?.data);
       setModalVisible(false);
   
-      if (!checkAddressValidity(e.data)) {
+      if (!checkAddressValidity(e?.data)) {
+        setModalVisible(false);
+        setErroVisible(false)
         setAddress("");
         setErroVisible(true)
       }
