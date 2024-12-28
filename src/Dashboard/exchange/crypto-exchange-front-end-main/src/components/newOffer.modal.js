@@ -80,7 +80,7 @@ export const NewOfferModal = () => {
   const activeColor = ["rgba(70, 169, 234, 1)", "rgba(185, 116, 235, 1)"];
   const navigation = useNavigation()
   const [show_bal,setshow_bal]=useState(false);
-  const [deposit_loading,setdeposit_loading]=useState(false);
+  const [reserveLoading,setreserveLoading]=useState(false);
   const [postData, setPostData] = useState({
     email: "",
     publicKey: "",
@@ -250,12 +250,15 @@ const chooseRenderItem_1 = ({ item }) => (
       offerTx.sign(sourceKeypair);
       const offerResult = await server.submitTransaction(offerTx);
       console.log('=> Sell Offer placed...',offerResult.hash);
-      Save_offer(base_asset_sell, offer_amount, offer_price, "Sell", "Success", offerResult.hash);
+      // Save_offer(base_asset_sell, offer_amount, offer_price, "Sell", "Success", offerResult.hash);
       Showsuccesstoast(toast, "Sell offer created.");
       setLoading(false)
       // setOpen(false);
+      navigation?.navigate("Offers")
       return 'Sell Offer placed successfully';
     } catch (error) {
+      setoffer_amount('')
+      setoffer_price('')
       console.error('Error occurred:---', error.response ? error.response.data.extras.result_codes : error);
       const errMessage = error.response && error.response.data.extras ? 
       error.response.data.extras.result_codes.operations.join(', ') : 
@@ -305,12 +308,15 @@ const chooseRenderItem_1 = ({ item }) => (
       const offerResult = await server.submitTransaction(offerTx);
       console.log("++++++++++++++++++++++++++++",offerResult)
       console.log('=> Buy Offer placed...');
-      Save_offer(counter_asset_buy, offer_amount, offer_price, "Buy", "Success", "1234");
+      // Save_offer(counter_asset_buy, offer_amount, offer_price, "Buy", "Success", "1234");
       Showsuccesstoast(toast, "Buy offer created.")
       setLoading(false)
       // setOpen(false);
+      navigation?.navigate("Offers")
       return 'Sell Offer placed successfully';
     } catch (error) {
+      setoffer_amount('')
+      setoffer_price('')
       const errMessage = error.response && error.response.data.extras ? 
       error.response.data.extras.result_codes.operations.join(', ') : 
       "An error occurred while creating the sell offer.";
@@ -353,20 +359,26 @@ const chooseRenderItem_1 = ({ item }) => (
 
   const get_stellar = async (asset) => {
     try {
+      setreserveLoading(true)
       console.log("",ALL_STELLER_BALANCES)
 
               ALL_STELLER_BALANCES.forEach(balance => {
                 if (asset==="native"?balance.asset_type === asset:balance.asset_code === asset) {
-                  setactiv(false)
-                  setbalance(balance.balance)
-                  setshow_bal(true)
+                  if (asset !== "native") {
+                    setactiv(false)
+                    setbalance(balance?.balance)
+                    setshow_bal(true)
+                    setreserveLoading(false)
+                  }
                 }
                 if(asset==="native")
                 {
                   GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
                     setbalance(result?.availableBalance)
+                    setreserveLoading(false)
                     }).catch(error => {
                       console.log('Error loading account:', error);
+                      setreserveLoading(false)
                   });
                 }
                 if(!ALL_STELLER_BALANCES.some((obj) => obj.hasOwnProperty('asset_code')))
@@ -378,6 +390,7 @@ const chooseRenderItem_1 = ({ item }) => (
       console.log("Error in get_stellar")
       Showsuccesstoast(toast, "Please wait account is updating....");
       setshow(false)
+      setreserveLoading(false)
     }
   }
 
@@ -818,8 +831,10 @@ const handleCloseModal = () => {
                 </Animated.View>
                 </TouchableOpacity>
                 :
-                <View style={{flexDirection:"row"}}><Text style={styles.balance}>Balance:</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(9),marginLeft:1 }}>
-                <Text style={styles.balance}>{Balance ? Number(Balance).toFixed(8) : 0.0} </Text></ScrollView>
+                <View style={{flexDirection:"row"}}><Text style={styles.balance}>Balance: </Text>
+                {reserveLoading?<ActivityIndicator color={"green"}/>:
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(9),marginLeft:1 }}>
+                <Text style={styles.balance}>{Balance ? Number(Balance).toFixed(8) : 0.0} </Text></ScrollView>}
                 </View>
                 }
 
@@ -843,7 +858,7 @@ const handleCloseModal = () => {
             }}
           >
             <View style={{width:wp(37),alignSelf:"center"}}>
-            {Balance==="0.0000000"&&<Text style={{textAlign:"center",color:"red",borderColor:"red",borderWidth:1.9,borderRadius:10}}>Insufficient Balance</Text>}
+            {Balance==="0.0000000"||parseFloat(Balance)===0&&<Text style={{textAlign:"center",color:"red",borderColor:"red",borderWidth:1.9,borderRadius:10}}>Insufficient Balance</Text>}
             {/* {selectedValue==="XETH"||selectedValue==="XUSD"?<></>:<Text style={{textAlign:"center",color:"orange",borderColor:"orange",borderWidth:1.9,borderRadius:10}}>Available Soon</Text>} */}
 
             </View>
@@ -951,7 +966,7 @@ const handleCloseModal = () => {
                 },styles.confirmButton]}
                 onPress={() => { setLoading(true), offer_creation() }}
                 color="green"
-                disabled={Loading||Balance==="0.0000000"}
+                disabled={Loading||Balance==="0.0000000"||parseFloat(Balance)===0}
               >
                 <Text style={styles.textColor}>{Loading === true ? <ActivityIndicator color={"white"} /> :"Create Offer"}</Text>
               </TouchableOpacity>

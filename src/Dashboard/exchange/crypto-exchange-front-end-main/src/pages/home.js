@@ -1042,7 +1042,7 @@ useEffect(() => {
         </TouchableOpacity>
       </Modal>
               </View>
-            <OfferListViewHome/>
+            {/* <OfferListViewHome/> */}
     </ScrollView>
     </>
   );

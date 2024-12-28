@@ -389,7 +389,12 @@ useEffect(() => {
                     ></TextInput>
                     <TouchableOpacity
                         onPress={() => {
-                            setAmount(balance);
+                            if(!balance||parseFloat(balance)===0)
+                            {
+                              ShowErrotoast(toast,"Invalid Amount");
+                            }else{
+                              setAmount(balance);
+                            }
                         }}
                     >
                         <Text style={{ color: "blue" }}>MAX</Text>
@@ -422,7 +427,13 @@ useEffect(() => {
                         onPress={() => {
                             Keyboard.dismiss()
                             setPayment_loading(true);
-                           if(!address||!amount)
+                            if(!amount||parseFloat(amount)===0)
+                            {
+                              ShowErrotoast(toast,"Invalid Amount");
+                              setPayment_loading(false);
+                              setAmount('')
+                            }else{
+                              if(!address||!amount)
                            {
                              ShowErrotoast(toast,"Recipient Address and Amount Required")
                              setPayment_loading(false);
@@ -440,6 +451,7 @@ useEffect(() => {
                              setPayment_loading(false);
                            }
                            }
+                            }
                         }}
                     >
                         {Payment_loading===true?<ActivityIndicator color={"#fff"}/>:<Text style={{color:"#fff",fontSize:16}}>Send</Text>}

@@ -204,7 +204,17 @@ const send_recive = ({route}) => {
             setPayment_loading(false);
           }
           else{
+           if(parseFloat(recepi_amount)===0)
+           {
+             Snackbar.show({
+               text: "Invalid amount",
+               duration: Snackbar.LENGTH_LONG,
+               backgroundColor: 'red',
+             });
+            setPayment_loading(false);
+           }else{
             send_XLM(state.STELLAR_SECRET_KEY, recepi_address, recepi_amount)
+           }
           }
         } else {
           Snackbar.show({
@@ -271,7 +281,7 @@ const send_recive = ({route}) => {
                             </View>
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10 }]}>Available: {asset_name==="native"?!resStellarbal?<ActivityIndicator/>:resStellarbal:bala}</Text>
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Amount</Text>
-                            <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_amount(value) }} />
+                            <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="number-pad" style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_amount(value) }} />
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Transaction memo</Text>
                             <TextInput placeholder="Enter transaction memo" placeholderTextColor={"gray"} value={recepi_memo} style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_memo(value) }} />
 
