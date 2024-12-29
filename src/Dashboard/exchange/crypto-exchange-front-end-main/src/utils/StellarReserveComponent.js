@@ -43,7 +43,7 @@ const StellarAccountReserve = ({
   
       // Base reserve and extra calculations
       const baseReserve = 0.5; // 0.5 XLM per entry
-      const minAccountBalance = 3 * baseReserve; // 1 XLM base reserve for account
+      const minAccountBalance = 2 * baseReserve; // 1 XLM base reserve for account
   
       // Extract account details
       const subEntries = account.subentry_count;
@@ -53,7 +53,7 @@ const StellarAccountReserve = ({
       const sponsoredEntries = account.num_sponsored;
   
       // Calculate reserved for entries
-      const reservedForEntries = subEntries * baseReserve;
+      const reservedForEntries = 0.5;
   
       // Fetch active offers using Axios
       let xlmInOffers = 0;
@@ -82,9 +82,9 @@ const StellarAccountReserve = ({
       // Include offer reserve (0.5 XLM per offer)
       const offerReserve = offerCount * baseReserve;
   
+      const totalTrustReserve=account.balances.length-1===1?baseReserve:0;
       // Total reserved
-      const totalReserved = minAccountBalance + reservedForEntries + xlmInOffers + offerReserve;
-  
+      const totalReserved = minAccountBalance + reservedForEntries + xlmInOffers + offerReserve+totalTrustReserve;
       // Calculate total XLM balance in the account
       let xlmBalance = 0;
       balances.forEach((balance) => {
@@ -92,14 +92,15 @@ const StellarAccountReserve = ({
           xlmBalance = parseFloat(balance.balance);
         }
       });
-  
+      const transactionBuffer = 0.022;
       // Available balance (Total balance - Total reserved)
-      const availableBalance = xlmBalance - totalReserved;
+      const availableBalance = xlmBalance - totalReserved-transactionBuffer;
   
       // Update data for reserve information
       const data = [
+        { label: "Reserved:", value: `${totalReserved} XLM` },
         { label: "Base Reserve:", value: `${minAccountBalance} XLM` },
-        { label: "Extra:", value: `${reservedForEntries - baseReserve} XLM` },
+        { label: "Extra:", value: `${reservedForEntries} XLM` },
         { label: "Reserved for Active Offers:", value: `${xlmInOffers} XLM` },
         { label: "Trustlines:", value: `${account.balances.length - 1} (${baseReserve} XLM)` },
         { label: "Offers:", value: `${offerCount} (${offerReserve} XLM)` },
@@ -107,7 +108,6 @@ const StellarAccountReserve = ({
         { label: "Sponsoring Entries for Others:", value: `${sponsoringEntries} XLM` },
         { label: "Entries Sponsored for Account:", value: `${sponsoredEntries} XLM` },
         { label: "Total Balance:", value: `${xlmBalance} XLM` },
-        { label: "Total Reserved:", value: `${totalReserved} XLM` },
         { label: "Available Balance:", value: `${availableBalance} XLM` },
       ];
   

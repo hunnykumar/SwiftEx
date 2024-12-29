@@ -11,7 +11,7 @@ export async function GetStellarAvilabelBalance(publicKey) {
 
     // Base reserve and extra calculations
     const baseReserve = 0.5; // 0.5 XLM per entry
-    const minAccountBalance = 3 * baseReserve; // 1 XLM base reserve for account
+    const minAccountBalance = 2 * baseReserve; // 1 XLM base reserve for account
 
     // Extract account details
     const subEntries = account.subentry_count;
@@ -21,7 +21,7 @@ export async function GetStellarAvilabelBalance(publicKey) {
     const sponsoredEntries = account.num_sponsored;
 
     // Calculate reserved for entries
-    const reservedForEntries = subEntries * baseReserve;
+    const reservedForEntries = 0.5;
 
     // Fetch active offers using Axios
     let xlmInOffers = 0;
@@ -47,8 +47,9 @@ export async function GetStellarAvilabelBalance(publicKey) {
     // Include offer reserve (0.5 XLM per offer)
     const offerReserve = offerCount * baseReserve;
 
+    const totalTrustReserve=account.balances.length-1===1?baseReserve:0;
     // Total reserved
-    const totalReserved = minAccountBalance + reservedForEntries + xlmInOffers + offerReserve;
+    const totalReserved = minAccountBalance + reservedForEntries + xlmInOffers + offerReserve+totalTrustReserve;
 
     // Calculate total XLM balance in the account
     let xlmBalance = 0;
@@ -58,8 +59,9 @@ export async function GetStellarAvilabelBalance(publicKey) {
       }
     });
 
+    const transactionBuffer = 0.022;
     // Available balance (Total balance - Total reserved)
-    const availableBalance = xlmBalance - totalReserved;
+    const availableBalance = xlmBalance - totalReserved-transactionBuffer;
 
     const formatValue = (value) => {
       return value < 0 ? "0.00000" : value.toFixed(5);
