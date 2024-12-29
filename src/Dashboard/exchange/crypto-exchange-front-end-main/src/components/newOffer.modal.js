@@ -834,7 +834,7 @@ const handleCloseModal = () => {
                 <View style={{flexDirection:"row"}}><Text style={styles.balance}>Balance: </Text>
                 {reserveLoading?<ActivityIndicator color={"green"}/>:
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(9),marginLeft:1 }}>
-                <Text style={styles.balance}>{Balance ? Number(Balance).toFixed(8) : 0.0} </Text></ScrollView>}
+                <Text style={styles.balance}>{Balance ? Number(Balance).toFixed(5) : 0.0} </Text></ScrollView>}
                 </View>
                 }
 

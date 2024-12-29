@@ -43,7 +43,7 @@ const StellarAccountReserve = ({
   
       // Base reserve and extra calculations
       const baseReserve = 0.5; // 0.5 XLM per entry
-      const minAccountBalance = 2 * baseReserve; // 1 XLM base reserve for account
+      const minAccountBalance = 3 * baseReserve; // 1 XLM base reserve for account
   
       // Extract account details
       const subEntries = account.subentry_count;
