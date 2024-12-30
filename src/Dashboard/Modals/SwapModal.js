@@ -125,6 +125,21 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
       setPinViewVisible(false)
       const fetchData = async () => {
         try {
+          setSwapType("ETH")
+          setCoin0( {
+            name: "Ethereum",
+            address: "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
+            symbol: "WETH",
+            ChainId: "1",
+            logoUri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+          })
+          setCoin1({
+            name: "Uniswap",
+            address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+            symbol: "UNI",
+            ChainId: "5",
+            logoUri: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
+          })
           let bal = await AsyncStorageLib.getItem("EthBalance");
           setBalance(bal)
         } catch (e) {
@@ -1533,8 +1548,18 @@ fetchData();
                 
                 <TouchableOpacity
                   onPress={() => {
-                    setCoinType("1");
-                    setVisible(true);
+                    Keyboard.dismiss()
+                    if(coin0.symbol==="WETH")
+                    {
+                      Snackbar.show({
+                        text: "Eth test net only swap with UNI",
+                        duration: Snackbar.LENGTH_LONG,
+                        backgroundColor: 'orange',
+                      });
+                    }else{
+                      setCoinType("1");
+                      setVisible(true);
+                    }
                   }}
                   style={{
                     flexDirection: "row",
@@ -1592,6 +1617,7 @@ fetchData();
             // }}
             disabled={disable}
             onPress={async () => {
+              Keyboard.dismiss()
               //setVisible(true)
               setLoading2(true);
               console.log(coin1.address);
