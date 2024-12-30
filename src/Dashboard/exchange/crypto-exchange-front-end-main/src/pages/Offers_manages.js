@@ -17,6 +17,7 @@ import {
 import { useSelector } from 'react-redux';
 import StellarSdk from 'stellar-sdk';
 import Icon from '../../../../../icon';
+import Snackbar from 'react-native-snackbar';
 
 const STELLAR_NETWORK = StellarSdk.Networks.TESTNET;
 
@@ -149,6 +150,15 @@ const Offers_manages = () => {
 
   const updateOffer = async () => {
     Keyboard.dismiss()
+    if (!newAmount || !newPrice || parseFloat(newAmount) === 0 || parseFloat(newPrice) === 0) {
+      Snackbar.show({
+        text: 'Invalid value provided',
+        duration: Snackbar.LENGTH_SHORT,
+        backgroundColor: 'red',
+      });
+      setNewAmount('')
+      setNewPrice('')
+    } else {
     setloading_edi(true);
     const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
     try {
@@ -181,6 +191,7 @@ const Offers_manages = () => {
       console.log("Error updating offer:", error);
       Alert.alert('Info', 'Failed to update the offer');
     }
+   }
   };
 
   const renderItem = ({ item,index }) => (
