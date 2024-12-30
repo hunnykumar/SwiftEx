@@ -414,7 +414,7 @@ const chooseRenderItem_1 = ({ item }) => (
 
   const offer_creation = () => {
     const temp_amount=parseInt(offer_amount);
-   if(temp_amount>=Balance)
+   if(temp_amount>Balance)
     {
       ShowErrotoast(toast,"Insufficient Balance");
       setLoading(false)

@@ -148,7 +148,6 @@ const Offers_manages = () => {
   };
 
   const updateOffer = async () => {
-    console.log("==---updae-----lppp",sellingAssetCode,buyingAssetCode)
     Keyboard.dismiss()
     setloading_edi(true);
     const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
@@ -161,8 +160,8 @@ const Offers_manages = () => {
       })
         .addOperation(StellarSdk.Operation.manageOffer({
           offerId: selectedOffer.id,
-          selling:sellingAssetCode==="XLM"||sellingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(sellingAssetCode==='credit_alphanum4'||sellingAssetCode==='USDC'&&"USDC", sellingAssetIssuer), 
-          buying: buyingAssetCode==="XLM"||buyingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(buyingAssetCode==='credit_alphanum4'||buyingAssetCode==='USDC'&&"USDC", buyingAssetIssuer), 
+          selling:sellingAssetCode==="XLM"||sellingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(sellingAssetCode==='credit_alphanum4'||sellingAssetCode==='USDC'?"USDC":sellingAssetCode, sellingAssetIssuer), 
+          buying: buyingAssetCode==="XLM"||buyingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(buyingAssetCode==='credit_alphanum4'||buyingAssetCode==='USDC'?"USDC":sellingAssetCode, buyingAssetIssuer), 
           amount: newAmount, 
           price: newPrice, 
         }))
