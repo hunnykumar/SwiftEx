@@ -41,7 +41,7 @@ import { SET_ASSET_DATA } from "../../../../../components/Redux/actions/type";
 import { useToast } from "native-base";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import StellarAccountReserve from "../utils/StellarReserveComponent";
-import { GetStellarAvilabelBalance } from "../../../../../utilities/StellarUtils";
+import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../utilities/StellarUtils";
 const Web3 = require('web3');
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
@@ -214,14 +214,18 @@ const chooseRenderItem_1 = ({ item }) => (
     }
 };
   async function Sell() {
-    const temp_amount=parseInt(offer_amount);
-    const temp_offer_price=parseInt(offer_price);
-   if(temp_amount<=0||temp_offer_price<=0)
-   {
-    setLoading(false);
-    ShowErrotoast(toast,"Invalid value");
-
-   }else{
+    const temp_amount=parseFloat(offer_amount);
+    const temp_offer_price=parseFloat(offer_price);
+    if (
+      isNaN(parseFloat(temp_amount)) || 
+      isNaN(parseFloat(temp_offer_price)) || 
+      parseFloat(temp_amount) < 0.1 || 
+      parseFloat(temp_offer_price) < 0.1
+    ) {
+      setLoading(false);
+      ShowErrotoast(toast, "Invalid value");
+    } 
+    else{
      const sourceKeypair = StellarSdk.Keypair.fromSecret(SecretKey);
     console.log("Sell Offer Peram =>>>>>>>>>>>>", offer_amount, offer_price, SecretKey, AssetIssuerPublicKey)
     try {
@@ -263,7 +267,7 @@ const chooseRenderItem_1 = ({ item }) => (
       const errMessage = error.response && error.response.data.extras ? 
       error.response.data.extras.result_codes.operations.join(', ') : 
       "An error occurred while creating the sell offer.";
-      ShowErrotoast(toast,errMessage==="op_low_reserve"||errMessage==="op_underfunded"?SelectedBaseValue==="native"?"XLM low reserve in account":SelectedBaseValue +"low reserve in account":"Sell Offer not-created");
+      ShowErrotoast(toast,errMessage==="op_low_reserve"||errMessage==="op_underfunded"?SelectedBaseValue==="native"?"XLM low reserve in account":SelectedBaseValue +"low reserve in account":errMessage==="op_cross_self"?"Account already has an active offer with an Opposing order":"Sell Offer not-created");
       setLoading(false)
     }
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -271,14 +275,17 @@ const chooseRenderItem_1 = ({ item }) => (
   }
 
   async function Buy() {
-    const temp_amount=parseInt(offer_amount);
-    const temp_offer_price=parseInt(offer_price);
-   if(temp_amount<=0||temp_offer_price<=0)
-   {
-    setLoading(false);
-    ShowErrotoast(toast,"Invalid value");
-
-   }else{
+    const temp_amount=parseFloat(offer_amount);
+    const temp_offer_price=parseFloat(offer_price);
+    if (
+      isNaN(parseFloat(temp_amount)) || 
+      isNaN(parseFloat(temp_offer_price)) || 
+      parseFloat(temp_amount) < 0.1 || 
+      parseFloat(temp_offer_price) < 0.1
+    ) {
+      setLoading(false);
+      ShowErrotoast(toast, "Invalid value");
+    } else{
     const sourceKeypair = StellarSdk.Keypair.fromSecret(SecretKey);
     console.log("Buy Offer Peram =>>>>>>>>>>>>", offer_amount, offer_price, SecretKey, AssetIssuerPublicKey)
     try {
@@ -290,8 +297,8 @@ const chooseRenderItem_1 = ({ item }) => (
         networkPassphrase: StellarSdk.Networks.TESTNET
       })
       const offer = StellarSdk.Operation.manageOffer({
-        selling: base_asset_sell,
-        buying: counter_asset_buy,
+        selling: counter_asset_buy,
+        buying: base_asset_sell,
         amount: offer_amount,
         price: offer_price,
         offerId: parseInt(0)
@@ -320,7 +327,7 @@ const chooseRenderItem_1 = ({ item }) => (
       const errMessage = error.response && error.response.data.extras ? 
       error.response.data.extras.result_codes.operations.join(', ') : 
       "An error occurred while creating the sell offer.";
-      ShowErrotoast(toast,errMessage==="op_low_reserve"||errMessage==="op_underfunded"?SelectedBaseValue==="native"?"XLM low reserve in account":SelectedBaseValue +" low reserve in account":"Buy offer not-created.");
+      ShowErrotoast(toast,errMessage==="op_low_reserve"||errMessage==="op_underfunded"?SelectedBaseValue==="native"?"XLM low reserve in account":SelectedBaseValue +" low reserve in account": errMessage==="op_cross_self"?"Account already has an active offer with an Opposing order":"Buy offer not-created.");
       setLoading(false)
       console.error('Error occurred:', error.response ? error.response.data.extras.result_codes : error);
     }
@@ -359,14 +366,15 @@ const chooseRenderItem_1 = ({ item }) => (
 
   const get_stellar = async (asset) => {
     try {
+      setbalance("")
       setreserveLoading(true)
       console.log("",ALL_STELLER_BALANCES)
 
               ALL_STELLER_BALANCES.forEach(balance => {
                 if (asset==="native"?balance.asset_type === asset:balance.asset_code === asset) {
-                  if (asset !== "native") {
+                  if (asset !== "native"||asset !== "USDC") {
                     setactiv(false)
-                    setbalance(balance?.balance)
+                    // setbalance(balance?.balance)
                     setshow_bal(true)
                     setreserveLoading(false)
                   }
@@ -374,6 +382,16 @@ const chooseRenderItem_1 = ({ item }) => (
                 if(asset==="native")
                 {
                   GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
+                    setbalance(result?.availableBalance)
+                    setreserveLoading(false)
+                    }).catch(error => {
+                      console.log('Error loading account:', error);
+                      setreserveLoading(false)
+                  });
+                }
+                if(asset==="USDC")
+                {
+                  GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
                     setbalance(result?.availableBalance)
                     setreserveLoading(false)
                     }).catch(error => {

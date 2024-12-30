@@ -28,6 +28,7 @@ const Offers_manages = () => {
   const [sellingAssetCode, setSellingAssetCode] = useState('');
   const [buyingAssetCode, setBuyingAssetCode] = useState(''); 
   const [buyingAssetIssuer, setBuyingAssetIssuer] = useState('');
+  const [sellingAssetIssuer, setsellingAssetIssuer] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [SelectedIndex, setSelectedIndex] = useState(null);
@@ -62,22 +63,27 @@ const Offers_manages = () => {
         let sellingAssetCode;
         let buyingAssetCode;
         let buyingAssetIssuer;
+        let sellingAssetIssuer;
 
         if (firstOffer.selling) {
           const sellingAssetType = firstOffer.selling.asset_type;
 
-          sellingAssetCode = sellingAssetType === 'native' ? 'XLM' : firstOffer.selling.asset_code || 'Unknown Asset Code';
+          sellingAssetCode = sellingAssetType === 'native' ? 'XLM' : firstOffer.selling.asset_type || 'Unknown Asset Code';
+          sellingAssetIssuer = firstOffer.selling.asset_issuer || 'Unknown Issuer';
+
         }
 
         if (firstOffer.buying) {
-          buyingAssetCode = firstOffer.buying.asset_code || 'Unknown Asset Code';
+          buyingAssetCode = firstOffer.buying?.asset_code || firstOffer.buying?.asset_type;
           buyingAssetIssuer = firstOffer.buying.asset_issuer || 'Unknown Issuer';
         }
 
         setSellingAssetCode(sellingAssetCode);
         setBuyingAssetCode(buyingAssetCode); 
         setBuyingAssetIssuer(buyingAssetIssuer); 
+        setsellingAssetIssuer(sellingAssetIssuer)
       }
+      console.log("---fetchOffers-----",fetchedOffers)
       setOffers(fetchedOffers);
     } catch (error) {
       console.log('Error fetching offer data:', error);
@@ -99,6 +105,7 @@ const Offers_manages = () => {
   };
 
   const deleteOffer = async (offerId) => {
+    console.log("==--------lppp",sellingAssetCode,buyingAssetCode)
     setloading_del(true);
     const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
     try {
@@ -110,8 +117,8 @@ const Offers_manages = () => {
       })
         .addOperation(StellarSdk.Operation.manageOffer({
           offerId: offerId,
-          selling: new StellarSdk.Asset(sellingAssetCode, keypair.publicKey()), 
-          buying: new StellarSdk.Asset(buyingAssetCode, buyingAssetIssuer), 
+          selling:sellingAssetCode==="XLM"||sellingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(sellingAssetCode==='credit_alphanum4'&&"USDC", sellingAssetIssuer), 
+          buying: buyingAssetCode==="XLM"||buyingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(buyingAssetCode==='credit_alphanum4'&&"USDC", buyingAssetIssuer), 
           amount: '0', 
           price: '1', 
         }))
@@ -141,6 +148,7 @@ const Offers_manages = () => {
   };
 
   const updateOffer = async () => {
+    console.log("==---updae-----lppp",sellingAssetCode,buyingAssetCode)
     Keyboard.dismiss()
     setloading_edi(true);
     const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
@@ -153,8 +161,8 @@ const Offers_manages = () => {
       })
         .addOperation(StellarSdk.Operation.manageOffer({
           offerId: selectedOffer.id,
-          selling: new StellarSdk.Asset(sellingAssetCode, keypair.publicKey()), 
-          buying: new StellarSdk.Asset(buyingAssetCode, buyingAssetIssuer), 
+          selling:sellingAssetCode==="XLM"||sellingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(sellingAssetCode==='credit_alphanum4'||sellingAssetCode==='USDC'&&"USDC", sellingAssetIssuer), 
+          buying: buyingAssetCode==="XLM"||buyingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(buyingAssetCode==='credit_alphanum4'||buyingAssetCode==='USDC'&&"USDC", buyingAssetIssuer), 
           amount: newAmount, 
           price: newPrice, 
         }))
@@ -186,11 +194,11 @@ const Offers_manages = () => {
       </View>
       <View style={styles.container_sub}>
       <Text style={styles.offerText}>Asset Selling</Text>
-      <Text style={styles.offerText}>{item.selling.asset_type}</Text>
+      <Text style={styles.offerText}>{item.selling.asset_type==="credit_alphanum4"?"USDC":item.selling.asset_type==="native"?"XLM":item.selling.asset_type}</Text>
       </View>
       <View style={styles.container_sub}>
       <Text style={styles.offerText}>Asset Buying</Text>
-      <Text style={styles.offerText}>{item.buying.asset_code}</Text>
+      <Text style={styles.offerText}>{item.buying?.asset_type==="native"?"XLM":item.buying?.asset_type==="credit_alphanum4"?"USDC":item.buying?.asset_type||item.buying?.asset_code}</Text>
       </View>
       <View style={styles.container_sub}>
       <Text style={styles.offerText}>Amount</Text>
