@@ -376,7 +376,7 @@ const chooseRenderItem_1 = ({ item }) => (
                     setactiv(false)
                     // setbalance(balance?.balance)
                     setshow_bal(true)
-                    setreserveLoading(false)
+                    // setreserveLoading(false)
                   }
                 }
                 if(asset==="native")

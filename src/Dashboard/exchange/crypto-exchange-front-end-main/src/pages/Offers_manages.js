@@ -18,6 +18,12 @@ import { useSelector } from 'react-redux';
 import StellarSdk from 'stellar-sdk';
 import Icon from '../../../../../icon';
 import Snackbar from 'react-native-snackbar';
+import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from '../../../../../utilities/StellarUtils';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+import BigNumber from 'bignumber.js';
 
 const STELLAR_NETWORK = StellarSdk.Networks.TESTNET;
 
@@ -39,11 +45,19 @@ const Offers_manages = () => {
   const [STELLAR_ACCOUNT_SECRET,setSTELLAR_ACCOUNT_SECRET]=useState('');
   const [loading_del,setloading_del]=useState(false);
   const [loading_edi,setloading_edi]=useState(false);
+  const [stellarAvalibleBalance,setstellarAvalibleBalance]=useState('');
+  const [reserveLoading,setreserveLoading]=useState(false);
+  const [lastOfferAmount,setlastOfferAmount]=useState('');
 
 
   const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
 
   useEffect(() => {
+    setLoading(true);
+    setOffers([])
+    setlastOfferAmount('')
+    setreserveLoading(false);
+    setstellarAvalibleBalance('');
     setSelectedIndex(null)
     setloading_del(false);
     setloading_edi(false);
@@ -51,6 +65,30 @@ const Offers_manages = () => {
     setSTELLAR_ACCOUNT_SECRET(state.STELLAR_SECRET_KEY);
     fetchOffers();
   }, [isFocused]);
+
+
+  const fetchAvilableBalance=async(asset)=>{
+    if(asset==="native")
+    {
+      GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
+        setstellarAvalibleBalance(result?.availableBalance).toFixed(5)
+        setreserveLoading(false)
+        }).catch(error => {
+          console.log('Error loading account:', error);
+          setreserveLoading(false)
+      });
+    }
+    if(asset==="credit_alphanum4")
+    {
+      GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
+        setstellarAvalibleBalance(result?.availableBalance).toFixed(5)
+        setreserveLoading(false)
+        }).catch(error => {
+          console.log('Error loading account:', error);
+          setreserveLoading(false)
+      });
+    }
+  }
 
   const fetchOffers = async () => {
     setLoading(true);
@@ -141,58 +179,95 @@ const Offers_manages = () => {
   };
 
   const handleEdit = (offer,index) => {
+    setlastOfferAmount(Number(offer.amount).toFixed(5))
+    setreserveLoading(true)
+    fetchAvilableBalance(offer?.selling?.asset_type)
     setSelectedIndex(index)
     setSelectedOffer(offer);
-    setNewAmount(offer.amount);
-    setNewPrice(offer.price);
+    setNewAmount(Number(offer.amount).toFixed(5));
+    setNewPrice(Number(offer.price).toFixed(5));
     setModalVisible(true);
   };
 
   const updateOffer = async () => {
-    Keyboard.dismiss()
-    if (!newAmount || !newPrice || parseFloat(newAmount) === 0 || parseFloat(newPrice) === 0) {
+    Keyboard.dismiss();
+    console.log("data---", {
+      newAmount: BigNumber(newAmount || 0).toString(),
+      lastOfferAmount: BigNumber(lastOfferAmount || 0).toString(),
+      stellarAvalibleBalance: BigNumber(stellarAvalibleBalance || 0).toString()
+    });
+  
+    const newAmountBN = BigNumber(newAmount || 0);
+    const lastOfferAmountBN = BigNumber(lastOfferAmount || 0);
+    const stellarAvailableBalanceBN = BigNumber(stellarAvalibleBalance || 0);
+  
+    if (newAmountBN.gt(lastOfferAmountBN.plus(stellarAvailableBalanceBN))) {
       Snackbar.show({
-        text: 'Invalid value provided',
+        text: 'Insufficient balance',
         duration: Snackbar.LENGTH_SHORT,
         backgroundColor: 'red',
       });
-      setNewAmount('')
-      setNewPrice('')
     } else {
-    setloading_edi(true);
-    const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
-    try {
-      const account = await server.loadAccount(keypair.publicKey());
-
-      const transaction = new StellarSdk.TransactionBuilder(account, {
-        fee: StellarSdk.BASE_FEE,
-        networkPassphrase: STELLAR_NETWORK,
-      })
-        .addOperation(StellarSdk.Operation.manageOffer({
-          offerId: selectedOffer.id,
-          selling:sellingAssetCode==="XLM"||sellingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(sellingAssetCode==='credit_alphanum4'||sellingAssetCode==='USDC'?"USDC":sellingAssetCode, sellingAssetIssuer), 
-          buying: buyingAssetCode==="XLM"||buyingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(buyingAssetCode==='credit_alphanum4'||buyingAssetCode==='USDC'?"USDC":sellingAssetCode, buyingAssetIssuer), 
-          amount: newAmount, 
-          price: newPrice, 
-        }))
-        .setTimeout(30)
-        .build();
-
-      transaction.sign(keypair);
-
-      const response = await server.submitTransaction(transaction);
-      console.log('Offer updated:', response);
-      setloading_edi(false);
-      fetchOffers(); 
-      Alert.alert('Success', 'Offer updated successfully.');
-      setModalVisible(false);
-    } catch (error) {
-      setloading_edi(false);
-      console.log("Error updating offer:", error);
-      Alert.alert('Info', 'Failed to update the offer');
+      if (
+        newAmountBN.isZero() ||
+        BigNumber(newPrice || 0).isZero()
+      ) {
+        Snackbar.show({
+          text: 'Invalid value provided',
+          duration: Snackbar.LENGTH_SHORT,
+          backgroundColor: 'red',
+        });
+        setNewAmount('');
+        setNewPrice('');
+      } else {
+        setloading_edi(true);
+        const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
+        try {
+          const account = await server.loadAccount(keypair.publicKey());
+  
+          const transaction = new StellarSdk.TransactionBuilder(account, {
+            fee: StellarSdk.BASE_FEE,
+            networkPassphrase: STELLAR_NETWORK,
+          })
+            .addOperation(StellarSdk.Operation.manageOffer({
+              offerId: selectedOffer.id,
+              selling: sellingAssetCode === "XLM" || sellingAssetCode === "native" ? 
+                new StellarSdk.Asset.native() : 
+                new StellarSdk.Asset(
+                  sellingAssetCode === 'credit_alphanum4' || sellingAssetCode === 'USDC' ? 
+                    "USDC" : sellingAssetCode, 
+                  sellingAssetIssuer
+                ),
+              buying: buyingAssetCode === "XLM" || buyingAssetCode === "native" ? 
+                new StellarSdk.Asset.native() : 
+                new StellarSdk.Asset(
+                  buyingAssetCode === 'credit_alphanum4' || buyingAssetCode === 'USDC' ? 
+                    "USDC" : sellingAssetCode, 
+                  buyingAssetIssuer
+                ),
+              amount: newAmountBN.toString(),
+              price: BigNumber(newPrice).toString(),
+            }))
+            .setTimeout(30)
+            .build();
+  
+          transaction.sign(keypair);
+  
+          const response = await server.submitTransaction(transaction);
+          console.log('Offer updated:', response);
+          setloading_edi(false);
+          fetchOffers();
+          Alert.alert('Success', 'Offer updated successfully.');
+          setModalVisible(false);
+        } catch (error) {
+          setloading_edi(false);
+          console.log("Error updating offer:", error);
+          Alert.alert('Info', 'Failed to update the offer');
+        }
+      }
     }
-   }
   };
+  
 
   const renderItem = ({ item,index }) => (
     <View style={styles.offerItem}>
@@ -212,11 +287,11 @@ const Offers_manages = () => {
       </View>
       <View style={styles.container_sub}>
       <Text style={styles.offerText}>Amount</Text>
-      <Text style={styles.offerText}>{item.amount}</Text>
+      <Text style={styles.offerText}>{Number(item.amount).toFixed(5)}</Text>
       </View>
       <View style={styles.container_sub}>
       <Text style={styles.offerText}>Price</Text>
-      <Text style={styles.offerText}>{item.price}</Text>
+      <Text style={styles.offerText}>{Number(item.price).toFixed(5)}</Text>
       </View>
       <View style={styles.buttonContainer}>
       {loading_edi&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
@@ -282,7 +357,11 @@ const Offers_manages = () => {
               keyboardType="numeric"
               returnKeyType='done'
             />
-            <TouchableOpacity style={styles.update_btn} disabled={loading_edi} onPress={()=>{updateOffer()}}>
+             <View style={{ flexDirection: "row" ,marginBottom: 15,}}><Text style={styles.balance}>Balance: </Text>
+              {reserveLoading ? <ActivityIndicator color={"green"} /> :
+                  <Text style={styles.balance}>{stellarAvalibleBalance ? Number(stellarAvalibleBalance) : 0.0} </Text>}
+            </View>
+            <TouchableOpacity style={styles.update_btn} disabled={loading_edi||reserveLoading} onPress={()=>{updateOffer()}}>
               {loading_edi?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={{color:"#4B84ED",fontSize:19}}>Update Offer</Text>}
             </TouchableOpacity>
           </View>
@@ -404,7 +483,12 @@ const styles = StyleSheet.create({
     borderWidth:1,
     borderRadius:15,
     marginTop:13
-  }
+  },
+  balance: {
+    color: "#fff",
+    textAlign: "center",
+    fontSize: hp(2),
+  },
 });
 
 export default Offers_manages;
