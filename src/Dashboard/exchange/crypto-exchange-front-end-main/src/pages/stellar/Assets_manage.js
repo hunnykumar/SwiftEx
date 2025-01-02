@@ -98,7 +98,7 @@ const Assets_manage = () => {
             })
                 .addOperation(
                     StellarSdk.Operation.changeTrust({
-                        asset: new StellarSdk.Asset("USDC", "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"),
+                        asset: new StellarSdk.Asset("USDC", "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"),
                     })
                 )
                 .setTimeout(30)
@@ -127,15 +127,16 @@ const Assets_manage = () => {
                     console.log('Error loading account:', error);
                     setLoading(false)
                     Snackbar.show({
-                        text: 'USDC faild to added',
+                        text: 'USDC failed to be added',
                         duration: Snackbar.LENGTH_SHORT,
                         backgroundColor:'red',
                     });
                 });
         } catch (error) {
             console.error(`Error changing trust:`, error);
+            setLoading(false)
             Snackbar.show({
-                text: 'USDC faild to added',
+                text: 'USDC failed to be added',
                 duration: Snackbar.LENGTH_SHORT,
                 backgroundColor:'red',
             });
@@ -163,7 +164,7 @@ const Assets_manage = () => {
                 <View style={styles.assets_con}>
                     {assets.map((list, index) => {
                         return (
-                            <TouchableOpacity style={styles.assets_card} onPress={() => { navigation.navigate("send_recive",{bala:list.balance,asset_name:list.asset_type||list.asset_code}) }}>
+                            <TouchableOpacity style={styles.assets_card} onPress={() => { navigation.navigate("send_recive",{bala:list.balance,asset_name:list.asset_type === "native" ? "native" : list.asset_code=== "USDC"?"USDC":list.asset_code}) }}>
                                 <View style={{ flexDirection: "column" }}>
                                     <Text style={[styles.mode_text, { fontSize: 19, fontWeight: "300" }]}>{list.asset_type === "native" ? "Lumens" : list.asset_code=== "USDC"&&"USDC"}</Text>
                                     <Text style={[styles.mode_text, { fontSize: 16, fontWeight: "300", color: "silver" }]}>{list.asset_type === "native" ? "(stellar.org)" : list.asset_code==="USDC" && "(centre.io)"}</Text>
@@ -224,7 +225,7 @@ const Assets_manage = () => {
                                 <TouchableOpacity style={styles.btn} disabled={Loading} onPress={()=>{
                                     list.name==="USDC"?changeTrust():alert_message(list.name+' Added Soon.')
                                 }}>
-                                    <Text style={[styles.modal_sub_heading]}>{Loading&&index==0?(<ActivityIndicator color={"green"}/>):("Add Asset")}</Text>
+                                    {Loading&&index==0?<ActivityIndicator color={"green"}/>:<Text style={[styles.modal_sub_heading]}>Add Asset</Text>}
                                 </TouchableOpacity>
                                 }
                             </View>

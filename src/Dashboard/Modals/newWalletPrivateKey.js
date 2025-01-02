@@ -128,6 +128,7 @@ const NewWalletPrivateKey = ({
   console.log("My mnemonic", mnemonic);
 
   useEffect(() => {
+    setAccountName("")
     const fetch_wallet=async()=>{
       try {
         console.log(Wallet);
@@ -155,7 +156,12 @@ const NewWalletPrivateKey = ({
       </TouchableOpacity>
     );
   };
-
+  const handleUsernameChange = (text) => {
+    // Remove whitespace from the username
+    const formattedUsername = text.replace(/\s/g, '')
+    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
+    setAccountName(formattedUsername);
+  };
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
@@ -209,14 +215,13 @@ const NewWalletPrivateKey = ({
           <View style={style.dotView}>
             <Icon name="dot-single" type={"entypo"} size={20} color={"gray"}/>
             <Text style={{ color: "gray" }}>
-              Keep your mnemonic in a safe place isolated from network
+            Keep your mnemonic in a safe place, isolated from any network.
             </Text>
           </View>
           <View style={style.dotView1}>
             <Icon name="dot-single" type={"entypo"} size={20} color={"gray"}/>
             <Text style={{ color: "gray", width: "90%" }}>
-              Don't share and store mnemonic with a network, such as
-              email,photo, social apps, and so on
+            Do not share it through email, photos, social media, apps, etc.
             </Text>
           </View>
           {/* <Text selectable={true} style={style.welcomeText2}>
@@ -228,8 +233,9 @@ const NewWalletPrivateKey = ({
             <Text style={[style.label,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>Account Name</Text>
             <TextInput
               value={accountName}
+              returnKeyType="done"
               onChangeText={(text) => {
-                setAccountName(text);
+                handleUsernameChange(text)
               }}
               style={{ width: wp("78%"),color:"black" }}
               placeholder={user ? user : "Enter your account name"}
@@ -397,14 +403,14 @@ const style = StyleSheet.create({
   dotView: {
     flexDirection: "row",
     alignItems: "center",
-    width: wp(90),
+    width: wp(85),
     marginLeft: 18,
     marginTop: hp(3),
   },
   dotView1: {
     flexDirection: "row",
     alignItems: "center",
-    width: wp(90),
+    width: wp(85),
     marginLeft: 18,
     marginTop: hp(2),
   },

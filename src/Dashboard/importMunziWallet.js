@@ -93,6 +93,12 @@ const ImportMunziWallet = (props) => {
     }
   }, [mnemonic]);
 
+  const handleUsernameChange = (text) => {
+    // Remove whitespace from the username
+    const formattedUsername = text.replace(/\s/g, '')
+    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
+    setAccountName(formattedUsername);
+  };
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
@@ -103,9 +109,9 @@ const ImportMunziWallet = (props) => {
           <Text style={style.label}>Name</Text>
           <TextInput
             value={accountName}
-            onChangeText={(text) => setAccountName(text)}
+            onChangeText={(text) => {handleUsernameChange(text)}}
             style={{ width: wp("78%"),color:"black" }}
-            placeholder={accountName?accountName: "Wallet 1"}
+            placeholder={accountName?accountName: "Wallet"}
             placeholderTextColor={"gray"}
           />
         </View>

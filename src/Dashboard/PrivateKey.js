@@ -46,6 +46,7 @@ const PrivateKey = (props) => {
   };
 
   useEffect( () => {
+    setAccountName('')
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,
@@ -86,7 +87,12 @@ const PrivateKey = (props) => {
       </Pressable>
     );
   };
-
+  const handleUsernameChange = (text) => {
+    // Remove whitespace from the username
+    const formattedUsername = text.replace(/\s/g, '')
+    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
+    setAccountName(formattedUsername);
+  };
   return (
     <>
     <Wallet_screen_header title="Private Key" onLeftIconPress={() => navi.goBack()} />
@@ -131,31 +137,31 @@ const PrivateKey = (props) => {
         <View style={style.dotView}>
           <Icon name="dot-single" type={"entypo"} size={20} />
           <Text style={{ color: "black" }}>
-            Keep your Mnemonic in a safe place isolated from any network
+          Keep your mnemonic in a safe place, isolated from any network.
           </Text>
         </View>
         <View style={style.dotView1}>
           <Icon name="dot-single" type={"entypo"} size={20} />
           <Text style={style.welcomeText}>
-            Don't share such as email,photo,social apps,etc
+          Do not share it through email, photos, social media, apps, etc.
           </Text>
         </View>
 
         {/* <Text selectable={true} style={style.welcomeText2}>
           {props.route.params.wallet.wallet.mnemonic}
         </Text> */}
-
+        <View style={{marginTop:text_input_up?"-60%":10}}>
         <Text style={style.accountText}> Account Name</Text>
-
         <TextInput
-          style={[style.input,{color:"black",marginTop:text_input_up?"-60%":38}]}
+          style={[style.input,{color:"black"}]}
           placeholder="Enter your account name"
           value={accountName}
-          onChangeText={(text) => setAccountName(text)}
+          onChangeText={(text) => {handleUsernameChange(text)}}
           placeholderTextColor="gray"
           autoCapitalize={"none"}
           maxLength={20}
-        />
+          />
+          </View>
         <TouchableOpacity
           style={{alignSelf: "center",
           alignItems: "center",
@@ -240,7 +246,7 @@ const style = StyleSheet.create({
     borderRadius: 10,
     width: wp(80),
     height: hp(5),
-    marginTop: hp(2),
+    marginTop: hp(1),
     alignSelf: "center",
   },
   pressable: {
@@ -282,7 +288,7 @@ const style = StyleSheet.create({
   dotView1: {
     flexDirection: "row",
     alignItems: "center",
-    width: wp(90),
+    width: wp(80),
     marginLeft: 18,
     marginTop: hp(2),
   },

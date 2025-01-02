@@ -201,14 +201,13 @@ const MyPrivateKey = (props) => {
         <View style={style.dotView}>
           <Icon name="dot-single" type={"entypo"} size={20} color={state.THEME.THEME===false?"black":"#fff"}/>
           <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>
-            Keep your mnemonic in a safe place isolated from any network
+          Keep your mnemonic in a safe place, isolated from any network.
           </Text>
         </View>
         <View style={style.dotView1}>
           <Icon name="dot-single" type={"entypo"} size={20} color={state.THEME.THEME===false?"black":"#fff"}/>
           <Text style={[style.welcomeText,{color:state.THEME.THEME===false?"black":"#fff"}]}>
-            Don't share and store mnemonic with a network, such as email,photo,
-            social apps, and so on
+           Do not share it through email, photos, social media, apps, etc.
           </Text>
         </View>
 

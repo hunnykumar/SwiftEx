@@ -121,6 +121,16 @@ const ImportBinanceWallet = ({
     }
     },[mnemonic,privateKey,json,accountName])
 
+    const handleUsernameChange = (text) => {
+      const formattedUsername = text
+        .replace(/\s/g, '')
+        .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '')
+        .replace(/[^a-zA-Z0-9]/g, '');
+    
+      setAccountName(formattedUsername);
+    };
+  
+
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
@@ -211,7 +221,7 @@ const ImportBinanceWallet = ({
             <TextInput
               value={accountName}
               onChangeText={(text) => {
-                setAccountName(text);
+                handleUsernameChange(text)
               }}
               style={{ width: wp("78%"),color:"black" }}
               placeholder={accountName ? accountName : "Wallet 1"}

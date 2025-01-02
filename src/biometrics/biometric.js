@@ -55,6 +55,20 @@ export function useBiometrics(navigation){
   })
 }
 
+export async function useBiometrics_run() {
+  try {
+    const result = await rnBiometrics.simplePrompt({ promptMessage: 'Confirm fingerprint' })
+    if (result.success) {
+      console.log('successful biometrics provided')
+      return true
+    }
+    if (result.error) {
+      return false
+    }
+  } catch (error) {
+    return false
+  }
+}
 
 export function useBiometricsForAppLock(navigation){ 
   rnBiometrics.simplePrompt({promptMessage: 'Confirm fingerprint'})

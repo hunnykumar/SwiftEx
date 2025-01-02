@@ -11,6 +11,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   ScrollView,
+  Alert,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -31,6 +32,7 @@ import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { REACT_APP_HOST } from "../../ExchangeConstants";
 import { useToast } from "native-base";
 import { Exchange_Login_screen } from "../../../../../reusables/ExchangeHeader";
+import Snackbar from "react-native-snackbar";
 
 export const ExchangeLogin = (props) => {
   const toast=useToast();
@@ -138,19 +140,64 @@ const FOCUSED=useIsFocused();
         redirect: "follow"
       };
   
-      fetch(REACT_APP_HOST+"/users/login", requestOptions)
+      fetch(REACT_APP_HOST+"/auth/login", requestOptions)
         .then((response) => response.json())
         .then((result) => {
-          if(result.message==="Invalid credintials"||result.statusCode===400)
+          console.log("----",result)
+          if (Array.isArray(result?.message)) {
+            Snackbar.show({
+              text: result?.message[0]==="email must be an email"?"Email must be an email":result?.message[0],
+              duration: Snackbar.LENGTH_SHORT,
+              backgroundColor: 'red',
+            });
+            setEmail("");
+            setlogin_Passcode("");
+            setLoading(false);
+          }
+          if(result.message==="Invalid credintials"&&result.statusCode===400)
           {
             setTimeout(()=>{
-              ShowErrotoast(toast,"Invalid credintials");
+              ShowErrotoast(toast,"Invalid credentials");
             },400)
             setlogin_Passcode("");
             setLoading(false);
           }
+          if(result.message==="Invalid credentials"&&result.statusCode===401)
+          {
+            setTimeout(()=>{
+              ShowErrotoast(toast,"Invalid credentials");
+            },400)
+            setlogin_Passcode("");
+            setLoading(false);
+          }
+          if(result.message==="Please verify your email"&&result.statusCode===400)
+          {
+            setTimeout(()=>{
+              Alert.alert(
+                'Account info',
+                'Account Disabled, Please Verify.',
+                [
+                  {
+                    text: 'Cancel',
+                    style: 'cancel',
+                  },
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      setactive_forgot(true);
+                    },
+                  },
+                ],
+                { cancelable: false }
+              );
+              ShowErrotoast(toast,"Please verify your email");
+            },400)
+            setlogin_Passcode("");
+            setLoading(false);
+          }
+
           else{
-            save_token_inlocal(result.token)
+             save_token_inlocal(result.token)
           }
 
       })
@@ -269,14 +316,17 @@ const FOCUSED=useIsFocused();
 
   const forgot_pass=()=>{
       setactive_forgot(true);
+      setlodaing_ver(false);
+      setVERFIY_OTP(false)
   }
 
   const get_otp_forget = async () => {
+
     setVERFIY_OTP(true);
     Keyboard.dismiss()
     setlodaing_ver(true);
     setLoading_fog(true);
-    if (!Email) {
+    if (Email.length<0) {
       setlodaing_ver(false);
        setLoading_fog(false);
        setTimeout(()=>{
@@ -298,11 +348,11 @@ const FOCUSED=useIsFocused();
           redirect: "follow"
         };
 
-        fetch(REACT_APP_HOST +"/users/forgot_passcode", requestOptions)
+        fetch(REACT_APP_HOST +"/users/forgotPasscode", requestOptions)
           .then((response) => response.json())
           .then((result) => {
-            console.log(result)
-            if (result.message === "Otp Send successfully"&&result.statusCode===200) {
+              console.log("---",result)
+              if (result.errorMessage === "OTP sent successfully"&&result.errorCode===200) {
               setlodaing_ver(false);
               setLoading_fog(true);
               setTimeout(()=>{
@@ -310,20 +360,36 @@ const FOCUSED=useIsFocused();
               },400)
               setLoading_fog(false);
               setVERFIY_OTP(false);
+              setLoading(false);
               navigation.navigate("Exchange_otp", {
-                Email: Email,
+                Email:result.token,
+                type:"old_res"
               });
             }
             if(result.statusCode===400)
             {
-              setlodaing_ver(false);
+              if (Array.isArray(result?.message)) {
+                Snackbar.show({
+                  text: result?.message[0]==="email must be an email"?"Email must be an email":result?.message[0],
+                  duration: Snackbar.LENGTH_SHORT,
+                  backgroundColor: 'red',
+                });
+                setlodaing_ver(false);
               setLoading_fog(true);
               setEmail("");
               setLoading_fog(false);
-              setTimeout(()=>{
-                ShowErrotoast(toast,result.message);
-              },400)
               setVERFIY_OTP(false);
+              setLoading(false);
+              } else {
+                ShowErrotoast(toast, result.message);
+                setlodaing_ver(false);
+              setLoading_fog(true);
+              setEmail("");
+              setLoading_fog(false);
+              setVERFIY_OTP(false);
+              setLoading(false);
+              }
+              
             }
             if(result?.errorMessage==="User not found")
             {
@@ -335,6 +401,7 @@ const FOCUSED=useIsFocused();
                 ShowErrotoast(toast,"User not found");
               },400)
               setVERFIY_OTP(false);
+              setLoading(false);
             }
             if(result.statusCode===500)
             {
@@ -346,15 +413,22 @@ const FOCUSED=useIsFocused();
                 ShowErrotoast(toast,"Something went worng.");
               },400)
               setVERFIY_OTP(false);
+              setLoading(false);
             }
           })
-          .catch((error) => console.error(error));
+          .catch((error) => {console.error(error)
+            setLoading(false);
+            setLoading_fog(false);
+            setVERFIY_OTP(false);
+          });
       } catch (err) {
+        setLoading(false);
         setLoading_fog(false);
          setLoading_fog(true);
         setMessage(err.message);
         setLoading_fog(false);
       } finally {
+        setLoading(false);
         setLoading_fog(false);
         setLoading_fog(true);
         setLoading(false);
@@ -440,8 +514,7 @@ const FOCUSED=useIsFocused();
     setcon_passcode(formattedInput);
   };
   const onChangelmail = (input) => {
-    const formattedInput = input.replace(/\s/g, '').toLowerCase();
-    setEmail(formattedInput)
+    setEmail(input)
   };
 
   useEffect(() => {

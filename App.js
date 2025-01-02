@@ -14,6 +14,7 @@ import {
 } from "react-native-responsive-screen";
 import Moralis from "moralis"
 import { API_KEYS, MORALIS_API_KEY } from "./src/Dashboard/constants";
+import Network_Checker from "./src/utilities/Network_Checker";
 
 LogBox.ignoreLogs(["Setting a timer"]);
 
@@ -66,7 +67,7 @@ export default function App() {
     <StoreProvider store={store}>
       <NativeBaseProvider>
         <PaperProvider>
-          
+          <Network_Checker/>
             <View style={styles.container}>
               {/* <StatusBar  backgroundColor="#011434" /> */}
               {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={"#011434"}/>}

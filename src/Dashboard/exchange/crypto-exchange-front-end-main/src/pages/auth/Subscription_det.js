@@ -12,7 +12,7 @@ export default function Subscription_det({ route }) {
   const FOCUSED = useIsFocused();
   const navigation = useNavigation();
   const [avl_plan, setavl_plan] = useState([
-    { id: 1, month: "1 month", save_on_price: 16, org_price: "5", current_price: "Free", type: "Mothly", subscriber_type: "" },
+    { id: 1, month: "1 month", save_on_price: 16, org_price: "5", current_price: "Free", type: "Monthly", subscriber_type: "" },
     { id: 2, month: "3 month", save_on_price: 16, org_price: "15", current_price: "$ 14.6", type: "Quarter", subscriber_type: "MOST POPULAR" },
     { id: 3, month: "Yearly", save_on_price: 16, org_price: "60", current_price: "$ 58", type: "Yearly", subscriber_type: "BEST VALUE" }
   ]);
@@ -47,7 +47,7 @@ export default function Subscription_det({ route }) {
           Early Access to New Features: Be the first to try out upcoming features and updates before anyone else{'\n\n'}
         </Text>
       </View>
-        <Text style={styles.btom_txt}>Terms And Conditions / Privacy Police</Text>
+        <Text style={styles.btom_txt}>Terms And Conditions / Privacy Policy</Text>
     </View>
   )
 }

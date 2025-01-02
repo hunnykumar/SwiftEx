@@ -18,13 +18,16 @@ import { Exchange_screen_header } from "../../../../../reusables/ExchangeHeader"
 import { alert } from "../../../../../reusables/Toasts";
 import { STELLAR_URL } from "../../../../../constants";
 import { SaveTransaction } from "../../../../../../utilities/utilities";
+import Snackbar from "react-native-snackbar";
+import ErrorComponet from "../../../../../../utilities/ErrorComponet";
+import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../../utilities/StellarUtils";
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
 
 const send_recive = ({route}) => {
     const {bala,asset_name}=route.params;
     console.log("----------------usdtAsse-----------------",bala,asset_name)
-    const usdtAsset = new StellarSdk.Asset("USDC", "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN");
+    const usdtAsset = new StellarSdk.Asset("USDC", "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID");
   const cameraRef = useRef(null);
     const state = useSelector((state) => state);
     const FOCUSED = useIsFocused();
@@ -34,25 +37,74 @@ const send_recive = ({route}) => {
     const [recepi_address, setrecepi_address] = useState("");
     const [recepi_memo, setrecepi_memo] = useState("");
     const [recepi_amount, setrecepi_amount] = useState("");
-    const [qrData, setQrData] = useState('');
+    const [lastScannedData, setLastScannedData] = useState(null);
     const [Payment_loading,setPayment_loading]=useState(false);
     const [qrvalue, setqrvalue] = useState("");
     const [isModalVisible, setModalVisible] = useState(false);
-    const onBarCodeRead = (e) => {
-        if (e.data !== qrData) { 
-          setQrData(e.data);
-          alert("success","QR Code Decoded successfully..")
-          setrecepi_address("");
-          setrecepi_address(e.data);
-          toggleModal();
-        }
-      };
+    const [ErroVisible,setErroVisible]=useState(false);
+    const [resStellarbal, setresStellarbal] = useState("");
+    const [Loading, setLoading] = useState(false);
+
+
+  const onBarCodeRead = (e) => {
+    if (e?.data && e?.data !== lastScannedData) {
+      setLastScannedData(e?.data); // Update the last scanned data
+      setErroVisible(false)
+      alert("success", "QR Code Decoded successfully..");
+      setrecepi_address(e?.data);
+      setModalVisible(false);
+  
+      if (!validateStellarAddress(e?.data)) {
+        setModalVisible(false);
+        setErroVisible(false)
+        setrecepi_address("");
+        setErroVisible(true)
+      }
+    }
+  };
+  const handleCameraStatus = (status) => {
+    if (status === "NOT_AUTHORIZED") {
+      setModalVisible(false);
+      Alert.alert(
+        "Camera Permissions Required.",
+        "Please enable camera permissions in settings to scan QR code.",
+        [
+          { text: "Close", style: "cancel" },
+          { text: "Open", onPress: () => Linking.openSettings() },
+        ]
+      );
+    }
+    // No need to explicitly toggle modal visibility on "READY"
+    // Let `toggleModal` or user actions handle visibility
+  };
     const toggleModal = () => {
         setModalVisible(!isModalVisible);
       };
 
     const get_data=async()=>{
-            setqrvalue(state.STELLAR_PUBLICK_KEY)
+        setLoading(true);
+            setqrvalue(state?.STELLAR_PUBLICK_KEY)
+            if(asset_name==="native")
+            {
+              GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
+                setresStellarbal(result?.availableBalance)
+                setLoading(false);
+              }).catch(error => {
+                console.log('Error loading account:', error);
+                setLoading(false);
+              });
+            }
+            if(asset_name==="USDC")
+            {
+              GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
+                console.log("-------jhdkjas",result)
+                setresStellarbal(result?.availableBalance)
+                setLoading(false);
+              }).catch(error => {
+                console.log('Error loading account:', error);
+                setLoading(false);
+              });
+            }
     }
     function validateStellarAddress(address) {
       if (address.length !== 56 || address[0] !== 'G') {
@@ -96,7 +148,14 @@ const send_recive = ({route}) => {
       // Submit the transaction
       const transactionResult = await server.submitTransaction(transaction);
       console.log('Transaction successful!', transactionResult);
-      alert("success","Transaction successful!");
+      Snackbar.show({
+        text: "Transaction successful!",
+        duration: Snackbar.LENGTH_LONG,
+        backgroundColor:'green', 
+      });
+      setrecepi_address('');
+      setrecepi_amount('');
+      setrecepi_memo('');
       setPayment_loading(false);
       try {
         const user_current = await state.user;
@@ -118,32 +177,68 @@ const send_recive = ({route}) => {
       }
     } catch (error) {
       console.error('Error sending XLM:', error);
-      alert("error","Transaction Failed");
+      Snackbar.show({
+        text: "Transaction Failed",
+        duration: Snackbar.LENGTH_LONG,
+        backgroundColor:'red', 
+      });
+      setrecepi_address('');
+      setrecepi_amount('');
+      setrecepi_memo('');
       setPayment_loading(false);
     }
   }
 
 
   const Send_Asseet = async () => {
+    Keyboard.dismiss()
     setPayment_loading(true);
     try {
       if (!recepi_address || !recepi_amount) {
-        alert("error", "Recipient Address and Amount Required.")
+        Snackbar.show({
+          text: "Recipient Address and Amount Required.",
+          duration: Snackbar.LENGTH_LONG,
+          backgroundColor:'red', 
+      });
         setPayment_loading(false);
       }else {
         if (validateStellarAddress(recepi_address)) {
-          alert("success", "Valid Stellar address");
-          if(parseFloat(recepi_amount)>bala)
+          Snackbar.show({
+            text: "Valid Stellar address",
+            duration: Snackbar.LENGTH_LONG,
+            backgroundColor:'green', 
+        });
+          if(parseFloat(recepi_amount)>(asset_name==="native"?resStellarbal:resStellarbal))
           {
-            alert("error", "Insuficint balance");
+            Snackbar.show({
+              text: "Insuficint balance",
+              duration: Snackbar.LENGTH_LONG,
+              backgroundColor:'red', 
+          });
             setPayment_loading(false);
           }
           else{
+           if(parseFloat(recepi_amount)===0)
+           {
+             Snackbar.show({
+               text: "Invalid amount",
+               duration: Snackbar.LENGTH_LONG,
+               backgroundColor: 'red',
+             });
+            setPayment_loading(false);
+           }else{
             send_XLM(state.STELLAR_SECRET_KEY, recepi_address, recepi_amount)
+           }
           }
         } else {
-          alert("error", "Invalid Stellar address");
-          recepi_address('');
+          Snackbar.show({
+            text: "Invalid Stellar address",
+            duration: Snackbar.LENGTH_LONG,
+            backgroundColor:'red', 
+        });
+          setrecepi_address('');
+          setrecepi_amount('');
+          setrecepi_memo('');
           setPayment_loading(false);
         }
       }
@@ -154,14 +249,27 @@ const send_recive = ({route}) => {
   }
 
     useEffect(() => {
+        setLoading(false)
+        setErroVisible(false)
         setPayment_loading(false)
         get_data()
         setmode_selected("SED");
     }, [FOCUSED])
+
+  // Reset lastScannedData when modal is closed
+  useEffect(() => {
+    if (!isModalVisible) {
+      setLastScannedData(null);
+    }
+  }, [isModalVisible]);
     return (
         <>
      <Exchange_screen_header title="Transaction" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
-
+     <ErrorComponet
+          isVisible={ErroVisible}
+          onClose={() => setErroVisible(false)}
+          message="The scanned QR code contains an invalid public key. Please make sure you're scanning the correct QR code and try again."
+        />
             <View style={styles.main_con}>
                 <View style={styles.mode_con}>
                     <TouchableOpacity style={[styles.mode_sele, { backgroundColor: mode_selected === "SED" ? "green" : "#011434" }]} onPress={() => { setmode_selected("SED") }}>
@@ -185,9 +293,9 @@ const send_recive = ({route}) => {
                             />
                             </TouchableOpacity>
                             </View>
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10 }]}>Available: {bala}</Text>
+                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10 }]}>Available: {asset_name==="native"||asset_name==="USDC"?!resStellarbal?<ActivityIndicator/>:resStellarbal:resStellarbal}</Text>
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Amount</Text>
-                            <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_amount(value) }} />
+                            <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="number-pad" style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_amount(value) }} />
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Transaction memo</Text>
                             <TextInput placeholder="Enter transaction memo" placeholderTextColor={"gray"} value={recepi_memo} style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_memo(value) }} />
 
@@ -215,72 +323,34 @@ const send_recive = ({route}) => {
                             </Text>
                         </View>
                 }
-            <Modal
+           <Modal
         animationType="slide"
         transparent={true}
         visible={isModalVisible}
         onRequestClose={toggleModal}
       >
-        {/* <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <View style={{ backgroundColor: '#145DA0', padding: 20, borderRadius: 10,width:"90%",height:"50%" }}>
-            <Text style={{color:"white",fontWeight:"700",alignSelf:"center",fontSize:19}} onPress={()=>{
-              toggleModal();
-            }}>Scan QR.</Text>
-              <View style={styles.QR_scan_con}>
-                <RNCamera
-                  ref={cameraRef}
-                  style={styles.preview}
-                  onBarCodeRead={onBarCodeRead}
-                  captureAudio={false}
-                >
-                  <View style={styles.rectangleContainer}>
-                    <View style={styles.rectangle} />
-                  </View>
-                </RNCamera>
+         <RNCamera
+            ref={cameraRef}
+            style={styles.preview}
+            onBarCodeRead={onBarCodeRead}
+            captureAudio={false}
+            onStatusChange={({ status }) => handleCameraStatus(status)} // Use onStatusChange
+          >
+            <>
+              <View style={styles.header}>
+                <TouchableOpacity onPress={() => { setModalVisible(false); }}>
+                  <Icon name="arrow-left" size={24} color="#fff" style={styles.backIcon} />
+                </TouchableOpacity>
+                <Text style={[styles.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
               </View>
-          </View>
-        </View> */}
-       <RNCamera
-      ref={cameraRef}
-      style={styles.preview}
-      onBarCodeRead={onBarCodeRead}
-      captureAudio={false}
-    >{({ status }) => {
-        console.log("****----",status)
-        if (status==="NOT_AUTHORIZED")
-        {
-          setModalVisible(false),
-          Alert.alert("Camera Permissions Required.","Please enable camera permissions in settings to scan QR code.",
-          [
-            {text:"Close",style:"cancel"},
-            {text:"Open",onPress:()=>{
-                Linking.openSettings()
-            }},
-          ])
-        }
-        if(status==="READY")
-        {
-            setModalVisible(true)
-        }
-        return (
-         <>
-         <View style={styles.header}>
-            <TouchableOpacity onPress={()=>{setModalVisible(false)}}>
-      <Icon name="arrow-left" size={24} color="#fff" style={styles.backIcon}/>
-            </TouchableOpacity>
-      <Text style={[styles.title,{marginTop:Platform.OS==="ios"?hp(5):0}]}>Scan QR Code</Text>
-    </View>
-      <View style={styles.rectangleContainer}>
-        <View style={styles.rectangle}>
-          <View style={styles.innerRectangle} />
-        </View>
-      </View>
-         </>
-          )
-        }}
-    </RNCamera>
-        
-      </Modal>
+              <View style={styles.rectangleContainer}>
+                <View style={styles.rectangle}>
+                  <View style={styles.innerRectangle} />
+                </View>
+              </View>
+            </>
+          </RNCamera>
+    </Modal>
             </View>
         </>
     )

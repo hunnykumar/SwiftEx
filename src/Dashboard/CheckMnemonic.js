@@ -385,6 +385,7 @@ import { genrateAuthToken, genUsrToken } from "./Auth/jwtHandler";
 import { alert } from "./reusables/Toasts";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { useNavigation } from "@react-navigation/native";
+import Snackbar from "react-native-snackbar";
 const StellarSdk = require('stellar-sdk');
 const storeData = async (publicKey,secretKey,Ether_address) => {
   try {
@@ -575,11 +576,11 @@ const CheckMnemonic = (props) => {
           ))}
         </View>
         
-        {loading ? (
+        {loading ? 
+          <View style={[style.ButtonView,{backgroundColor:"white"}]}>
           <ActivityIndicator size="large" color="green" />
-        ) : (
-          <Text></Text>
-        )}
+          </View>
+          :        
         <TouchableOpacity
           style={style.ButtonView}
           onPress={async () => {
@@ -684,14 +685,32 @@ const CheckMnemonic = (props) => {
             }
           }
           else {
-            alert("error","Incorrect Answers, please try again");
-            setAnswers(Array(4).fill(null));
-            shuffleQuestions();
+                  const hasNull = answers.some((answer) => answer === null);
+                  if (hasNull) {
+                    Snackbar.show({
+                      text: 'Please provide all answers before submitting.',
+                      duration: Snackbar.LENGTH_SHORT,
+                      backgroundColor: 'red',
+                    });
+                    setAnswers(Array(4).fill(null));
+                    shuffleQuestions();
+                  }
+                  else{
+
+                    Snackbar.show({
+                      text: 'Incorrect Answers, please try again',
+                      duration: Snackbar.LENGTH_SHORT,
+                      backgroundColor:'red',
+                    });
+                    setAnswers(Array(4).fill(null));
+                    shuffleQuestions();
+                  }
           }
           }}
         >
           <Text style={{ color: "white" }}>Done</Text>
         </TouchableOpacity>
+        }
       </View>
     </Animated.View>
   );

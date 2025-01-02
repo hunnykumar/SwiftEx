@@ -307,7 +307,7 @@ export const OfferView = () => {
     <>
  
  <Exchange_screen_header title="Offers" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
-      <View style={{ height: hp(100), backgroundColor: "#131E3A" }}>
+      <View style={{ height: hp(100), backgroundColor: "#011434",paddingBottom:hp(15) }}>
       <Offers_manages/>
       </View>
     </>

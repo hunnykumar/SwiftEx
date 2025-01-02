@@ -72,7 +72,7 @@ const GenerateWallet = (props) => {
             onPress={() => setCheckBox(!Checked)}
             />
           <Text style={style.txtStyle}>
-            If I lose my private key , my funds will be lost
+            If I lose my private key, my funds will be lost
           </Text>
         </TouchableOpacity>
 
@@ -89,15 +89,19 @@ const GenerateWallet = (props) => {
             onPress={() => setCheckBox2(!Checked2)}
             />
           <Text style={style.txtStyle}>
-            If I share my private key , my funds can get stolen
+            If I share my private key, my funds can get stolen
           </Text>
         </TouchableOpacity>
-        {loading ? (
+        {/* {loading ? (
           <ActivityIndicator size="large" color="white" />
         ) : (
           <Text> </Text>
-        )}
-
+        )} */}
+         {loading ?
+          <View style={[style.btnview,{backgroundColor: "#131E3A"}]}>
+          <ActivityIndicator size="large" color="green" />
+          </View>
+        :
         <TouchableOpacity
           style={
             Checked && Checked2
@@ -147,7 +151,7 @@ const GenerateWallet = (props) => {
           >
             Continue
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity>}
       </View>
     </Animated.View>
   );
@@ -202,10 +206,10 @@ const style = StyleSheet.create({
   txtStyle: {
     color: "white",
     textAlign: "center",
-    width: wp(58),
+    width: wp(70),
     textAlign: "left",
     fontSize: 15,
-    marginLeft:wp(4)
+    marginLeft:wp(2)
   },
   textview: {
     display: "flex",

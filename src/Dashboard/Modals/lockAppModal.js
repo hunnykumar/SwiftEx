@@ -1,315 +1,299 @@
-import React, { useRef, useEffect, useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
-import { Animated } from "react-native";
-import title_icon from "../../../assets/title_icon.png";
-import ReactNativePinView from "react-native-pin-view";
-import Icon from "react-native-vector-icons/Ionicons";
-import ICON from "../../icon"
-import ReactNativeBiometrics, { BiometryTypes } from 'react-native-biometrics'
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useState, useRef, useEffect } from "react";
+import { StyleSheet, View, Text, TouchableOpacity, Animated, Alert, Image, Modal, Platform, } from "react-native";
+import darkBlue from "../../../assets/darkBlue.png";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { useDispatch } from "react-redux";
-import { useSelector } from "react-redux";
-import { Platform } from "react-native";
-import {
-  setPlatform,
-  setWalletType,
-} from "../../components/Redux/actions/auth";
-import Modal from "react-native-modal";
-import AsyncStorageLib from "@react-native-async-storage/async-storage";
-import { useIsFocused, useNavigation } from "@react-navigation/native";
-import { decodeUserToken } from "../Auth/jwtHandler";
-import { SendLoadingComponent } from "../../utilities/loadingComponent";
-import darkBlue from '../../../assets/darkBlue.png'
+import { useFocusEffect, useIsFocused, useNavigation } from "@react-navigation/native";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SET_APP_THEME } from "../../components/Redux/actions/type";
 import { alert } from "../reusables/Toasts";
-import { enableBiometrics } from "../../biometrics/biometric";
-const rnBiometrics = new ReactNativeBiometrics({ allowDeviceCredentials: true })
+import { useBiometrics_run } from "../../biometrics/biometric";
+import Icon from "../../icon";
+
 const LockAppModal = ({ pinViewVisible, setPinViewVisible }) => {
-  const state = useSelector((state) => state);
-  const [pin, setPin] = useState();
-  const [status, setStatus] = useState("pinset");
-  const [showRemoveButton, setShowRemoveButton] = useState(false);
-  const [enteredPin, setEnteredPin] = useState("");
-  const [showCompletedButton, setShowCompletedButton] = useState(false);
-  const [loader, setLoader] = useState(false);
-  const pinView = useRef(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [pin, setPin] = useState("");
+  const [isError, setIsError] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
   const dispatch = useDispatch();
-
-  const navigation = useNavigation();
-  const FOCUSED=useIsFocused()
-  const Spin = new Animated.Value(0);
-  const SpinValue = Spin.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
-  function useBiometrics(){ 
-    rnBiometrics.simplePrompt({promptMessage: 'Confirm fingerprint'})
-  .then((resultObject) => {
-    const { success } = resultObject
-    if (success) {
-      console.log('successful biometrics provided')
-      setPinViewVisible(false)
-    } else {
-      console.log('user cancelled biometric prompt')
-    }
-  })
-  .catch(() => {
-    console.log('biometrics failed')
-  })
-}
-useEffect(() => {
-  const checkBiometricSetting = async () => {
-    if (pinViewVisible) {
-      const biometric = await AsyncStorage.getItem("Biometric");
-      if (biometric === "SET") {
-        useBiometrics();
+  const [status, setStatus] = useState("pinset");
+  const [tempPin, setTempPin] = useState("");
+  const FOCUSED=useIsFocused();
+  const handlePress = async (value) => {
+    if (pin.length < 6) {
+      const newPin = pin + value;
+      setPin(newPin);
+      if (newPin.length === 6) {
+        if (status === "pinset") {
+          const storedPin = await AsyncStorage.getItem("pin");
+          if (JSON.parse(storedPin) === newPin) {
+            setIsSuccess(true);
+            setTimeout(() => {
+              resetInput();
+              setPinViewVisible(false)
+            }, 500);
+          } else {
+            triggerShake();
+            setIsError(true);
+            setTimeout(() => {
+              resetInput();
+            }, 1000);
+          }
+        }
       }
     }
   };
-  checkBiometricSetting();
-}, [FOCUSED, pinViewVisible]);
 
 
 
-useEffect(() => {
-  const checkPinAndAnimate = async () => {
-    if (pinViewVisible) {
-      const biometric = await AsyncStorage.getItem("Biometric");
-      if (biometric === "SET") {
-        useBiometrics();
+  const handleDelete = () => {
+    setPin((prev) => prev.slice(0, -1));
+  };
+
+  const resetInput = () => {
+    setPin("");
+    setIsError(false);
+    setIsSuccess(false);
+  };
+
+  const triggerShake = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true, 
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  useEffect(() => {
+    const checkBiometricSetting = async () => {
+      if (pinViewVisible) {
+        const biometric = await AsyncStorage.getItem("Biometric");
+        if (biometric === "SET") {
+          const data=await useBiometrics_run();
+          if(data)
+          {
+            setPinViewVisible(false)
+          }
+        }
       }
-    }
-    
-    const Check = await AsyncStorage.getItem(`pin`);
-    console.log(Check);
-    if (Check) {
-      setStatus("pinset");
-    }
-    
-    console.log(Platform.OS);
-    if (Platform.OS === "ios") {
-      const platform = "ios";
-      dispatch(setPlatform(platform)).then((response) => {
-        console.log(response);
+    };
+    checkBiometricSetting();
+  }, [FOCUSED, pinViewVisible]);
+  useEffect(() => {
+    const initializeApp = async () => {
+      const Checked = await AsyncStorage.getItem("APP_THEME");
+      dispatch({
+        type: SET_APP_THEME,
+        payload: { THEME: Checked === null ? false : Checked === "false" ? false : true },
       });
-    }
+      const Check = await AsyncStorage.getItem("pin");
+      if (Check) {
+        setStatus("pinset");
+      }
+      if (Platform.OS === "ios") {
+        dispatch(setPlatform("ios"));
+      }
+    };
+    initializeApp();
+  }, []);
 
-    // Animations
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: false, // Important: set this according to your needs
-    }).start();
-
-    Animated.timing(Spin, {
-      toValue: 1,
-      duration: 1500,
-      useNativeDriver: true,
-    }).start();
-
-    // Update remove button visibility
-    setShowRemoveButton(enteredPin.length > 0);
-
-    // Check entered pin length
-    if (enteredPin.length === 6) {
-      const Pin = await AsyncStorage.getItem("pin");
-      if (JSON.parse(Pin) === enteredPin) {
-        console.log(Pin);
-        setPinViewVisible(false);
-      } else {
-        pinView.current.clearAll();
-        alert("error", "Incorrect pin, try again.");
+  const handleBiometrics = async () => {
+    const biometric = await AsyncStorage.getItem("Biometric");
+    if (biometric === "SET") {
+      const data=await useBiometrics_run()
+      if(data)
+      {
+        setPinViewVisible(false)
       }
     } else {
-      setShowCompletedButton(false);
+      alert('error', Platform.OS === "android"
+        ? 'Enable biometrics in SwiftEx app settings.'
+        : 'Enable face Id in SwiftEx app settings.'
+      );
     }
   };
-
-  checkPinAndAnimate(); // Call the async function
-
-}, [fadeAnim, enteredPin, pinViewVisible]); 
-
-
   return (
-    <Modal
-      animationIn="fadeInUpBig"
-      animationOut="fadeOutDownBig"
-      animationInTiming={500}
-      animationOutTiming={650}
-      isVisible={pinViewVisible}
-      useNativeDriver={true}
-      statusBarTranslucent={true}
-      style={style.Body}
-    //  onBackdropPress={() => setPinViewVisible(false)}
-      // onBackButtonPress={() => {
-      //   setPinViewVisible(false);
-      // }}
-    >
-      <Animated.View // Special animatable View
-      style={{ opacity: fadeAnim, }}
-    >
-      <View style={style.Body}>
-        <Animated.Image
-          style={{
-            width: wp("30"),
-            height: hp("12"),
-            padding: 30,
-            marginTop: hp(0),
-            //transform: [{ rotate: SpinValue }],
-          }}
-          source={darkBlue}
-        />
-        <Text style={style.welcomeText}> Hi,</Text>
-        <Text style={style.welcomeText1}>
-          {" "}
-          {status == "verify"
-            ? "Please Re-enter your pin"
-            : status === "pinset"
-            ? "Please enter your pin"
-            : "Please create a pin"}
-        </Text>
-        <View style={{ marginTop: hp(5) }}>
-          <ReactNativePinView
-            inputSize={25}
-            ref={pinView}
-            pinLength={6}
-            buttonSize={50}
-            onValueChange={(value) => setEnteredPin(value)}
-            buttonAreaStyle={{
-              marginTop: 30,
+    <Modal visible={pinViewVisible}>
+      <View style={[styles.container]}>
+        <View style={styles.upper_con}>
+          <Image
+            style={{
+              width: wp("20"),
+              height: hp("15"),
+              padding: 30,
+              marginTop: hp(2),
             }}
-            inputAreaStyle={{
-              // marginBottom: 24,
-            }}
-            inputViewEmptyStyle={{
-              backgroundColor: "transparent",
-              borderWidth: 1,
-              borderColor: "#FFF",
-            }}
-            inputViewFilledStyle={{
-              backgroundColor: "#FFF",
-            }}
-            buttonViewStyle={{
-              borderWidth: 1,
-              borderColor: "#FFF",
-              marginVertical:hp(1)
-            }}
-            buttonTextStyle={{
-              color: "#FFF",
-            }}
-            onButtonPress={async (key) => {
-              console.log(key);
-              if (key === "custom_left") {
-                const biometric = await AsyncStorage.getItem("Biometric");
-                if (biometric === "SET") {
-                  useBiometrics();
-                }else{
-                      Platform.OS==="android"?
-                      alert('error','Enable biometrics in your device settings.'):
-                      alert('error','Enable face Id in your device settings.')
-                }
-              }
-              if (key === "custom_right") {
-                pinView.current.clear();
-              }
-            }}
-            customLeftButton={
-              
-              <ICON
-                type={"materialCommunity"} 
-                name={Platform.OS==="android"?"fingerprint":"face-recognition"}
+            source={darkBlue}
+          />
+          <View style={styles.text_con}>
+            <Text style={styles.text_style}>Hi,</Text>
+            <Text style={[styles.text_style, { marginTop: 10 }]}>{status === "verify"
+              ? "Please Re-enter your pin"
+              : status === "pinset"
+                ? "Please enter your pin"
+                : "Please create a pin"}</Text>
+          </View>
+          <Animated.View
+            style={[
+              styles.pinContainer,
+              { transform: [{ translateX: shakeAnimation }] },
+            ]}
+          >
+            {[0, 1, 2, 3, 4, 5].map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.pinBox,
+                  isError && styles.pinBoxError,
+                  isSuccess && styles.pinBoxSuccess,
+                ]}
+              >
+                {pin.length > index && (
+                  <View
+                    style={[
+                      styles.dot,
+                      isError && styles.dotError,
+                      isSuccess && styles.dotSuccess,
+                    ]}
+                  />
+                )}
+              </View>
+            ))}
+          </Animated.View>
+        </View>
+        <View style={styles.keypad}>
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((key) => (
+            <TouchableOpacity
+              key={key}
+              onPress={() => handlePress(key.toString())}
+              style={styles.key}
+            >
+              <Text style={styles.keyText}>{key}</Text>
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity onPress={() => { handleBiometrics() }} style={styles.key}>
+            <Icon
+             type={"materialCommunity"}
+             name={Platform.OS==="android"?"fingerprint":"face-recognition"}
+             size={36}
+             color={"gray"}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handlePress("0")} style={styles.key}>
+            <Text style={styles.keyText}>0</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleDelete} style={styles.key}>
+            <Icon
+                type={"materialCommunity"}
+                name={"backspace"}
                 size={36}
                 color={"gray"}
-                onPress={async ()=>{
-                  const biometric = await AsyncStorage.getItem("Biometric");
-                  if (biometric === "SET") {
-                    useBiometrics();
-                  }else{
-                      await enableBiometrics()
-                  }
-                }}
               />
-          
-          }
-          customRightButton={
-              showRemoveButton ? (
-                <Icon name={"backspace"} size={36} color={"gray"} />
-              ) : undefined
-            }
-            // customRightButton={
-            //   showCompletedButton ? (
-            //     <Icon
-            //       name={"ios-chevron-forward-circle"}
-            //       size={36}
-            //       color={"#FFF"}
-            //     />
-            //   ) : <Icon
-            //   name={"ios-chevron-forward-circle"}
-            //   size={36}
-            //   color={"#FFF"}
-            // />
-            // }
-          />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.text_con}>
+          <Text style={[styles.text_style, { fontSize: 13, color: "gray" }]}>Passcode adds an extra layer of security</Text>
+          <Text style={[styles.text_style, { fontSize: 13, color: "gray" }]}>when using the app</Text>
         </View>
       </View>
-    </Animated.View>
     </Modal>
   );
 };
 
-export default LockAppModal;
-
-const style = StyleSheet.create({
-  Body: {
-    display: "flex",
-    backgroundColor: "#131E3A",
-    height: hp(109),
-    width: wp(100),
+const styles = StyleSheet.create({
+  upper_con: {
+    height: "50%",
     alignItems: "center",
-    textAlign: "center",
-    marginRight:wp(10),
-    marginTop:hp(3),
-    justifyContent:"center"
+    width: "100%",
+    paddingTop: 40
   },
-  welcomeText: {
-    fontSize: 16,
-    fontWeight: "200",
+  text_con: {
+    padding: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10
+  },
+  text_style: {
+    fontSize: 19,
+    color: "#fff"
+  },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#011434"
+  },
+  pinContainer: {
+    flexDirection: "row",
+    marginBottom: 20,
+    marginTop: 20
+  },
+  pinBox: {
+    width: 48,
+    height: 50,
+    margin: 5,
+    borderWidth: 1,
+    borderColor: "gray",
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  pinBoxError: {
+    borderColor: "red",
+  },
+  pinBoxSuccess: {
+    borderColor: "green",
+  },
+  dot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "silver",
+  },
+  dotError: {
+    backgroundColor: "red",
+  },
+  dotSuccess: {
+    backgroundColor: "green",
+  },
+  keypad: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    width: "100%",
+    justifyContent: "center"
+  },
+  key: {
+    width: 60,
+    height: 60,
+    marginHorizontal: 33,
+    marginVertical: 5,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 30,
+  },
+  keyText: {
+    fontSize: 23,
+    fontWeight: "bold",
     color: "white",
-    marginTop: hp(3),
   },
-  welcomeText2: {
-    fontSize: 20,
-    fontWeight: "200",
-    color: "white",
-    marginTop: hp(10),
-  },
-  Button: {
-    marginTop: hp(20),
-  },
-  tinyLogo: {
-    width: wp("5"),
-    height: hp("5"),
-    padding: 30,
-    marginTop: hp(10),
-  },
-  Text: {
-    marginTop: hp(5),
-    fontSize: 15,
-    fontWeight: "200",
-    color: "white",
-  },
-  welcomeText1:{
-    fontSize: 16,
-    fontWeight: "200",
-    color: "white",
-    marginTop: hp(1),
-  }
 });
+
+export default LockAppModal;

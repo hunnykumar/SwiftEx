@@ -52,11 +52,14 @@ import { STELLAR_URL } from "../../../../constants";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import { Charts_Loadings, Exchange_single_loading } from "../../../../reusables/Exchange_loading";
 import { LineChart } from "react-native-gifted-charts";
+import useFirebaseCloudMessaging from "../../../../notifications/firebaseNotifications";
+import DeviceInfo from 'react-native-device-info';
 // import StellarSdk from '@stellar/stellar-sdk';
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
 
 export const HomeView = ({ setPressed }) => {
+  const { FCM_getToken, requestUserPermission } = useFirebaseCloudMessaging();
   const dispatch_ = useDispatch()
   const [modalContainer_menu,setmodalContainer_menu]=useState(false);
   const AnchorViewRef = useRef(null);
@@ -263,7 +266,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
             // )
             .addOperation(
                 StellarSdk.Operation.changeTrust({
-                    asset: new StellarSdk.Asset("USDC", "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"),
+                    asset: new StellarSdk.Asset("USDC", "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"),
                 })
             )
             .setTimeout(30)
@@ -391,39 +394,49 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
     getAccountDetails();
     fetchProfileData();
     getData()
-    getOffersData();
-    getBidsData();
-    // syncDevice();
+    // getOffersData();
+    // getBidsData();
+    syncDevice();
   }, []);
   useEffect(() => {
     fetchProfileData();
-    getOffersData();
+    // getOffersData();
     getData()
-    getBidsData();
-    // syncDevice();
+    // getBidsData();
+    syncDevice();
   }, [change]);
 
   const syncDevice = async () => {
-    const token = await getRegistrationToken();
+    const token = await FCM_getToken();
     console.log(token);
-    console.log("hi", token);
+    console.log("hi----->>>ttokenb", token);
+    const device_info = {
+      'Device Brand:': await DeviceInfo.getBrand(),
+      'Device Model:': await DeviceInfo.getModel(),
+      'System Version:': await DeviceInfo.getSystemVersion(),
+      "Device Unique ID:": await DeviceInfo.getUniqueIdSync(),
+      "Device IP:": await DeviceInfo.getIpAddressSync(),
+      "Device Type:": await DeviceInfo.getDeviceType(),
+      "Device ": await DeviceInfo.getMacAddress()
+    }
     if(!token)
     {
-      const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-           AsyncStorage.removeItem(LOCAL_TOKEN);
-           Navigate()
+      // const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
+      //      AsyncStorage.removeItem(LOCAL_TOKEN);
+      //      Navigate()
            
-      navigation.navigate('exchangeLogin')
-      return
+      // navigation.navigate('exchangeLogin')
+      // return
     }
     try {
       const { res } = await authRequest(
-        `/users/getInSynced/${await getRegistrationToken()}`,
+        `/users/getInSynced/${token}`,
         GET
       );
       if (res.isInSynced) {
         const { err } = await authRequest("/users/syncDevice", POST, {
-          fcmRegToken: await getRegistrationToken(),
+          fcmRegToken: token,
+          deviceInfo:device_info
         });
         if (err) return setMessage(`${err.message}`);
         return setMessage("Your device is synced");
@@ -438,8 +451,9 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
 
   const fetchProfileData = async () => {
     try {
-      const { res, err } = await authRequest("/users/getUserDetails", GET);
+      const { res, err } = await authRequest("/users/:id", GET);
       await AsyncStorage.setItem("user_email",res.email);
+      console.log("8888888000------1111-------",res,err)
       if (err)return [navigation.navigate("exchangeLogin"),setMessage(` ${err.message} please log in again!`)];
       setProfile(res);
     } catch (err) {
@@ -923,7 +937,7 @@ useEffect(() => {
                 </View>
               ) : (
                <View style={{flexDirection:"row",justifyContent:"center",marginVertical:5}}>
-                <Text style={styles.kycText}>FATCHING UPDATING {profile.isVerified===false?kyc():""}</Text>
+                <Text style={styles.kycText}>FETCHING UPDATES {profile.isVerified===false?kyc():""}</Text>
                 <ActivityIndicator color={"green"}/>
                </View>
               )}
@@ -1028,7 +1042,7 @@ useEffect(() => {
         </TouchableOpacity>
       </Modal>
               </View>
-            <OfferListViewHome/>
+            {/* <OfferListViewHome/> */}
     </ScrollView>
     </>
   );

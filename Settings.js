@@ -217,7 +217,9 @@ import Icon from "./src/icon";
 import { SET_APP_THEME } from "./src/components/Redux/actions/type";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { Wallet_screen_header } from "./src/Dashboard/reusables/ExchangeHeader";
+import useFirebaseCloudMessaging from "./src/Dashboard/notifications/firebaseNotifications";
 const Settings = (props) => {
+  const { usergetToken } = useFirebaseCloudMessaging();
   const navi=useNavigation();
   const focused=useIsFocused();
   const [Checked, setCheckBox] = useState(false);
@@ -450,6 +452,9 @@ const Settings = (props) => {
         onPress={() => {
           //props.navigation.navigate('ImportWallet')
           alert("Coming soon.")
+        }}
+        onLongPress={()=>{
+          usergetToken()
         }}
       >
         <Icon type={"feather"} name="help-circle" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} />

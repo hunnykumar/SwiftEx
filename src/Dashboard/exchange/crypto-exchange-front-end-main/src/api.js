@@ -24,8 +24,8 @@ export const getToken = async () => {
   return TOKEN
 }
 
-export const saveToken = (token) => {
-  AsyncStorageLib.setItem(LOCAL_TOKEN, token) 
+export const saveToken =async (token) => {
+  await AsyncStorageLib.setItem(LOCAL_TOKEN, token) 
 }
 
 export const removeAuth = () => {
@@ -129,7 +129,7 @@ export const authRequest = async (url, request, body = {}) => {
       url,
       body: body,
       headers: {
-        authorization: await getToken(),
+        authorization:"Bearer "+await getToken(),
       },
     }
 

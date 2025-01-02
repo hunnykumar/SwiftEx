@@ -88,7 +88,7 @@ const chooseRenderItem = ({ item }) => (
 );
 const fetchProfileData = async () => {
   try {
-    const { res, err } = await authRequest("/users/getUserDetails", GET);
+    const { res, err } = await authRequest("/users/:id", GET);
     // console.log("_+++++++",res.email)
     if (err) return setMessage(` ${err.message} please log in again!`);
     setu_email(res.email);

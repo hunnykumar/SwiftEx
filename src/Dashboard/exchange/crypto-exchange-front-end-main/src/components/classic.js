@@ -43,6 +43,7 @@ const classic = ({ route }) => {
   const [fianl_modal_loading, setfianl_modal_loading] = useState(false);
   const [amount, setamount] = useState('');
   const [chooseModalVisible_choose, setchooseModalVisible_choose] = useState(false);
+  const [not_avilable, setnot_avilable] = useState(true);
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
@@ -68,7 +69,7 @@ useEffect(()=>{
 },[])
   const for_trading = async () => {
     try {
-        const { res, err } = await authRequest("/users/getUserDetails", GET);
+        const { res, err } = await authRequest("/users/:id", GET);
         setProfile(res);
         await getOffersData()
     } catch (err) {
@@ -432,6 +433,38 @@ const getOffersData = async () => {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={not_avilable}>
+        <View style={styles.modalContainer} onPress={() => { setfianl_modal_error(false) }}>
+          <View style={{
+            backgroundColor: 'rgba(33, 43, 83, 1)',
+            padding: 10,
+            borderRadius: 10,
+            alignItems: 'center',
+            width: "95%",
+            height: "30%",
+            justifyContent: "center",
+            borderColor:"#4CA6EA",
+            borderWidth:2
+          }}>
+            <Icon
+              name={"shield-alert-outline"}
+              type={"materialCommunity"}
+              size={60}
+              color={"orange"}
+            />
+            <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: hp(2.5), color: "#fff",textAlign:"center" }}>This feature is currently not available in the development environment.</Text>
+            <TouchableOpacity style={{ alignSelf: "center", marginTop:hp(2.5),backgroundColor:"green",alignContent:"center",justifyContent:"center",paddingHorizontal:wp(10),paddingVertical:hp(2),borderRadius:10,borderColor:"#4CA6EA",
+            borderWidth:2 }} onPress={() => { navigation.goBack() }}>
+            <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff",textAlign:"center" }}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 };
