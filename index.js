@@ -36,7 +36,7 @@ PushNotification.getChannels(function (channel_ids) {
       console.log('LOCAL NOTIFICATION ==>', notification)
       if(notification.userInteraction){
         //Navigation.navigate('exchange')
-        NavigationController('Transactions')
+        NavigationController('Home')
       }
       console.log("Actions",notification.actions)
     },
@@ -66,9 +66,9 @@ PushNotification.getChannels(function (channel_ids) {
   );
 
 
-messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-    firebaseNotification(remoteMessage.notification.title,'SwiftEx',remoteMessage.notification.message,remoteMessage.notification.body,remoteMessage?.notification?.android?.imageUrl,remoteMessage?.data?.transaction)
-});
+// messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+//     firebaseNotification(remoteMessage.notification.title,'SwiftEx',remoteMessage.notification.message,remoteMessage.notification.body,remoteMessage?.notification?.android?.imageUrl,remoteMessage?.data?.transaction)
+// });
 messaging().onMessage(async (remoteMessage) => {
     firebaseNotification(remoteMessage.notification.title,'SwiftEx',remoteMessage.notification.message,remoteMessage.notification.body,remoteMessage?.notification?.android?.imageUrl,remoteMessage?.data?.transaction)
   });

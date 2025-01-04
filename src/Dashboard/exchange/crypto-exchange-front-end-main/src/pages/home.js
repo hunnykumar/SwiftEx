@@ -949,7 +949,7 @@ useEffect(() => {
           <TouchableOpacity
             style={[styles.PresssableBtn,{flexDirection:"row",justifyContent:"center",marginTop:1,width: wp(45),height:hp(8),marginLeft:3,paddingHorizontal:wp(0)}]}
             onPress={() => {
-              navigation.navigate("classic",{Asset_type:"Ethereum"})
+              navigation.navigate("classic",{Asset_type:"ETH"})
             }}
           >
             <Text style={{ color: "#fff", fontSize: 17, fontWeight: "bold",textAlign:"center"}}>Bridge Tokens</Text>
