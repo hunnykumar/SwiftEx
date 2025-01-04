@@ -162,11 +162,32 @@ const EthSwap = () => {
     console.log("---",state)
     setallblnLoading(true);
     const fetchBalance=async()=>{
-      const resposeBalance = await fetchTokenInfo(TOKENS[1].address,state?.wallet?.address)
-      setUSDCBAL(parseFloat(resposeBalance?.balance)?.toFixed(5))
-      setWETHBAL(parseFloat(state?.EthBalance)?.toFixed(5))
+     try{
+      const addresses = ["0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14", "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"];
+      const WALLET_ADDRESS = state?.wallet?.address;
+
+      const resposeBalance = await fetchTokenInfo(addresses, WALLET_ADDRESS)
+      const usdcBalance = resposeBalance.find(item => item.symbol === "USDC")?.balance || "0.0";
+      const wethBalance = resposeBalance.find(item => item.symbol === "WETH")?.balance || "0.0";
+      setUSDCBAL(parseFloat(usdcBalance).toFixed(5));
+      setWETHBAL(parseFloat(state?.EthBalance)?.toFixed(5));
       setallblnLoading(false);
       setShowTokenList(false);
+    } catch (error) {
+      console.log("Error fetching token info:", error);
+      setallblnLoading(false);
+      setShowTokenList(false);
+      Snackbar.show({
+        text: "Unable to find balance",
+        duration: Snackbar.LENGTH_LONG,
+        backgroundColor: 'red',
+      });
+    }
+      // const resposeBalance = await fetchTokenInfo(TOKENS[1].address,state?.wallet?.address)
+      // setUSDCBAL(parseFloat(resposeBalance?.balance)?.toFixed(5))
+      // setWETHBAL(parseFloat(state?.EthBalance)?.toFixed(5))
+      // setallblnLoading(false);
+      // setShowTokenList(false);
     }
     fetchBalance()
   },[FOCUSED])
@@ -239,6 +260,17 @@ const EthSwap = () => {
   }
 
   useEffect(()=>{
+    if (Number(amount) <= 0) {
+      if(amount==="")
+      {
+        setbtnDisable(true);
+        setbtnMessage("Swap");
+      }else{
+        setbtnDisable(true);
+        setbtnMessage("Invalid Amount");
+      }
+    }
+    else{    
     if(fromToken.symbol==="WETH")
     {
       if (Number(WETHBAL)<Number(amount)) {
@@ -261,6 +293,7 @@ const EthSwap = () => {
         setbtnMessage("Swap")
       }
     }
+  }
     
   },[amount])
 

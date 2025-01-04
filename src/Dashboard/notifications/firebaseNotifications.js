@@ -110,21 +110,20 @@ const useFirebaseCloudMessaging = (navigation) => {
   }, [])
 
   useEffect(() => {
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
      // Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage))
       console.log(remoteMessage.notification.body)
       console.log(remoteMessage.notification.title)
-
       //SendNotification(remoteMessage.notification.title,remoteMessage.notification.body)
-     firebaseNotification(remoteMessage.notification.title,'SwiftEx','You have new Exchange updates',remoteMessage.notification.body)
+    //  await firebaseNotification(remoteMessage.notification.title,'SwiftEx','You have new Exchange updates',remoteMessage.notification.body)
     })
-    messaging().setBackgroundMessageHandler(async remoteMessage => {
-      console.log('Message handled in the background!', remoteMessage);
-      firebaseNotification(remoteMessage.notification.title,'SwiftEx','You have new Exchange updates',remoteMessage.notification.body)
-      //SendNotification(remoteMessage.notification.title,remoteMessage.notification.body)
+    // messaging().setBackgroundMessageHandler(async remoteMessage => {
+    //   console.log('Message handled in the background!', remoteMessage);
+    //   // firebaseNotification(remoteMessage.notification.title,'SwiftEx','You have new Exchange updates',remoteMessage.notification.body)
+    //   //SendNotification(remoteMessage.notification.title,remoteMessage.notification.body)
 
 
-    });
+    // });
 
     return unsubscribe
   }, [])

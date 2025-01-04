@@ -44,6 +44,8 @@ const classic = ({ route }) => {
   const [amount, setamount] = useState('');
   const [chooseModalVisible_choose, setchooseModalVisible_choose] = useState(false);
   const [not_avilable, setnot_avilable] = useState(true);
+  const [WALLETADDRESS,setWALLETADDRESS]=useState('')
+  const [WALLETBALANCE,setWALLETBALANCE]=useState('')
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
@@ -64,6 +66,8 @@ const classic = ({ route }) => {
 });
 const [open, setOpen] = useState(false);
 useEffect(()=>{
+  setWALLETBALANCE(state&&state.EthBalance)
+  setWALLETADDRESS(state&&state.wallet && state.wallet.address)
   setfianl_modal_loading(false)
   setamount('');
 },[])
@@ -128,11 +132,11 @@ const getOffersData = async () => {
   const manage_swap = async (wallet_type, asset_type, receive_token) => {
     const receivetoken = wallet_type === "Ethereum" && asset_type === "USDT" && receive_token === null ? "USDC" : wallet_type === "BNB" && asset_type === "USDT" && receive_token === null ? "aeETH" : wallet_type === "Ethereum" && asset_type === "USDT" ? "aeETH" : wallet_type === "BNB" && asset_type === "USDT" ? "aeETH" : receive_token;
     setfianl_modal_loading(true);
-    let temp_bal = toInt(state?.EthBalance)
+    let temp_bal = toInt(WALLETBALANCE)
     let temp_amt = toInt(amount)
     if (temp_amt >= temp_bal || temp_amt === 0) {
       setfianl_modal_loading(false)
-      ShowErrotoast(toast,temp_amt === 0 ? "Invalid amount" : "Insufficient funds");
+      ShowErrotoast(toast,temp_amt === 0 ? "This feature is not supported in the test environment." : "Insufficient funds");
     }
     else {
       setfianl_modal_loading(false)      // comment this code for run allbridge
@@ -182,13 +186,13 @@ const getOffersData = async () => {
               <View style={{flexDirection:"row",alignItems:"center",width:wp(85)}}>
               <Text style={{fontSize:16,textAlign:"center",color:"#fff",fontSize:19}}>Address: </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%",borderRadius:10}}>
-                <Text style={{fontSize:17,color:"#fff" }}>{state?.wallet?.address}</Text>
+                <Text style={{fontSize:17,color:"#fff" }}>{WALLETADDRESS}</Text>
               </ScrollView>
               </View>
               <View style={{flexDirection:"row",alignItems:"center",width:wp(30)}}>
               <Text style={{fontSize:19,textAlign:"center",color:"#fff"}}>Balance: </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
-                <Text style={{color:"#fff",fontSize:19 }}>{state?.EthBalance}</Text>
+                <Text style={{color:"#fff",fontSize:19 }}>{WALLETBALANCE}</Text>
               </ScrollView>
               </View>
           </View>
@@ -306,7 +310,7 @@ const getOffersData = async () => {
             </View>
             <View style={styles.inputContainer}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%" }}>
-                <Text>{state?.wallet?.address}</Text>
+                <Text>{WALLETADDRESS}</Text>
               </ScrollView>
             </View>
             <View style={styles.inputContainer}>
@@ -458,7 +462,7 @@ const getOffersData = async () => {
             />
             <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: hp(2.5), color: "#fff",textAlign:"center" }}>This feature is currently not available in the development environment.</Text>
             <TouchableOpacity style={{ alignSelf: "center", marginTop:hp(2.5),backgroundColor:"green",alignContent:"center",justifyContent:"center",paddingHorizontal:wp(10),paddingVertical:hp(2),borderRadius:10,borderColor:"#4CA6EA",
-            borderWidth:2 }} onPress={() => { navigation.goBack() }}>
+            borderWidth:2 }} onPress={() => { setnot_avilable(false) }}>
             <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff",textAlign:"center" }}>OK</Text>
             </TouchableOpacity>
           </View>

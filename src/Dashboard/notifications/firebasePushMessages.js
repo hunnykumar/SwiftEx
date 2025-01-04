@@ -104,13 +104,13 @@ export default function PushNotifications(){
   export const firebaseNotification = (title,appName,submessage,message,imageUrl,data) => {
     
     console.log("-------------------------start-----------------------------------------")
-    let {from, txHash, type,coinType}  =   JSON.parse(data);
-    console.log("-------",from, txHash, type,coinType)
-    SaveTransaction(type, txHash, "App", coinType, "Multi-coin", coinType);
-
-    console.log("------------------------------end------------------------------------")
+    // let {from, txHash, type,coinType}  =   JSON.parse(data);
+    // console.log("-------",from, txHash, type,coinType)
+    // SaveTransaction(type, txHash, "App", coinType, "Multi-coin", coinType);
+    
+    // console.log("------------------------------end------------------------------------")
     PushNotification.localNotification({
-        channelId: "1",
+      channelId: "1",
       autoCancel: true,
       bigText:submessage,
       bigPictureUrl: imageUrl,
@@ -118,6 +118,7 @@ export default function PushNotifications(){
       title: title,
       message: message,
       vibrate: true,
+      priority: 'high',
       vibration: 300,
       playSound: true,
       soundName: 'default',
