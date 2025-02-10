@@ -558,7 +558,7 @@ function InvestmentChart(setCurrentWallet) {
           {xmlBalance ? xmlBalance : 0.00} XLM
         </Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.flatlistContainer,{backgroundColor:state.THEME.THEME===false?"#F7F7F7":"#3C3C3C", width: wp(100),height:hp(10),paddingHorizontal:wp(5)}]} onPress={()=>{navigation.navigate("Asset_info",{asset_type:"BNB"})}}>
+      <TouchableOpacity style={[styles.flatlistContainer]} onPress={()=>{navigation.navigate("Asset_info",{asset_type:"BNB"})}}>
 
 
 
@@ -574,14 +574,14 @@ function InvestmentChart(setCurrentWallet) {
             >
               ${bnbPrice >= 0 ? bnbPrice : 300}
             </Text>
-            <Text
+            {/* <Text
               style={{
                 color: "grey",
                 fontWeight: "bold",
               }}
             >
               Available Soon
-            </Text>
+            </Text> */}
           </View>
         </View>
         <Text

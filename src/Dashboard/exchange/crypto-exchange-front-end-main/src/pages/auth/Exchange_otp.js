@@ -86,6 +86,8 @@ const Exchange_otp = (props) => {
             <View style={{ justifyContent: "center", alignItems: "center", paddingHorizontal: wp(9) }}>
                 <Text style={{ marginVertical: 15, color: "white", alignSelf: "flex-start",fontSize:19 }}>Verification Code</Text>
                 <TextInput
+                id="verificationCodeInput"
+                testID="verificationCodeInput"
                     placeholderTextColor="gray"
                     style={[styles.input, { color: "black", backgroundColor: "#fff" }]}
                     maxLength={6}
@@ -107,6 +109,8 @@ const Exchange_otp = (props) => {
     </View>
 ) : (
     <TouchableOpacity
+        id="submitOtpBtn"
+        testID="submitOtpBtn"
         disabled={Loading}
         onPress={() => {
             Keyboard.dismiss();

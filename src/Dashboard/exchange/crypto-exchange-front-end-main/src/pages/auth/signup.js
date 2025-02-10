@@ -177,6 +177,8 @@ useEffect(()=>{
                 <Text style={styles.text}>First Name</Text>
 
               <TextInput
+                id="firstNameInput"
+                testID="firstNameInput"
                 style={styles.input}
                 theme={{ colors: { text: "white" } }}
                 value={formContent.firstName}
@@ -184,7 +186,6 @@ useEffect(()=>{
                 onChangeText={(text) =>
                   onChangename(text)
                 }
-                autoCapitalize={"none"}
                 placeholderTextColor="gray"
                 
               />
@@ -195,6 +196,8 @@ useEffect(()=>{
             <View style={styles.inp}>
                 <Text style={styles.text}>Last Name</Text>
               <TextInput
+                id="lastNameInput"
+                testID="lastNameInput"
                 placeholderTextColor="gray"
                 style={styles.input}
                 theme={{ colors: { text: "white" } }}
@@ -211,6 +214,8 @@ useEffect(()=>{
                   Email Address
                 </Text>
               <TextInput
+                id="emailInput"
+                testID="emailInput"
                 placeholderTextColor="gray"
                 style={styles.input}
                 theme={{ colors: { text: "white" } }}
@@ -246,6 +251,8 @@ useEffect(()=>{
               <Text style={{ color: "gray",fontSize:19,marginLeft:wp(2) }}>Email  should not be empty</Text>
             </View>
 <TouchableOpacity
+id="createAccountBtn"
+testID="createAccountBtn"
   disabled={loading}
   onPress={() => {
     handleSubmit();
@@ -269,6 +276,8 @@ useEffect(()=>{
                 </TouchableOpacity>
             <View style={styles.lowerbox}>
               <TouchableOpacity
+              id="alreadyAccountBtn"
+              testID="alreadyAccountBtn"
                 onPress={() => {
                   navigation.navigate("exchangeLogin");
                 }}

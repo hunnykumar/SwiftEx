@@ -133,6 +133,8 @@ const Setup_password = (props) => {
             <View style={{ justifyContent: "center", alignItems: "center", paddingHorizontal: wp(9) }}>
                 <Text style={{ marginVertical: 15, color: "white", alignSelf: "flex-start",fontSize:19 }}>Password</Text>
                 <TextInput
+                    id="fistPasswordInput"
+                    testID="fistPasswordInput"
                     secureTextEntry={true}
                     placeholderTextColor="gray"
                     style={[styles.input, { color: "black", backgroundColor: "#fff" }]}
@@ -148,6 +150,8 @@ const Setup_password = (props) => {
                 {/* Set con-pass code  */}
                 <Text style={{ marginVertical: 15, color: "white",alignSelf:"flex-start",fontSize:19 }}>Confirm Password</Text>
                 <TextInput
+                    id="secondPasswordInput"
+                    testID="secondPasswordInput"
                     secureTextEntry={true}
                     placeholderTextColor="gray"
                     style={[styles.input, { color: "black", backgroundColor: "#fff" }]}
@@ -168,6 +172,8 @@ const Setup_password = (props) => {
     </View>
 ) : (
     <TouchableOpacity
+        id="submitpasscodeBtn"
+        testID="submitpasscodeBtn"
         disabled={passcode.length < 8 || con_passcode.length < 8}
         onPress={() => {
             submitpasscode();

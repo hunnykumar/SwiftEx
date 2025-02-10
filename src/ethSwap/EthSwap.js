@@ -56,6 +56,14 @@ const TOKENS = [
     address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
     balance: '1000',
     logoUri:'https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png'
+  },
+  {
+    symbol: 'WBNB',
+    name: 'BNB Coin',
+    decimals: 6,
+    address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+    balance: '1000',
+    logoUri:'https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png'
   }
 ];
 
@@ -198,7 +206,7 @@ const EthSwap = () => {
       <Image source={{ uri: token.logoUri }} style={[styles.logoImage,{marginRight:5}]} />
       <Text style={[styles.tokenSymbol,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{token.symbol}</Text>
       </View>
-      {allblnLoading?<ActivityIndicator size={"small"} color={"green"}/>:<Text style={styles.tokenBalance}>Balance: {token?.symbol==="WETH"?WETHBAL:USDCBAL}</Text>}
+      {allblnLoading?<ActivityIndicator size={"small"} color={"green"}/>:<Text style={styles.tokenBalance}>Balance: {token?.symbol==="WETH"?WETHBAL!=="NaN"?WETHBAL:"0.00":USDCBAL!=="NaN"?USDCBAL:"0.00"}</Text>}
     </TouchableOpacity>
   );
 
@@ -221,6 +229,10 @@ const EthSwap = () => {
                 onPress={() => {
                   if (selectingFor === 'from') {
                     setFromToken(item);
+                    if(item.symbol==="WBNB")
+                    {
+                      navigation.navigate("BnbSwap");
+                    }
                   } else {
                     setToToken(item);
                   }

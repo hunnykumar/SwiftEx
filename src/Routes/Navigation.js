@@ -77,6 +77,7 @@ import Setup_password from "../Dashboard/exchange/crypto-exchange-front-end-main
 import Exchange_otp from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Exchange_otp";
 import { App_Update } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/App_Update";
 import EthSwap from "../ethSwap/EthSwap";
+import BnbSwap from "../ethSwap/BnbSwap";
 
 const Stack = createNativeStackNavigator();
 
@@ -570,6 +571,11 @@ const AuthStack = () => (
        <Stack.Screen
         name="EthSwap"
         component={EthSwap}
+        options={{headerShown:false}}
+      />
+       <Stack.Screen
+        name="BnbSwap"
+        component={BnbSwap}
         options={{headerShown:false}}
       />
     </Stack.Navigator>

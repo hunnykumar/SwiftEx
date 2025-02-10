@@ -544,7 +544,8 @@ const FOCUSED=useIsFocused();
      {/* {lodaing_ver==true?alert("success","Email Verifying...."):<></>} */}
     <Exchange_Login_screen title="" onLeftIconPress={() => navigation.navigate("Home")} />
       <SafeAreaView style={styles.container}>
-        <TouchableWithoutFeedback onPress={()=>{Keyboard.dismiss()}}
+        <TouchableWithoutFeedback id="keybordDismissBtn"
+testID="keybordDismissBtn" onPress={()=>{Keyboard.dismiss()}}
           // style={styles.container}
           // onStartShouldSetResponder={() => Keyboard.dismiss()}
         >
@@ -572,12 +573,12 @@ const FOCUSED=useIsFocused();
                     paddingVertical:5,
                     fontWeight:"500"
                   }}>Email</Text>
-                <TextInput autoCapitalize="none" textContentType="emailAddress" placeholder={"Email Adderss"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,color:"black" }} value={Email} onChangeText={(text) => { onChangelmail(text) }} />
+                <TextInput id="emailLoginInput" testID="emailLoginInput" accessibilityLabel="textInputId" autoCapitalize="none" textContentType="emailAddress" placeholder={"Email Adderss"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,color:"black" }} value={Email} onChangeText={(text) => { onChangelmail(text) }} />
                 {active_forgot===false?
                 <>
                  <Text style={{fontWeight:"500",color: "#FFFFFF",fontSize: 16,textAlign: 'left',paddingVertical:5,marginTop:10}}>Password</Text>
                 <TextInput autoCapitalize="none" placeholder={"Password"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,marginTop:5,color:"black" }} value={login_Passcode} onChangeText={(text) => { setlogin_Passcode(text) }} secureTextEntry={true} /></>:<></>}                
-                <TouchableOpacity style={{alignSelf:"flex-end",marginTop:15}} onPress={()=>{active_forgot===false?forgot_pass():[setactive_forgot(false),setEmail("")]}}>
+                <TouchableOpacity id="forgotAndLoginBtn" testID="forgotAndLoginBtn" style={{alignSelf:"flex-end",marginTop:15}} onPress={()=>{active_forgot===false?forgot_pass():[setactive_forgot(false),setEmail("")]}}>
                 {active_forgot===false?<Text style={{color:"red",fontWeight:"300",fontSize:15,fontWeight:"400"}}>Forgot Password</Text>:<Text style={{color:"red",fontWeight:"300",fontSize:15,fontWeight:"400"}}>Login</Text>}
                 </TouchableOpacity>
                 {loading ? (
@@ -588,6 +589,8 @@ const FOCUSED=useIsFocused();
                 <Text> </Text>
               )}
                 <TouchableOpacity style={styles.PresssableBtn}
+                id="LoginAndVerifyBtn"
+                testID="LoginAndVerifyBtn"
                 disabled={VERFIY_OTP}
                   onPress={() => {
                     if (active_forgot === false) {
@@ -650,6 +653,8 @@ const FOCUSED=useIsFocused();
     justifyContent: "center",
   }}>
                 <TouchableOpacity
+                id="RegisterBtn"
+                testID="RegisterBtn"
                   onPress={() => {
                     navigation.navigate("exchangeRegister");
                   }}
@@ -678,6 +683,8 @@ const FOCUSED=useIsFocused();
               <View style={{ marginVertical: 3 }}>
                 {passcode_view === false ? <><Text style={{ marginVertical: 15, color: "white" }}>Verification OTP</Text>
                   <TextInput
+                  id="oneTimeCodeInput"
+                  testID="oneTimeCodeInput"
                     placeholderTextColor="gray"
                     style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
                     theme={{ colors: { text: "white" } }}
@@ -694,6 +701,8 @@ const FOCUSED=useIsFocused();
                   /></> : <>{/* Set pass code  */}
                   <Text style={{ marginVertical: 15, color: "white" }}>Password</Text>
                   <TextInput
+                  id="fistPasswordInput"
+                  testID="fistPasswordInput"
                   secureTextEntry={true}
                     placeholderTextColor="gray"
                     style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
@@ -709,6 +718,8 @@ const FOCUSED=useIsFocused();
                   {/* Set con-pass code  */}
                   <Text style={{ marginVertical: 15, color: "white" }}>Confirm Password</Text>
                   <TextInput
+                    id="secondPasswordInput"
+                    testID="secondPasswordInput"
                     secureTextEntry={true}
                     placeholderTextColor="gray"
                     style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
@@ -738,6 +749,8 @@ const FOCUSED=useIsFocused();
               )}
 
 <TouchableOpacity
+id="submitOtpOrsubmitpasscodeBtn"
+testID="submitOtpOrsubmitpasscodeBtn"
   disabled={passcode_view===false?false:passcode.length<8||con_passcode.length<8?true:false}
   onPress={() => {
     setLoading("true");
@@ -757,10 +770,12 @@ const FOCUSED=useIsFocused();
                 </TouchableOpacity>
               {/* <TouchableOpacity onPress={() => { navigation.navigate("exchangeLogin") }}> */}
             {passcode_view === false? <View style={{flexDirection:"row", width:"90%",justifyContent:"center"}}>
-             <TouchableOpacity onPress={() => { navigation.goBack() }}>
+             <TouchableOpacity id="EditEmailIdBtn"
+testID="EditEmailIdBtn" onPress={() => { navigation.goBack() }}>
                 <Text style={{ marginTop: 14, color: "white" }}>Edit Email Id</Text>
               </TouchableOpacity>
-              <TouchableOpacity disabled={resend_view} onPress={() => {resend_otp()}}>
+              <TouchableOpacity id="resendOtpBtn"
+testID="resendOtpBtn" disabled={resend_view} onPress={() => {resend_otp()}}>
                 <Text style={{ marginLeft:19,marginTop: 14, color: resend_view?"gray":"white" }}>{resend_view?`Resend after: ${count}`:"Resend OTP"}</Text>
               </TouchableOpacity>
              </View>:<></>}
