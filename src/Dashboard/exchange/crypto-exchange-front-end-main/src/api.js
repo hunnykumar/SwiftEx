@@ -1,6 +1,7 @@
 import axios from 'axios'
 import AsyncStorageLib from '@react-native-async-storage/async-storage'
 import { REACT_APP_HOST, REACT_APP_GOOGLE_VPID_KEY, REACT_APP_LOCAL_TOKEN, REACT_APP_FCM_TOKEN_KEY} from './ExchangeConstants'
+import DeviceInfo from 'react-native-device-info'
 const SERVER_URL = REACT_APP_HOST
 const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN
 let TOKEN =''
@@ -167,4 +168,45 @@ export async function PATCH(opts) {
   const body = opts.body
   const res = await axios.patch(URL, body, { headers: header })
   return res.data
+}
+
+// Add guest auth
+export const createGuestUser=async()=>{
+  console.log("----createGuestUser----",)
+  try {
+    const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+
+  const raw = JSON.stringify({
+   'deviceBrand': await DeviceInfo.getBrand(),
+    'deviceModel': await DeviceInfo.getModel(),
+    'systemVersion': await DeviceInfo.getSystemVersion(),
+    "deviceUniqueID": await DeviceInfo.getUniqueIdSync(),
+    "deviceIP": await DeviceInfo.getIpAddressSync(),
+    "deviceType": await DeviceInfo.getDeviceType(),
+    "deviceMacAddress": await DeviceInfo.getMacAddress()
+  });
+  
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: raw,
+    redirect: "follow"
+  };
+  
+  fetch(REACT_APP_HOST+"/users/guestRegister", requestOptions)
+    .then((response) => response.json())
+    .then(async(result) => {
+      console.log("--Guest auth --",result)
+      if(result?.success===true&&result?.status===200)
+      {
+        await saveToken(result?.token)
+      }
+    })
+    .catch((error) => {
+      console.log("--Guest auth Error--",error)
+    });
+  } catch (error) {
+    console.log("--Guest Auth Creation Faild--",error)
+  }
 }

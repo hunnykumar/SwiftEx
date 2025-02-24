@@ -32,12 +32,13 @@ const Payout = () => {
   ];
   const Anchors=[
     // {name:"SwiftEx",by:"centre.io", address: state.wallet.address,image: require('../../../../../../assets/darkBlue.png'), seps: ["SEP 6", "SEP 12", "SEP 24"]},
-    {name:"MoneyGram", address: state.wallet.address,image: require('../../../../../../assets/MONEY_GRAM.png'),dis_ass:"moneygram.com", seps: ["SEP 24"],tom_url:"https://www.moneygram.com/intl/moneygramaccess"},
-    {name:"Banxa", address: state.wallet.address,image: require('../../../../../../assets/BANXA.png'),dis_ass:"banxa.com", seps: ["SEP 24"],tom_url:"https://banxa.com/"},
-    {name:"Clpx", address: state.wallet.address,image: require('../../../../../../assets/CLPX.png'),dis_ass:"clpx.finance", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://clpx.finance/transactions"},
-    {name:"Clickpesa", address: state.wallet.address,image: require('../../../../../../assets/CLICKPESA.png'),dis_ass:"clickpesa.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://clickpesa.com/"},
-    {name:"Finclusive", address: state.wallet.address,image: require('../../../../../../assets/FINCLUSIVE.png'),dis_ass:"finclusive.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://finclusive.com/"},
-    {name:"Mykobo", address: state.wallet.address,image: require('../../../../../../assets/MYKOBO.png'),dis_ass:"mykobo.co", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://mykobo.co/"},
+    // {name:"MoneyGram", address: state.wallet.address,image: require('../../../../../../assets/MONEY_GRAM.png'),dis_ass:"moneygram.com", seps: ["SEP 24"],tom_url:"https://www.moneygram.com/intl/moneygramaccess"},
+    // {name:"Banxa", address: state.wallet.address,image: require('../../../../../../assets/BANXA.png'),dis_ass:"banxa.com", seps: ["SEP 24"],tom_url:"https://banxa.com/"},
+    // {name:"Clpx", address: state.wallet.address,image: require('../../../../../../assets/CLPX.png'),dis_ass:"clpx.finance", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://clpx.finance/transactions"},
+    // {name:"Clickpesa", address: state.wallet.address,image: require('../../../../../../assets/CLICKPESA.png'),dis_ass:"clickpesa.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://clickpesa.com/"},
+    // {name:"Finclusive", address: state.wallet.address,image: require('../../../../../../assets/FINCLUSIVE.png'),dis_ass:"finclusive.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://finclusive.com/"},
+    {name:"Alchemy Pay", address: state.wallet.address,image: require('../../../../../../assets/AlcamyPay.jpg'),dis_ass:"alchemypay.org",tom_url:"https://www.alchemypay.org/"},
+    {name:"Mykobo", address: state.wallet.address,image: require('../../../../../../assets/MYKOBO.png'),dis_ass:"mykobo.co", seps: ["SEP 24"],tom_url:"https://mykobo.co/"},
   ];
   const price_data=[
     { name: "USDC", price: "100", fee:"0.5", asset_code:"USDC" },
@@ -319,7 +320,7 @@ const Payout = () => {
           <ScrollView>
             {Anchors.map((list, index) => {
               return (
-                <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),setURL_OPEN(list.tom_url),setLoading(true),setopen_web_view(true)}}>
+                <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),setURL_OPEN(index===0?navigation.navigate("KycComponent"):list.tom_url),setLoading(index===0?false:true),setopen_web_view(index===0?false:true)}}>
                   <View style={{flexDirection:"row",alignItems:"center"}}>
                   <Image
                   source={list.image}
@@ -331,11 +332,8 @@ const Payout = () => {
                     <Text style={[styles.card_text,{color:"gray"}]}>{list.dis_ass}</Text>
                     </View>
                   {/* <Text style={[styles.next_btn_txt,{fontSize:13,marginTop:5,fontWeight:"500"}]}>Vist stellar website</Text> */}
-                    <TouchableOpacity disabled={Anchor_selection!==index} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"#011434",alignSelf:"center" }]} onPress={()=>{[setLoading(true),setopen_web_view(true)]}}>
-                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>SEP-24</Text>
-                    </TouchableOpacity>
-                    {list.name==="Clpx"&&<TouchableOpacity disabled={true} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"gray",alignSelf:"center" }]} onPress={()=>{[setLoading(true),setopen_web_view(true)]}}>
-                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>SEP-6</Text>
+                    {list?.seps&&<TouchableOpacity disabled={Anchor_selection!==index} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"#011434",alignSelf:"center" }]} onPress={()=>{[setLoading(true),setopen_web_view(true)]}}>
+                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>{list.seps}</Text>
                     </TouchableOpacity>}
                   </View>
                   {/* {list?.seps.map((sep, sepIndex) => (

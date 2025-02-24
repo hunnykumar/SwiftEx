@@ -1,234 +1,123 @@
-import { Dropdown } from "react-native-element-dropdown";
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  LayoutAnimation,
-  Platform,
-  UIManager,
-} from "react-native";
-import AntDesign from "react-native-vector-icons/AntDesign";
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState } from 'react';
+import { View, Text, Image, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 
-export const DropDown = ({
-  Title,
-  dropdownData,
-  setNewOffer,
-  dropdownStyle,
-  newOffer,
-  handleChange,
-  placeholderTextStyle
-}) => {
-  const state = useSelector((state) => state);
-  const [value, setValue] = useState(null);
-  const [value2, setValue2] = useState(null);
-  const [isFocus, setIsFocus] = useState(false);
-  const renderLabel = () => {
-    if (value || isFocus) {
-      return (
-        <Text style={[styles.label, isFocus && { color: "blue" }]}>
-          Dropdown label
+const Dropdown = ({ theme, selectedToken, onSelectToken }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const tokens = [
+    { id: 1, name: 'Ethereum', image: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png' },
+    { id: 2, name: 'Binance', image: 'https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1696501970' },
+  ];
+
+  const renderToken = ({ item }) => (
+    <TouchableOpacity
+      style={styles.tokenItem}
+      onPress={() => {
+        onSelectToken(item);
+        setModalVisible(false);
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Image source={{ uri: item.image }} style={styles.tokenImage} />
+        <Text style={{ color: theme ? "#fff" : "black", marginLeft: 5, fontSize: 17 }}>
+          {item.name}
         </Text>
-      );
-    }
-    return null;
-  };
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={styles.container}>
-      <Dropdown
-        style={[
-          styles.dropdown,
-          dropdownStyle,
-          isFocus && { borderColor: "blue" },
-        ]}
-        placeholderStyle={[styles.placeholderStyle,placeholderTextStyle]}
-        selectedTextStyle={styles.selectedTextStyle}
-        inputSearchStyle={styles.inputSearchStyle}
-        iconStyle={styles.iconStyle}
-        data={dropdownData}
-        search
-        //maxHeight={200}
-        labelField="label"
-        valueField="value"
-        placeholder={
-          !isFocus
-            ? Title
-            : Title === "Choose Asset"
-            ? "Assets"
-            : Title === "Choose Currency"
-            ? "Currencies"
-            : "Select"
-        }
-        searchPlaceholder="Search..."
-        value={Title === "Assets" ? value : value2}
-        onFocus={() => setIsFocus(true)}
-        onBlur={() => setIsFocus(false)}
-        onChange={(input) => {
-          let type;
-          if (Title === "Assets") {
-            type = "amount";
-            // setNewOffer(newOffer)
-            handleChange(input.value, "assetName");
-            const assetName = {
-              amount: newOffer.amount,
-              assetName: input.value,
-              pricePerUnit: newOffer.pricePerUnit,
-              currencyName: newOffer.currencyName ? newOffer.currencyName : "",
-            };
-            setNewOffer(assetName);
-            setValue(input.value);
-          } else if (Title === "INR") {
-            type = "pricePerUnit";
-            handleChange(input.value, "currencyName");
-            const assetName = {
-              amount: newOffer.amount,
-              assetName: newOffer.assetName ? newOffer.assetName : "",
-              pricePerUnit: newOffer.pricePerUnit,
-              currencyName: input.value,
-            };
-            setNewOffer(assetName);
-            setValue2(input.value);
-          }
-        }}
-        // renderLeftIcon={() => (
-        //   <AntDesign
-        //     style={styles.icon}
-        //     color={isFocus ? "blue" : "white"}
-        //     name="Safety"
-        //     size={20}
-        //   />
-        // )}
-      />
-    </View>
+    <>
+      <TouchableOpacity
+        style={styles.addTokenContainer}
+        onPress={() => setModalVisible(true)}
+      >
+        <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+          <Image source={{ uri: selectedToken.image }} style={styles.tokenImage} />
+          <Text style={{ color: theme ? "#fff" : "black", marginLeft: 5, fontSize: 19 }}>
+            {selectedToken.name}
+          </Text>
+        </View>
+        <Icon name="chevron-down" size={29} color={theme ? "#fff" : "black"} style={{ marginLeft: 8 }} />
+      </TouchableOpacity>
+
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setModalVisible(false)}
+        >
+          <View style={[
+            styles.dropdownContainer,
+            { backgroundColor: theme ? '#1a1a1a' : '#fff' }
+          ]}>
+            <FlatList
+              data={tokens}
+              renderItem={renderToken}
+              keyExtractor={item => item.id.toString()}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
   );
 };
 
+export default Dropdown;
+
 const styles = StyleSheet.create({
-  text: {
-    bottom: wp("35"),
-    color: "white",
+  addTokenContainer: {
+    height: hp(8),
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: 20,
+    paddingHorizontal: 13,
+    paddingVertical: 17,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderColor: '#4CA6EA',
   },
-  textDesign: {
-    color: "white",
-    fontStyle: "italic",
-    fontWeight: "bold",
-    marginLeft: wp("3"),
+  tokenImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 19,
+    backgroundColor: '#ddd',
   },
-  textDesign2: {
-    color: "white",
-    fontWeight: "bold",
-    marginLeft: wp("5"),
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  textDesign3: {
-    color: "white",
-    fontWeight: "bold",
-    marginLeft: wp("2"),
+  dropdownContainer: {
+    width: '95%',
+    maxHeight: 300,
+    borderRadius: 10,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  textDesign4: {
-    color: "white",
-    fontWeight: "bold",
-    marginLeft: wp("4"),
-  },
-  buttons: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    bottom: hp("16"),
-  },
-  addButton: {
-    display: "flex",
-    paddingLeft: wp("4"),
-    opacity: 0.8,
-    alignItems: "center",
-    textAlign: "center",
-    zIndex: 11,
-    backgroundColor: "grey",
-    width: wp("15"),
-    height: hp("6"),
-    borderRadius: 45,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 8,
-  },
-  addButton2: {
-    position: "absolute",
-    zIndex: 11,
-    left: 20,
-    bottom: 90,
-    backgroundColor: "green",
-    width: 80,
-    height: 70,
-    borderRadius: 35,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 8,
-  },
-  addButtonText: {
-    color: "#fff",
-    fontSize: 18,
-  },
-  container: {
-    // backgroundColor: "white",
-    color: "white",
-  },
-  dropdown: {
-    height: hp("7"),
-    width: wp("40"),
-    paddingHorizontal: 8,
-    marginTop: hp("1"),
-    color:'white'
-  },
-  icon: {
-    marginRight: 5,
-    backgroundColor: "blue",
-  },
-  label: {
-    position: "absolute",
-    backgroundColor: "white",
-    left: wp("13"),
-    zIndex: -999,
-    paddingHorizontal: 8,
-    fontSize: 14,
-    color: "black",
-    height: hp("3"),
-    bottom: hp("8"),
-  },
-  placeholderStyle: {
-    fontSize: 16,
-    color: "white",
-  },
-  selectedTextStyle: {
-    fontSize: 11,
-    color: "white",
-  },
-  iconStyle: {
-    width: 20,
-    height: 20,
-    
-    // backgroundColor: "blue",
-  },
-  inputSearchStyle: {
-    height: 40,
-    fontSize: 16,
-  },
-  label: {
-    position: "absolute",
-    backgroundColor: "white",
-    left: 22,
-    top: 8,
-    zIndex: 999,
-    paddingHorizontal: 8,
-    fontSize: 14,
+  tokenItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
 });

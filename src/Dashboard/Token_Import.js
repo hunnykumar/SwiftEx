@@ -39,7 +39,11 @@
   } from "react-native-responsive-screen";
 import { Wallet_market_loading } from './reusables/Exchange_loading';
 import LinearGradient from 'react-native-linear-gradient';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import Dropdown from './exchange/crypto-exchange-front-end-main/src/components/Dropdown';
+import IconWithCircle, { CustomIconWithCircle } from '../Screens/iconwithCircle';
+import RecieveAddress from './Modals/ReceiveAddress';
+import TokenQrCode from './Modals/TokensQrCode';
 
   const ERC20_ABI = [
     "function name() view returns (string)",
@@ -47,19 +51,39 @@ import { useFocusEffect } from '@react-navigation/native';
     "function decimals() view returns (uint8)",
     "function balanceOf(address owner) view returns (uint256)"
   ];
+
+  const ERC20_BNB_ABI = [
+    "function balanceOf(address) view returns (uint256)",
+    "function name() view returns (string)",
+    "function decimals() view returns (uint8)"
+  ];
   
   const Token_Import = () => {
+    const navigation=useNavigation();
     const state = useSelector((state) => state);
     const [tokenInfoList, setTokenInfoList] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [newTokenAddress, setNewTokenAddress] = useState('');
     const [showTokenList, setShowTokenList] = useState(false); // Toggle state for token list view
+    const [QrVisible,setQrVisible]=useState(false);
+    const [QrValue,setQrValue]=useState("");
+    const [QrName,setQrName]=useState("");
+
     
     const WALLET_ADDRESS = state.wallet.address; 
     const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
+    const providerBNB = new ethers.providers.JsonRpcProvider(RPC.BSCRPC2);
+
   
     const STORAGE_KEY = `tokens_${WALLET_ADDRESS}`;
+    const STORAGE_BNB_KEY = `tokens_BNB${WALLET_ADDRESS}`;
+    
+    const [selectedToken, setSelectedToken] = useState({
+      id: 1,
+      name: 'Ethereum',
+      image: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png'
+    });
   
     // Default tokens array
     const DEFAULT_TOKENS = [
@@ -79,6 +103,14 @@ import { useFocusEffect } from '@react-navigation/native';
         address: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
       }
     ];
+    // Default BNB Tokens
+    const DEFAULT_BNB_TOKENS = [
+      {
+        symbol: "USDT",
+        img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png", 
+        address: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
+      }
+    ];
   
     // Fetch token details
     const fetchTokenInfo = async (address, img_url = '', symbol = '') => {
@@ -94,6 +126,28 @@ import { useFocusEffect } from '@react-navigation/native';
         return { 
           name, 
           symbol: fetchedSymbol || symbol, 
+          balance: formattedBalance, 
+          address, 
+          img_url: img_url
+        };
+      } catch (error) {
+        console.error(`Error fetching token info for ${address}:`, error);
+        throw new Error('Invalid token address or failed to fetch data');
+      }
+    };
+
+    // Fetch BNB token details
+    const fetchBNBTokenInfo = async (address, img_url = '', symbol = '') => {
+      try {
+        const tokenContract = new ethers.Contract(address, ERC20_BNB_ABI, providerBNB);  
+        const [name, decimals, balance] = await Promise.all([
+          tokenContract.name(),
+          tokenContract.decimals(),
+          tokenContract.balanceOf(WALLET_ADDRESS)
+        ]);
+        const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+        return { 
+          name,  
           balance: formattedBalance, 
           address, 
           img_url: img_url
@@ -134,6 +188,36 @@ import { useFocusEffect } from '@react-navigation/native';
         setIsLoading(false);
       }
     };
+       // Fetch default BNB tokens and stored tokens
+       const fetchDefaultAndStoredBNBTokens = async () => {
+        setIsLoading(true);
+        try {
+          // Fetch default tokens
+          const defaultTokenPromises = DEFAULT_BNB_TOKENS.map(({ address, img_url, symbol }) =>
+            fetchBNBTokenInfo(address, img_url, symbol)
+          );
+          const defaultTokenData = await Promise.all(defaultTokenPromises);
+    
+          // Fetch stored tokens from AsyncStorage
+          const storedAddresses = await AsyncStorage.getItem(STORAGE_BNB_KEY);
+          const storedTokenAddresses = storedAddresses ? JSON.parse(storedAddresses) : [];
+    
+          const storedTokenPromises = storedTokenAddresses.map((address) =>
+            fetchBNBTokenInfo(address)
+          );
+          const storedTokenData = await Promise.all(storedTokenPromises);
+    
+          // Combine and sort tokens
+          const combinedTokens = [...defaultTokenData, ...storedTokenData];
+          const sortedTokens = combinedTokens.sort((a, b) => a.name.localeCompare(b.name));
+    
+          setTokenInfoList(sortedTokens);
+        } catch (error) {
+          console.error('Error fetching tokens:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
   
     // Add new token
     const handleAddToken = async () => {
@@ -173,24 +257,84 @@ import { useFocusEffect } from '@react-navigation/native';
         setIsLoading(false);
       } catch (error) {
         Alert.alert('Error', 'Please check the token address.');
+        console.log("-----",error)
         setNewTokenAddress('');
         setIsLoading(false);
       } finally {
         setIsLoading(false);
       }
     };
+
+    // Add BNB Token
+    const handleAddBNBToken = async () => {
+      if (!newTokenAddress||newTokenAddress.length !== 42) {
+        setNewTokenAddress('');
+        Alert.alert('Error', 'Please enter a valid token contract address.');
+        return;
+      }
+  
+      if (!ethers.utils.isAddress(newTokenAddress)) {
+        setNewTokenAddress('');
+        Alert.alert('Error', 'Invalid Binance address.');
+        return;
+      }
+  
+      if (tokenInfoList.some((token) => token.address === newTokenAddress)) {
+        setNewTokenAddress('');
+        Alert.alert('Error', 'Token already added.');
+        return;
+      }
+      
+      setIsLoading(true);
+      try {
+        // Fetch token info and update UI
+        const newToken = await fetchBNBTokenInfo(newTokenAddress);
+        const updatedTokens = [...tokenInfoList, newToken].sort((a, b) => a.name.localeCompare(b.name));
+        setTokenInfoList(updatedTokens);
+  
+        // Update AsyncStorage
+        const storedAddresses = await AsyncStorage.getItem(STORAGE_BNB_KEY);
+        const tokenAddresses = storedAddresses ? JSON.parse(storedAddresses) : [];
+        const updatedAddresses = Array.from(new Set([...tokenAddresses, newTokenAddress])); // Avoid duplicates
+        await AsyncStorage.setItem(STORAGE_BNB_KEY, JSON.stringify(updatedAddresses));
+  
+        setNewTokenAddress('');
+        Alert.alert("Info","Token Adding completed.")
+        setIsLoading(false);
+      } catch (error) {
+        Alert.alert('Error', 'Please check the token address.');
+        setNewTokenAddress('');
+        setIsLoading(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+
   
     // Refresh token list
     const handleRefresh = async () => {
       setRefreshing(true);
-      await fetchDefaultAndStoredTokens();
+      if(selectedToken.name==="Ethereum")
+      {
+        await fetchDefaultAndStoredTokens();
+      }
+      else{
+        await fetchDefaultAndStoredBNBTokens();
+      }
       setRefreshing(false);
     };
   
     // Fetch token data on component mount
     useEffect(() => {
-      fetchDefaultAndStoredTokens();
-    }, [WALLET_ADDRESS]);
+      if(selectedToken.name==="Ethereum")
+        {
+          fetchDefaultAndStoredTokens();
+        }
+        else{
+          fetchDefaultAndStoredBNBTokens();
+        }
+    }, [WALLET_ADDRESS,selectedToken]);
     useFocusEffect(
       useCallback(() => {
         setShowTokenList(false);
@@ -212,23 +356,45 @@ import { useFocusEffect } from '@react-navigation/native';
                 data={tokenInfoList}
                 keyExtractor={(item) => item.address}
                 renderItem={({ item }) => (
-                  <View style={[styles.tokenCard,{color:state.THEME.THEME===false?"#fff":"black"}]}>
-                    {item.img_url ?
-                      <Image
-                        source={{ uri: item.img_url }}
-                        style={styles.tokenImage}
-                      /> :
-                      <LinearGradient
-                      colors={['#3b82f6', '#8b5cf6']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={[styles.tokenImage, { borderRadius: 30, justifyContent: "center", alignItems: "center" }]}
-                    >
-                        <Text style={[styles.tokenName,{color:"#fff",fontSize:28}]}>{item?.name?.charAt(0)}</Text>
-                      </LinearGradient>}
-                    <View>
-                      <Text style={[styles.tokenName,{color:state.THEME.THEME===false?"black":"#fff"}]}>{item?.name} ({item?.symbol})</Text>
-                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>Balance: {item?.balance}</Text>
+                  <View style={[styles.tokenCard, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black",alignContent:"center",justifyContent:"space-between" }]}>
+                    <View style={{ flexDirection: "row", alignItems: 'center' }}>
+                      {item.img_url ?
+                        <Image
+                          source={{ uri: item.img_url }}
+                          style={styles.tokenImage}
+                        /> :
+                        <LinearGradient
+                          colors={['#3b82f6', '#8b5cf6']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={[styles.tokenImage, { borderRadius: 30, justifyContent: "center", alignItems: "center" }]}
+                        >
+                          <Text style={[styles.tokenName, { color: "#fff", fontSize: 28 }]}>{item?.name?.charAt(0)}</Text>
+                        </LinearGradient>}
+                      <View>
+                        <Text style={[styles.tokenName, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>{item?.name} {item?.symbol && "(" + item?.symbol + ")"}</Text>
+                        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff" }}>Balance: {Number(item?.balance).toFixed(4)}</Text>
+                      </View>
+                    </View>
+                    <View style={{ flexDirection: "row", alignItems: 'center' }}>
+                      <CustomIconWithCircle
+                        name={"paper-plane-outline"}
+                        type={"ionicon"}
+                        onPress={() => navigation.navigate("TokenSend",{tokenAddress:item?.address,tokenType:selectedToken})}
+                        bgColor={state.THEME.THEME===false?"#F4F4F4":"#23262F99"}
+                        width={43}
+                        height={43}
+                        iconColor={"#2164C1"}
+                      />
+                      <CustomIconWithCircle
+                        name={"qr-code-outline"}
+                        type={"ionicon"}
+                        onPress={() => {setQrValue(item?.address),setQrName(item?.name),setQrVisible(true)}}
+                        bgColor={state.THEME.THEME===false?"#F4F4F4":"#23262F99"}
+                        width={43}
+                        height={43}
+                        iconColor={"#2164C1"}
+                      />
                     </View>
                   </View>
                 )}
@@ -244,14 +410,12 @@ import { useFocusEffect } from '@react-navigation/native';
           </>
         ) : (
           <>
-            {/* Add Token Form View */}
-            <View style={[styles.addTokenContainer]}>
-          <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
-            <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.tokenImage} />
-            <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", marginLeft: 5,fontSize:17 }}>Ethereum</Text>
-          </View>
-          {/* <Icon type={"materialCommunity"} name="menu-down" size={hp(2.9)} color={"pink"} style={{ margin: hp(2), }} /> */}
-        </View>
+            <Text style={[styles.watchlistCon.watchlistConHeading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Your Tracked Tokens</Text>
+              <Dropdown
+                theme={state.THEME.THEME}
+                selectedToken={selectedToken}
+                onSelectToken={setSelectedToken}
+              />
             <View style={styles.addTokenContainer}>
               <TextInput
                 style={[styles.input,{backgroundColor:state.THEME.THEME===false?"#fff":"black",color:state.THEME.THEME===false?"black":"#fff"}]}
@@ -266,7 +430,7 @@ import { useFocusEffect } from '@react-navigation/native';
         </TouchableOpacity>
             </View>
               <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
-                <TouchableOpacity disabled={!newTokenAddress} style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: !newTokenAddress ? "gray" : "green" }]} onPress={() => { handleAddToken() }}>
+                <TouchableOpacity disabled={!newTokenAddress} style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: !newTokenAddress ? "gray" : "green" }]} onPress={() => { selectedToken.name==="Ethereum"?handleAddToken():handleAddBNBToken() }}>
                  {isLoading?<ActivityIndicator color='#fff'/>:<Text style={[styles.text, { color: state.THEME.THEME === false ? "#fff" : "#fff" }]}>Add Asset</Text>}
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: "green" }]} onPress={() => { setShowTokenList(true) }}>
@@ -275,6 +439,16 @@ import { useFocusEffect } from '@react-navigation/native';
               </View>
           </>
         )}
+        <View style={{ width: wp(100), height: hp(1) }}>
+          <TokenQrCode
+            modalVisible={QrVisible}
+            setModalVisible={setQrVisible}
+            iconType={QrName}
+            qrvalue={QrValue}
+            isDark={state.THEME.THEME}
+          />
+        </View>
+
       </View>
     );
   };
@@ -360,7 +534,20 @@ import { useFocusEffect } from '@react-navigation/native';
       fontWeight:"600",
       textAlign: "center",
       margin: hp(0),
-    }
+    },
+    watchlistCon: {
+      backgroundColor: "rgba(244, 244, 244, 1)",
+      width: "100%",
+      height: "100%",
+      paddingVertical: 10,
+      paddingHorizontal:20,
+      watchlistConHeading: {
+        fontSize: 18,
+        fontWeight: "600",
+        color: "#FFFFFF",
+        paddingBottom:12
+      }
+    },
   });
   
   export default Token_Import;

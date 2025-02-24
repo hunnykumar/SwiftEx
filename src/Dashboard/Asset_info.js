@@ -153,7 +153,7 @@ const Asset_info = ({ route }) => {
                     return { date: timestamp, value: closePrice };
                   });
 
-                console.log("8******************_____", transformedData);
+                console.log("8******************_____", resp);
                 setchart(transformedData)
                 setpoints_data(transformedData[transformedData?.length-1]?.value);
                 setpoints_data_time(transformedData[transformedData?.length-1]?.date);

@@ -78,6 +78,8 @@ import Exchange_otp from "../Dashboard/exchange/crypto-exchange-front-end-main/s
 import { App_Update } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/App_Update";
 import EthSwap from "../ethSwap/EthSwap";
 import BnbSwap from "../ethSwap/BnbSwap";
+import KycComponent from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/KycComponent";
+import TokenSend from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/TokenSend";
 
 const Stack = createNativeStackNavigator();
 
@@ -576,6 +578,16 @@ const AuthStack = () => (
        <Stack.Screen
         name="BnbSwap"
         component={BnbSwap}
+        options={{headerShown:false}}
+      />
+       <Stack.Screen
+        name="KycComponent"
+        component={KycComponent}
+        options={{headerShown:false}}
+      />
+       <Stack.Screen
+        name="TokenSend"
+        component={TokenSend}
         options={{headerShown:false}}
       />
     </Stack.Navigator>

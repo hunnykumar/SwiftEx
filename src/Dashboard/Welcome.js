@@ -17,6 +17,7 @@ import W2 from "../../assets/W2.png";
 import W3 from "../../assets/W3.png";
 import W4 from "../../assets/W4.png";
 import CustomImageSlider from '../../Custom_scroller'; // Make sure to create this file
+import { createGuestUser } from "./exchange/crypto-exchange-front-end-main/src/api";
 
 const Welcome = (props) => {
   const images = [W4, W2, W3, W1];
@@ -41,6 +42,10 @@ const Welcome = (props) => {
       useNativeDriver: true,
     }).start();
   }, [fadeAnim, Spin]);
+
+  useEffect(()=>{
+    createGuestUser()
+  },[]);
 
   return (
     <View style={styles.container}>

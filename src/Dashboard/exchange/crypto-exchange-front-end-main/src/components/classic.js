@@ -43,7 +43,7 @@ const classic = ({ route }) => {
   const [fianl_modal_loading, setfianl_modal_loading] = useState(false);
   const [amount, setamount] = useState('');
   const [chooseModalVisible_choose, setchooseModalVisible_choose] = useState(false);
-  const [not_avilable, setnot_avilable] = useState(true);
+  const [not_avilable, setnot_avilable] = useState(false);
   const [WALLETADDRESS,setWALLETADDRESS]=useState('')
   const [WALLETBALANCE,setWALLETBALANCE]=useState('')
   const chooseItemList = [
@@ -70,6 +70,9 @@ useEffect(()=>{
   setWALLETADDRESS(state&&state.wallet && state.wallet.address)
   setfianl_modal_loading(false)
   setamount('');
+  setTimeout(()=>{
+    setnot_avilable(true)
+  },500)
 },[])
   const for_trading = async () => {
     try {

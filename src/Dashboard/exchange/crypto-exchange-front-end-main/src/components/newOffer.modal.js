@@ -15,7 +15,9 @@ import {
   Animated,
   Easing,
   FlatList,
-  TextInput
+  TextInput,
+  KeyboardAvoidingView,
+  StatusBar
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -42,6 +44,7 @@ import { useToast } from "native-base";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import StellarAccountReserve from "../utils/StellarReserveComponent";
 import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../utilities/StellarUtils";
+import InfoComponent from "./InfoComponent";
 const Web3 = require('web3');
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
@@ -66,6 +69,7 @@ export const NewOfferModal = () => {
   const [offer_price, setoffer_price] = useState('');
   const [AssetIssuerPublicKey, setAssetIssuerPublicKey] = useState("GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID");
   const [route, setRoute] = useState("SELL");
+  const [btnRoot, setbtnRoot] = useState(0);
   const [Loading, setLoading] = useState(false);
   const [open_offer, setopen_offer] = useState(false);
   const [show_trust_modal,setshow_trust_modal]=useState(false);
@@ -99,6 +103,11 @@ const [chooseModalPair,setchooseModalPair]=useState(false);
 const [total_price,settotal_price]=useState(0);
 const [total_price_info,settotal_price_info]=useState(false);
 const [reservedError, setreservedError] = useState(false);
+const [infoVisible,setinfoVisible]=useState("");
+const [infotype,setinfotype]=useState("success");
+const [infomessage,setinfomessage]=useState("");
+const [assetInfo, setassetInfo] = useState(false);
+
 
 
 
@@ -123,10 +132,18 @@ const getAccountDetails = async () => {
       setMessage(err.message || "Something went wrong");
     }
 };
+const [amountSuggest, setamountSuggest] = useState([{ id: 1, amountSuggest: "25%" }, { id: 2, amountSuggest: "50%" }, { id: 3, amountSuggest: "75%" }, { id: 4, amountSuggest: "100%" },]);
 
 const chooseItemList = [
   { id: 1, name: "XLM/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"XLM",visible_1:"USDC",asset_dom:"steller.org",asset_dom_1:"centre.io"},
-  // { id: 2, name: "USDC/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"USDC",visible_1:"XLM",asset_dom:"centre.io",asset_dom_1:"steller.org"},
+  { id: 2, name: "ETH/BTC" ,base_value:"BTC",counter_value:"ETH",visible_0:"ETH",visible_1:"BTC",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz"},
+  { id: 3, name: "ETH/USDC" ,base_value:"USDC",counter_value:"ETH",visible_0:"ETH",visible_1:"USDC",asset_dom:"ultracapital.xyz",asset_dom_1:"centre.io"},
+  { id: 4, name: "BTC/ETH" ,base_value:"ETH",counter_value:"BTC",visible_0:"BTC",visible_1:"ETH",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz"},
+  { id: 5, name: "ETH/AQUA" ,base_value:"AQUA",counter_value:"ETH",visible_0:"ETH",visible_1:"AQUA",asset_dom:"ultracapital.xyz",asset_dom_1:"aqua.network"},
+  { id: 6, name: "BTC/AQUA" ,base_value:"AQUA",counter_value:"BTC",visible_0:"BTC",visible_1:"AQUA",asset_dom:"ultracapital.xyz",asset_dom_1:"aqua.network"},
+  { id: 7, name: "ETH/yXLM" ,base_value:"yXLM",counter_value:"ETH",visible_0:"ETH",visible_1:"yXLM",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz"},
+  { id: 8, name: "yBTC/yXLM" ,base_value:"yXLM",counter_value:"yBTC",visible_0:"yBTC",visible_1:"yXLM",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz"},
+
   // { id: 2, name: "ETH/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"ETH",visible_1:"USDC",asset_dom:"allbridge.io",asset_dom_1:"allbridge.io"},
   // { id: 3, name: "BNB/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"BNB",visible_1:"XLM",asset_dom:"allbridge.io",asset_dom_1:"allbridge.io"},
   // { id: 4, name: "SWIFTEX/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"SWIFTEX",visible_1:"XLM",asset_dom:"swiftex",asset_dom_1:"steller.org"},
@@ -147,7 +164,7 @@ const chooseFilteredItemList = chooseItemList.filter(
   item => item.name.toLowerCase().includes(chooseSearchQuery.toLowerCase())
 );
 const chooseRenderItem = ({ item }) => (
-  <TouchableOpacity onPress={() => { setRoute("SELL"),setvisible_value(item.name),settop_value(item.visible_0),settop_domain(item.asset_dom),settop_domain_0(item.asset_dom_1),settop_value_0(item.visible_1),setSelectedValue(item.base_value),setSelectedBaseValue(item.counter_value),setchooseModalPair(false)}} style={[styles.chooseItemContainer,{
+  <TouchableOpacity onPress={() => { setRoute("SELL"),setvisible_value(item.name),settop_value(item.visible_0),settop_domain(item.asset_dom),settop_domain_0(item.asset_dom_1),settop_value_0(item.visible_1),setSelectedValue(item.base_value),setSelectedBaseValue(item.counter_value),setchooseModalPair(false),item.id===1?setassetInfo(false):setassetInfo(true)}} style={[styles.chooseItemContainer,{
     borderBottomWidth:0.9,
     borderBlockEndColor: '#fff',
     paddingVertical:hp(1.5)
@@ -685,65 +702,68 @@ const handleCloseModal = () => {
   setreservedError(false);
 };
 
+  useEffect(() => {
+    if (Balance === "0.0000000" || parseFloat(Balance)===0) {
+      setinfomessage("Insufficient Balance"),
+      setinfotype("warning"),
+      setinfoVisible(true)
+    }
+  }, [Balance])
 
   return (
    
-    <>
-    <Exchange_screen_header title="Trade" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
-      <View
-        style={{
-          backgroundColor: "#011434",
-          flex:1
-        }}
+   <>
+       {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={"#011434"}/>}
+      <Exchange_screen_header title="Trade" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1, backgroundColor: "#011434", }}
       >
+        <ScrollView contentContainerStyle={styles.scrollView}>
       
-      <View
-      style={{
-        width: "100%",
-        flexDirection: "row",
-        alignItems: "center",
-        marginTop: 19,
-        marginLeft: 6
-      }}
-      >
-      <View style={{ flex: 1, alignItems: "flex-end", paddingRight: 10 }}>
-        <Text style={{ fontSize: 24, color: "#fff" }}>{top_value}</Text>
-        <Text style={{ fontSize: 10, color: "gray" }}>{top_domain}</Text>
+        <InfoComponent
+          visible={infoVisible}
+          type={infotype}
+          message={infomessage}
+          onClose={() => setinfoVisible(false)}
+        />
+      <View style={styles.pariViewCon}>
+        <TouchableOpacity style={styles.pairNameCon}>
+          <Text style={styles.pairNameText}>{top_value}</Text>
+          <Text style={styles.pairNameText.pairDomainText}>{top_domain}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.pairSwapCon} onPress={()=>{settop_domain(top_domain_0),settop_value(top_value_0),settop_domain_0(top_domain),settop_value_0(top_value)}}>
+          <Icon name="swap" type={"antDesign"} size={25} color={"#141C2B"} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.pairNameCon}>
+          <Text style={styles.pairNameText}>{top_value_0}</Text>
+          <Text style={styles.pairNameText.pairDomainText}>{top_domain_0}</Text>
+        </TouchableOpacity>
       </View>
-      <View style={{ flex: 0 }}>
-        <Icon
-          name="swap-horizontal"
-          type="materialCommunity"
-          color="rgba(129, 108, 255, 0.97)"
-          size={29}
-          // onPress={() => { reves_fun(top_value, top_value_0); }}
-          />
-      </View>
-      <View style={{ flex: 1, alignItems: "flex-start", paddingLeft: 10 }}>
-        <Text style={{ fontSize: 24, color: "#fff" }}>{top_value_0}</Text>
-        <Text style={{ fontSize: 10, color: "gray" }}>{top_domain_0}</Text>
-      </View>
-    </View>
-       
-       <View style={{flexDirection:"row",justifyContent:"space-between",padding:Platform.OS==="android"?10:19}}>
-       <View style={{ width: '40%', marginTop: 19 }}>
-               <View style={{flexDirection:"row"}}>
-               <Text style={{color:"#fff",fontSize:21,textAlign:"center",marginLeft:Platform.OS==="android"&&30}}>{Platform.OS==="android"?"Trading Pair":"Trading Pair"}</Text>
-                <TouchableOpacity onPress={() => { setreservedError(!reservedError)}}>
-                  <Icon
-                    name={"information-outline"}
-                    type={"materialCommunity"}
-                    color={"rgba(129, 108, 255, 0.97)"}
-                    size={21}
-                    style={{ marginLeft: 10 }}
-                  />
-                </TouchableOpacity>
-               </View>
-                <TouchableOpacity  style={Platform.OS === "ios" ? { marginTop: 10, width: '90%', borderColor:"'rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",borderWidth:1, marginLeft: 15,paddingVertical:7.6,alignItems:"center",borderRadius:6 } : { height:hp(4),marginTop: 13, width: "90%", color: "white", marginLeft:30,borderColor:"'rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",borderWidth:1,justifyContent:"center",alignItems:"center",borderRadius:5 }} onPress={()=>{setchooseModalPair(true)}}>
-                  <Text style={{fontSize:15,color:"#fff"}}>{top_value+"/"+top_value_0}</Text>
-                </TouchableOpacity>
-                
-                <Modal
+        {assetInfo&&
+           <View style={styles.informationContiner}>
+           <Text style={styles.amountSugCon.amountSugCardText}>Click 'Import' to add token.</Text>
+           <TouchableOpacity style={styles.amountSugCon.amountSugCard} onPress={()=>{navigation.navigate("classic",{Asset_type:"ETH"})}}>
+           <Text style={styles.amountSugCon.amountSugCardText}>Import</Text>
+           </TouchableOpacity>
+         </View>
+        }
+       {/* offer seletion container */}
+      <View style={[styles.pairSelectionCon]}>
+        <Text style={styles.pairHeadingText}>Trading Pair</Text>
+        <TouchableOpacity style={styles.pairSelectionSubCon} onPress={()=>{setchooseModalPair(true)}}>
+          <Text style={styles.pairSelectionSubCon.pairSelectionName}>{top_value+" / "+top_value_0}</Text>
+          <Icon name="down" type={"antDesign"} size={20} color={"#FFFFFF"} />
+        </TouchableOpacity>
+        <Text style={[styles.pairHeadingText, { marginTop: 13, }]}>Select Offer</Text>
+        <View style={styles.offerSelctionCon}>
+          <TouchableOpacity style={[styles.offerSelctionBtn,{ backgroundColor: btnRoot===0?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("BUY"),setbtnRoot(0),reves_fun(top_value, top_value_0)}}>
+            <Text style={styles.pairSelectionSubCon.pairSelectionName}>Buy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.offerSelctionBtn, { backgroundColor: btnRoot===1?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("SELL"),setbtnRoot(1),reves_fun(top_value, top_value_0)}}>
+            <Text style={styles.pairSelectionSubCon.pairSelectionName}>Sell</Text>
+          </TouchableOpacity>
+          <Modal
         animationType="slide"
         transparent={true}
         visible={chooseModalPair}
@@ -751,14 +771,6 @@ const handleCloseModal = () => {
         <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setchooseModalPair(false)}>
           <View style={styles.chooseModalContent}>
           <Text style={styles.chooseItem_text}>Select Trading Pair</Text>
-            {/* <TextInput
-              style={styles.searchInput}
-              placeholder="Search..."
-              placeholderTextColor={"gray"}
-              onChangeText={text => setChooseSearchQuery(text)}
-              value={chooseSearchQuery}
-              autoCapitalize='none'
-            /> */}
             <FlatList
               data={chooseFilteredItemList}
               renderItem={chooseRenderItem}
@@ -767,178 +779,75 @@ const handleCloseModal = () => {
           </View>
         </TouchableOpacity>
       </Modal>
-
-              </View>
-
-              <View style={{ width: '40%', marginTop: 19, }}>
-                <Text style={{color:"#fff",fontSize:21,textAlign:"center"}}>Select Offer</Text>
-                <TouchableOpacity style={{width:wp(29),height:hp(4),marginTop:hp(1.5),borderColor:"'rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",borderWidth:1,borderRadius:5,padding:3,marginLeft:wp(5),justifyContent:"center"}} onPress={()=>{
-                  setopen_offer(open_offer?false:true)
-                }}>
-                  <Text style={{color:"#fff",fontSize:16,textAlign:"center"}}>{route}</Text>
-                  <Modal
-        animationType="slide"
-        transparent={true}
-        visible={open_offer}
-      >
-        <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setopen_offer(false)}>
-          <View style={[styles.chooseModalContent]}>
-          <Text style={styles.chooseItem_text}>Select Offer</Text>
-            <FlatList
-              data={chooseItemList_1}
-              renderItem={chooseRenderItem_1}
-              keyExtractor={(item) => item.id.toString()}
-            />
+        </View>
+      </View>
+            {/* account info container */}
+            <View style={styles.pairSelectionCon}>
+        <View style={styles.accountInfoCon}>
+          <Text style={styles.pairHeadingText}>Account</Text>
+          <View style={{width:wp(60)}}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60) }}>
+          <Text style={styles.accountInfoCon.accountInfoText} numberOfLines={1}>{PublicKey}</Text>
+          </ScrollView>
           </View>
-        </TouchableOpacity>
-      </Modal>
-                </TouchableOpacity>
-                {/* <Picker
-                  mode={"dropdown"}
-                  selectedValue={route}
-                  style={Platform.OS === "ios" ? { marginTop: -50, width: '120%', color: "white", marginLeft: -15 } : { marginTop: 3, width: "90%", color: "white", marginLeft: 14 }}
-                  onValueChange={(itemValue, itemIndex) => setRoute(itemValue)}
-                >
-                  <Picker.Item label="BUY" value="BUY" color={Platform.OS === "ios" ? "white" : "black"} />
-                  <Picker.Item label="SELL" value="SELL" color={Platform.OS === "ios" ? "white" : "black"} />
-                </Picker> */}
-              </View>
-       </View>
-
-        
-        <View
-          style={{
-            display: "flex",
-            alignItems: "center",
-            marginTop:Platform.OS==="ios"?30:30
-          }}
-        >
-          <View
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <View style={{ flexDirection: 'row', width: '60%' }}>
-              <Text style={{ color: "white", fontSize: hp(2) }}>Account: </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(3) }}>
-                <Text style={{ color: "white", width: '100%', fontSize: hp(2) }}>{PublicKey}</Text>
-              </ScrollView>
-            </View>
-
-            <View
-              style={{
-                display: "flex",
-                alignSelf: "center",
-              }}
-            >
-
-            
-              <StellarAccountReserve
-                isVisible={reservedError}
-                onClose={handleCloseModal}
-                title="Reserved"
-              />
-
-    <View style={{ flexDirection: "row",alignSelf:"center" }}>
-              {activ===true?
-              <TouchableOpacity style={styles.background_1}>
-               <Animated.View style={[styles.frame_1, { borderColor: "gray" ,flexDirection:"row"}]}>
-               <Text style={{color:'green',fontSize:19,textAlign:"center"}}>Updating.</Text>
-               <ActivityIndicator color={"green"}/>
-                </Animated.View>
-                </TouchableOpacity>
-                :
-                <View style={{flexDirection:"row"}}><Text style={styles.balance}>Balance: </Text>
-                {reserveLoading?<ActivityIndicator color={"green"}/>:
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(9),marginLeft:1 }}>
-                <Text style={styles.balance}>{Balance ? Number(Balance).toFixed(5) : 0.0} </Text></ScrollView>}
-                </View>
-                }
-
-                {/* { show === true ? selectedValue==="XETH"?<></>:<ActivityIndicator color={"green"} /> : <></>} */}
-              </View>
-
-
-
-
-
-
-              
-            </View>
-
-           
-          </View>
-         
-          <View
-            style={{
-              display: "flex",
-            }}
-          >
-            <View style={{width:wp(37),alignSelf:"center"}}>
-            {Balance==="0.0000000"||parseFloat(Balance)===0&&<Text style={{textAlign:"center",color:"red",borderColor:"red",borderWidth:1.9,borderRadius:10}}>Insufficient Balance</Text>}
-            {/* {selectedValue==="XETH"||selectedValue==="XUSD"?<></>:<Text style={{textAlign:"center",color:"orange",borderColor:"orange",borderWidth:1.9,borderRadius:10}}>Available Soon</Text>} */}
-
-            </View>
-            <View style={styles.inputContainer}>
-             <View style={{flexDirection:"row"}}>  
-              <Text style={styles.unitText}>Amount</Text>
-               <TouchableOpacity onPress={()=>{info_amount===false?setinfo_amount(true):setinfo_amount(false)}}>
-               <Icon
-                      name={"information-outline"}
-                      type={"materialCommunity"}
-                      color={"rgba(129, 108, 255, 0.97)"}
-                      size={21}
-                      style={{marginLeft:10}}
-                    />
-               </TouchableOpacity>
-{info_amount===true?<View style={{backgroundColor:"gray",backgroundColor:"#212B53",padding:3.6,borderRadius:10,zIndex:20,position:"absolute",marginStart:95}}>
-                      <Text style={{color:"white"}}>Offered Amount for {SelectedBaseValue==="native"?"XLM":SelectedBaseValue}</Text>
-                    </View>:<></>}
-             </View>
-              <TextInput
-                style={[styles.input,{backgroundColor:"#fff",color:"black",borderRadius:5,paddingHorizontal:5}]}
-                keyboardType="numeric"
+        </View>
+        <View style={[styles.accountInfoCon, { marginTop: 9 }]}>
+          <TouchableOpacity style={{flexDirection:"row",alignItems:"center"}} onPress={()=>{setreservedError(true)}}>
+          <Text style={styles.pairHeadingText}>Balance</Text>
+          <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"} style={{marginLeft:3}}/>
+          </TouchableOpacity>
+          {reserveLoading?<ActivityIndicator color={"green"}/>:
+          <Text style={styles.accountInfoCon.accountInfoText} numberOfLines={1}>{Balance ? Number(Balance).toFixed(5) : 0.0} </Text>}
+        </View>
+      </View>
+      {/* amount input */}
+      <View style={styles.amountCon}>
+        <View style={styles.amountSubinfo}>
+          <Text style={[styles.pairHeadingText]}>Amount </Text>
+          <TouchableOpacity onPress={()=>{setinfoVisible(true),setinfotype("success"),setinfomessage(`Offered Amount for ${SelectedBaseValue==="native"?"XLM":SelectedBaseValue}`)}}>
+          <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"}/>
+                      </TouchableOpacity>
+        </View>
+        <View style={styles.amountInputCon}>
+          <TextInput  
+          style={{color:"#fff",fontSize:16}}
+              keyboardType="numeric"
                 returnKeyType="done"
                 value={offer_amount}
                 placeholder={SelectedBaseValue==="native"?"Amount of XLM":"Amount of "+SelectedBaseValue}
                 placeholderTextColor={"gray"}
                 onChangeText={(text) => {
                   onChangeamount(text)
-                  // setoffer_amount(text)
                   if (offer_amount > Balance) {
-                    ShowErrotoast(toast, "Inputed Balance not found in account.");
+                    setinfoVisible(true),setinfotype("error"),setinfomessage("Inputed Balance not found in account.")
                   }
                 }}
                 disabled={Balance==="0.0000000"||Balance==="0"}
-                autoCapitalize={"none"}
-              />
-              <View style={{flexDirection:"row",paddingTop:10,marginTop:-10,width:"10%"}}>
-                {slipage.map((list,index)=>{
-                  return(
-                    <TouchableOpacity style={styles.slipage_1} key={index}>
-                      <Text style={{color:"#fff"}}>{list.data}</Text>
-                    </TouchableOpacity>
-                  )
-                })}
-              </View>
-              <View style={{flexDirection:"row"}}> 
-              <Text style={styles.unitText}>Price</Text>
-                <TouchableOpacity onPress={() => { info_price === false ? setinfo_price(true) : setinfo_price(false) }}>
-                  <Icon
-                    name={"information-outline"}
-                    type={"materialCommunity"}
-                    color={"rgba(129, 108, 255, 0.97)"}
-                    size={21}
-                    style={{ marginLeft: 10 }}
-                  />
-                </TouchableOpacity>
-                {info_price === true ? <View style={{ backgroundColor: "gray", backgroundColor: "#212B53", padding: 3.6, borderRadius: 10, zIndex: 20, position: "absolute", marginStart: 70 }}>
-                  <Text style={{ color: "white" }}>Offered Price for {selectedValue==="native"?"XLM":selectedValue}</Text>
-                </View> : <></>}
-              </View>
-              <TextInput
-                style={[styles.input,{backgroundColor:"#fff",color:"black",borderRadius:5,paddingHorizontal:5}]}
+                autoCapitalize={"none"}/>
+        </View>
+        <View style={styles.amountSugCon}>
+          {amountSuggest.map((item, index) => {
+            return (
+              <TouchableOpacity style={styles.amountSugCon.amountSugCard} key={index}>
+                <Text style={styles.amountSugCon.amountSugCardText}>{item.amountSuggest}</Text>
+              </TouchableOpacity>
+            )
+          })}
+        </View>
+      </View>
+
+      {/* price input */}
+      <View style={[styles.amountCon,{marginTop:"14%"}]}>
+        <View style={styles.amountSubinfo}>
+          <Text style={[styles.pairHeadingText]}>Price </Text>
+          <TouchableOpacity onPress={()=>{setinfoVisible(true),setinfotype("success"),setinfomessage(`Offered Price for ${selectedValue==="native"?"XLM":selectedValue}`)}}>
+          <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.amountInputCon}>
+
+          <TextInput 
+                style={{color:"#fff",fontSize:16}}
                 returnKeyType="done"
                 keyboardType="numeric"
                 value={offer_price}
@@ -950,42 +859,44 @@ const handleCloseModal = () => {
                 autoCapitalize={"none"}
                 disabled={Balance === "0.0000000" || Balance === "0"}
               />
-
-<View style={{flexDirection:"row"}}> 
-              <Text style={styles.unitText}>Total</Text>
-                <TouchableOpacity onPress={() => { total_price_info === false ? settotal_price_info(true) : settotal_price_info(false) }}>
-                  <Icon
-                    name={"information-outline"}
-                    type={"materialCommunity"}
-                    color={"rgba(129, 108, 255, 0.97)"}
-                    size={21}
-                    style={{ marginLeft: 10 }}
-                  />
-                </TouchableOpacity>
-                {total_price_info === true ? <View style={{ backgroundColor: "gray", backgroundColor: "#212B53", padding: 3.6, borderRadius: 10, zIndex: 20, position: "absolute", marginStart: 70 }}>
-                  <Text style={{ color: "white" }}>Total for {selectedValue==="native"?"XLM":selectedValue}</Text>
-                </View> : <></>}
-              </View>
-              <Text style={[styles.input,{backgroundColor:"silver",borderTopLeftRadius:4,borderTopRightRadius:4,color:"black",paddingTop:5,paddingLeft:10,fontSize:19}]}>{offer_price*offer_amount}</Text>
-
-
-            </View>
-
-          </View>
         </View>
+        </View>
+        {/* total view */}
+        <View style={styles.priceInfoCon}>
+        <View style={styles.amountSubinfo}>
+          <Text style={[styles.pairHeadingText]}>Total </Text>
+          <TouchableOpacity onPress={()=>{setinfoVisible(true),setinfotype("success"),setinfomessage(`Total for ${selectedValue==="native"?"XLM":selectedValue}`)}}>
+          <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"} />
+          </TouchableOpacity>
+        </View>
+          <Text style={[styles.accountInfoCon.accountInfoText,{fontWeight:"900"}]} numberOfLines={1}>{offer_price*offer_amount}</Text>
+        </View>
+        {/* create offer button */}
 
-        <View style={styles.Buttons}>
         
+        <View
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginTop:Platform.OS==="ios"?30:30
+          }}
+          >
+            <View style={{display: "flex", alignSelf: "center",}}>
+              <StellarAccountReserve
+                isVisible={reservedError}
+                onClose={handleCloseModal}
+                title="Reserved"
+                />
+            </View>
+        </View>
 
               <TouchableOpacity
                 activeOpacity={true}
-                style={[{
-                  alignItems: "center", paddingVertical: hp(1.3), paddingHorizontal: wp(1),
-                },styles.confirmButton]}
+                style={[styles.submitBtn,{backgroundColor:Loading === true?"gray":"#2164C1"}]}
                 onPress={() => { setLoading(true), offer_creation() }}
                 color="green"
                 disabled={Loading||Balance==="0.0000000"||parseFloat(Balance)===0}
-              >
+                >
                 <Text style={styles.textColor}>{Loading === true ? <ActivityIndicator color={"white"} /> :"Create Offer"}</Text>
               </TouchableOpacity>
             
@@ -995,9 +906,7 @@ const handleCloseModal = () => {
             <View></View>
           )}
 
-        </View>
-         
-      </View>
+
 
       <Modal
           animationType="fade"
@@ -1011,7 +920,7 @@ const handleCloseModal = () => {
                 type={"materialCommunity"}
                 size={60}
                 color={"orange"}
-              />
+                />
               <Text style={styles.AccounheadingContainer}>Trust USDT by Center.io ?</Text>
               <View style={{ flexDirection: "row",justifyContent:"space-around",width:wp(80),marginTop:hp(3),alignItems:"center" }}>
                 <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={() => {setshow_trust_modal(false),navigation.goBack()}}>
@@ -1024,9 +933,11 @@ const handleCloseModal = () => {
             </View>
           </View>
         </Modal>
-    </>
+</ScrollView>
+        </KeyboardAvoidingView>
+        </>
 
-  );
+);
 };
 
 const styles = StyleSheet.create({
@@ -1346,5 +1257,208 @@ searchInput: {
     fontWeight: "bold",
     marginTop: 10,
     color: "#fff"
+  },
+  scrollView:{
+    flexGrow: 1,
+    alignItems:"center"
+  },
+  pariViewCon: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#141C2B",
+    alignItems: "center",
+    width: "95%",
+    height: "9%",
+    top: 30,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#FFFFFF33",
+    paddingHorizontal: 13
+  },
+  pairNameCon: {
+    width: 122,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FFFFFF33",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#1F2937"
+  },
+  pairSwapCon: {
+    width: 33,
+    height: 33,
+    backgroundColor: "#EBECF5",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 30
+  },
+  pairNameText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    pairDomainText:{
+      color: "#818895",
+      fontSize: 10,
+    }
+  },
+  pairHeadingText: {
+    color: "#818895",
+    fontSize: 14,
+  },
+  pairSelectionCon: {
+    marginTop: 13,
+    flexDirection: "column",
+    justifyContent: "space-between",
+    backgroundColor: "#141C2B",
+    alignItems: "flex-start",
+    width: "95%",
+    top: 30,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#FFFFFF33",
+    padding: 13
+  },
+  pairSelectionSubCon: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    width: "100%",
+    top: 5,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#FFFFFF33",
+    backgroundColor: "#1F2937",
+    padding: 15,
+    pairSelectionName: {
+      fontSize: 16,
+      color: "#FFFFFF"
+    }
+  },
+  offerSelctionCon: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    top: 5,
+    padding: 5,
+    pairSelectionName: {
+      fontSize: 16,
+      color: "#FFFFFF"
+    }
+  },
+  offerSelctionBtn: {
+    width: "48%",
+    height: 40,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#FFFFFF33",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  accountInfoCon: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    accountInfoText: {
+      fontSize: 14,
+      color: "#FFFFFF"
+    }
+  },
+  amountCon: {
+    width: "95%",
+    height: 71,
+    marginTop: "11%",
+    gap: 2,
+  },
+  amountSubinfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    left: 4
+  },
+  amountInputCon: {
+    paddingHorizontal: 15,
+    justifyContent: "center",
+    alignItems: "flex-start",
+    width: "100%",
+    height: 48,
+    borderRadius: 16,
+    borderWidth: 1,
+    backgroundColor: "#141C2B",
+    borderColor: "#FFFFFF33",
+    marginTop: 2
+  },
+  amountSugCon: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 6.9,
+    paddingHorizontal: 5,
+    amountSugCard: {
+      alignItems: "center",
+      justifyContent: "center",
+      width: 80,
+      height: 33,
+      borderRadius: 8,
+      backgroundColor: "#141C2B"
+    },
+    amountSugCardText: {
+      color: "#FFFFFF",
+      fontSize: 16
+    }
+  },
+  priceInfoCon: {
+    flexDirection:"row",
+    paddingHorizontal: 15,
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "95%",
+    height: 48,
+    borderRadius: 16,
+    borderWidth: 1,
+    backgroundColor: "#141C2B",
+    borderColor: "#FFFFFF33",
+    marginTop: 14,
+    alignSelf:"center"
+  },
+  submitBtn: {
+    paddingHorizontal: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "95%",
+    height: 48,
+    borderRadius: 37,
+    marginTop: "1%",
+    alignSelf:"center",
+    backgroundColor:"#2164C1",
+    submitBtnText:{
+      fontSize:17,
+      fontWeight:"3400",
+      color:"#FFFFFF"
+    }
+  },
+  informationContiner: {
+    position:"relative",
+    zIndex:20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#F9FC691A",
+    alignItems: "center",
+    width: "95%",
+    height: "8%",
+    top: "4.4%",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#F7CC49",
+    paddingHorizontal: 13
+  },
+  infoBtnCon:{
+    alignItems: "center",
+    justifyContent: "center",
+    width: 80,
+    height: 33,
+    borderRadius: 8,
+    backgroundColor: "gray",
   }
 });

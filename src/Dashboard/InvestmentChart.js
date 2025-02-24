@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { StyleSheet, View, Text, Image, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator, Modal, TouchableWithoutFeedback } from "react-native";
+import { StyleSheet, View, Text, Image, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator, Modal, TouchableWithoutFeedback, FlatList } from "react-native";
 import {
   Avatar,
   Card,
@@ -17,10 +17,7 @@ import Etherimage from "../../assets/ethereum.png";
 import { Animated, LayoutAnimation, Platform, UIManager } from "react-native";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { getBnbPrice, getEthPrice, getXLMPrice } from "../utilities/utilities";
-import Maticimage from "../../assets/matic.png";
-import Xrpimage from "../../assets/xrp.png";
 import stellar from "../../assets/Stellar_(XLM).png"
-import bnbimage from "../../assets/bnb-icon2_2x.png";
 import { GetBalance, getAllBalances } from "../utilities/web3utilities";
 import { getXrpBalance,getEthBalance } from "../components/Redux/actions/auth";
 import alert from "./reusables/Toasts";
@@ -29,6 +26,7 @@ import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { RAPID_STELLAR, SET_ASSET_DATA } from "../components/Redux/actions/type";
 import { enableBiometrics } from "../biometrics/biometric";
 import { STELLAR_URL } from "./constants";
+import ResponsiveLineChart from "./exchange/crypto-exchange-front-end-main/src/components/ResponsiveLineChart";
 const StellarSdk = require('stellar-sdk');
 
 function InvestmentChart(setCurrentWallet) {
@@ -56,13 +54,16 @@ function InvestmentChart(setCurrentWallet) {
   const dispatch = useDispatch()
   const getEthBnbPrice = async () => {
     await getEthPrice().then((response) => {
+      console.log("_++++++",response.USD)
       setEthPrice(response.USD);
     });
     await getBnbPrice().then((response) => {
       setBnbPrice(response.USD);
+      console.log("_++++++",response.USD)
     });
     await getXLMPrice().then((response) => {
       setcurrent_xlm(response.USD);
+      console.log("_++++++",response.USD)
     });
   };
   const getData = async () => {
@@ -209,32 +210,71 @@ function InvestmentChart(setCurrentWallet) {
    
   },[foused])
 
-  useEffect( () => {
-   const insilize=async()=>{
+  useEffect(() => {
+    let isMounted = true;
+  
+    const initialize = async () => {
+      const biometric = await AsyncStorageLib.getItem("Biometric");
+        if ((biometric === null || biometric !== "SET")) {
+          setACTIVATION_MODAL(true);
+        }
+      if (!isMounted) return;
       setLoading(true);
+  
       try {
-        await getTokenBalance();
-        await getData();
-        // await getTokenBalance()
-        getEthBnbPrice();
-        get_stellar();
-        setTimeout(()=>{
+        await Promise.all([
+          getTokenBalance(),
+          getData(),
+          getEthBnbPrice(),
+          get_stellar()
+        ]);
+        
+  
+        if (!isMounted) return;
+  
+        const updatedChainData = chainnData.map(chain => {
+          switch (chain.name) {
+            case "Ethereum":
+              return {
+                ...chain,
+                avl: ethBalance ? `${ethBalance} ETH` : "0.00 ETH",
+                dollaravl: ethPrice ? `$ ${ethPrice}` : "$ 0.00"
+              };
+            
+            case "XLM":
+              return {
+                ...chain,
+                avl: xmlBalance ? `${xmlBalance} XLM` : "0.00 XLM",
+                dollaravl: current_xlm ? `$ ${current_xlm}` : "$ 0.00"
+              };
+      
+            case "Binance":
+              return {
+                ...chain,
+                avl: bnbBalance ? `${bnbBalance} BNB` : "0.00 BNB",
+                dollaravl: bnbPrice >= 0 ? `$ ${bnbPrice}` : "$ 300"
+              };
+      
+            default:
+              return chain;
+          }
+        });
+      
+        if (!isMounted) return;
+        setchainnData(updatedChainData);
+  
+      } catch (error) {
+        console.error("Initialization error:", error);
+      } finally {
+        if (isMounted) {
           setLoading(false);
-        },1000)
-        setTimeout(async()=>{
-          const biometric = await AsyncStorageLib.getItem("Biometric");
-                if (biometric === "SET") {
-                }
-                else{
-                  setACTIVATION_MODAL(true)
-                }
-        },1500)
-      } catch (e) {
-        console.log(e)
-        setLoading(false);
+        }
       }
-   }
-   insilize()
+    };
+    initialize();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -245,6 +285,36 @@ function InvestmentChart(setCurrentWallet) {
         await getData_dispatch();
         getTokenBalance(); 
         get_stellar(); 
+        const updatedChainData = chainnData.map(chain => {
+          switch (chain.name) {
+            case "Ethereum":
+              return {
+                ...chain,
+                avl: ethBalance ? `${ethBalance} ETH` : "0.00 ETH",
+                dollaravl: ethPrice ? `$ ${ethPrice}` : "$ 0.00"
+              };
+            
+            case "XLM":
+              return {
+                ...chain,
+                avl: xmlBalance ? `${xmlBalance} XLM` : "0.00 XLM",
+                dollaravl: current_xlm ? `$ ${current_xlm}` : "$ 0.00"
+              };
+      
+            case "Binance":
+              return {
+                ...chain,
+                avl: bnbBalance ? `${bnbBalance} BNB` : "0.00 BNB",
+                dollaravl: bnbPrice >= 0 ? `$ ${bnbPrice}` : "$ 300"
+              };
+      
+            default:
+              return chain;
+          }
+        });
+      
+        setchainnData(updatedChainData);
+        console.log("--2`",chainnData)
       } catch (e) {
         console.log(e);
       }
@@ -421,10 +491,61 @@ function InvestmentChart(setCurrentWallet) {
    }
    get_new_all_bal()
  },[])
-
+  const [chainnData,setchainnData] =useState([
+    { id: 1,symbole:"ETH", name: "Ethereum", avl: ethBalance ? ethBalance +" ETH": 0.00+" ETH", dollaravl: ethPrice?"$ "+ethPrice:"$ 0.00", status: "+1.8%", statusColor: "#40BF6A", img: "https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png", bgColor: "#181F2C", viewColor: "rgba(45, 170, 32, 0.15)" },
+    { id: 2,symbole:"XLM", name: "XLM", avl: xmlBalance ? xmlBalance+" XLM" : 0.00 +" XLM", dollaravl: "$ "+current_xlm?"$ "+current_xlm:"$ 0.00", status: "+1.8%", statusColor: "#BF404D", img: stellar, bgColor: "#FF971A26", viewColor: "#AA202226" },
+    { id: 3,symbole:"BNB", name: "Binance", avl: bnbBalance?bnbBalance+" BNB":0.00+" BNB", dollaravl: "$ "+bnbPrice >= 0 ? "$ "+bnbPrice : "$ "+300, status: "+1.8%", statusColor: "#40BF6A", img: "https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1696501970", bgColor: "rgba(243, 186, 47, 0.3)rgba(243, 47, 153, 0.3)", viewColor: "rgba(45, 170, 32, 0.15)" },
+    { id: 4,symbole:"BTC", name: "Bitcoin", avl: "0 BTC", dollaravl: "$ 0.00", status: "+1.8%", statusColor: "#40BF6A", img: "https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png", bgColor: "#FF971A26", viewColor: "rgba(45, 170, 32, 0.15)" },
+  ]);
+ const renderCoins = ({ item }) => {
   return (
+    <TouchableOpacity disabled={item.id===4} style={[styles.coinMainCon,{backgroundColor:state.THEME.THEME===false?"#FFFFFF":"#18181C"}]} onPress={()=>{navigation.navigate("Asset_info",{asset_type:item.symbole})}}>
+      {item.id===4&&
+        <View style={[styles.TokenInfo]}>
+              <Text style={styles.TokenInfoText}>Comming Soon</Text>
+            </View>
+      }
+      {/* coin image container */}
+      <View style={[styles.coinImgCon, { backgroundColor: item.bgColor }]}>
+        <Image source={item.name==="XLM"?item.img:{ uri: item.img }}
+          style={item.name==="XLM"?{ width: 49, height: 49 }:{ width: 39, height: 39 }} />
+      </View>
+      {/* coin info container */}
+      <View style={styles.coinInfoCon}>
+        <Text style={[styles.coinInfoCon.coinInfoText,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>{item.name}</Text>
+        <Text style={styles.coinInfoCon.coinBalText}>{parseFloat(item.avl).toFixed(1)}{" "+item.symbole} </Text>
+        <View style={styles.coinInfoCon.coinSubCon}>
+          <Text style={[styles.coinInfoCon.coinInfoText,,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>{item.dollaravl}</Text>
+          <View style={[styles.coinInfoCon.coinPerCon, { backgroundColor: item.viewColor, }]}>
+            <Text style={[styles.coinInfoCon.coinStatusText, { color: item.statusColor }]}>{item.status}</Text>
+          </View>
+        </View>
+      </View>
+      {/* coin chart */}
+      <ResponsiveLineChart width={80} height={70} symbol={item.symbole} />
+      {/* coin actions */}
+      <View style={{
+        alignItems:"center",
+        paddingRight: 5,
+        }}>
+        <TouchableOpacity disabled={item.id===4} style={[styles.actionBuyBtn,{backgroundColor:"#23262F",margin:2}]} onPress={()=>{navigation.navigate("newOffer_modal")}}>
+          <Text style={styles.actionRowBtnText}>Trade</Text>
+        </TouchableOpacity>
+
+        {/* buy btn */}
+        <TouchableOpacity disabled={item.id===4} style={styles.actionBuyBtn} onPress={()=>{navigation.navigate("payout")}}>
+          <Text style={styles.actionRowBtnText}>Buy</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  )
+}
+  return (
+        <View style={[styles.watchlistCon,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#23262F1A"}]}>
+        <Text style={[styles.watchlistCon.watchlistConHeading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Watchlist</Text>
     <ScrollView
-     style={{backgroundColor:state.THEME.THEME===false?"#fff":"black"}}
+    showsVerticalScrollIndicator={false}
+     style={{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#23262F1A"}}
       refreshControl={
         <RefreshControl
           refreshing={pull}
@@ -435,6 +556,7 @@ function InvestmentChart(setCurrentWallet) {
             getTokenBalance();
             get_stellar();
             getData();
+            getAllBalances(state, dispatch)
           }}
         />
       }
@@ -442,196 +564,17 @@ function InvestmentChart(setCurrentWallet) {
       nestedScrollEnabled={true} contentContainerStyle={{ paddingBottom: hp(60) }} sp>
       {
         loading===true?<ActivityIndicator color={"green"} size={"large"} style={{marginTop:hp(10)}}/>
-        :<>
-        <View style={{flexDirection:"row" ,alignItems:"center",width:wp(96)}}>
-        <TouchableOpacity style={styles.refresh} onPress={() => {
-        getAllBalances(state, dispatch)
-      }}>
- <Icon type={"materialCommunity"} name="refresh" size={hp(3)} color={state.THEME.THEME===false?"black":"#fff"} style={{ marginLeft: 1 }} />
-      </TouchableOpacity>
-      <View style={{flexDirection:"row",justifyContent:"flex-end",width:wp(80),marginTop:hp(1.6)}}>
-      <Text style={{color:state.THEME.THEME===false?"black":"#fff",fontSize:16,fontWeight:"500"}}>Balance</Text>
-      </View>
-        </View>
-    
-
-      <TouchableOpacity style={styles.flatlistContainer} onPress={()=>{navigation.navigate("Asset_info",{asset_type:"ETH"})}}>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Image source={Etherimage} style={styles.img} />
-          <View style={styles.ethrumView}>
-            <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>Ethereum</Text>
-            <Text
-              style={{
-                color: "grey",
-                fontWeight: "bold",
-              }}
-            >
-              $ {ethPrice >= 0 ? ethPrice : 1300}
-            </Text>
-          </View>
-        </View>
-
-        <Text
-          style={{
-            color:state.THEME.THEME===false?"black":"#fff",
-            fontWeight: "bold",
-          }}
-        >
-          {ethBalance ? ethBalance : 0} ETH
-        </Text>
-      </TouchableOpacity>
-      {/* <TouchableOpacity style={styles.flatlistContainer} onPress={()=>{navigation.navigate("Asset_info",{asset_type:"Matic"})}} >
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Image source={Maticimage} style={styles.img} />
-          <View style={styles.ethrumView}>
-            <Text>Matic</Text>
-            <Text
-              style={{
-                color: "grey",
-                fontWeight: "bold",
-              }}
-            >
-              $ {4}
-            </Text>
-          </View>
-        </View>
-
-        <Text
-          style={{
-            color: "black",
-            fontWeight: "bold",
-          }}
-        >
-          {maticBalance ? maticBalance : 0} MAT
-        </Text>
-      </TouchableOpacity> */}
-      {/* <TouchableOpacity style={styles.flatlistContainer} onPress={()=>{navigation.navigate("Asset_info",{asset_type:"XRP"})}}>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Image source={Xrpimage} style={styles.img} />
-          <View style={styles.ethrumView}>
-            <Text>XRP</Text>
-            <Text
-              style={{
-                color: "grey",
-                fontWeight: "bold",
-              }}
-            >
-              $ {0.78}
-            </Text>
-          </View>
-        </View>
-
-        <Text
-          style={{
-            color: "black",
-            fontWeight: "bold",
-          }}
-        >
-          {xrpBalance ? xrpBalance : 0} XRP
-        </Text>
-      </TouchableOpacity> */}
-
-      <TouchableOpacity style={styles.flatlistContainer} onPress={()=>{navigation.navigate("Asset_info",{asset_type:"XLM"})}}>
-      
-
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Image source={stellar} style={styles.img} />
-          <View style={styles.ethrumView}>
-            <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>XLM</Text>
-            <Text
-              style={{
-                color: "grey",
-                fontWeight: "bold",
-              }}
-            >
-              $ {current_xlm?current_xlm:0.78}
-            </Text>
-          </View>
-        </View>
-
-        <Text
-          style={{
-            color:state.THEME.THEME===false?"black":"#fff",
-            fontWeight: "bold",
-          }}
-        >
-          {xmlBalance ? xmlBalance : 0.00} XLM
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.flatlistContainer]} onPress={()=>{navigation.navigate("Asset_info",{asset_type:"BNB"})}}>
-
-
-
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Image source={bnbimage} style={styles.img} />
-          <View style={styles.ethrumView}>
-            <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>BNB</Text>
-            <Text
-              style={{
-                color: "grey",
-                fontWeight: "bold",
-              }}
-            >
-              ${bnbPrice >= 0 ? bnbPrice : 300}
-            </Text>
-            {/* <Text
-              style={{
-                color: "grey",
-                fontWeight: "bold",
-              }}
-            >
-              Available Soon
-            </Text> */}
-          </View>
-        </View>
-        <Text
-          style={{
-            color:state.THEME.THEME===false?"black":"#fff",
-
-            fontWeight: "bold",
-          }}
-        >
-          {bnbBalance ? bnbBalance : 0} BNB
-        </Text>
-      </TouchableOpacity>
-      {/* <TouchableOpacity style={styles.flatlistContainer} onPress={()=>{navigation.navigate("Asset_info",{asset_type:"BNB"})}}> */}
-      <TouchableOpacity style={[styles.flatlistContainer,{marginVertical: hp(0),backgroundColor:state.THEME.THEME===false?"#F7F7F7":"#3C3C3C", width: wp(100),height:hp(10),paddingHorizontal:wp(5),borderTopColor:state.THEME.THEME===false?"#fff":"black",borderColor:state.THEME.THEME===false?"silver":"black",borderWidth:1 }]} >
-
-
-
-        <View style={{ flexDirection: "row", alignItems: "center"}}>
-          <Image source={{uri:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png"}} style={styles.img} />
-          <View style={styles.ethrumView}>
-            <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>BTC</Text>
-            <Text
-              style={{
-                color: "grey",
-                fontWeight: "bold",
-              }}
-            >
-              $1209
-            </Text>
-            <Text
-              style={{
-                color: "grey",
-                fontWeight: "bold",
-              }}
-            >
-              Available Soon
-            </Text>
-          </View>
-        </View>
-        <Text
-          style={{
-            color:state.THEME.THEME===false?"black":"#fff",
-
-            fontWeight: "bold",
-          }}
-        >
-          0.00 BTC
-        </Text>
-      </TouchableOpacity>
+        :
+        <>
+        <FlatList
+          data={chainnData}
+          renderItem={renderCoins}
+          keyExtractor={item => item.id}
+        />
         </>
+
+
+    
       }
  <Modal
           animationType="fade"
@@ -664,6 +607,7 @@ function InvestmentChart(setCurrentWallet) {
             </TouchableWithoutFeedback>
         </Modal>
     </ScrollView>
+    </View>
   );
 }
 
@@ -733,5 +677,112 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 10,
     color: "#fff"
-  }
+  },
+  watchlistCon: {
+    backgroundColor: "rgba(244, 244, 244, 1)",
+    width: "100%",
+    height: "100%",
+    paddingVertical: 10,
+    paddingHorizontal:20,
+    watchlistConHeading: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: "#FFFFFF",
+      paddingBottom:8
+    }
+  },
+  coinMainCon: {
+    flexDirection: "row",
+    backgroundColor: "#18181C",
+    marginVertical: 4,
+    alignItems: "center",
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+    borderRadius: 10,
+    justifyContent: "space-between"
+  },
+  coinImgCon: {
+    width: 50,
+    height: 50,
+    left: 5,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10
+  },
+  coinInfoCon: {
+    width: "20%",
+    height: 53,
+    marginLeft: "-2.5%",
+    coinInfoText: {
+      fontSize: 13,
+      color: "#FFFFFF",
+      fontWeight: "600"
+    },
+    coinBalText: {
+      color: "gray",
+      fontSize: 13,
+      fontWeight: "600"
+    },
+    coinStatusText: {
+      fontSize: 11,
+      fontWeight: "500"
+    },
+    coinSubCon: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "flex-start"
+    },
+    coinPerCon: {
+      borderRadius: 10,
+      // width: "28%",
+      paddingHorizontal: 3,
+      height: "90%",
+      alignItems: "center",
+      marginLeft: 5
+    }
+  },
+  actionRowBtn: {
+    width: 51,
+    height: 27,
+    borderRadius: 6,
+    backgroundColor:"#23262F",
+    justifyContent:"center",
+    alignItems:"center",
+  },
+  actionBuyBtn: {
+    width: 105,
+    height: 29,
+    top:4,
+    borderRadius: 6,
+    backgroundColor:"#2164C1",
+    justifyContent:"center",
+    alignItems:"center"
+  },
+  actionRowBtnCon:{ 
+    flexDirection: "row",
+    justifyContent:"space-between",
+    width:106
+  },
+  actionRowBtnText:{
+    fontSize:13,
+    color:"#fff",
+    textAlign:"center"
+  },
+  TokenInfo: {
+    position: "absolute",
+    top: 1,
+    backgroundColor: "orange",
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    elevation: 5,
+    zIndex:10,
+    right: -10,
+  },
+  TokenInfoText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
 });

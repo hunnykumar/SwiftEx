@@ -12,9 +12,10 @@ export default function Subscription_det({ route }) {
   const FOCUSED = useIsFocused();
   const navigation = useNavigation();
   const [avl_plan, setavl_plan] = useState([
-    { id: 1, month: "1 month", save_on_price: 16, org_price: "5", current_price: "Free", type: "Monthly", subscriber_type: "" },
-    { id: 2, month: "3 month", save_on_price: 16, org_price: "15", current_price: "$ 14.6", type: "Quarter", subscriber_type: "MOST POPULAR" },
-    { id: 3, month: "Yearly", save_on_price: 16, org_price: "60", current_price: "$ 58", type: "Yearly", subscriber_type: "BEST VALUE" }
+    { id: 1, month: "1 Year", save_on_price: 16, org_price: "5", current_price: "Free", type: "Yearly", subscriber_type: "" },
+    { id: 2, month: "1 month", save_on_price: 16, org_price: "5", current_price: "Free", type: "Monthly", subscriber_type: "" },
+    { id: 3, month: "3 month", save_on_price: 16, org_price: "15", current_price: "$ 14.6", type: "Quarter", subscriber_type: "MOST POPULAR" },
+    { id: 4, month: "Yearly", save_on_price: 16, org_price: "60", current_price: "$ 58", type: "Yearly", subscriber_type: "BEST VALUE" }
   ]);
   return (
     <View style={styles.content} onPress={() => { Keyboard.dismiss() }}>

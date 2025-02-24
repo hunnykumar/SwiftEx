@@ -21,6 +21,7 @@ import {
   BackHandler,
   FlatList,
   Dimensions,
+  StatusBar,
 } from "react-native";
 import BootstrapStyleSheet from "react-native-bootstrap-styles";
 import { useDispatch, useSelector } from "react-redux";
@@ -132,12 +133,13 @@ export const HomeView = ({ setPressed }) => {
   const [Offer_active,setOffer_active]=useState(false);
   const Anchor=[
     // {name:"SwiftEx",status:"Verified",image: require('../../../../../../assets/darkBlue.png'),city:"India / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Slovakia / Slovenia / Solomon Islands / South Africa / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Taiwan / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turkey / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"XETH, XUSD",Fiat_Assets:"$ USD, € EUR",Payment_Rails:"Card, Bank Transfer, Local Method" },
-    {name:"MoneyGram",status:"Pending",image: require('../../../../../../assets/MONEY_GRAM.png'),city:"Afghanistan / Albania / Angola / Anguilla / Antigua and Barbuda / Argentina / Armenia / Aruba / Australia / Bahamas / Bahrain / Barbados / Belarus / Belgium / Belize / Benin / Berumda / Bhutan / Bolivia / Bosnia and Herzegovina / Botswana / Brazil / Brunei Darussalam / Bulgaria / Burkina Faso / Burundi / Cambodia / Cameroon / Canada / Cape Verde / Cayman Islands / Central African Republic / Chad / Chile / Colombia / Comoros / Costa Rica / Cote D'Ivoire / Croatia / Curacao / Cyprus / Czech Republic / Democratic Republic of the Congo / Denmark / Djibouti / Dominica / Dominican Republic / Ecuador / El Salvador / Equatorial Guinea / Estonia / Eswatini / Ethiopia / Fiji / Finland / France / French Guiana / Gabon / Gambia / Georgia / Germany / Ghana / Gibraltar / Greece / Grenada / Guadeloupe / Guam / Guatemala / Guinea / Guinea-Bissau / Guyana / Haiti / Honduras / Hong Kong / Hungary / Iceland / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Lithuania / Luxembourg / Macao / Macedonia / Madagascar / Malawi / Malaysia / Maldives / Mali / Malta / Marshall Islands / Martinique / Mauritania / Mauritius / Mayotte / Mexico / Micronesia / Moldova / Mongolia / Montenegro / Montserrat / Mozambique / Myanmar / Namibia / Netherlands / New Zealand / Nicaragua / Niger / Nigeria / Norway / Oman / Palestine / Panama / Paraguay / Peru / Philippines / Poland / Portugal / Puerto Rico / Reunion / Romania / Rwanda / Saint Kitts And Nevis / Saint Lucia / Saint Martin / Saint Vincent And The Grenadines / Samoa / Sao Tome And Principe / Saudi Arabia / Senegal / Serbia / Seychelles / Sierra Leone / Singapore / Sint Maarten / Slovakia / Solomon Islands / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"USDC",Payment_Rails:"Global Rails, Cash" },
+    // {name:"MoneyGram",status:"Pending",image: require('../../../../../../assets/MONEY_GRAM.png'),city:"Afghanistan / Albania / Angola / Anguilla / Antigua and Barbuda / Argentina / Armenia / Aruba / Australia / Bahamas / Bahrain / Barbados / Belarus / Belgium / Belize / Benin / Berumda / Bhutan / Bolivia / Bosnia and Herzegovina / Botswana / Brazil / Brunei Darussalam / Bulgaria / Burkina Faso / Burundi / Cambodia / Cameroon / Canada / Cape Verde / Cayman Islands / Central African Republic / Chad / Chile / Colombia / Comoros / Costa Rica / Cote D'Ivoire / Croatia / Curacao / Cyprus / Czech Republic / Democratic Republic of the Congo / Denmark / Djibouti / Dominica / Dominican Republic / Ecuador / El Salvador / Equatorial Guinea / Estonia / Eswatini / Ethiopia / Fiji / Finland / France / French Guiana / Gabon / Gambia / Georgia / Germany / Ghana / Gibraltar / Greece / Grenada / Guadeloupe / Guam / Guatemala / Guinea / Guinea-Bissau / Guyana / Haiti / Honduras / Hong Kong / Hungary / Iceland / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Lithuania / Luxembourg / Macao / Macedonia / Madagascar / Malawi / Malaysia / Maldives / Mali / Malta / Marshall Islands / Martinique / Mauritania / Mauritius / Mayotte / Mexico / Micronesia / Moldova / Mongolia / Montenegro / Montserrat / Mozambique / Myanmar / Namibia / Netherlands / New Zealand / Nicaragua / Niger / Nigeria / Norway / Oman / Palestine / Panama / Paraguay / Peru / Philippines / Poland / Portugal / Puerto Rico / Reunion / Romania / Rwanda / Saint Kitts And Nevis / Saint Lucia / Saint Martin / Saint Vincent And The Grenadines / Samoa / Sao Tome And Principe / Saudi Arabia / Senegal / Serbia / Seychelles / Sierra Leone / Singapore / Sint Maarten / Slovakia / Solomon Islands / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"USDC",Payment_Rails:"Global Rails, Cash" },
+    {name:"Alchemy Pay",status:"Active",image: require('../../../../../../assets/AlcamyPay.jpg'),city:"Afghanistan / Albania / Algeria / Andorra / Angola / Anguilla / Antigua and Barbuda / Argentina / Armenia / Aruba / Australia / Austria / Azerbaijan / Bahamas / Bahrain / Bangladesh / Barbados / Belarus / Belgium / Belize / Benin / Bermuda / Bhutan / Bolivia / Bosnia and Herzegovina / Botswana / Brazil / Brunei Darussalam / Bulgaria / Burkina Faso / Burundi / Cambodia / Cameroon / Canada / Cape Verde / Cayman Islands / Central African Republic / Chad / Chile / China / Colombia / Comoros / Congo - Brazzaville / Congo - Kinshasa / Costa Rica / Cote D'Ivoire / Croatia / Cuba / Curacao / Cyprus / Czech Republic / Democratic Republic of the Congo / Denmark / Djibouti / Dominica / Dominican Republic / Ecuador / El Salvador / Equatorial Guinea / Eritrea / Estonia / Eswatini / Ethiopia / Fiji / Finland / France / French Guiana / Gabon / Gambia / Georgia / Germany / Ghana / Gibraltar / Global / Greece / Greenland / Grenada / Guadeloupe / Guam / Guatemala / Guinea / Guinea-Bissau / Guyana / Haiti / Honduras / Hong Kong / Hungary / Iceland / India / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Lithuania / Luxembourg / Macao / Macedonia / Madagascar / Malawi / Malaysia / Maldives / Mali / Malta / Marshall Islands / Martinique / Mauritania / Mauritius / Mayotte / Mexico / Micronesia / Moldova / Monaco / Mongolia / Montenegro / Montserrat / Mozambique / Myanmar / Namibia / Netherlands / New Zealand / Nicaragua / Niger / Nigeria / Norway / Oman / Pakistan / Palestine / Panama / Papua New Guinea / Paraguay / Peru / Philippines / Poland / Portugal / Puerto Rico / Qatar / Romania / Rwanda / Réunion / Saint Kitts And Nevis / Saint Lucia / Saint Martin / Saint Vincent And The Grenadines / Samoa / Sao Tome And Principe / Saudi Arabia / Senegal / Serbia / Seychelles / Sierra Leone / Singapore / Sint Maarten / Slovakia / Slovenia / Solomon Islands / South Africa / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Taiwan / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turkey / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"XLM",Fiat_Assets:"$ USD",Payment_Rails:"Apple PayBank, TransferCardGoogle, PayLocal, MethodSEPA" },
     {name:"Mykobo",status:"Pending",image: require('../../../../../../assets/MYKOBO.png'),city:"Austria / Belgium / Bulgaria / Croatia / Cyprus / Czech Republic / Denmark / Estonia / Finland / France / Germany / Greece / Hungary / Ireland / Italy / Lithuania / Luxembourg / Malta / Netherlands / Poland / Portugal / Romania / Slovakia / Slovenia / Spain / Sweden",Fiat_Assets:"€ EUR",Crypto_Assets:"EURC",Payment_Rails:"Bank Transfer, SEPA" },
-    {name:"Banxa",status:"Pending",image: require('../../../../../../assets/BANXA.png'),city:"Australia / Austria / Brazil / Canada / Hong Kong / India / Indonesia / Mexico / Netherlands / Philippines / South Africa / Switzerland / Turkey / United States",Fiat_Assets:"$ USD",Crypto_Assets:"USDC ,XLM",Payment_Rails:"Card, Apple Pay, Google Pay, ACH, SEPA, Bank Transfer, Local Method"},
-    {name:"Clpx",status:"Pending",image: require('../../../../../../assets/CLPX.png'),city:"Chile",Crypto_Assets:"CLPX" },
-    {name:"Clickpesa",status:"Pending",image: require('../../../../../../assets/CLICKPESA.png'),city:"Kenya / Rwanda / Tanzania",Crypto_Assets:"USDC, XLM, RWF, TZS, KES",Fiat_Assets:"$ USD"},
-    {name:"Finclusive",status:"Pending",image: require('../../../../../../assets/FINCLUSIVE.png'),city:"Benin / Burkina Faso / Cape Verde / Cote D'Ivoire / Gambia / Ghana / Guinea / Guinea-Bissau / Liberia / Mali / Mauritania / Niger / Nigeria / Senegal / Sierra Leone / Togo",Crypto_Assets:"USDC",Fiat_Assets:"$ USD" },
+    // {name:"Banxa",status:"Pending",image: require('../../../../../../assets/BANXA.png'),city:"Australia / Austria / Brazil / Canada / Hong Kong / India / Indonesia / Mexico / Netherlands / Philippines / South Africa / Switzerland / Turkey / United States",Fiat_Assets:"$ USD",Crypto_Assets:"USDC ,XLM",Payment_Rails:"Card, Apple Pay, Google Pay, ACH, SEPA, Bank Transfer, Local Method"},
+    // {name:"Clpx",status:"Pending",image: require('../../../../../../assets/CLPX.png'),city:"Chile",Crypto_Assets:"CLPX" },
+    // {name:"Clickpesa",status:"Pending",image: require('../../../../../../assets/CLICKPESA.png'),city:"Kenya / Rwanda / Tanzania",Crypto_Assets:"USDC, XLM, RWF, TZS, KES",Fiat_Assets:"$ USD"},
+    // {name:"Finclusive",status:"Pending",image: require('../../../../../../assets/FINCLUSIVE.png'),city:"Benin / Burkina Faso / Cape Verde / Cote D'Ivoire / Gambia / Ghana / Guinea / Guinea-Bissau / Liberia / Mali / Mauritania / Niger / Nigeria / Senegal / Sierra Leone / Togo",Crypto_Assets:"USDC",Fiat_Assets:"$ USD" },
   ];
   const [steller_key_private,setsteller_key_private]=useState("");
   const [Anchor_modal,setAnchor_modal]=useState(false);
@@ -148,6 +150,7 @@ export const HomeView = ({ setPressed }) => {
   const [api_data_loading,setapi_data_loading]=useState(false)
   const [lineColor, setlineColor] = useState();
   const [Data, setData] = useState([]);
+  const [lastData, setlastData] = useState([]);
   const [points_data,setpoints_data]=useState();
   const [points_data_time,setpoints_data_time]=useState();
 
@@ -174,8 +177,8 @@ export const HomeView = ({ setPressed }) => {
   useEffect(()=>{
     const fetch_color=async()=>{
      try {
-      const last_Value = Data[Data.length - 1]?.close;
-      const second_LastValue = Data[Data.length - 2].close;
+      const last_Value = Data?.close;
+      const second_LastValue = lastData?.close;
       const line_Color = last_Value > second_LastValue ? "green" : "red";      
       setlineColor(line_Color)
     } catch (error) {
@@ -411,13 +414,13 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
     console.log(token);
     console.log("hi----->>>ttokenb", token);
     const device_info = {
-      'Device Brand:': await DeviceInfo.getBrand(),
-      'Device Model:': await DeviceInfo.getModel(),
-      'System Version:': await DeviceInfo.getSystemVersion(),
-      "Device Unique ID:": await DeviceInfo.getUniqueIdSync(),
-      "Device IP:": await DeviceInfo.getIpAddressSync(),
-      "Device Type:": await DeviceInfo.getDeviceType(),
-      "Device ": await DeviceInfo.getMacAddress()
+      'deviceBrand': await DeviceInfo.getBrand(),
+      'deviceModel': await DeviceInfo.getModel(),
+      'systemVersion': await DeviceInfo.getSystemVersion(),
+      "deviceUniqueID": await DeviceInfo.getUniqueIdSync(),
+      "deviceIP": await DeviceInfo.getIpAddressSync(),
+      "deviceType": await DeviceInfo.getDeviceType(),
+      "deviceMacAddress": await DeviceInfo.getMacAddress()
     }
     if(!token)
     {
@@ -508,7 +511,8 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
       const apiResponse = await response.json();
       const records = apiResponse._embedded.records;
       setAPI_data(records);
-      setData(records[0])
+      setData(records[0]);
+      setlastData(records[1]);
       setpoints_data(records[0]?.close)
       setpoints_data_time(new Date(parseInt(records[0]?.timestamp)).toLocaleTimeString([], { 
         hour: '2-digit', 
@@ -529,8 +533,8 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
 
   useEffect(() => {
     fetchData()
-    const intervalId = setInterval(fetchData, 1000);
-    return () => clearInterval(intervalId);
+    // const intervalId = setInterval(fetchData, 1000);
+    // return () => clearInterval(intervalId);
   }, [chart_index]);
 
   useEffect(() => {
@@ -655,6 +659,7 @@ useEffect(() => {
 }, [API_data]); 
   return (
     <>
+           {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={"#011434"}/>}
     <Exchange_screen_header title="Home" onLeftIconPress={() => navigation.navigate("Home")} onRightIconPress={() => console.log('Pressed')} />
 
     <ScrollView
@@ -669,20 +674,20 @@ useEffect(() => {
       
                <View style={styles.container_a}>
                   {/* <View style={{flexDirection:"row",justifyContent:"space-between",zIndex:20,position:"absolute",width:wp(95),marginTop:80}}> */}
-                 {ShowButtonLeft? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5}} onPress={() => {
+                 {/* {ShowButtonLeft? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5}} onPress={() => {
           if (AnchorViewRef.current && contentWidth !== 0) {
             const backOffset = (AnchorViewRef.current.contentOffset ? AnchorViewRef.current.contentOffset.x : 0) - 3 * contentWidth / Anchor.length;
             handleScroll(backOffset);
 
           }}}><Icon name={"left"} type={"antDesign"} size={25} color={"white"} style={{marginRight:5}}/>
-               </TouchableOpacity>:<></>}
+               </TouchableOpacity>:<></>} */}
 
-              {ShowButtonRight? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5,alignSelf:"flex-end"}} onPress={() => {
+              {/* {ShowButtonRight? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5,alignSelf:"flex-end"}} onPress={() => {
           if (AnchorViewRef.current && contentWidth !== 0) {
             const nextOffset = (AnchorViewRef.current.contentOffset ? AnchorViewRef.current.contentOffset.x : 0) + 3 * contentWidth / Anchor.length;
             handleScroll(nextOffset);
           }
-        }}><Icon name={"right"} type={"antDesign"} size={25} color={"white"}/></TouchableOpacity>:<></>}
+        }}><Icon name={"right"} type={"antDesign"} size={25} color={"white"}/></TouchableOpacity>:<></>} */}
                   {/* </View> */}
                <View style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center"}}>
                <Text style={{textAlign:"left",marginHorizontal:10,marginTop:10,fontWeight: "bold",fontSize:20,color:"#fff"}}>Anchors</Text>
@@ -702,7 +707,7 @@ useEffect(() => {
               {Anchor.map((list, index) => {
                 return (
                   <View>
-                    <TouchableOpacity  onPress={()=>{setAnchor_modal(true),setindex_Anchor(index)}} style={[styles.card,{backgroundColor:list.status==="Pending"?"#2b3c57":"#011434"}]} key={index}>
+                    <TouchableOpacity  onPress={()=>{setAnchor_modal(true),setindex_Anchor(index)}} style={[styles.card,{backgroundColor:list.status==="Pending"?"#2b3c57":"#2b3c57"}]} key={index}>
                       <View style={{ width: "30%", height: "27%", position: "absolute", alignSelf: "flex-end",zIndex:20 }}>
                         <Icon name={list.status === "Pending" ? "clock-time-two-outline" : "check-circle-outline"} type={"materialCommunity"} color={list.status === "Pending" ? "yellow" : "#35CA1D"} size={24} />
                       </View>

@@ -39,6 +39,7 @@ import  Clipboard from "@react-native-clipboard/clipboard";
 import { alert } from "../../../../reusables/Toasts";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import {Exchange_profile_loading} from "../../../../reusables/Exchange_loading";
+import DeviceInfo from "react-native-device-info";
 const VERIFICATION_STATUS = {
   VERIFIED: "VERIFIED",
   UNVERIFIED: "UNVERIFIED",
@@ -350,9 +351,10 @@ export const ProfileView = (props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [modalContainer_menu,setmodalContainer_menu]=useState(false);
   const [avl_plan, setavl_plan] = useState([
-    { id: 1, month: "1 month", save_on_price: 16, org_price: "5", current_price: "Free", type: "Monthly", subscriber_type: "" },
-    { id: 2, month: "3 month", save_on_price: 16, org_price: "15", current_price: "$ 14.6", type: "Quarter", subscriber_type: "MOST POPULAR" },
-    { id: 3, month: "Yearly", save_on_price: 16, org_price: "60", current_price: "$ 58", type: "Yearly", subscriber_type: "BEST VALUE" }
+    { id: 1, month: "1 Year", save_on_price: 16, org_price: "5", current_price: "Free", type: "Yearly", subscriber_type: "" },
+    { id: 2, month: "1 month", save_on_price: 16, org_price: "5", current_price: "Free", type: "Monthly", subscriber_type: "" },
+    { id: 3, month: "3 month", save_on_price: 16, org_price: "15", current_price: "$ 14.6", type: "Quarter", subscriber_type: "MOST POPULAR" },
+    { id: 4, month: "Yearly", save_on_price: 16, org_price: "60", current_price: "$ 58", type: "Yearly", subscriber_type: "BEST VALUE" }
   ]);
   const [expire_plan, setexpire_plan] = useState("");
   const [subscription_id,setsubscription_id]=useState(0);
@@ -360,10 +362,10 @@ export const ProfileView = (props) => {
   useEffect(() => {
     fetchProfileData();
   }, [FOUCUSED]);
-  
+
   useEffect(() => {
     // setsubscription_id(1)
-    const res = PlanExpire(avl_plan[subscription_id].month)
+    const res = PlanExpire(avl_plan[subscription_id].type)
     setexpire_plan(res);
   }, [subscription_id]);
 
@@ -371,23 +373,22 @@ export const ProfileView = (props) => {
     getAccountDetails();
   }, []);
 
-  const PlanExpire = (time_line) => {
-    let today = new Date();
+  const PlanExpire = (time_line,startingDate) => {
+    let today = startingDate ? new Date(startingDate) : new Date();
     let expire_date = new Date(today);
 
     switch (time_line) {
         case '1 month':
-            expire_date.setMonth(today.getMonth() + 1);
+            expire_date.setMonth(expire_date.getMonth() + 1);
             break;
         case '3 month':
-            expire_date.setMonth(today.getMonth() + 3);
+            expire_date.setMonth(expire_date.getMonth() + 3);
             break;
         case 'Yearly':
-            expire_date.setFullYear(today.getFullYear() + 1);
+            expire_date.setFullYear(expire_date.getFullYear() + 1);
             break;
         default:
-            console.log('Invalid subscription time line.');
-            return;
+            return 'Invalid subscription time line.';
     }
 
     const day = expire_date.getDate();
@@ -424,6 +425,10 @@ export const ProfileView = (props) => {
       if (err) return [setLoad(true),setMessage(`${err.status}: ${err.message}`)];
       setProfile(res);
       setLoad(false)
+      if (res?.createdAt) {
+        const expireRes = PlanExpire(avl_plan[subscription_id].type,res?.createdAt)
+        setexpire_plan(expireRes);
+      }
     } catch (err) {
       console.log(err);
       setMessage(err.message || "Something went wrong");
@@ -478,6 +483,27 @@ export const ProfileView = (props) => {
         {Load?
       <Exchange_profile_loading/>
       :  
+              profile?.email === DeviceInfo?.getUniqueIdSync() ?
+                <View style={styles.guesetUserCon}>
+                  <LinearGradient
+                    colors={['#3b82f6', '#8b5cf6']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.tokenImage]}
+                  >
+                    <Text style={[styles.tokenName, { color: "#fff", fontSize: 28 }]}>{profile?.firstName?.charAt(0)?.toLocaleUpperCase()}</Text>
+                  </LinearGradient>
+                  <View style={{justifyContent:"center",alignItems:"flex-start",marginBottom:-8,width:"90%",marginLeft:8}}>
+                    <View style={{flexDirection:"row",width:"90%",justifyContent:"space-between",alignItems:"center"}}>
+                      <Text style={[styles.guesetUserCon.userName]}>{profile?.firstName}</Text>
+                      <TouchableOpacity style={styles.amountSugCon.amountSugCard} onPress={() => { navigation.navigate("exchangeLogin") }}>
+                        <Text style={styles.amountSugCon.amountSugCardText}>Log In</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={[styles.guesetUserCon.userName,{fontSize:15,color:"gray"}]}>You're in Guest Mode. Sign in for full access.</Text>
+                  </View>
+                </View>
+      :
       <>
             {/* <Icon
               name={"account-circle-outline"}
@@ -490,7 +516,7 @@ export const ProfileView = (props) => {
                   colors={['#3b82f6', '#8b5cf6']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={[styles.tokenImage, { borderRadius: 30, justifyContent: "center", alignItems: "center" }]}
+                  style={[styles.tokenImage]}
                 >
                   <Text style={[styles.tokenName, { color: "#fff", fontSize: 28 }]}>{profile?.firstName?.charAt(0)?.toLocaleUpperCase()}</Text>
                 </LinearGradient>
@@ -1138,10 +1164,46 @@ tokenImage: {
   width: 53,
   height: 53,
   marginTop: 10,
+  borderRadius: 30,
+  justifyContent: "center",
+  alignItems: "center" 
 },
 tokenName: {
   fontSize: 16,
   fontWeight: 'bold',
   textAlign:"center"
+},
+guesetUserCon: {
+  width: "100%",
+  flexDirection:"row",
+  justifyContent:"flex-start",
+  alignItems:"center",
+  alignSelf:"center",
+  paddingHorizontal:10,
+  userName: {
+    fontSize: 18,
+    fontWeight: "500",
+    textAlign: "center",
+    color:"#fff"
+  }
+},
+amountSugCon: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  paddingVertical: 6.9,
+  paddingHorizontal: 5,
+  amountSugCard: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 80,
+    height: 33,
+    borderRadius: 8,
+    backgroundColor: "#23262F"
+  },
+  amountSugCardText: {
+    color: "#FFFFFF",
+    fontSize: 16
+  }
 },
 });

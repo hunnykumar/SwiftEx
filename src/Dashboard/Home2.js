@@ -331,17 +331,29 @@ const Home2 = ({ navigation }) => {
   //    },6000)
   // }, [])
 
-  const renderTabBar = (props) => (
-    <TabBar
-      {...props}
-      indicatorStyle={{ backgroundColor: "#4CA6EA" }}
-      style={ {backgroundColor:state.THEME.THEME===false?"#fff":"black"} }
-      activeColor={"#4CA6EA"}
-      inactiveColor={state.THEME.THEME===false?"black":"#fff"}
-      pressColor={"black"}
-
-    />
-  );
+  const renderTabBar = (props) => {
+    return (
+      <View style={[Styles.tabCon,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#23262F99"}]}>
+        {props.navigationState.routes.map((route, i) => {
+          const isActive = index === i;
+          return (
+            <TouchableOpacity
+              key={i}
+              style={[
+                Styles.tabCard,
+                { backgroundColor: isActive ? "#2164C1" : "#23262F99" }
+              ]}
+              onPress={() => setIndex(i)}
+            >
+              <Text style={Styles.tabCardText}>
+                {route.title}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
 
   const FirstRoute = () => (
     <ScrollView style={{ flex: 1 }}>
@@ -513,8 +525,8 @@ const Home2 = ({ navigation }) => {
     }, [])
   );
   return (
-    <View style={{ backgroundColor: "#000C66" }}>
-      <View style={Styles.container}>
+    <View style={{backgroundColor:state.THEME.THEME===false?"#fff":"black"}}>
+      <View style={[Styles.container,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
         <TabView
           swipeEnabled={true}
           navigationState={{ index, routes }}
@@ -522,19 +534,42 @@ const Home2 = ({ navigation }) => {
           renderScene={renderScene}
           onIndexChange={setIndex}
           initialLayout={{ width: Dimensions.get('window').width }}
-        // style={{ borderTopRightRadius: 20, borderTopLeftRadius: 20 }}
         />
-        <LockAppModal pinViewVisible={visible} setPinViewVisible={setVisible} />
       </View>
+        <LockAppModal pinViewVisible={visible} setPinViewVisible={setVisible} />
     </View>
   );
 };
 
 export default Home2;
 const Styles = StyleSheet.create({
+  tabCon: {
+    marginVertical: "8%",
+    flexDirection: "row",
+    width: "90%",
+    height: "6%",
+    alignSelf: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#23262F99",
+    borderRadius: 13,
+    padding: 2,
+  },
+  tabCard: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: "99%",
+    width: "49%",
+    padding: 10,
+    borderRadius: 13,
+  },
+  tabCardText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    fontWeight: "600"
+  },
   container: {
     // display: "flex",
-    backgroundColor: "white",
+    backgroundColor:"black",
     height: hp("100"),
     width: wp("100"),
     borderTopRightRadius: 20,

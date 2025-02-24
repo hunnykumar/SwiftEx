@@ -191,6 +191,7 @@ const requestOptions = {
           ) : (
             <View>
                 <Image source={monkey} style={Styles.monkey_img}/>
+                <Text style={{color:state.THEME.THEME===false?"black":"#fff",alignSelf:"center",fontSize:18,marginTop:hp(2)}}>No results found.</Text>
             </View>
           )}
         </ScrollView>
