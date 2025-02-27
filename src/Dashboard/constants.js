@@ -74,6 +74,9 @@ export const STELLAR_URL={
 export const OneTapContractAddress={
   Address:"0x4B28d1E56B442ff3A1858612DcA3ae7EEdc33735"
 }
+export const OneTapUSDCAddress={
+  Address:"0x7e9fbbf33c595430848e767E162e4b0FF6b8205b"
+}
 
 //172.20.10.6:2000
 

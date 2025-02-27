@@ -531,7 +531,7 @@ function InvestmentChart(setCurrentWallet) {
         alignItems:"center",
         paddingRight: 5,
         }}>
-        <TouchableOpacity disabled={item.id===4} style={[styles.actionBuyBtn,{backgroundColor:"#23262F",margin:2}]} onPress={()=>{navigation.navigate("newOffer_modal")}}>
+        <TouchableOpacity disabled={item.id===4} style={[styles.actionBuyBtn,{backgroundColor:"#23262F",margin:2}]} onPress={()=>{state?.STELLAR_ADDRESS_STATUS===false?navigation.navigate("exchange"):navigation.navigate("newOffer_modal")}}>
           <Text style={styles.actionRowBtnText}>Trade</Text>
         </TouchableOpacity>
 

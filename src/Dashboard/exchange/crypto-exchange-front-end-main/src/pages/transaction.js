@@ -9,7 +9,7 @@ export const TransactionView = () => {
   return (
     <>
     <Exchange_screen_header title="Transactions" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
-    <StellarTransactionHistory publicKey={state.STELLAR_PUBLICK_KEY} isDarkMode={state.THEME.THEME}/>
+    <StellarTransactionHistory publicKey={state.STELLAR_PUBLICK_KEY} isDarkMode={true}/>
     </>
   );
 };

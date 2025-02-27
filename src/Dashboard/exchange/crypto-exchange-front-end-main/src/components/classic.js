@@ -22,7 +22,7 @@ import { toInt } from 'validator';
 import { SignTransaction, swap_prepare } from '../../../../../../All_bridge';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
 import { ethers } from 'ethers';
-import { OneTapContractAddress, RPC } from '../../../../constants';
+import { OneTapContractAddress, OneTapUSDCAddress, RPC } from '../../../../constants';
 const classic = ({ route }) => {
   const Focused=useIsFocused();
   const toast=useToast();
@@ -48,16 +48,15 @@ const classic = ({ route }) => {
   const [not_avilable, setnot_avilable] = useState(false);
   const [WALLETADDRESS,setWALLETADDRESS]=useState('')
   const [WALLETBALANCE,setWALLETBALANCE]=useState('')
+  const [balanceLoading,setbalanceLoading]=useState(false);
   const [fianl_modal_text,setfianl_modal_text]=useState("Transaction Faild")
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
-    // { id: 3, name: "Matic", url: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" },
   ]
   const chooseItemList_ETH = [
     { id: 1, name: "USDT", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" },
-    chooseSelectedItemId === "Ethereum" ? { id: 2, name: "USDC", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" } :
-    chooseSelectedItemId === "Matic"?{ id: 2, name: "Matic", url: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }:{ id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
+    { id: 2, name: "USDC", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }
   ];
   const [Profile, setProfile] = useState({
     isVerified: false,
@@ -68,8 +67,32 @@ const classic = ({ route }) => {
     isEmailVerified: false,
 });
 const [open, setOpen] = useState(false);
+  const fetchUSDCBalnce = async (addresses) => {
+    try {
+      const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
+      const usdtAddress = OneTapUSDCAddress.Address;
+      const usdtAbi = [
+        "function balanceOf(address owner) view returns (uint256)"
+      ];
+
+      const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, provider);
+
+      const balance = await usdtContract.balanceOf(addresses);
+      console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`);
+
+      setWALLETBALANCE(ethers.utils.formatUnits(balance, 6));
+      setbalanceLoading(false)
+    } catch (error) {
+      setWALLETBALANCE(0.00);
+      setbalanceLoading(false)
+      console.log("Error fetching balance:", error);
+    }
+  }
+
 useEffect(()=>{
-  setWALLETBALANCE(state&&state.EthBalance)
+  setbalanceLoading(true)
+  fetchUSDCBalnce(state&&state.wallet && state.wallet.address)
+  // setWALLETBALANCE(state&&state.EthBalance)
   setWALLETADDRESS(state&&state.wallet && state.wallet.address)
   setfianl_modal_loading(false)
   setamount('');
@@ -164,25 +187,26 @@ const getOffersData = async () => {
       keysUpdate()
       const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
       const wallet = new ethers.Wallet(state?.wallet?.privateKey, provider);
-      const valueInWei = ethers.utils.parseEther(amount);
-      const tx = await wallet.sendTransaction({
-        to: OneTapContractAddress.Address,
-        value: valueInWei,
-      });
-
-      setfianl_modal_text("Transaction Success")
-      console.log("Transaction Sent", `Tx Hash: ${tx.hash}`)
+      const usdtAddress = OneTapUSDCAddress.Address;  
+      const usdtAbi = [
+          "function transfer(address to, uint256 value) public returns (bool)"
+      ];
+      const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
+      const valueInUSDT = ethers.utils.parseUnits(amount, 6);
+      const tx = await usdtContract.transfer(OneTapContractAddress.Address, valueInUSDT);
+      console.log("Transaction Sent", `Tx Hash: ${tx.hash}`);
+  
+      setfianl_modal_text("Transaction Success");
       await tx.wait();
       setfianl_modal_loading(false);
-      setfianl_modal_loading(false);
       setfianl_modal_error(true);
-    } catch (error) {
-      setfianl_modal_text("Transaction Faild");
+  } catch (error) {
+      setfianl_modal_text("Transaction Failed");
       console.log("Transaction Failed", error);
       setfianl_modal_loading(false);
-      setfianl_modal_loading(false);
-      setfianl_modal_error(true)
-    }
+      setfianl_modal_error(true);
+  }
+  
   };
   const manage_swap = async () => {
     setfianl_modal_loading(true);
@@ -212,7 +236,7 @@ const getOffersData = async () => {
   }
   return (
     <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
-     <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+     <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
       <View style={styles.modalHeader}>
             <Text style={styles.textModal}>Import assets on exchange</Text>
           </View>
@@ -246,7 +270,7 @@ const getOffersData = async () => {
               <View style={{flexDirection:"row",alignItems:"center",width:wp(30)}}>
               <Text style={{fontSize:19,textAlign:"center",color:"#fff"}}>Balance: </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
-                <Text style={{color:"#fff",fontSize:19 }}>{WALLETBALANCE}</Text>
+                {balanceLoading?<ActivityIndicator color={"green"}/>:<Text style={{color:"#fff",fontSize:19 }}>{WALLETBALANCE}</Text>}
               </ScrollView>
               </View>
           </View>
@@ -258,10 +282,10 @@ const getOffersData = async () => {
             <View style={{ width: wp(40), alignSelf: "center" }}>
               <Text style={[styles.textModal, { fontSize: 18 }]}>Receive</Text>
               <View style={[styles.modalOpen, { backgroundColor: "#33373DCC", width: wp(40) }]} onPress={() => { setchooseModalVisible_choose(true); setIdIndex(3); }}>
-                {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} />}
+                {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} />}
                 <View>
-                <Text style={{color:"#fff",fontSize:19,marginLeft:2}}>{chooseSelectedItemIdCho === null ? "USDC" : chooseSelectedItemIdCho === "USDC" ? chooseSelectedItemId === "Matic" || chooseSelectedItemIdCho === "Matic" ? "apUSDC" : "USDC" : chooseSelectedItemIdCho === "BNB" ? "BNB" : chooseSelectedItemIdCho === "Matic" ? "apMATIC" : "aeETH"}</Text>
-                {chooseSelectedItemIdCho === null||chooseSelectedItemIdCho ==="USDC"?<Text style={{color:"gray",fontSize:10}}>centre.io</Text>:chooseSelectedItemIdCho ==="USDT"?<Text style={{color:"gray",fontSize:10}}>allbridge.io</Text>:<></>}
+                <Text style={{color:"#fff",fontSize:19,marginLeft:2}}>{chooseSelectedItemIdCho === null ? "USDC" : chooseSelectedItemIdCho === "USDC" ? chooseSelectedItemId === "Matic" || chooseSelectedItemIdCho === "Matic" ? "apUSDC" : "USDC" : chooseSelectedItemIdCho === "BNB" ? "BNB" : chooseSelectedItemIdCho === "Matic" ? "apMATIC" : "USDC"}</Text>
+                {chooseSelectedItemIdCho === null||chooseSelectedItemIdCho ==="USDC"?<Text style={{color:"gray",fontSize:10}}>centre.io</Text>:chooseSelectedItemIdCho ==="USDT"?<Text style={{color:"gray",fontSize:10}}>centre.io</Text>:<></>}
                 </View>
               </View>
             </View>
