@@ -496,7 +496,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                 </View>
                   <View style={styles.walletSubCon}>
                     <View style={{width:"60%"}}>
-                    <Text style={[styles.walletNameandBal.walletNamefontBal,{color:state.THEME.THEME === false ? "black":"#fff"}]}>{balanceVisible ? "$ " + balanceUsd? "$ "+balanceUsd:"$ 0.0"  : "$ X.XX"} </Text>
+                    <Text lineBreakMode={"tail"} style={[styles.walletNameandBal.walletNamefontBal,{color:state.THEME.THEME === false ? "black":"#fff"}]}>{balanceVisible ? "$ " + balanceUsd? "$ "+balanceUsd:"$ 0.0"  : "$ X.XX"} </Text>
                     </View>
                     {balanceVisible ?
                         <Icon name="eye-off-outline" type={"ionicon"} size={26} color={"gray"} onPress={() => { setbalanceVisible(balanceVisible ? false : true) }} />:
@@ -526,7 +526,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                   <Text style={[styles.featureCard.featureCardText,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>Swap</Text>
                 </TouchableOpacity>
                 {/* buy card */}
-                <TouchableOpacity style={[styles.featureCard,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#23262F99"}]} onPress={() => navigation.navigate("buycrypto")}>
+                <TouchableOpacity style={[styles.featureCard,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#23262F99"}]} onPress={() => navigation.navigate("KycComponent",{tabName:"Buy"})}>
                 <Icon name="dollar-sign" type={"feather"}  color={"#2164C1"} size={35} />
                   <Text style={[styles.featureCard.featureCardText,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>Buy</Text>
                 </TouchableOpacity>

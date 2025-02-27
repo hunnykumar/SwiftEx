@@ -205,7 +205,8 @@ export const HomeView = ({ setPressed }) => {
   
       const postData = {
         email: storedEmail,
-        publicKey: state.STELLAR_PUBLICK_KEY,
+        publicKey: state?.STELLAR_PUBLICK_KEY,
+        wallletPublicKey:state?.ETH_KEY
       };
   
       // Update public key by email

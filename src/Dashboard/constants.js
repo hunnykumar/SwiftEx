@@ -71,6 +71,10 @@ export const STELLAR_URL={
   URL:"https://horizon-testnet.stellar.org"
 }
 
+export const OneTapContractAddress={
+  Address:"0x4B28d1E56B442ff3A1858612DcA3ae7EEdc33735"
+}
+
 //172.20.10.6:2000
 
 /*<WebView 

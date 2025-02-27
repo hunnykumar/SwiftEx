@@ -500,7 +500,7 @@ export const ProfileView = (props) => {
                         <Text style={styles.amountSugCon.amountSugCardText}>Log In</Text>
                       </TouchableOpacity>
                     </View>
-                    <Text style={[styles.guesetUserCon.userName,{fontSize:15,color:"gray"}]}>You're in Guest Mode. Sign in for full access.</Text>
+                    <Text style={[styles.guesetUserCon.userName,{fontSize:15,color:"gray"}]}>You're in Guest Mode.</Text>
                   </View>
                 </View>
       :

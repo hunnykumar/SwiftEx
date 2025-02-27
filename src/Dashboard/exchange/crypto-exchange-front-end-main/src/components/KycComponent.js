@@ -17,7 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import Icon from "../../../../../icon";
 
-const KycComponent = () => {
+const KycComponent = ({ route }) => {
     const navigation = useNavigation();
     const [visibleAlert, setVisibleAlert] = useState(false);
     const [amountSend, setamountSend] = useState(0.00);
@@ -50,7 +50,7 @@ const KycComponent = () => {
           keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
         >
           <Exchange_screen_header 
-            title="Deposit" 
+            title={route?.params?.tabName??"Buy"} 
             onLeftIconPress={() => navigation.goBack()} 
             onRightIconPress={() => console.log('Pressed')} 
           />

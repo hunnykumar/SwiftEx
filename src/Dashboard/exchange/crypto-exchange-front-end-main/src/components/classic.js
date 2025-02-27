@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, Picker, ActivityIndicator, StyleSheet, TouchableOpacity, TextInput, Image, Platform, Keyboard } from 'react-native';
+import { Modal, View, Text, Picker, ActivityIndicator, StyleSheet, TouchableOpacity, TextInput, Image, Platform, Keyboard, Alert } from 'react-native';
 import Icon from "../../../../../icon";
 import { FlatList, useToast } from 'native-base';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -10,23 +10,25 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { REACT_APP_LOCAL_TOKEN } from '../ExchangeConstants';
+import { REACT_APP_HOST, REACT_APP_LOCAL_TOKEN } from '../ExchangeConstants';
 import AsyncStorageLib from '@react-native-async-storage/async-storage';
 import darkBlue from '../../../../../../assets/darkBlue.png'
 import steller_img from '../../../../../../assets/Stellar_(XLM).png'
 import bnbimage from "../../../../../../assets/bnb-icon2_2x.png";
 
-import { GET, authRequest } from '../api';
+import { GET, authRequest, getToken } from '../api';
 import { ShowErrotoast, alert } from '../../../../reusables/Toasts';
 import { toInt } from 'validator';
 import { SignTransaction, swap_prepare } from '../../../../../../All_bridge';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
+import { ethers } from 'ethers';
+import { OneTapContractAddress, RPC } from '../../../../constants';
 const classic = ({ route }) => {
+  const Focused=useIsFocused();
   const toast=useToast();
   const navigation=useNavigation();
   const { Asset_type } = route.params;
   const TEMPCHOSE=Asset_type==="ETH"?"Ethereum":Asset_type==="BNB"?"BNB":Asset_type 
-  console.log("-=-=-=-=-=-=-=-------=======",Asset_type,TEMPCHOSE)
   const state = useSelector((state) => state);
   const nav = useNavigation();
   const [chooseModalVisible, setChooseModalVisible] = useState(false);
@@ -46,6 +48,7 @@ const classic = ({ route }) => {
   const [not_avilable, setnot_avilable] = useState(false);
   const [WALLETADDRESS,setWALLETADDRESS]=useState('')
   const [WALLETBALANCE,setWALLETBALANCE]=useState('')
+  const [fianl_modal_text,setfianl_modal_text]=useState("Transaction Faild")
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
@@ -70,10 +73,10 @@ useEffect(()=>{
   setWALLETADDRESS(state&&state.wallet && state.wallet.address)
   setfianl_modal_loading(false)
   setamount('');
-  setTimeout(()=>{
-    setnot_avilable(true)
-  },500)
-},[])
+  // setTimeout(()=>{
+  //   setnot_avilable(true)
+  // },500)
+},[Focused])
   const for_trading = async () => {
     try {
         const { res, err } = await authRequest("/users/:id", GET);
@@ -132,32 +135,80 @@ const getOffersData = async () => {
     }, 1300)
   }
 
-  const manage_swap = async (wallet_type, asset_type, receive_token) => {
-    const receivetoken = wallet_type === "Ethereum" && asset_type === "USDT" && receive_token === null ? "USDC" : wallet_type === "BNB" && asset_type === "USDT" && receive_token === null ? "aeETH" : wallet_type === "Ethereum" && asset_type === "USDT" ? "aeETH" : wallet_type === "BNB" && asset_type === "USDT" ? "aeETH" : receive_token;
+  const keysUpdate=async()=>{
+    try {
+       const postData = {
+              publicKey: state?.STELLAR_PUBLICK_KEY,
+              wallletPublicKey:state?.ETH_KEY
+            };
+        
+            // Update public key by email
+            const response = await fetch(`${REACT_APP_HOST}/users/updatePublicKey`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': "Bearer "+await getToken()
+              },
+              body: JSON.stringify(postData),
+            });
+            
+            const data = await response.json();
+            console.log("---keysUpdate>>>>", data);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const sendEthToContract = async () => {
+    try {
+      keysUpdate()
+      const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
+      const wallet = new ethers.Wallet(state?.wallet?.privateKey, provider);
+      const valueInWei = ethers.utils.parseEther(amount);
+      const tx = await wallet.sendTransaction({
+        to: OneTapContractAddress.Address,
+        value: valueInWei,
+      });
+
+      setfianl_modal_text("Transaction Success")
+      console.log("Transaction Sent", `Tx Hash: ${tx.hash}`)
+      await tx.wait();
+      setfianl_modal_loading(false);
+      setfianl_modal_loading(false);
+      setfianl_modal_error(true);
+    } catch (error) {
+      setfianl_modal_text("Transaction Faild");
+      console.log("Transaction Failed", error);
+      setfianl_modal_loading(false);
+      setfianl_modal_loading(false);
+      setfianl_modal_error(true)
+    }
+  };
+  const manage_swap = async () => {
     setfianl_modal_loading(true);
-    let temp_bal = toInt(WALLETBALANCE)
-    let temp_amt = toInt(amount)
-    if (temp_amt >= temp_bal || temp_amt === 0) {
-      setfianl_modal_loading(false)
-      ShowErrotoast(toast,temp_amt === 0 ? "This feature is not supported in the test environment." : "Insufficient funds");
+    const amountValue = parseFloat(amount);
+    const walletBalanceValue = parseFloat(WALLETBALANCE);
+    if (isNaN(amount)||amountValue == 0) {
+      setfianl_modal_loading(false);
+      ShowErrotoast(toast, "Invalid amount");
+      setamount("");
     }
-    else {
-      setfianl_modal_loading(false)      // comment this code for run allbridge
-      setfianl_modal_error(true)         // comment this code for run allbridge
-
-      // uncomment this code for run allbridge
-
-      // const ressult_swap = await swap_prepare(state.wallet.privateKey, state.wallet.address, state.STELLAR_PUBLICK_KEY, amount, asset_type, receivetoken, wallet_type)
-      // console.log("----", ressult_swap.status_task)
-      // if (ressult_swap.status_task) {
-      //   setfianl_modal_loading(false)
-      //   setfianl_modal(true)
-      // }
-      // else {
-      //   setfianl_modal_loading(false)
-      //   setfianl_modal_error(true)
-      // }
+    else{
+      if (amountValue <= 0 || amountValue > walletBalanceValue) {
+        setfianl_modal_loading(false);
+        ShowErrotoast(toast, "Insufficient funds");
+        setamount("");
+      }
+      else{
+        sendEthToContract()
+      }
+      
     }
+      
+      // setfianl_modal_loading(false) //error alert
+      // setfianl_modal_error(true)
+
+
   }
   return (
     <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
@@ -220,7 +271,7 @@ const getOffersData = async () => {
             <TouchableOpacity
               // disabled={chooseSelectedItemIdCho === null||chooseSelectedItemId === null} 
               style={[styles.nextButton, { backgroundColor: !amount?"gray":'#2F7DFF',height:hp(6),marginTop:hp(5) }]}
-            disabled={!amount||fianl_modal_loading} onPress={() => { Keyboard.dismiss(),manage_swap(chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho,chooseSelectedItemIdCho) }}
+            disabled={!amount||fianl_modal_loading} onPress={() => { Keyboard.dismiss(),manage_swap() }}
             >
               {fianl_modal_loading?<ActivityIndicator color={"white"}/>:<Text style={styles.nextButtonText}>Confirm Transaction</Text>}
             </TouchableOpacity>
@@ -317,7 +368,7 @@ const getOffersData = async () => {
               </ScrollView>
             </View>
             <View style={styles.inputContainer}>
-              <TextInput placeholder='Amount' placeholderTextColor="gray" keyboardType="number-pad" style={styles.input} onChangeText={(value) => { setamount(value) }} />
+              <TextInput placeholder='Amount' placeholderTextColor="gray" keyboardType="number-pad" value={amount} style={styles.input} onChangeText={(value) => { setamount(value) }} />
             </View>
             <TouchableOpacity style={[styles.confirmButton, { backgroundColor: !amount ? "gray" : "green" }]} disabled={!amount} onPress={() => { setConfirmModalVisible(false), setfianl_modal(true) }}>
               <Text style={styles.confirmButtonText}>Confirm</Text>
@@ -379,13 +430,13 @@ const getOffersData = async () => {
             />
           </TouchableOpacity>
             <Icon
-              name={"alert-circle-outline"}
+              name={fianl_modal_text==="Transaction Faild"?"alert-circle-outline":"check-circle-outline"}
               type={"materialCommunity"}
               size={60}
-              color={"red"}
+              color={fianl_modal_text==="Transaction Faild"?"red":"green"}
               style={{marginTop:19}}
             />
-            <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 10, color: "#fff" }}>Transaction Faild</Text>
+            <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 10, color: "#fff" }}>{fianl_modal_text}</Text>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -622,8 +673,8 @@ const styles = StyleSheet.create({
     marginLeft: wp(22),
   },
   logoImg_TOP_1: {
-    height: hp(4.5),
-    width: wp(9),
+    height: 39,
+    width: 39,
     marginLeft: wp(1),
     marginRight: 3
   },

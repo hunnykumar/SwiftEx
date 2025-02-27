@@ -502,7 +502,7 @@ function InvestmentChart(setCurrentWallet) {
     <TouchableOpacity disabled={item.id===4} style={[styles.coinMainCon,{backgroundColor:state.THEME.THEME===false?"#FFFFFF":"#18181C"}]} onPress={()=>{navigation.navigate("Asset_info",{asset_type:item.symbole})}}>
       {item.id===4&&
         <View style={[styles.TokenInfo]}>
-              <Text style={styles.TokenInfoText}>Comming Soon</Text>
+              <Text style={styles.TokenInfoText}>Coming Soon</Text>
             </View>
       }
       {/* coin image container */}
@@ -516,10 +516,13 @@ function InvestmentChart(setCurrentWallet) {
         <Text style={styles.coinInfoCon.coinBalText}>{parseFloat(item.avl).toFixed(1)}{" "+item.symbole} </Text>
         <View style={styles.coinInfoCon.coinSubCon}>
           <Text style={[styles.coinInfoCon.coinInfoText,,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>{item.dollaravl}</Text>
-          <View style={[styles.coinInfoCon.coinPerCon, { backgroundColor: item.viewColor, }]}>
+          {Platform.OS==="android"&&<View style={[styles.coinInfoCon.coinPerCon, { backgroundColor: item.viewColor, }]}>
             <Text style={[styles.coinInfoCon.coinStatusText, { color: item.statusColor }]}>{item.status}</Text>
-          </View>
+          </View>}
         </View>
+        {Platform.OS==="ios"&&<View style={[styles.coinInfoCon.coinPerCon, { backgroundColor: item.viewColor,maxWidth:"70%",height:"30%",alignSelf:"flex-start" }]}>
+            <Text style={[styles.coinInfoCon.coinStatusText, { color: item.statusColor }]}>{item.status}</Text>
+          </View>}
       </View>
       {/* coin chart */}
       <ResponsiveLineChart width={80} height={70} symbol={item.symbole} />
@@ -542,7 +545,7 @@ function InvestmentChart(setCurrentWallet) {
 }
   return (
         <View style={[styles.watchlistCon,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#23262F1A"}]}>
-        <Text style={[styles.watchlistCon.watchlistConHeading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Watchlist</Text>
+        {/* <Text style={[styles.watchlistCon.watchlistConHeading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Watchlist</Text> */}
     <ScrollView
     showsVerticalScrollIndicator={false}
      style={{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#23262F1A"}}
@@ -711,9 +714,9 @@ const styles = StyleSheet.create({
     borderRadius: 10
   },
   coinInfoCon: {
-    width: "20%",
+    width: "26%",
+    marginLeft:Platform.OS==="ios"?"2%":0,
     height: 53,
-    marginLeft: "-2.5%",
     coinInfoText: {
       fontSize: 13,
       color: "#FFFFFF",

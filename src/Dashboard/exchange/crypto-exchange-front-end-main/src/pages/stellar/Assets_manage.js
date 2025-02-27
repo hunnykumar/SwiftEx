@@ -166,8 +166,8 @@ const Assets_manage = () => {
                         return (
                             <TouchableOpacity style={styles.assets_card} onPress={() => { navigation.navigate("send_recive",{bala:list.balance,asset_name:list.asset_type === "native" ? "native" : list.asset_code=== "USDC"?"USDC":list.asset_code}) }}>
                                 <View style={{ flexDirection: "column" }}>
-                                    <Text style={[styles.mode_text, { fontSize: 19, fontWeight: "300" }]}>{list.asset_type === "native" ? "Lumens" : list.asset_code=== "USDC"&&"USDC"}</Text>
-                                    <Text style={[styles.mode_text, { fontSize: 16, fontWeight: "300", color: "silver" }]}>{list.asset_type === "native" ? "(stellar.org)" : list.asset_code==="USDC" && "(centre.io)"}</Text>
+                                    <Text style={[styles.mode_text, { fontSize: 19, fontWeight: "300" }]}>{list.asset_type === "native" ? "Lumens" : list.asset_code}</Text>
+                                    <Text style={[styles.mode_text, { fontSize: 16, fontWeight: "300", color: "silver" }]}>{list.asset_type === "native" ? "(stellar.org)" : list.asset_code==="USDC"?"(centre.io)":list.asset_code==="ETH"?"(ultracapital.xyz)":"(ultracapital.xyz)"}</Text>
                                 </View>
                                 {/* <ScrollView style={{height:hp52)}}> */}
 

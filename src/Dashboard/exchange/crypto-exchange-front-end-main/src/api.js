@@ -138,6 +138,7 @@ export const authRequest = async (url, request, body = {}) => {
     return { res }
   } catch (error) {
     console.log('AUTHORIZED_REQUEST_ERROR: \n', JSON.stringify(error.response))
+    createGuestUser()
     const err = {
       message: error.response.data.message,
       status: error.response.statusText,

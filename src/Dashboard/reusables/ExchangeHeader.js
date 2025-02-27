@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, Dimensions, Animated, TouchableWithoutFeedback } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, Dimensions, Animated, TouchableWithoutFeedback, Alert } from "react-native";
 import React, { useCallback, useState } from "react";
 import Icon from "../../icon";
 import {
@@ -10,6 +10,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import darkBlue from "../../../assets/darkBlue.png";
 import { REACT_APP_LOCAL_TOKEN } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import { useSelector } from "react-redux";
+import { createGuestUser } from "../exchange/crypto-exchange-front-end-main/src/api";
 
 export const ExchangeHeaderApp = () => {
   const navigation = useNavigation();
@@ -138,7 +139,9 @@ const CustomDrawer = ({ isVisible, onClose }) => {
       onClose()
       const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
       await AsyncStorage.removeItem(LOCAL_TOKEN);
-      naviagtion.navigate("exchangeLogin");
+      createGuestUser()
+      Alert.alert("You're in Guest Mode.");
+      // naviagtion.navigate("Home");
     } catch (error) {
       console.log("--===9",error)
     }

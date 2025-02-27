@@ -94,9 +94,9 @@ const send_recive = ({route}) => {
                 setLoading(false);
               });
             }
-            if(asset_name==="USDC")
+            if(asset_name==="USDC"||asset_name==="ETH"||asset_name==="BTC")
             {
-              GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
+              GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,asset_name).then((result) => {
                 console.log("-------jhdkjas",result)
                 setresStellarbal(result?.availableBalance)
                 setLoading(false);

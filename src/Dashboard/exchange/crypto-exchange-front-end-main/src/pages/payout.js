@@ -320,7 +320,7 @@ const Payout = () => {
           <ScrollView>
             {Anchors.map((list, index) => {
               return (
-                <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),setURL_OPEN(index===0?navigation.navigate("KycComponent"):list.tom_url),setLoading(index===0?false:true),setopen_web_view(index===0?false:true)}}>
+                <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),setURL_OPEN(index===0?navigation.navigate("KycComponent",{tabName:"Deposit"}):list.tom_url),setLoading(index===0?false:true),setopen_web_view(index===0?false:true)}}>
                   <View style={{flexDirection:"row",alignItems:"center"}}>
                   <Image
                   source={list.image}

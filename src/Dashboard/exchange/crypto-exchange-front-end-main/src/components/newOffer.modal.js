@@ -73,6 +73,7 @@ export const NewOfferModal = () => {
   const [Loading, setLoading] = useState(false);
   const [open_offer, setopen_offer] = useState(false);
   const [show_trust_modal,setshow_trust_modal]=useState(false);
+  const [tradeTrust,settradeTrust]=useState(false);
   const [loading_trust_modal,setloading_trust_modal]=useState(false);
   const [u_email,setemail]=useState('');
   const [titel,settitel]=useState("UPDATING..");
@@ -135,15 +136,11 @@ const getAccountDetails = async () => {
 const [amountSuggest, setamountSuggest] = useState([{ id: 1, amountSuggest: "25%" }, { id: 2, amountSuggest: "50%" }, { id: 3, amountSuggest: "75%" }, { id: 4, amountSuggest: "100%" },]);
 
 const chooseItemList = [
-  { id: 1, name: "XLM/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"XLM",visible_1:"USDC",asset_dom:"steller.org",asset_dom_1:"centre.io"},
-  { id: 2, name: "ETH/BTC" ,base_value:"BTC",counter_value:"ETH",visible_0:"ETH",visible_1:"BTC",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz"},
-  { id: 3, name: "ETH/USDC" ,base_value:"USDC",counter_value:"ETH",visible_0:"ETH",visible_1:"USDC",asset_dom:"ultracapital.xyz",asset_dom_1:"centre.io"},
-  { id: 4, name: "BTC/ETH" ,base_value:"ETH",counter_value:"BTC",visible_0:"BTC",visible_1:"ETH",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz"},
-  { id: 5, name: "ETH/AQUA" ,base_value:"AQUA",counter_value:"ETH",visible_0:"ETH",visible_1:"AQUA",asset_dom:"ultracapital.xyz",asset_dom_1:"aqua.network"},
-  { id: 6, name: "BTC/AQUA" ,base_value:"AQUA",counter_value:"BTC",visible_0:"BTC",visible_1:"AQUA",asset_dom:"ultracapital.xyz",asset_dom_1:"aqua.network"},
-  { id: 7, name: "ETH/yXLM" ,base_value:"yXLM",counter_value:"ETH",visible_0:"ETH",visible_1:"yXLM",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz"},
-  { id: 8, name: "yBTC/yXLM" ,base_value:"yXLM",counter_value:"yBTC",visible_0:"yBTC",visible_1:"yXLM",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz"},
-
+  { id: 1, name: "XLM/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"XLM",visible_1:"USDC",asset_dom:"steller.org",asset_dom_1:"centre.io",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
+  { id: 2, name: "ETH/BTC" ,base_value:"BTC",counter_value:"ETH",visible_0:"ETH",visible_1:"BTC",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
+  { id: 3, name: "ETH/USDC" ,base_value:"USDC",counter_value:"ETH",visible_0:"ETH",visible_1:"USDC",asset_dom:"ultracapital.xyz",asset_dom_1:"centre.io",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
+  { id: 4, name: "BTC/ETH" ,base_value:"ETH",counter_value:"BTC",visible_0:"BTC",visible_1:"ETH",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
+  { id: 5, name: "XLM/BTC" ,base_value:"BTC",counter_value:"native",visible_0:"XLM",visible_1:"BTC",asset_dom:"steller.org",asset_dom_1:"centre.io",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
   // { id: 2, name: "ETH/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"ETH",visible_1:"USDC",asset_dom:"allbridge.io",asset_dom_1:"allbridge.io"},
   // { id: 3, name: "BNB/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"BNB",visible_1:"XLM",asset_dom:"allbridge.io",asset_dom_1:"allbridge.io"},
   // { id: 4, name: "SWIFTEX/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"SWIFTEX",visible_1:"XLM",asset_dom:"swiftex",asset_dom_1:"steller.org"},
@@ -164,7 +161,7 @@ const chooseFilteredItemList = chooseItemList.filter(
   item => item.name.toLowerCase().includes(chooseSearchQuery.toLowerCase())
 );
 const chooseRenderItem = ({ item }) => (
-  <TouchableOpacity onPress={() => { setRoute("SELL"),setvisible_value(item.name),settop_value(item.visible_0),settop_domain(item.asset_dom),settop_domain_0(item.asset_dom_1),settop_value_0(item.visible_1),setSelectedValue(item.base_value),setSelectedBaseValue(item.counter_value),setchooseModalPair(false),item.id===1?setassetInfo(false):setassetInfo(true)}} style={[styles.chooseItemContainer,{
+  <TouchableOpacity onPress={() => { setRoute("SELL"),setvisible_value(item.name),settop_value(item.visible_0),settop_domain(item.asset_dom),settop_domain_0(item.asset_dom_1),settop_value_0(item.visible_1),setSelectedValue(item.base_value),setSelectedBaseValue(item.counter_value),setchooseModalPair(false)}} style={[styles.chooseItemContainer,{
     borderBottomWidth:0.9,
     borderBlockEndColor: '#fff',
     paddingVertical:hp(1.5)
@@ -307,8 +304,8 @@ const chooseRenderItem_1 = ({ item }) => (
     console.log("Buy Offer Peram =>>>>>>>>>>>>", offer_amount, offer_price, SecretKey, AssetIssuerPublicKey)
     try {
       const account = await server.loadAccount(sourceKeypair.publicKey());
-      const counter_asset_buy = SelectedBaseValue==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(SelectedBaseValue, AssetIssuerPublicKey);
-      const  base_asset_sell= selectedValue==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(selectedValue, AssetIssuerPublicKey);
+      const counter_asset_buy = top_value==="XLM"?new StellarSdk.Asset.native():new StellarSdk.Asset(top_value_0, AssetIssuerPublicKey);
+      const  base_asset_sell= top_value_0==="XLM"?new StellarSdk.Asset.native():new StellarSdk.Asset(top_value, AssetIssuerPublicKey);
       const transaction = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
         networkPassphrase: StellarSdk.Networks.TESTNET
@@ -383,76 +380,89 @@ const chooseRenderItem_1 = ({ item }) => (
 
   const get_stellar = async (asset) => {
     try {
-      setbalance("")
-      setreserveLoading(true)
-      console.log("",ALL_STELLER_BALANCES)
+      console.log("_+_+_+_+_IIIO",ALL_STELLER_BALANCES)
+        setbalance("");
+        setreserveLoading(true);
+        const hasAsset = ALL_STELLER_BALANCES.some(
+            (balance) => balance.asset_code === asset || balance.asset_type === asset
+        );
+        if (!hasAsset&&asset!=="native") {
+            setshow_trust_modal(true);
+        }
 
-              ALL_STELLER_BALANCES.forEach(balance => {
-                if (asset==="native"?balance.asset_type === asset:balance.asset_code === asset) {
-                  if (asset !== "native"||asset !== "USDC") {
-                    setactiv(false)
-                    // setbalance(balance?.balance)
-                    setshow_bal(true)
-                    // setreserveLoading(false)
-                  }
+        ALL_STELLER_BALANCES.forEach((balance) => {
+            if (balance.asset_code === asset || balance.asset_type === asset) {
+                if (asset !== "native" && asset !== "USDC") {
+                    setactiv(false);
+                    setshow_bal(true);
                 }
-                if(asset==="native")
-                {
-                  GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
-                    setbalance(result?.availableBalance)
-                    setreserveLoading(false)
-                    }).catch(error => {
-                      console.log('Error loading account:', error);
-                      setreserveLoading(false)
-                  });
-                }
-                if(asset==="USDC")
-                {
-                  GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
-                    setbalance(result?.availableBalance)
-                    setreserveLoading(false)
-                    }).catch(error => {
-                      console.log('Error loading account:', error);
-                      setreserveLoading(false)
-                  });
-                }
-                if(!ALL_STELLER_BALANCES.some((obj) => obj.hasOwnProperty('asset_code')))
-                {
-                  setshow_trust_modal(true)
-                }
-              });
+            }
+        });
+
+        if (asset === "native") {
+            GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY)
+                .then((result) => {
+                    setbalance(result?.availableBalance);
+                    setreserveLoading(false);
+                })
+                .catch((error) => {
+                    console.log("Error loading account:", error);
+                    setreserveLoading(false);
+                });
+        }
+
+        if (asset === "USDC"||asset==="ETH"||asset==="BTC") {
+            GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,asset)
+                .then((result) => {
+                    setbalance(result?.availableBalance);
+                    setreserveLoading(false);
+                })
+                .catch((error) => {
+                    console.log("Error loading account:", error);
+                    setreserveLoading(false);
+                });
+        }
     } catch (error) {
-      console.log("Error in get_stellar")
-      Showsuccesstoast(toast, "Please wait account is updating....");
-      setshow(false)
-      setreserveLoading(false)
+        console.log("Error in get_stellar");
+        Showsuccesstoast(toast, "Please wait, account is updating....");
+        setshow(false);
+        setreserveLoading(false);
     }
-  }
+};
+
 
   const offer_creation = () => {
-    const temp_amount=parseInt(offer_amount);
-   if(temp_amount>Balance)
-    {
-      ShowErrotoast(toast,"Insufficient Balance");
+    const hasAsset = ALL_STELLER_BALANCES.some(
+      (balance) => balance.asset_code === selectedValue || balance.asset_type === selectedValue
+    );
+    if (!hasAsset && selectedValue !== "native") {
+      settradeTrust(true)
       setLoading(false)
-    }
-    else{
-      console.log("---selectedValue",selectedValue)
-      if(selectedValue==="USDC"||selectedValue==="XLM"||selectedValue==="native")
-    {
-    getData();
-    if (titel!=="Activate Stellar Account for trading" && offer_amount !== "" && offer_price !== ""&& offer_amount !== "0"&& offer_price !== "0"&& offer_amount !== "."&& offer_price !== "."&& offer_amount !== ","&& offer_price !== ",") {
-      { route === "SELL" ? Sell() : Buy() }
+      setshow_trust_modal(true);
     }
     else {
-      titel==="Activate Stellar Account for trading"? ShowErrotoast(toast,"Activation Required"): ShowErrotoast(toast,"Input Correct Value.")
-      setLoading(false)
-    }
-    }
-    else{
-      setLoading(false)
-      Showsuccesstoast(toast, "Available Soon.")
-    }
+      const temp_amount = parseInt(offer_amount);
+      if (temp_amount > Balance) {
+        ShowErrotoast(toast, "Insufficient Balance");
+        setLoading(false)
+      }
+      else {
+        console.log("---selectedValue", selectedValue)
+        // if (selectedValue === "USDC" || selectedValue === "XLM" || selectedValue === "native") {
+          getData();
+          if (titel !== "Activate Stellar Account for trading" && offer_amount !== "" && offer_price !== "" && offer_amount !== "0" && offer_price !== "0" && offer_amount !== "." && offer_price !== "." && offer_amount !== "," && offer_price !== ",") {
+            { route === "SELL" ? Sell() : Buy() }
+          }
+          else {
+            titel === "Activate Stellar Account for trading" ? ShowErrotoast(toast, "Activation Required") : ShowErrotoast(toast, "Input Correct Value.")
+            setLoading(false)
+          }
+        // }
+        // else {
+        //   setLoading(false)
+        //   Showsuccesstoast(toast, "Available Soon.")
+        // }
+      }
     }
   }
   const active_account=async()=>{
@@ -555,6 +565,9 @@ const chooseRenderItem_1 = ({ item }) => (
     const fetch_ins = async () => {
       try {
         setreservedError(false)
+        setassetInfo(false)
+        settop_value(chooseItemList[0].visible_0)
+        settop_value_0(chooseItemList[0].visible_1)
         setloading_trust_modal(false)
         setALL_STELLER_BALANCES(state?.assetData)
         setshow_trust_modal(false);
@@ -639,7 +652,7 @@ const reves_fun=async(fist_data,second_data)=>{
 }
 
 
-const change_Trust_New = async () => {
+const change_Trust_New = async (assetName) => {
   setloading_trust_modal(true)
   try {
       console.log(":++++ Entered into trusting ++++:")
@@ -652,7 +665,7 @@ const change_Trust_New = async () => {
       })
           .addOperation(
               StellarSdk.Operation.changeTrust({
-                  asset: new StellarSdk.Asset("USDC", "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"),
+                  asset: new StellarSdk.Asset(assetName, "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"),
               })
           )
           .setTimeout(30)
@@ -661,7 +674,7 @@ const change_Trust_New = async () => {
       const result = await server.submitTransaction(transaction);
       console.log(`Trustline updated successfully`);
       Snackbar.show({
-          text: 'USDC added successfully',
+          text: 'Trustline updated successfully',
           duration: Snackbar.LENGTH_SHORT,
           backgroundColor:'green',
       });
@@ -669,6 +682,7 @@ const change_Trust_New = async () => {
           .then(account => {
               console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);
               account.balances.forEach(balance => {
+                settradeTrust(false);
                 setloading_trust_modal(false)
                 setshow_trust_modal(false)
                   dispatch_({
@@ -680,15 +694,17 @@ const change_Trust_New = async () => {
           })
           .catch(error => {
               console.log('Error loading account:', error);
+              settradeTrust(false);
               setloading_trust_modal(false)
               Snackbar.show({
-                  text: 'USDC failed to be added',
+                  text: 'Trustline failed to updated',
                   duration: Snackbar.LENGTH_SHORT,
                   backgroundColor:'red',
               });
           });
   } catch (error) {
       console.error(`Error changing trust:`, error);
+      settradeTrust(false);
       setloading_trust_modal(false)
       Snackbar.show({
           text: 'USDC failed to be added',
@@ -704,6 +720,7 @@ const handleCloseModal = () => {
 
   useEffect(() => {
     if (Balance === "0.0000000" || parseFloat(Balance)===0) {
+      setassetInfo(true)
       setinfomessage("Insufficient Balance"),
       setinfotype("warning"),
       setinfoVisible(true)
@@ -921,12 +938,12 @@ const handleCloseModal = () => {
                 size={60}
                 color={"orange"}
                 />
-              <Text style={styles.AccounheadingContainer}>Trust USDT by Center.io ?</Text>
+              <Text style={styles.AccounheadingContainer}>Trust {tradeTrust?top_value_0:top_value} by {tradeTrust?top_domain_0:top_domain} ?</Text>
               <View style={{ flexDirection: "row",justifyContent:"space-around",width:wp(80),marginTop:hp(3),alignItems:"center" }}>
                 <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={() => {setshow_trust_modal(false),navigation.goBack()}}>
                    <Text style={styles.Accounbtntext}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={()=>{change_Trust_New()}}>
+                <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={()=>{change_Trust_New(tradeTrust?top_value_0:top_value)}}>
                    <Text style={styles.Accounbtntext}>{loading_trust_modal?<ActivityIndicator color={"green"}/>:"Trust"}</Text>
                 </TouchableOpacity>
               </View>

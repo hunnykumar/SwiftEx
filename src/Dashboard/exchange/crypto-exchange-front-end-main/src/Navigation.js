@@ -12,7 +12,6 @@ import {
 import { Text } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { OfferView } from "./pages/offers";
-import { TransactionsListView } from "./pages/transaction";
 import { AccountView } from "./pages/account";
 import { TransactionView } from "./pages/transaction";
 import { ExchangeHeader, ExchangeHeaderIcon } from "../../../header";
