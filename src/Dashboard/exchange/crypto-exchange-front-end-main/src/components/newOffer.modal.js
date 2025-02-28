@@ -751,7 +751,8 @@ const handleCloseModal = () => {
        {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={"#011434"}/>}
       <Exchange_screen_header title="Trade" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : null}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         style={{ flex: 1, backgroundColor: "#011434", }}
       >
         <ScrollView contentContainerStyle={styles.scrollView}>
@@ -849,6 +850,8 @@ const handleCloseModal = () => {
               keyboardType="numeric"
                 returnKeyType="done"
                 value={offer_amount}
+                contextMenuHidden={true}
+                disableFullscreenUI={true}
                 placeholder={SelectedBaseValue==="native"?"Amount of XLM":"Amount of "+SelectedBaseValue}
                 placeholderTextColor={"gray"}
                 onChangeText={(text) => {
@@ -886,6 +889,8 @@ const handleCloseModal = () => {
                 returnKeyType="done"
                 keyboardType="numeric"
                 value={offer_price}
+                contextMenuHidden={true}
+                disableFullscreenUI={true}
                 placeholder={"Price of " + route.toLocaleLowerCase()}
                 placeholderTextColor={"gray"}
                 onChangeText={(text) => {

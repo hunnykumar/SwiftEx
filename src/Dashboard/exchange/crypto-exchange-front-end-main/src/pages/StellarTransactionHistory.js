@@ -11,6 +11,7 @@ import {
 import StellarSdk from 'stellar-sdk';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { STELLAR_URL } from '../../../../constants';
+import { useNavigation } from '@react-navigation/native';
 
 const server = new StellarSdk.Server(STELLAR_URL.URL);
 
@@ -33,7 +34,7 @@ const getThemeColors = (isDarkMode) => ({
 function formatDate(dateString) {
   const date = new Date(dateString);
   const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+  const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
@@ -41,38 +42,40 @@ function formatDate(dateString) {
 }
 
 const getTransactionType = (operation) => {
+  if (operation.type === 'payment') {
+      return operation.asset_code || operation.asset_type;
+  }
+
   switch (operation.type) {
-    case 'payment':
-      return 'Payment';
-    case 'createAccount':
-      return 'Account Created';
-    case 'changeTrust':
-      return 'Trust Line';
-    case 'manage_sell_offer':
-      return `Sell offer`;
-    case 'manage_buy_offer':
-      return `Buy offer`;
-    case 'change_trust':
-      return `Change trust`;
-    case 'create_account':
-      return `Create account`;
-    case 'pathPaymentStrictSend':
-      return `Path Payment (Send ${operation.source_asset_code || 'XLM'})`;
-    case 'setOptions':
-      return 'Settings Update';
-    default:
-      return operation.type.replace(/([A-Z])/g, ' $1').trim();
+      case 'create_account':
+          return 'Account Created';
+      case 'change_trust':
+      case 'change_trust':
+          return 'Trust Line';
+      case 'manage_sell_offer':
+          return 'Sell Offer';
+      case 'manage_buy_offer':
+          return 'Buy Offer';
+      case 'create_account':
+          return 'Create Account';
+      case 'pathPaymentStrictSend':
+          return `Path Payment (Send ${operation.source_asset_code || 'XLM'})`;
+      case 'setOptions':
+          return 'Settings Update';
+      default:
+          return operation.type.replace(/([A-Z])/g, ' $1').trim();
   }
 };
+
 
 
 const getTransactionIcon = (type) => {
   switch (type) {
     case 'payment':
       return 'cash-multiple';
-    case 'createAccount':
+    case 'create_account':
       return 'account-plus';
-    case 'changeTrust':
+    case 'change_trust':
       return 'shield-check';
     case 'manageSellOffer':
       return 'trending-down';
@@ -128,39 +131,52 @@ const TabBar = ({ selectedTab, onTabPress, isDarkMode }) => {
 };
 
 const TransactionCard = ({ item, userPublicKey, isDarkMode }) => {
+  const navigation=useNavigation();
   const colors = getThemeColors(isDarkMode);
   const operation = item.operations.records[0];
-  const isReceived = operation?.to === userPublicKey;
-  const transactionType = getTransactionType(operation);
-  
-  let iconName = getTransactionIcon(operation.type);
-  let amountText = item.amount;
 
-  if (operation.type === 'manageSellOffer') {
-    amountText = `${operation.amount} ${operation.selling.asset_code || 'XLM'}`;
-  } else if (operation.type === 'manageBuyOffer') {
-    amountText = `${operation.amount} ${operation.buying.asset_code || 'XLM'}`;
+ 
+  const isReceived = 
+    operation?.to === userPublicKey ||
+    operation.type === 'create_account'||operation.type === 'change_trust';
+
+ 
+  const transactionType =
+    operation.type === 'payment' 
+      ? operation.asset_type === 'native' 
+        ? 'XLM'
+        : operation.asset_code || operation.asset_type
+      : getTransactionType(operation);
+
+ 
+  let iconName = getTransactionIcon(operation.type);
+
+ 
+  let amountText = '0';
+  if (operation.type === 'payment') {
+    amountText = operation.amount;
+  } else if (operation.type === 'create_account') {
+    amountText = operation.starting_balance;
+  } else if (operation.type === 'manageSellOffer' || operation.type === 'manageBuyOffer') {
+    amountText = operation.amount;
   }
-  
+
   return (
     <TouchableOpacity 
       style={[
         styles.transactionCard,
-        { 
-          backgroundColor: colors.cardBackground,
-          shadowColor: colors.shadow,
-        }
+        { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }
       ]}
+      onPress={()=>{navigation.navigate('StellarTransactionViewer',{transactionPath: item?.operations?.records[0]?.transaction_hash})}}
     >
       <View style={[styles.iconContainer, { backgroundColor: colors.iconBackground }]}>
         <Icon
           name={iconName}
           size={24}
           color={isReceived ? colors.received : colors.sent}
-          style={[styles.directionIcon, { backgroundColor: colors.cardBackground }]}
         />
       </View>
-      
+
       <View style={styles.contentContainer}>
         <View style={styles.transactionHeader}>
           <Text style={[styles.date, { color: colors.secondaryText }]}>
@@ -180,28 +196,15 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode }) => {
           <Text style={[styles.type, { color: colors.primaryText }]}>
             {transactionType}
           </Text>
-          {(operation.type === 'manageSellOffer' || operation.type === 'manageBuyOffer') && (
-            <Text style={[styles.memo, { color: colors.secondaryText }]}>
-              Trade Pair: {operation.selling.asset_code || 'XLM'} / {operation.buying.asset_code || 'XLM'}
-            </Text>
-          )}
-
           <Text style={[
             styles.amount,
             { color: isReceived ? colors.received : colors.sent }
           ]}>
-            {isReceived ? '+' : '-'}{amountText}
+            {isReceived ? '' : '-'}{amountText}
           </Text>
         </View>
-        
-        {(operation.type === 'manageSellOffer' || operation.type === 'manageBuyOffer') && (
-          <Text style={[styles.exchangeRate, { color: colors.secondaryText }]}>
-            Rate: 1 {operation.selling.asset_code || 'XLM'} = {
-              (parseFloat(operation.price) || 0).toFixed(7)
-            } {operation.buying.asset_code || 'XLM'}
-          </Text>
-        )}
-        
+
+        {/* Memo (if exists) */}
         {item.memo && item.memo !== 'No memo' && (
           <Text style={[styles.memo, { color: colors.secondaryText }]} numberOfLines={1}>
             Memo: {item.memo}
@@ -221,46 +224,52 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
 
   const fetchTransactions = async () => {
     try {
-      const transactionsData = await server
-      .transactions()
-      .forAccount(publicKey)
-      .order('desc')
-      .limit(200)
-      .call();
-      
-      const processedTransactions = await Promise.all(
-        transactionsData.records.map(async (tx) => {
-          const operations = await tx.operations();
-          const firstOp = operations.records[0];
-          let amount = '0';
-          
-          if (firstOp.type === 'payment') {
-            amount = firstOp.amount;
-          } else if (firstOp.type === 'createAccount') {
-            amount = firstOp.startingBalance;
-          } else if (firstOp.type === 'manageSellOffer' || firstOp.type === 'manageBuyOffer') {
-            amount = firstOp.amount;
-          }
+        const transactionsData = await server
+            .transactions()
+            .forAccount(publicKey)
+            .order('desc')
+            .limit(200)
+            .call();
 
-          return {
-            id: tx.id,
-            date: formatDate(tx.created_at),
-            amount: amount,
-            success: tx.successful,
-            memo: tx.memo || 'No memo',
-            operations: operations,
-          };
-        })
-      );
+        const processedTransactions = await Promise.all(
+            transactionsData.records.map(async (tx) => {
+                const operations = await tx.operations();
+                const firstOp = operations.records[0];
+                let amount = '0';
+                let isReceived = false;
 
-      setTransactions(processedTransactions);
+                if (firstOp.type === 'payment') {
+                    amount = firstOp.amount;
+                    isReceived = firstOp.to === publicKey;
+                } else if (firstOp.type === 'create_account') {
+                    amount = firstOp.starting_balance;
+                    isReceived = true; 
+                } else if (['change_trust', 'change_trust', 'create_account'].includes(firstOp.type)) {
+                    isReceived = true;
+                } else if (firstOp.type === 'manageSellOffer' || firstOp.type === 'manageBuyOffer') {
+                    amount = firstOp.amount;
+                }
+
+                return {
+                    id: tx.id,
+                    date: formatDate(tx.created_at),
+                    amount: amount,
+                    success: tx.successful,
+                    memo: tx.memo || 'No memo',
+                    operations: operations,
+                    isReceived: isReceived,
+                };
+            })
+        );
+
+        setTransactions(processedTransactions);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+        console.error('Error fetching transactions:', error);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+        setLoading(false);
+        setRefreshing(false);
     }
-  };
+};
 
   useEffect(() => {
     fetchTransactions();
@@ -286,40 +295,40 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
               isDarkMode={isDarkMode}
           />
 
-          <FlatList
-              data={transactions.filter(tx => {
-                  if (selectedTab === 'all') return true;
-                  const isReceived = tx.operations.records[0]?.to === publicKey;
-                  return selectedTab === 'received' ? isReceived : !isReceived;
-              })}
-              renderItem={({ item }) => (
-                  <TransactionCard
-                      item={item}
-                      userPublicKey={publicKey}
-                      isDarkMode={isDarkMode}
-                  />
-              )}
-              keyExtractor={item => item.id}
-              refreshControl={
-                  <RefreshControl
-                      refreshing={refreshing}
-                      onRefresh={onRefresh}
-                      tintColor={colors.accent}
-                  />
-              }
-              contentContainerStyle={[
-                  styles.listContent,
-                  transactions.length === 0 && { flex: 1, justifyContent: 'center', alignItems: 'center' }
-              ]}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={
-                  <View style={styles.emptyContainer}>
-                      <Icon name="history" size={60} color={"#fff"} />
-                      <Text style={styles.emptyText}>No transactions found</Text>
-                      <Text style={styles.emptySubText}>Your transactions will appear here.</Text>
-                  </View>
-              }
-          />
+<FlatList
+    data={transactions.filter(tx => {
+        if (selectedTab === 'all') return true;
+        return selectedTab === 'received' ? tx.isReceived : !tx.isReceived;
+    })}
+    renderItem={({ item }) => (
+        <TransactionCard
+            item={item}
+            userPublicKey={publicKey}
+            isDarkMode={isDarkMode}
+        />
+    )}
+    keyExtractor={item => item.id}
+    refreshControl={
+        <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.accent}
+        />
+    }
+    contentContainerStyle={[
+      styles.listContent,
+      transactions.length === 0 && { flex: 1, justifyContent: 'center', alignItems: 'center' }
+  ]}
+  showsVerticalScrollIndicator={false}
+  ListEmptyComponent={
+      <View style={styles.emptyContainer}>
+          <Icon name="history" size={60} color={"#fff"} />
+          <Text style={styles.emptyText}>No transactions found</Text>
+          <Text style={styles.emptySubText}>Your transactions will appear here.</Text>
+      </View>
+  }
+/>
+
 
       </View>
   );

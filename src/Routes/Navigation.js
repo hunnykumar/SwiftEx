@@ -80,6 +80,7 @@ import EthSwap from "../ethSwap/EthSwap";
 import BnbSwap from "../ethSwap/BnbSwap";
 import KycComponent from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/KycComponent";
 import TokenSend from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/TokenSend";
+import StellarTransactionViewer from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/StellarTransactionViewer";
 
 const Stack = createNativeStackNavigator();
 
@@ -538,7 +539,19 @@ const AuthStack = () => (
             fontWeight: "bold",
           },
         }}
-      />    
+      />
+      <Stack.Screen
+        name="StellarTransactionViewer"
+        component={StellarTransactionViewer}
+        options={{
+          headerShown: false,
+          headerStyle: { backgroundColor: "#4CA6EA" },
+          headerTintColor: "white",
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+        }}
+      />        
       <Stack.Screen
         name="send_recive"
         component={send_recive}
