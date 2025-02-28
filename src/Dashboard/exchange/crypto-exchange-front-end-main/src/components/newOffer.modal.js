@@ -74,6 +74,7 @@ export const NewOfferModal = () => {
   const [open_offer, setopen_offer] = useState(false);
   const [show_trust_modal,setshow_trust_modal]=useState(false);
   const [tradeTrust,settradeTrust]=useState(false);
+  const [usdcBidgeTrust,setusdcBidgeTrust]=useState(false);
   const [loading_trust_modal,setloading_trust_modal]=useState(false);
   const [u_email,setemail]=useState('');
   const [titel,settitel]=useState("UPDATING..");
@@ -430,7 +431,19 @@ const chooseRenderItem_1 = ({ item }) => (
     }
 };
 
-
+  const proceedToBridgeValidation=async()=>{
+    const hasAsset = ALL_STELLER_BALANCES.some(
+      (balance) => balance.asset_code === "USDC" || balance.asset_type === "USDC"
+    );
+    if (!hasAsset) {
+      setusdcBidgeTrust(true)
+      setLoading(false)
+      setshow_trust_modal(true);
+    }
+    else{
+      navigation.navigate("classic",{Asset_type:"ETH"})
+    }
+  }
   const offer_creation = () => {
     const hasAsset = ALL_STELLER_BALANCES.some(
       (balance) => balance.asset_code === selectedValue || balance.asset_type === selectedValue
@@ -588,6 +601,8 @@ const chooseRenderItem_1 = ({ item }) => (
 
   },[isFocused])
   useEffect(() => {
+    setusdcBidgeTrust(false)
+    settradeTrust(false)
     setALL_STELLER_BALANCES(state.assetData)
     getAccountDetails();
     setinfo_(false);
@@ -687,6 +702,7 @@ const change_Trust_New = async (assetName) => {
                   payload: account.balances,
                 })
                 settradeTrust(false);
+                setusdcBidgeTrust(false);
                 setloading_trust_modal(false)
                 setshow_trust_modal(false)
               });
@@ -695,6 +711,7 @@ const change_Trust_New = async (assetName) => {
           .catch(error => {
               console.log('Error loading account:', error);
               settradeTrust(false);
+              setusdcBidgeTrust(false);
               setloading_trust_modal(false)
               Snackbar.show({
                   text: 'Trustline failed to updated',
@@ -705,6 +722,7 @@ const change_Trust_New = async (assetName) => {
   } catch (error) {
       console.error(`Error changing trust:`, error);
       settradeTrust(false);
+      setusdcBidgeTrust(false);
       setloading_trust_modal(false)
       Snackbar.show({
           text: 'Trustline failed to updated',
@@ -760,7 +778,7 @@ const handleCloseModal = () => {
         {assetInfo&&
            <View style={styles.informationContiner}>
            <Text style={styles.amountSugCon.amountSugCardText}>Click 'Import' to add token.</Text>
-           <TouchableOpacity style={styles.amountSugCon.amountSugCard} onPress={()=>{navigation.navigate("classic",{Asset_type:"ETH"})}}>
+           <TouchableOpacity style={styles.amountSugCon.amountSugCard} onPress={()=>{proceedToBridgeValidation()}}>
            <Text style={styles.amountSugCon.amountSugCardText}>Import</Text>
            </TouchableOpacity>
          </View>
@@ -938,12 +956,12 @@ const handleCloseModal = () => {
                 size={60}
                 color={"orange"}
                 />
-              <Text style={styles.AccounheadingContainer}>Trust {tradeTrust?top_value_0:top_value} by {tradeTrust?top_domain_0:top_domain} ?</Text>
+              <Text style={styles.AccounheadingContainer}>Trust {usdcBidgeTrust?"USDC":tradeTrust?top_value_0:top_value} by {usdcBidgeTrust?"centre.io":tradeTrust?top_domain_0:top_domain} ?</Text>
               <View style={{ flexDirection: "row",justifyContent:"space-around",width:wp(80),marginTop:hp(3),alignItems:"center" }}>
                 <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={() => {setshow_trust_modal(false),navigation.goBack()}}>
                    <Text style={styles.Accounbtntext}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={()=>{change_Trust_New(tradeTrust?top_value_0:top_value)}}>
+                <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={()=>{change_Trust_New(usdcBidgeTrust?"USDC":tradeTrust?top_value_0:top_value)}}>
                    <Text style={styles.Accounbtntext}>{loading_trust_modal?<ActivityIndicator color={"green"}/>:"Trust"}</Text>
                 </TouchableOpacity>
               </View>

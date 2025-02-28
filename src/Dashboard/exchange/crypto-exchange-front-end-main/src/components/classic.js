@@ -82,11 +82,33 @@ const [open, setOpen] = useState(false);
 
       setWALLETBALANCE(ethers.utils.formatUnits(balance, 6));
       setbalanceLoading(false)
+      BridgeUSDCValidation()
     } catch (error) {
       setWALLETBALANCE(0.00);
       setbalanceLoading(false)
+      BridgeUSDCValidation()
       console.log("Error fetching balance:", error);
     }
+  }
+  function isAssetData(state) {
+    return state?.assetData !== undefined && state?.assetData !== null;
+}
+  const BridgeUSDCValidation=async()=>{
+    const avlRes=isAssetData(state?.assetData);
+    if(!avlRes)
+    {
+      const ALL_STELLER_BALANCES=state?.assetData;
+      const hasAsset = ALL_STELLER_BALANCES.some(
+        (balance) => balance.asset_code === "USDC" || balance.asset_type === "USDC"
+      );
+      if (!hasAsset) {
+        setnot_avilable(true);
+      }
+      else{
+        setnot_avilable(false);
+      }
+    }
+    
   }
 
 useEffect(()=>{
@@ -294,8 +316,8 @@ const getOffersData = async () => {
 
             <TouchableOpacity
               // disabled={chooseSelectedItemIdCho === null||chooseSelectedItemId === null} 
-              style={[styles.nextButton, { backgroundColor: !amount?"gray":'#2F7DFF',height:hp(6),marginTop:hp(5) }]}
-            disabled={!amount||fianl_modal_loading} onPress={() => { Keyboard.dismiss(),manage_swap() }}
+              style={[styles.nextButton, { backgroundColor: !amount||balanceLoading?"gray":'#2F7DFF',height:hp(6),marginTop:hp(5) }]}
+            disabled={!amount||fianl_modal_loading||balanceLoading} onPress={() => { Keyboard.dismiss(),manage_swap() }}
             >
               {fianl_modal_loading?<ActivityIndicator color={"white"}/>:<Text style={styles.nextButtonText}>Confirm Transaction</Text>}
             </TouchableOpacity>
@@ -515,7 +537,7 @@ const getOffersData = async () => {
         animationType="fade"
         transparent={true}
         visible={not_avilable}>
-        <View style={styles.modalContainer} onPress={() => { setfianl_modal_error(false) }}>
+        <View style={styles.modalContainer}>
           <View style={{
             backgroundColor: 'rgba(33, 43, 83, 1)',
             padding: 10,
@@ -533,11 +555,20 @@ const getOffersData = async () => {
               size={60}
               color={"orange"}
             />
-            <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: hp(2.5), color: "#fff",textAlign:"center" }}>This feature is currently not available in the development environment.</Text>
-            <TouchableOpacity style={{ alignSelf: "center", marginTop:hp(2.5),backgroundColor:"green",alignContent:"center",justifyContent:"center",paddingHorizontal:wp(10),paddingVertical:hp(2),borderRadius:10,borderColor:"#4CA6EA",
-            borderWidth:2 }} onPress={() => { setnot_avilable(false) }}>
-            <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff",textAlign:"center" }}>OK</Text>
+            <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: hp(2.5), color: "#fff",textAlign:"center" }}>To use this feature, you must trust USDC. Please trust USDC first to ensure a smooth and uninterrupted experience.</Text>
+            <View style={{ flexDirection: "row",justifyContent:"space-around",width:"83%" }}>
+              <TouchableOpacity style={{
+                alignSelf: "center", marginTop: hp(2.5), backgroundColor: "gray", alignContent: "center", justifyContent: "center", width: "40%", paddingVertical: hp(1), borderRadius: 10, borderColor: "#4CA6EA",
+                borderWidth: 2
+              }} onPress={() => {setnot_avilable(false),navigation.goBack()}}>
+                <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff", textAlign: "center" }}>Maybe Later</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={{ alignSelf: "center", marginTop:hp(2.5),backgroundColor:"green",alignContent:"center",justifyContent:"center",width:"40%",paddingVertical:hp(1),borderRadius:10,borderColor:"#4CA6EA",
+            borderWidth:2 }} onPress={() => {navigation.navigate("Assets_manage",{openAssetModal:true})}}>
+            <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff",textAlign:"center" }}>Trust Now</Text>
             </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

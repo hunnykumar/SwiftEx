@@ -21,7 +21,7 @@ import { SET_ASSET_DATA } from "../../../../../../components/Redux/actions/type"
 import { STELLAR_URL } from "../../../../../constants";
 import { Exchange_screen_header } from "../../../../../reusables/ExchangeHeader";
 const StellarSdk = require('stellar-sdk');
-const Assets_manage = () => {
+const Assets_manage = ({route}) => {
     const FOCUSED = useIsFocused();
     const navigation = useNavigation();
     const dispatch_ = useDispatch()
@@ -152,6 +152,7 @@ const Assets_manage = () => {
     }
 
     useEffect(() => {
+        setTRUST_ASSET(route?.params?.openAssetModal || false);
         setLoading_assets_bal(false)
         get_stellar()
     }, [FOCUSED])
