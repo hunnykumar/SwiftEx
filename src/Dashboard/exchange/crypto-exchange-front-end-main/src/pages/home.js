@@ -661,7 +661,7 @@ useEffect(() => {
   return (
     <>
            {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={"#011434"}/>}
-    <Exchange_screen_header title="Home" onLeftIconPress={() => navigation.navigate("Home")} onRightIconPress={() => console.log('Pressed')} />
+    <Exchange_screen_header title="Trade Wallet" onLeftIconPress={() => navigation.navigate("Home")} onRightIconPress={() => console.log('Pressed')} />
 
     <ScrollView
     style={{ backgroundColor: "#011434"}}

@@ -389,7 +389,7 @@ import TokenQrCode from './Modals/TokensQrCode';
                       <CustomIconWithCircle
                         name={"qr-code-outline"}
                         type={"ionicon"}
-                        onPress={() => {setQrValue(item?.address),setQrName(item?.name),setQrVisible(true)}}
+                        onPress={() => {setQrValue(state?.wallet?.address),setQrName(item?.name),setQrVisible(true)}}
                         bgColor={state.THEME.THEME===false?"#F4F4F4":"#23262F99"}
                         width={43}
                         height={43}

@@ -527,11 +527,11 @@ function InvestmentChart(setCurrentWallet) {
       {/* coin chart */}
       <ResponsiveLineChart width={80} height={70} symbol={item.symbole} />
       {/* coin actions */}
-      <View style={{
+      {item?.id!==4?<View style={{
         alignItems:"center",
         paddingRight: 5,
         }}>
-        <TouchableOpacity disabled={item.id===4} style={[styles.actionBuyBtn,{backgroundColor:"#23262F",margin:2}]} onPress={()=>{state?.STELLAR_ADDRESS_STATUS===false?navigation.navigate("exchange"):navigation.navigate("newOffer_modal")}}>
+        <TouchableOpacity disabled={item.id===4} style={[styles.actionBuyBtn,{backgroundColor:"#23262F",margin:2}]} onPress={()=>{state?.STELLAR_ADDRESS_STATUS===false?navigation.navigate("exchange"):navigation.navigate("newOffer_modal",item?.id===1&&{tradeAssetType:item?.symbole})}}>
           <Text style={styles.actionRowBtnText}>Trade</Text>
         </TouchableOpacity>
 
@@ -539,7 +539,8 @@ function InvestmentChart(setCurrentWallet) {
         <TouchableOpacity disabled={item.id===4} style={styles.actionBuyBtn} onPress={()=>{navigation.navigate("payout")}}>
           <Text style={styles.actionRowBtnText}>Buy</Text>
         </TouchableOpacity>
-      </View>
+      </View>:<View style={{ width: 105,}}>
+      </View>}
     </TouchableOpacity>
   )
 }
@@ -774,7 +775,6 @@ const styles = StyleSheet.create({
   },
   TokenInfo: {
     position: "absolute",
-    top: 1,
     backgroundColor: "orange",
     paddingVertical: 5,
     paddingHorizontal: 15,

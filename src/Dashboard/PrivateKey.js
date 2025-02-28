@@ -89,8 +89,7 @@ const PrivateKey = (props) => {
   };
   const handleUsernameChange = (text) => {
     // Remove whitespace from the username
-    const formattedUsername = text.replace(/\s/g, '')
-    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
+    const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
     setAccountName(formattedUsername);
   };
   return (

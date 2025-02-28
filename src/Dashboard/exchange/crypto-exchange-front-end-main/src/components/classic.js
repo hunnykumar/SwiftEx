@@ -196,7 +196,7 @@ const getOffersData = async () => {
       const tx = await usdtContract.transfer(OneTapContractAddress.Address, valueInUSDT);
       console.log("Transaction Sent", `Tx Hash: ${tx.hash}`);
   
-      setfianl_modal_text("Transaction Success");
+      setfianl_modal_text("Transaction Successful");
       await tx.wait();
       setfianl_modal_loading(false);
       setfianl_modal_error(true);
@@ -277,7 +277,7 @@ const getOffersData = async () => {
           <View style={{ flexDirection: "row", justifyContent: "space-between" ,marginTop:hp(2),paddingHorizontal:wp(4)}}>
             <View style={{ width: wp(40), alignSelf: "center" }}>
             <Text style={[styles.textModal, { fontSize: 18 }]}>Amount</Text>
-              <TextInput placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" style={[styles.modalOpen, { padding:10, width: wp(40),fontSize:18,color:"#fff" }]} onChangeText={(value) => { setamount(value) }} returnKeyType="done"/>
+              <TextInput maxLength={2} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" style={[styles.modalOpen, { padding:10, width: wp(40),fontSize:18,color:"#fff" }]} onChangeText={(value) => { setamount(value) }} returnKeyType="done"/>
             </View>
             <View style={{ width: wp(40), alignSelf: "center" }}>
               <Text style={[styles.textModal, { fontSize: 18 }]}>Receive</Text>
@@ -435,24 +435,16 @@ const getOffersData = async () => {
         transparent={true}
         visible={fianl_modal_error}>
           
-        <TouchableOpacity style={styles.modalContainer} onPress={()=>{setfianl_modal_error(false)}}>
+        <View style={styles.modalContainer}>
           <View style={{
             backgroundColor: 'rgba(33, 43, 83, 1)',
             padding: 20,
             borderRadius: 10,
             alignItems: 'center',
             width: "90%",
-            height: "25%",
-            justifyContent: "center"
+            height: "30%",
           }}>
-             <TouchableOpacity style={{alignSelf:"flex-end",marginTop:-50,marginRight:-13}} onPress={()=>{setfianl_modal_error(false)}}>
-          <Icon
-              name={"close-circle-outline"}
-              type={"materialCommunity"}
-              size={35}
-              color={"orange"}
-            />
-          </TouchableOpacity>
+            
             <Icon
               name={fianl_modal_text==="Transaction Faild"?"alert-circle-outline":"check-circle-outline"}
               type={"materialCommunity"}
@@ -460,9 +452,12 @@ const getOffersData = async () => {
               color={fianl_modal_text==="Transaction Faild"?"red":"green"}
               style={{marginTop:19}}
             />
-            <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 10, color: "#fff" }}>{fianl_modal_text}</Text>
+            <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical: 19, color: "#fff" }}>{fianl_modal_text}</Text>
+            <TouchableOpacity style={styles.alertBtn} onPress={()=>{fianl_modal_text==="Transaction Faild"?setfianl_modal_error(false):[setfianl_modal_error(false),navigation.navigate("Assets_manage")]}}>
+              <Text style={styles.alertBtnText}>Ok</Text>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
 
 
@@ -805,6 +800,21 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "gray",
     marginStart: 5
+  },
+  alertBtn: {
+    width: "90%",
+    height: 40,
+    borderRadius: 80,
+    marginTop:19,
+    backgroundColor:"#2164C1",
+    alignItems:"center",
+    justifyContent:"center"
+  },
+  alertBtnText:{
+      textAlign:"center",
+      fontSize:19,
+      fontWeight:"400",
+      color:"#fff"
   }
 });
 export default classic;

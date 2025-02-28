@@ -54,7 +54,7 @@ export const NewOfferModal = () => {
   const toast=useToast();
   const dispatch_=useDispatch();
   const [chooseSearchQuery, setChooseSearchQuery] = useState('');
-  // const back_data=useRoute();
+  const back_data=useRoute();
   // const { user, open, getOffersData, onCrossPress }=back_data.params;
   const isFocused = useIsFocused();
   const state = useSelector((state) => state);
@@ -566,14 +566,14 @@ const chooseRenderItem_1 = ({ item }) => (
       try {
         setreservedError(false)
         setassetInfo(false)
-        settop_value(chooseItemList[0].visible_0)
+        settop_value(back_data?.params?.tradeAssetType || chooseItemList[0].visible_0);
         settop_value_0(chooseItemList[0].visible_1)
         setloading_trust_modal(false)
         setALL_STELLER_BALANCES(state?.assetData)
         setshow_trust_modal(false);
         setactiv(false)
         setshow_bal(true)
-        await get_stellar("native")
+        await get_stellar(back_data?.params?.tradeAssetType || "native")
       } catch (error) {
         console.log("=-====#", error)
       }
@@ -596,7 +596,7 @@ const chooseRenderItem_1 = ({ item }) => (
     get_stellar(SelectedBaseValue)
     getAssetIssuerId(selectedValue)
     // eth_services()
-  }, [show_bal,selectedValue, route,isFocused])
+  }, [show_bal,selectedValue, route,isFocused,loading_trust_modal])
 
  useEffect(()=>{
    setTimeout(()=>{
@@ -680,17 +680,17 @@ const change_Trust_New = async (assetName) => {
       });
       server.loadAccount(state.STELLAR_PUBLICK_KEY)
           .then(account => {
-              console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);
+              console.log('Balances for account:', account.balances);
               account.balances.forEach(balance => {
+                dispatch_({
+                  type: SET_ASSET_DATA,
+                  payload: account.balances,
+                })
                 settradeTrust(false);
                 setloading_trust_modal(false)
                 setshow_trust_modal(false)
-                  dispatch_({
-                      type: SET_ASSET_DATA,
-                      payload: account.balances,
-                    })
               });
-              navigation.goBack()
+              // navigation.goBack()
           })
           .catch(error => {
               console.log('Error loading account:', error);
@@ -707,7 +707,7 @@ const change_Trust_New = async (assetName) => {
       settradeTrust(false);
       setloading_trust_modal(false)
       Snackbar.show({
-          text: 'USDC failed to be added',
+          text: 'Trustline failed to updated',
           duration: Snackbar.LENGTH_SHORT,
           backgroundColor:'red',
       });
@@ -827,7 +827,7 @@ const handleCloseModal = () => {
         </View>
         <View style={styles.amountInputCon}>
           <TextInput  
-          style={{color:"#fff",fontSize:16}}
+          style={{color:"#fff",fontSize:16,width:"100%",height:"100%"}}
               keyboardType="numeric"
                 returnKeyType="done"
                 value={offer_amount}
@@ -864,7 +864,7 @@ const handleCloseModal = () => {
         <View style={styles.amountInputCon}>
 
           <TextInput 
-                style={{color:"#fff",fontSize:16}}
+                style={{color:"#fff",fontSize:16,width:"100%",height:"100%"}}
                 returnKeyType="done"
                 keyboardType="numeric"
                 value={offer_price}

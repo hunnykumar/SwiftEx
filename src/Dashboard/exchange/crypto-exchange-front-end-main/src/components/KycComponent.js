@@ -30,6 +30,7 @@ const KycComponent = ({ route }) => {
 
     const visibleClose = () => {
       setVisibleAlert(false);
+      navigation.navigate("exchangeLogin")
     };
 
     // Calculate dynamic widths based on screen size
@@ -62,9 +63,9 @@ const KycComponent = ({ route }) => {
           >
             {visibleAlert && (
               <InfoCustomAlert 
-                heading="Complete Your KYC"
-                subHeading="Please complete your KYC process to process to proceed. Click the button below to start your KYC verification now"
-                btnText="Complete KYC Now"
+                heading="Oops! You're in Guest Mode"
+                subHeading="Looks like you're in Guest Mode. Log in to unlock this feature and enjoy the full experience!"
+                btnText="Login"
                 onclose={visibleClose}
               />
             )}

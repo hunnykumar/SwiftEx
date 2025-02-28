@@ -25,10 +25,8 @@ const Payout = () => {
   const state = useSelector((state) => state);
   const Assets = [
     { name: "USDC",by:"centre.io", address: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",dis_ass:"GA5...KZVN",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" },
-    { name: "EURC",by:" circle.com", address: "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2", dis_ass:"GDH...NPP2",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420"},
-    { name: "CLPX",by:"clpx", address: "GDYSPBVZHPQTYMGSYNOHRZQNLB3ZWFVQ2F7EP7YBOLRGD42XIC3QUX5G",dis_ass:"GDY...UX5G",img:"../../../../../../assets/CLPX.png" },
-    { name: "RWF",by:"clickpesa", address: "GA2MSSZKJOU6RNL3EJKH3S5TB5CDYTFQFWRYFGUJVIN5I6AOIRTLUHTO",dis_ass:"GA2...UHTO",img:"../../../../../../assets/CLICKPESA.png" },
-    { name: "KES",by:"clickpesa", address: "GA2MSSZKJOU6RNL3EJKH3S5TB5CDYTFQFWRYFGUJVIN5I6AOIRTLUHTO",dis_ass:"GA2...UHTO",img:"../../../../../../assets/CLICKPESA.png" },
+    { name: "ETH",by:"ultracapital.xyz", address: "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2", dis_ass:"GDH...NPP2",img:"https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png"},
+    { name: "BTC",by:"ultracapital.xyz", address: "GDYSPBVZHPQTYMGSYNOHRZQNLB3ZWFVQ2F7EP7YBOLRGD42XIC3QUX5G",dis_ass:"GDY...UX5G",img:"https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png" }
   ];
   const Anchors=[
     // {name:"SwiftEx",by:"centre.io", address: state.wallet.address,image: require('../../../../../../assets/darkBlue.png'), seps: ["SEP 6", "SEP 12", "SEP 24"]},
@@ -234,16 +232,13 @@ const Payout = () => {
               return (
                 <TouchableOpacity style={[styles.card, {marginTop:5,width: wp("90%"), justifyContent: "flex-start", borderColor: higlight === index ? "green" : "#011434", flexDirection: "row", alignItems: "center", }]} key={index} onPress={() => { sethiglight(index) }}>
                   <Image
-                    source={list.by === "clpx" ? bnb : list.by === "clickpesa" ? xrp : { uri: list.img }}
+                    source={{ uri: list.img }}
                     style={styles.image_asset}
                     resizeMode="cover"
                   />
                   <View style={{ flexDirection: "column", marginLeft: 9,marginTop:3 }}>
                     <Text style={[styles.card_text,{textAlign:"left"}]}>{list.name}</Text>
-                    {/* <Text style={[{textAlign:"left",fontSize:10,color:"#fff"}]}>Issued by</Text> */}
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(24),borderColor:"#485DCA",paddingVertical:0}}>
-                    <Text style={[styles.card_text,{textAlign:"left",fontSize:16}]}>{list.dis_ass}</Text>
-                    </ScrollView>
+                    <Text style={[styles.card_text,{textAlign:"left",fontSize:16}]}>{list.by}</Text>
                   </View>
                 </TouchableOpacity>
               )
@@ -272,16 +267,13 @@ const Payout = () => {
         filteredAssets.map((list, index) => (
           <TouchableOpacity style={[styles.card, { marginTop:5,width: wp("90%"),justifyContent: "flex-start",borderColor:higlight===index?"green":"#011434",flexDirection:"row",alignItems:"center" }]} key={index} onPress={()=>{sethiglight(index)}}>
           <Image
-                    source={list.by === "clpx" ? bnb : list.by === "clickpesa" ? xrp : { uri: list.img }}
+                    source={{ uri: list.img }}
                   style={styles.image_asset}
                   resizeMode="cover"
                 />
                              <View style={{ flexDirection: "column", marginLeft: 9,marginTop:3 }}>
                     <Text style={[styles.card_text,{textAlign:"left"}]}>{list.name}</Text>
-                    {/* <Text style={[{textAlign:"left",fontSize:10,color:"#fff"}]}>Issued by</Text> */}
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(24),borderColor:"#485DCA",paddingVertical:0}}>
-                    <Text style={[styles.card_text,{textAlign:"left",fontSize:16}]}>{list.dis_ass}</Text>
-                    </ScrollView>
+                    <Text style={[styles.card_text,{textAlign:"left",fontSize:16}]}>{list.by}</Text>
                   </View>
                           </TouchableOpacity>
         ))
@@ -811,7 +803,8 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: "#011434",
     flexDirection: "column",
-    paddingVertical: 3
+    paddingVertical: 3,
+    paddingVertical:'3%'
   },
   card_text: {
     fontSize: 19,
