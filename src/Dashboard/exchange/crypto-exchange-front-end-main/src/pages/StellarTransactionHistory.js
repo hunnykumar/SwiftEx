@@ -157,7 +157,7 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode }) => {
     amountText = operation.amount;
   } else if (operation.type === 'create_account') {
     amountText = operation.starting_balance;
-  } else if (operation.type === 'manageSellOffer' || operation.type === 'manageBuyOffer') {
+  } else if (operation.type === 'manage_sell_offer' || operation.type === 'manage_buy_offer') {
     amountText = operation.amount;
   }
 
@@ -200,7 +200,7 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode }) => {
             styles.amount,
             { color: isReceived ? colors.received : colors.sent }
           ]}>
-            {isReceived ? '' : '-'}{amountText}
+            {isReceived||operation.type === 'manage_sell_offer'||operation.type === 'manage_buy_offer' ? '' : '-'}{amountText}
           </Text>
         </View>
 
@@ -246,7 +246,8 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
                     isReceived = true; 
                 } else if (['change_trust', 'change_trust', 'create_account'].includes(firstOp.type)) {
                     isReceived = true;
-                } else if (firstOp.type === 'manageSellOffer' || firstOp.type === 'manageBuyOffer') {
+                } else if (firstOp.type === 'manage_sell_offer' || firstOp.type === 'manage_buy_offer') {
+                   isReceived = false;
                     amount = firstOp.amount;
                 }
 

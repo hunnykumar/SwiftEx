@@ -109,7 +109,7 @@ const [infoVisible,setinfoVisible]=useState("");
 const [infotype,setinfotype]=useState("success");
 const [infomessage,setinfomessage]=useState("");
 const [assetInfo, setassetInfo] = useState(false);
-
+const messageShownRef = useRef(false);
 
 
 
@@ -441,6 +441,7 @@ const chooseRenderItem_1 = ({ item }) => (
       setshow_trust_modal(true);
     }
     else{
+      setinfoVisible(false)
       navigation.navigate("classic",{Asset_type:"ETH"})
     }
   }
@@ -737,11 +738,13 @@ const handleCloseModal = () => {
 };
 
   useEffect(() => {
-    if (Balance === "0.0000000" || parseFloat(Balance)===0) {
-      setassetInfo(true)
-      setinfomessage("Insufficient Balance"),
-      setinfotype("warning"),
-      setinfoVisible(true)
+    const isZeroBalance = Balance === "0.0000000" || parseFloat(Balance) === 0;
+    if (isZeroBalance && !messageShownRef.current) {
+      setassetInfo(true);
+      setinfomessage("Insufficient Balance");
+      setinfotype("warning");
+      setinfoVisible(true);
+      messageShownRef.current = true;
     }
   }, [Balance])
 
@@ -961,7 +964,7 @@ const handleCloseModal = () => {
                 size={60}
                 color={"orange"}
                 />
-              <Text style={styles.AccounheadingContainer}>Trust {usdcBidgeTrust?"USDC":tradeTrust?top_value_0:top_value} by {usdcBidgeTrust?"centre.io":tradeTrust?top_domain_0:top_domain} ?</Text>
+              <Text style={styles.AccounheadingContainer}>Please trust {usdcBidgeTrust?"USDC":tradeTrust?top_value_0:top_value} first before creating your offer.</Text>
               <View style={{ flexDirection: "row",justifyContent:"space-around",width:wp(80),marginTop:hp(3),alignItems:"center" }}>
                 <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={() => {setshow_trust_modal(false),navigation.goBack()}}>
                    <Text style={styles.Accounbtntext}>Cancel</Text>
@@ -1293,10 +1296,11 @@ searchInput: {
     color: "#fff"
   },
   AccounheadingContainer:{
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "bold",
     marginTop: 10,
-    color: "#fff"
+    color: "#fff",
+    textAlign:"center"
   },
   scrollView:{
     flexGrow: 1,

@@ -26,7 +26,8 @@ const Payout = () => {
   const Assets = [
     { name: "USDC",by:"centre.io", address: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",dis_ass:"GA5...KZVN",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" },
     { name: "ETH",by:"ultracapital.xyz", address: "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2", dis_ass:"GDH...NPP2",img:"https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png"},
-    { name: "BTC",by:"ultracapital.xyz", address: "GDYSPBVZHPQTYMGSYNOHRZQNLB3ZWFVQ2F7EP7YBOLRGD42XIC3QUX5G",dis_ass:"GDY...UX5G",img:"https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png" }
+    { name: "BTC",by:"ultracapital.xyz", address: "GDYSPBVZHPQTYMGSYNOHRZQNLB3ZWFVQ2F7EP7YBOLRGD42XIC3QUX5G",dis_ass:"GDY...UX5G",img:"https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png" },
+    { name: "EURC",by:"circle.com", address: "GDYSPBVZHPQTYMGSYNOHRZQNLB3ZWFVQ2F7EP7YBOLRGD42XIC3QUX5G",dis_ass:"GDY...UX5G",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420" }
   ];
   const Anchors=[
     // {name:"SwiftEx",by:"centre.io", address: state.wallet.address,image: require('../../../../../../assets/darkBlue.png'), seps: ["SEP 6", "SEP 12", "SEP 24"]},
@@ -36,7 +37,7 @@ const Payout = () => {
     // {name:"Clickpesa", address: state.wallet.address,image: require('../../../../../../assets/CLICKPESA.png'),dis_ass:"clickpesa.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://clickpesa.com/"},
     // {name:"Finclusive", address: state.wallet.address,image: require('../../../../../../assets/FINCLUSIVE.png'),dis_ass:"finclusive.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://finclusive.com/"},
     {name:"Alchemy Pay", address: state.wallet.address,image: require('../../../../../../assets/AlcamyPay.jpg'),dis_ass:"alchemypay.org",tom_url:"https://www.alchemypay.org/"},
-    {name:"Mykobo", address: state.wallet.address,image: require('../../../../../../assets/MYKOBO.png'),dis_ass:"mykobo.co", seps: ["SEP 24"],tom_url:"https://mykobo.co/"},
+    {name:"Mykobo", address: state.wallet.address,image: require('../../../../../../assets/MYKOBO.png'),dis_ass:"mykobo.co", seps: ["SEP 6"],tom_url:"https://mykobo.co/"},
   ];
   const price_data=[
     { name: "USDC", price: "100", fee:"0.5", asset_code:"USDC" },
@@ -312,7 +313,7 @@ const Payout = () => {
           <ScrollView>
             {Anchors.map((list, index) => {
               return (
-                <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),setURL_OPEN(index===0?navigation.navigate("KycComponent",{tabName:"Deposit"}):list.tom_url),setLoading(index===0?false:true),setopen_web_view(index===0?false:true)}}>
+                <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),navigation.navigate("KycComponent",{tabName:"Deposit"})}}>
                   <View style={{flexDirection:"row",alignItems:"center"}}>
                   <Image
                   source={list.image}
@@ -324,9 +325,9 @@ const Payout = () => {
                     <Text style={[styles.card_text,{color:"gray"}]}>{list.dis_ass}</Text>
                     </View>
                   {/* <Text style={[styles.next_btn_txt,{fontSize:13,marginTop:5,fontWeight:"500"}]}>Vist stellar website</Text> */}
-                    {list?.seps&&<TouchableOpacity disabled={Anchor_selection!==index} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"#011434",alignSelf:"center" }]} onPress={()=>{[setLoading(true),setopen_web_view(true)]}}>
+                    {list?.seps&&<View disabled={Anchor_selection!==index} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"#011434",alignSelf:"center" }]}>
                       <Text style={[styles.next_btn_txt,{fontSize:16}]}>{list.seps}</Text>
-                    </TouchableOpacity>}
+                    </View>}
                   </View>
                   {/* {list?.seps.map((sep, sepIndex) => (
                     <TouchableOpacity disabled={sepIndex===1||sepIndex===3||Anchor_selection!==index} style={[styles.next_btn, { marginTop: 10, height: "13%",backgroundColor:sepIndex===1||sepIndex===3?"gray":"#011434" }]} onPress={()=>{sepIndex===2?[setLoading(true),setopen_web_view(true)]:setkyc_modal(true)}}>
@@ -372,7 +373,7 @@ const Payout = () => {
             filteredAnchors.map((list, index) => {
              
                 return (
-                  <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),setURL_OPEN(list.tom_url),setLoading(true),setopen_web_view(true)}}>
+                  <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),navigation.navigate("KycComponent",{tabName:"Deposit"})}}>
                   <View style={{flexDirection:"row",alignItems:"center"}}>
                   <Image
                   source={list.image}
@@ -384,30 +385,10 @@ const Payout = () => {
                     <Text style={[styles.card_text,{color:"gray"}]}>{list.dis_ass}</Text>
                     </View>
                   {/* <Text style={[styles.next_btn_txt,{fontSize:13,marginTop:5,fontWeight:"500"}]}>Vist stellar website</Text> */}
-                    <TouchableOpacity disabled={Anchor_selection!==index} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"#011434",alignSelf:"center" }]} onPress={()=>{[setLoading(true),setopen_web_view(true)]}}>
-                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>SEP-24</Text>
-                    </TouchableOpacity>
-                    {list.name==="Clpx"&&<TouchableOpacity disabled={true} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"gray",alignSelf:"center" }]} onPress={()=>{[setLoading(true),setopen_web_view(true)]}}>
-                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>SEP-6</Text>
-                    </TouchableOpacity>}
+                    {list?.seps&&<View disabled={Anchor_selection!==index} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"#011434",alignSelf:"center" }]} >
+                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>{list.seps}</Text>
+                    </View>}
                   </View>
-                  {/* {list?.seps.map((sep, sepIndex) => (
-                    <TouchableOpacity disabled={sepIndex===1||sepIndex===3||Anchor_selection!==index} style={[styles.next_btn, { marginTop: 10, height: "13%",backgroundColor:sepIndex===1||sepIndex===3?"gray":"#011434" }]} onPress={()=>{sepIndex===2?[setLoading(true),setopen_web_view(true)]:setkyc_modal(true)}}>
-                      <Text style={styles.next_btn_txt} key={sepIndex}>
-                        {sep}
-                      </Text>
-                      
-                    </TouchableOpacity>
-                  ))} */}
-                 {/* {Anchor_selection===index&&<View style={{justifyContent:"center",alignSelf:"center",marginTop:10}}>
-                  <Icon
-                    name={"check-circle-outline"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"green"}
-                  />
-                  </View>
-                  } */}
                 </TouchableOpacity>
                 )
 
@@ -804,7 +785,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#011434",
     flexDirection: "column",
     paddingVertical: 3,
-    paddingVertical:'3%'
   },
   card_text: {
     fontSize: 19,

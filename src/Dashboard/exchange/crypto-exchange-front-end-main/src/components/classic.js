@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, Picker, ActivityIndicator, StyleSheet, TouchableOpacity, TextInput, Image, Platform, Keyboard, Alert } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Modal, View, Text, Picker, ActivityIndicator, StyleSheet, TouchableOpacity, TextInput, Image, Platform, Keyboard, Alert, BackHandler } from 'react-native';
 import Icon from "../../../../../icon";
 import { FlatList, useToast } from 'native-base';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
 import Bridge from "../../../../../../assets/Bridge.png";
 import { useSelector } from 'react-redux';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -23,6 +23,7 @@ import { SignTransaction, swap_prepare } from '../../../../../../All_bridge';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
 import { ethers } from 'ethers';
 import { OneTapContractAddress, OneTapUSDCAddress, RPC } from '../../../../constants';
+import Clipboard from '@react-native-clipboard/clipboard';
 const classic = ({ route }) => {
   const Focused=useIsFocused();
   const toast=useToast();
@@ -110,6 +111,16 @@ const [open, setOpen] = useState(false);
     }
     
   }
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate('/');
+        return true;
+      };
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [navigation])
+  );
 
 useEffect(()=>{
   setbalanceLoading(true)
@@ -256,11 +267,15 @@ const getOffersData = async () => {
 
 
   }
+  const copyToClipboard = (tokenAddress) => {
+    Clipboard.setString(tokenAddress);
+    alert("success", "Copied to clipboard!");
+  };
   return (
     <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
      <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
       <View style={styles.modalHeader}>
-            <Text style={styles.textModal}>Import assets on exchange</Text>
+            <Text style={styles.textModal}>Import Assets on Trade Wallet</Text>
           </View>
 
           <View style={{ marginTop: hp(3),paddingHorizontal:wp(4),alignSelf:"flex-start" }}>
@@ -277,7 +292,27 @@ const getOffersData = async () => {
               <Text style={[styles.textModal, { fontSize: 18 }]}>Choose asset</Text>
               <TouchableOpacity style={[styles.modalOpen, { width: wp(90) }]} onPress={() => { setchooseModalVisible_choose(true); setIdIndex(3); }}>
                 {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} />}
-                <Text style={{color:"#fff",fontSize:19,marginLeft:wp(1.3)}}>{chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho}</Text>
+               <View>
+               <Text style={{color:"#fff",fontSize:19,marginLeft:wp(1.3)}}>{chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho}</Text>
+                <View style={{flexDirection:"row",alignItems:"center"}}>
+                <Text style={{ color: "#fff", fontSize: 10, marginLeft: wp(1.3) }}>
+                {chooseSelectedItemIdCho === null
+                  ? "0x7e9fbbf33c595430848e767E162e4b0FF6b8205b"
+                  : chooseSelectedItemIdCho === "USDT"
+                    ? "0x7e9fbbf33c595430848e767E162e4b0FF6b8205b"
+                    : "Arriving soon"}
+              </Text>
+              {chooseSelectedItemIdCho === "USDT"||chooseSelectedItemIdCho === null?<TouchableOpacity onPress={()=>{copyToClipboard("0x7e9fbbf33c595430848e767E162e4b0FF6b8205b")}} style={{ marginLeft: 5 }}>
+              <Icon
+                          name={"content-copy"}
+                          type={"materialCommunity"}
+                          color={"rgba(129, 108, 255, 0.97)"}
+                          size={24}
+                        />
+              </TouchableOpacity>:<></>}
+
+                </View>
+               </View>
               </TouchableOpacity>
             </View>
           </View>

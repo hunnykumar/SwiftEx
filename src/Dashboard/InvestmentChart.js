@@ -499,49 +499,78 @@ function InvestmentChart(setCurrentWallet) {
   ]);
  const renderCoins = ({ item }) => {
   return (
-    <TouchableOpacity disabled={item.id===4} style={[styles.coinMainCon,{backgroundColor:state.THEME.THEME===false?"#FFFFFF":"#18181C"}]} onPress={()=>{navigation.navigate("Asset_info",{asset_type:item.symbole})}}>
-      {item.id===4&&
-        <View style={[styles.TokenInfo]}>
-              <Text style={styles.TokenInfoText}>Coming Soon</Text>
-            </View>
-      }
-      {/* coin image container */}
-      <View style={[styles.coinImgCon, { backgroundColor: item.bgColor }]}>
-        <Image source={item.name==="XLM"?item.img:{ uri: item.img }}
-          style={item.name==="XLM"?{ width: 49, height: 49 }:{ width: 39, height: 39 }} />
+    <TouchableOpacity 
+    disabled={item.id === 4} 
+    style={[
+      styles.coinMainCon, 
+      { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#18181C" }
+    ]} 
+    onPress={() => navigation.navigate("Asset_info", { asset_type: item.symbole })}
+  >
+    {item.id === 4 && (
+      <View style={[styles.TokenInfo]}>
+        <Text style={styles.TokenInfoText}>Arriving soon</Text>
       </View>
-      {/* coin info container */}
-      <View style={styles.coinInfoCon}>
-        <Text style={[styles.coinInfoCon.coinInfoText,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>{item.name}</Text>
-        <Text style={styles.coinInfoCon.coinBalText}>{parseFloat(item.avl).toFixed(1)}{" "+item.symbole} </Text>
-        <View style={styles.coinInfoCon.coinSubCon}>
-          <Text style={[styles.coinInfoCon.coinInfoText,,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>{item.dollaravl}</Text>
-          {Platform.OS==="android"&&<View style={[styles.coinInfoCon.coinPerCon, { backgroundColor: item.viewColor, }]}>
-            <Text style={[styles.coinInfoCon.coinStatusText, { color: item.statusColor }]}>{item.status}</Text>
-          </View>}
-        </View>
-        {Platform.OS==="ios"&&<View style={[styles.coinInfoCon.coinPerCon, { backgroundColor: item.viewColor,maxWidth:"70%",height:"30%",alignSelf:"flex-start" }]}>
-            <Text style={[styles.coinInfoCon.coinStatusText, { color: item.statusColor }]}>{item.status}</Text>
-          </View>}
-      </View>
-      {/* coin chart */}
-      <ResponsiveLineChart width={80} height={70} symbol={item.symbole} />
-      {/* coin actions */}
-      {item?.id!==4?<View style={{
-        alignItems:"center",
-        paddingRight: 5,
-        }}>
-        <TouchableOpacity disabled={item.id===4} style={[styles.actionBuyBtn,{backgroundColor:"#23262F",margin:2}]} onPress={()=>{state?.STELLAR_ADDRESS_STATUS===false?navigation.navigate("exchange"):navigation.navigate("newOffer_modal",item?.id===1&&{tradeAssetType:item?.symbole})}}>
-          <Text style={styles.actionRowBtnText}>Trade</Text>
-        </TouchableOpacity>
+    )}
+  
+    {/* Left: Coin Image & Info */}
+    
+{/* Left: Coin Image & Info */}
+<View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+  {/* Coin Image */}
+  <View style={[styles.coinImgCon, { backgroundColor: item.bgColor }]}>
+    <Image 
+      source={item.name === "XLM" ? item.img : { uri: item.img }} 
+      style={item.name === "XLM" ? { width: 49, height: 49 } : { width: 39, height: 39 }} 
+    />
+  </View>
 
-        {/* buy btn */}
-        <TouchableOpacity disabled={item.id===4} style={styles.actionBuyBtn} onPress={()=>{navigation.navigate("payout")}}>
-          <Text style={styles.actionRowBtnText}>Buy</Text>
-        </TouchableOpacity>
-      </View>:<View style={{ width: 105,}}>
-      </View>}
-    </TouchableOpacity>
+  {/* Coin Info - Adjusted with marginLeft */}
+  <View style={[styles.coinInfoCon, { marginLeft: 10 }]}>
+    <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "black" : "#FFFFFF" }]}>
+      {item.name}
+    </Text>
+    <Text style={styles.coinInfoCon.coinBalText}>
+      {parseFloat(item.avl).toFixed(1)} {item.symbole}
+    </Text>
+    <View style={styles.coinInfoCon.coinSubCon}>
+      <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "black" : "#FFFFFF" }]}>
+        {item.dollaravl}
+      </Text>
+    </View>
+  </View>
+</View>
+
+  
+    {/* Center: Coin Chart */}
+    <View style={{ flex: 1, alignItems: "center" }}>
+      <ResponsiveLineChart width={89} height={70} symbol={item.symbole} />
+    </View>
+  
+    {/* Right: Action Buttons */}
+    {item?.id!==4?<View style={{ alignItems: "center", paddingRight: 5 }}>
+      <TouchableOpacity 
+        disabled={item.id === 4} 
+        style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
+        onPress={() => {
+          state?.STELLAR_ADDRESS_STATUS === false 
+            ? navigation.navigate("exchange") 
+            : navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbole });
+        }}
+      >
+        <Text style={styles.actionRowBtnText}>Trade</Text>
+      </TouchableOpacity>
+  
+      <TouchableOpacity 
+        disabled={item.id === 4} 
+        style={styles.actionBuyBtn} 
+        onPress={() => navigation.navigate("payout")}
+      >
+        <Text style={styles.actionRowBtnText}>Buy</Text>
+      </TouchableOpacity>
+    </View>:<View style={{ width: 107,}}/>}
+  </TouchableOpacity>
+  
   )
 }
   return (
@@ -715,7 +744,6 @@ const styles = StyleSheet.create({
     borderRadius: 10
   },
   coinInfoCon: {
-    width: "26%",
     marginLeft:Platform.OS==="ios"?"2%":0,
     height: 53,
     coinInfoText: {
@@ -779,9 +807,11 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: 15,
     borderRadius: 5,
+    alignItems:"center",
     elevation: 5,
     zIndex:10,
-    right: -10,
+    right: 10,
+    width: 104,
   },
   TokenInfoText: {
     color: "#fff",

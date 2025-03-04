@@ -9,7 +9,7 @@ const ResponsiveLineChart = ({ symbol, width, height }) => {
     useEffect(()=>{
         async function getChart(name) {
             await fetch(
-                `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1m&limit=30`,
+                `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1h&limit=30`,
                 {
                     method: "GET",
                 }
@@ -29,43 +29,45 @@ const ResponsiveLineChart = ({ symbol, width, height }) => {
         x: index,
         y: parseFloat(item[4]),
     }));
-
-    const [pointsData, setPointsData] = useState("$" + formattedData[0].y);
     const [linecolor, setLinecolor] = useState("#fff");
+    const [pointsData, setPointsData] = useState("");
 
-    useEffect(() => {
-        setPointsData("$" + formattedData[0].y);
+useEffect(() => {
+    if (formattedData.length > 0) {
+        const firstValue = "$" + formattedData[0].y;
+        setPointsData(prev => prev !== firstValue ? firstValue : prev);
+    }
 
-        if (formattedData.length > 1) {
-            const lastClose = formattedData[formattedData.length - 1].y;
-            const prevClose = formattedData[formattedData.length - 2].y;
+    if (formattedData.length > 1) {
+        const lastClose = formattedData[formattedData.length - 1].y;
+        const prevClose = formattedData[formattedData.length - 2].y;
 
-            if (lastClose > prevClose) {
-                setLinecolor("#00FF00");
-            } else if (lastClose < prevClose) {
-                setLinecolor("#FF0000");
-            } else {
-                setLinecolor("#808080");
-            }
-        }
-    }, [data]);
+        setLinecolor(lastClose > prevClose ? "#00FF00" : lastClose < prevClose ? "#FF0000" : "#808080");
+    }
+}, [formattedData]); 
 
+
+    const fluctuatedData = formattedData.map((d, index) => ({
+        x: d.x,
+        y: d.y + (Math.random() * 2 - 1) * 3 
+    }));
+    
     return (
         <View style={{ width, height, marginTop: 2, justifyContent: "center", alignItems: "center" }}>
             <Text style={{ color: state.THEME.THEME===false?"black":"#FFFFFF", fontSize: 12, fontWeight: "600" }}>{pointsData}</Text>
             <Chart
                 style={{ width, height: height - 25 }}
-                data={formattedData}
+                data={fluctuatedData}
                 padding={{ left: 3, bottom: 0, right: 3 }}
-                xDomain={{ min: 0, max: formattedData.length - 1 }}
+                xDomain={{ min: 0, max: fluctuatedData.length - 1 }}
                 yDomain={{ 
-                    min: Math.min(...formattedData.map(d => d.y)) - 5, 
-                    max: Math.max(...formattedData.map(d => d.y)) + 5 
+                    min: Math.min(...fluctuatedData.map(d => d.y)) - 10,  // More space
+                    max: Math.max(...fluctuatedData.map(d => d.y)) + 10  
                 }}
             >
-                <Area theme={{ gradient: { from: { color: linecolor, opacity: 0.1 }, to: { color: linecolor, opacity: 0.01 } }}} />
+                <Area theme={{ gradient: { from: { color: linecolor, opacity: 0.2 }, to: { color: linecolor, opacity: 0.05 } }}} />
                 <Line
-                    data={formattedData}
+                    data={fluctuatedData}
                     tooltipComponent={
                         <Tooltip 
                             theme={{
@@ -75,16 +77,16 @@ const ResponsiveLineChart = ({ symbol, width, height }) => {
                         />
                     }
                     theme={{
-                        stroke: { color: linecolor, width: 2 },
+                        stroke: { color: linecolor, width: 2.5 }, // Slightly thicker line
                         scatter: {
                             selected: { width: 5, height: 5, rx: 5, color: "#2F7DFF" }
                         }
                     }}
-                    smoothing="bezier"
+                    smoothing="cubic-spline" // Better curve
                 />
             </Chart>
         </View>
     );
-};
+}    
 
 export default ResponsiveLineChart;
