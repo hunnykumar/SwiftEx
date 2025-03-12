@@ -298,7 +298,7 @@ const Offers_manages = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Active Offers</Text>
+      {/* <Text style={styles.title}>Active Offers</Text> */}
     
       {loading ? (
         <ActivityIndicator color={"gray"} size={"large"}/>

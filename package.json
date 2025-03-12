@@ -61,6 +61,7 @@
     "ethereum-checksum-address": "^0.0.8",
     "ethereumjs-tx": "^2.1.2",
     "ethers": "^5.7.1",
+    "event-source-polyfill": "^1.0.31",
     "events": "^3.3.0",
     "expo-crypto-polyfills": "^1.1.0",
     "expo-jwt": "^1.8.0",

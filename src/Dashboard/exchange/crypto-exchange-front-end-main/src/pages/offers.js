@@ -36,6 +36,7 @@ import { useIsFocused } from '@react-navigation/native';
 import WebView from "react-native-webview";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import Offers_manages from "./Offers_manages";
+import CustomOrderBook from "./stellar/CustomOrderBook";
 
 
 
@@ -303,12 +304,31 @@ export const OfferView = () => {
     phoneNumber: "",
     isEmailVerified: true,
   });
+  const [enableComponent, setenableComponent] = useState(0);
   return (
     <>
  
  <Exchange_screen_header title="Offers" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
       <View style={{ height: hp(100), backgroundColor: "#011434",paddingBottom:hp(15) }}>
-      <Offers_manages/>
+         {/* enableComponent Buttons */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tabButton, enableComponent === 0 && styles.activeTab]}
+          onPress={() => setenableComponent(0)}
+        >
+          <Text style={styles.tabText}>Active Offers</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tabButton, enableComponent === 1 && styles.activeTab]}
+          onPress={() => setenableComponent(1)}
+        >
+          <Text style={styles.tabText}>OrderBook</Text>
+        </TouchableOpacity>
+      </View>
+      {/* enableComponent render */}
+      {enableComponent === 0 ?<Offers_manages/>:<CustomOrderBook/>}
+      
       </View>
     </>
   );
@@ -512,5 +532,41 @@ fontSize:20,
 fontWeight:"bold",
 color:"gray",
 marginStart:5
-}
+},
+tabContainer: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  paddingVertical: 0.1,
+  paddingHorizontal:10
+},
+tabButton: {
+  paddingVertical: 12,
+  paddingHorizontal: 50,
+  marginHorizontal: 5,
+  borderRadius: 10,
+  backgroundColor: "gray",
+},
+activeTab: {
+  backgroundColor: "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
+  borderColor:"rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
+  borderWidth:1,
+},
+tabText: {
+  fontSize: 16,
+  fontWeight: "bold",
+  color: "white",
+},
+activeText: {
+  color: "#fff",
+},
+content: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+},
+contentText: {
+  fontSize: 20,
+  fontWeight: "bold",
+  color: "#333",
+},
 });

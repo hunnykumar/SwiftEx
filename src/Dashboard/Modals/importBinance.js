@@ -220,6 +220,7 @@ const ImportBinanceWallet = ({
             <Text style={style.label}>Name</Text>
             <TextInput
               value={accountName}
+              maxLength={20}
               onChangeText={(text) => {
                 handleUsernameChange(text)
               }}

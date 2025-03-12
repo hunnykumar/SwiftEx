@@ -178,6 +178,7 @@ const ImportMultiCoinWalletModal = ({
             <Text style={style.label}>Name</Text>
             <TextInput
               value={accountName}
+              maxLength={20}
               onChangeText={(text) =>{handleUsernameChange(text)}}
               style={{ width: wp("78%"),color:"black" }}
               placeholder={accountName ? accountName : "Wallet 1"}

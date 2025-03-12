@@ -804,8 +804,8 @@ const styles = StyleSheet.create({
   TokenInfo: {
     position: "absolute",
     backgroundColor: "orange",
-    paddingVertical: 5,
-    paddingHorizontal: 15,
+    paddingVertical: 10,
+    // paddingHorizontal: 15,
     borderRadius: 5,
     alignItems:"center",
     elevation: 5,
