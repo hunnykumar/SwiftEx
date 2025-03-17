@@ -224,7 +224,7 @@ const ImportEthereumModal = ({
             <TouchableOpacity
               onPress={async () => {
                 // setText('abc')
-                const text = await Clipboard.getStringAsync();
+                const text = await Clipboard.getString();
                 // console.log(text)
                 // setText(text)
                 // setText('abc')
