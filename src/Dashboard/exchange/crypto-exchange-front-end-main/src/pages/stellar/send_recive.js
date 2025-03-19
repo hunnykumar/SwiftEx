@@ -21,13 +21,14 @@ import { SaveTransaction } from "../../../../../../utilities/utilities";
 import Snackbar from "react-native-snackbar";
 import ErrorComponet from "../../../../../../utilities/ErrorComponet";
 import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../../utilities/StellarUtils";
+import WalletActivationComponent from "../../utils/WalletActivationComponent";
 const StellarSdk = require('stellar-sdk');
-StellarSdk.Network.useTestNetwork();
+StellarSdk.Network.usePublicNetwork();
 
 const send_recive = ({route}) => {
-    const {bala,asset_name}=route.params;
-    console.log("----------------usdtAsse-----------------",bala,asset_name)
-    const usdtAsset = new StellarSdk.Asset("USDC", "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID");
+    const {bala,asset_name,assetIssuer}=route.params;
+    console.log("----------------usdtAsse-----------------",bala,asset_name,assetIssuer)
+    const usdtAsset = asset_name==="native"?StellarSdk.Asset.native():new StellarSdk.Asset(asset_name, assetIssuer);
   const cameraRef = useRef(null);
     const state = useSelector((state) => state);
     const FOCUSED = useIsFocused();
@@ -44,6 +45,7 @@ const send_recive = ({route}) => {
     const [ErroVisible,setErroVisible]=useState(false);
     const [resStellarbal, setresStellarbal] = useState("");
     const [Loading, setLoading] = useState(false);
+    const [ACTIVATION_MODAL_PROD, setACTIVATION_MODAL_PROD] = useState(false);
 
 
   const onBarCodeRead = (e) => {
@@ -94,7 +96,7 @@ const send_recive = ({route}) => {
                 setLoading(false);
               });
             }
-            if(asset_name==="USDC"||asset_name==="ETH"||asset_name==="BTC")
+            if(asset_name!=="native")
             {
               GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,asset_name).then((result) => {
                 console.log("-------jhdkjas",result)
@@ -121,7 +123,6 @@ const send_recive = ({route}) => {
     Keyboard.dismiss();
     try {
     const server = new StellarSdk.Server(STELLAR_URL.URL);
-    StellarSdk.Networks.TESTNET;
       // Load the source account
       const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecret);
       const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());
@@ -129,7 +130,7 @@ const send_recive = ({route}) => {
       // Create the transaction
       const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
         fee: await server.fetchBaseFee(),
-        networkPassphrase: StellarSdk.Networks.TESTNET,
+        networkPassphrase: StellarSdk.Networks.PUBLIC,
       })
         .addOperation(
           StellarSdk.Operation.payment({
@@ -249,11 +250,18 @@ const send_recive = ({route}) => {
   }
 
     useEffect(() => {
+        setACTIVATION_MODAL_PROD(false)
         setLoading(false)
         setErroVisible(false)
         setPayment_loading(false)
         get_data()
         setmode_selected("SED");
+        if(state.STELLAR_ADDRESS_STATUS===false)
+        {
+          setTimeout(()=>{
+            setACTIVATION_MODAL_PROD(true)
+          },600)
+        }
     }, [FOCUSED])
 
   // Reset lastScannedData when modal is closed
@@ -262,6 +270,11 @@ const send_recive = ({route}) => {
       setLastScannedData(null);
     }
   }, [isModalVisible]);
+
+  const ActivateModal = () => {
+    setACTIVATION_MODAL_PROD(false);
+    navigation.goBack()
+  };
     return (
         <>
      <Exchange_screen_header title="Transaction" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
@@ -270,6 +283,14 @@ const send_recive = ({route}) => {
           onClose={() => setErroVisible(false)}
           message="The scanned QR code contains an invalid public key. Please make sure you're scanning the correct QR code and try again."
         />
+         <WalletActivationComponent 
+         isVisible={ACTIVATION_MODAL_PROD}
+         onClose={() => {ActivateModal}}
+         onActivate={ActivateModal}
+         navigation={navigation}
+         appTheme={true}
+         shouldNavigateBack={true}
+      />
             <View style={styles.main_con}>
                 <View style={styles.mode_con}>
                     <TouchableOpacity style={[styles.mode_sele, { backgroundColor: mode_selected === "SED" ? "green" : "#011434" }]} onPress={() => { setmode_selected("SED") }}>
@@ -293,7 +314,7 @@ const send_recive = ({route}) => {
                             />
                             </TouchableOpacity>
                             </View>
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10 }]}>Available: {asset_name==="native"||asset_name==="USDC"?!resStellarbal?<ActivityIndicator/>:resStellarbal:resStellarbal}</Text>
+                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10 }]}>Available: {asset_name==="native"||asset_name!=="native"?!resStellarbal?<ActivityIndicator/>:resStellarbal==="Error"?0.00:resStellarbal:resStellarbal==="Error"?0.00:resStellarbal}</Text>
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Amount</Text>
                             <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="number-pad" style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_amount(value) }} />
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Transaction memo</Text>

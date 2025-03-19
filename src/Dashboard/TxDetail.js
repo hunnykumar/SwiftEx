@@ -8,16 +8,17 @@ import {  useSelector } from "react-redux";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { useNavigation } from "@react-navigation/native";
+import { STELLAR_URL } from "./constants";
 
 export const TxDetail = (props) => {
   const navi=useNavigation();
   const type = useSelector((state) => state.walletType);
   const [walletType, setWalletType] = useState();
-  const url = `https://testnet.bscscan.com/tx/${props?.route?.params?.data?.hash}`;
-  const etherUrl = `https://sepolia.etherscan.io/tx/${props?.route?.params?.data?.hash}`;
+  const url = `https://bscscan.com/tx/${props?.route?.params?.data?.hash}`;
+  const etherUrl = `https://etherscan.io/tx/${props?.route?.params?.data?.hash}`;
   const MaticUrl = `https://mumbai.polygonscan.com/tx/${props?.route?.params?.data?.hash}`;
   const XrpUrl = `https://test.bithomp.com/explorer/${props?.route?.params?.data?.hash}`;
-  const XLMUrl = `https://stellar.expert/explorer/testnet/tx/${props?.route?.params?.data?.hash}`;
+  const XLMUrl = `${STELLAR_URL.EXPERT_URL}/tx/${props?.route?.params?.data?.hash}`;
   console.log(props?.route?.params?.data?.hash);
   useEffect(() => {
     const fetch_wallets=async()=>{

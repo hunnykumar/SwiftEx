@@ -604,7 +604,7 @@ const CustomOrderBook = () => {
           </View>
           <Text style={styles.subtitle}>
             {!loading && asks.length > 0 ? 
-              `${selectedPair.counter.code === 'USDC' ? '$' : ''}${parseFloat(asks[0].price).toFixed(6)}` : 
+              `${selectedPair.counter.code === 'USDC' ? '$' : '$'}${parseFloat(asks[0].price).toFixed(6)}` : 
               '...'}
           </Text>
           {lastTrade && (

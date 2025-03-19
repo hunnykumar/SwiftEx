@@ -45,9 +45,10 @@ import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import StellarAccountReserve from "../utils/StellarReserveComponent";
 import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../utilities/StellarUtils";
 import InfoComponent from "./InfoComponent";
+import WalletActivationComponent from "../utils/WalletActivationComponent";
 const Web3 = require('web3');
 const StellarSdk = require('stellar-sdk');
-StellarSdk.Network.useTestNetwork();
+      StellarSdk.Network.usePublicNetwork();
 const alchemyUrl = RPC.ETHRPC;
 const server = new StellarSdk.Server(STELLAR_URL.URL);
 export const NewOfferModal = () => {
@@ -67,7 +68,6 @@ export const NewOfferModal = () => {
   const [Balance, setbalance] = useState('');
   const [offer_amount, setoffer_amount] = useState('');
   const [offer_price, setoffer_price] = useState('');
-  const [AssetIssuerPublicKey, setAssetIssuerPublicKey] = useState("GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID");
   const [route, setRoute] = useState("SELL");
   const [btnRoot, setbtnRoot] = useState(0);
   const [Loading, setLoading] = useState(false);
@@ -109,6 +109,7 @@ const [infoVisible,setinfoVisible]=useState("");
 const [infotype,setinfotype]=useState("success");
 const [infomessage,setinfomessage]=useState("");
 const [assetInfo, setassetInfo] = useState(false);
+const [ACTIVATION_MODAL_PROD,setACTIVATION_MODAL_PROD]=useState(false);
 const messageShownRef = useRef(false);
 
 
@@ -137,11 +138,11 @@ const getAccountDetails = async () => {
 const [amountSuggest, setamountSuggest] = useState([{ id: 1, amountSuggest: "25%" }, { id: 2, amountSuggest: "50%" }, { id: 3, amountSuggest: "75%" }, { id: 4, amountSuggest: "100%" },]);
 
 const chooseItemList = [
-  { id: 1, name: "XLM/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"XLM",visible_1:"USDC",asset_dom:"steller.org",asset_dom_1:"centre.io",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
-  { id: 2, name: "ETH/BTC" ,base_value:"BTC",counter_value:"ETH",visible_0:"ETH",visible_1:"BTC",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
-  { id: 3, name: "ETH/USDC" ,base_value:"USDC",counter_value:"ETH",visible_0:"ETH",visible_1:"USDC",asset_dom:"ultracapital.xyz",asset_dom_1:"centre.io",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
-  { id: 4, name: "BTC/ETH" ,base_value:"ETH",counter_value:"BTC",visible_0:"BTC",visible_1:"ETH",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
-  { id: 5, name: "XLM/BTC" ,base_value:"BTC",counter_value:"native",visible_0:"XLM",visible_1:"BTC",asset_dom:"steller.org",asset_dom_1:"centre.io",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
+  { id: 1, name: "XLM/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"XLM",visible_1:"USDC",asset_dom:"steller.org",asset_dom_1:"centre.io",visible0Issuer:"native",visible1Issuer:"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"},
+  { id: 2, name: "ETH/BTC" ,base_value:"BTC",counter_value:"ETH",visible_0:"ETH",visible_1:"BTC",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz",visible0Issuer:"GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC",visible1Issuer:"GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM"},
+  { id: 3, name: "ETH/USDC" ,base_value:"USDC",counter_value:"ETH",visible_0:"ETH",visible_1:"USDC",asset_dom:"ultracapital.xyz",asset_dom_1:"centre.io",visible0Issuer:"GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC",visible1Issuer:"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"},
+  { id: 4, name: "BTC/ETH" ,base_value:"ETH",counter_value:"BTC",visible_0:"BTC",visible_1:"ETH",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz",visible0Issuer:"GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM",visible1Issuer:"GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC"},
+  { id: 5, name: "XLM/BTC" ,base_value:"BTC",counter_value:"native",visible_0:"XLM",visible_1:"BTC",asset_dom:"steller.org",asset_dom_1:"centre.io",visible0Issuer:"native",visible1Issuer:"GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM"},
   // { id: 2, name: "ETH/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"ETH",visible_1:"USDC",asset_dom:"allbridge.io",asset_dom_1:"allbridge.io"},
   // { id: 3, name: "BNB/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"BNB",visible_1:"XLM",asset_dom:"allbridge.io",asset_dom_1:"allbridge.io"},
   // { id: 4, name: "SWIFTEX/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"SWIFTEX",visible_1:"XLM",asset_dom:"swiftex",asset_dom_1:"steller.org"},
@@ -158,11 +159,13 @@ const [top_value,settop_value]=useState(chooseItemList[0].visible_0)
 const [top_value_0,settop_value_0]=useState(chooseItemList[0].visible_1)
 const [top_domain,settop_domain]=useState(chooseItemList[0].asset_dom)
 const [top_domain_0,settop_domain_0]=useState(chooseItemList[0].asset_dom_1)
+const [AssetIssuerPublicKey, setAssetIssuerPublicKey] = useState(chooseItemList[0].visible0Issuer);
+const [AssetIssuerPublicKey1, setAssetIssuerPublicKey1] = useState(chooseItemList[0].visible1Issuer);
 const chooseFilteredItemList = chooseItemList.filter(
   item => item.name.toLowerCase().includes(chooseSearchQuery.toLowerCase())
 );
 const chooseRenderItem = ({ item }) => (
-  <TouchableOpacity onPress={() => { setRoute("SELL"),setvisible_value(item.name),settop_value(item.visible_0),settop_domain(item.asset_dom),settop_domain_0(item.asset_dom_1),settop_value_0(item.visible_1),setSelectedValue(item.base_value),setSelectedBaseValue(item.counter_value),setchooseModalPair(false)}} style={[styles.chooseItemContainer,{
+  <TouchableOpacity onPress={() => { setRoute("SELL"),setvisible_value(item.name),settop_value(item.visible_0),setAssetIssuerPublicKey(item.visible0Issuer),setAssetIssuerPublicKey1(item.visible1Issuer),settop_domain(item.asset_dom),settop_domain_0(item.asset_dom_1),settop_value_0(item.visible_1),setSelectedValue(item.base_value),setSelectedBaseValue(item.counter_value),setchooseModalPair(false)}} style={[styles.chooseItemContainer,{
     borderBottomWidth:0.9,
     borderBlockEndColor: '#fff',
     paddingVertical:hp(1.5)
@@ -171,7 +174,7 @@ const chooseRenderItem = ({ item }) => (
   </TouchableOpacity>
 );
 const chooseRenderItem_1 = ({ item }) => (
-  <TouchableOpacity onPress={() => {setRoute(item.name),reves_fun(top_value, top_value_0),setopen_offer(false)}} style={[styles.chooseItemContainer,{backgroundColor:item.name==="BUY"?"green":"red",borderRadius:15,height:hp(8),justifyContent:"center"}]}>
+  <TouchableOpacity onPress={() => {setRoute(item.name),reves_fun(top_value, top_value_0, AssetIssuerPublicKey,AssetIssuerPublicKey1),setopen_offer(false)}} style={[styles.chooseItemContainer,{backgroundColor:item.name==="BUY"?"green":"red",borderRadius:15,height:hp(8),justifyContent:"center"}]}>
     <Text style={[styles.chooseItemText,{marginLeft:5,fontWeight:"500"}]}>{item.name}</Text>
   </TouchableOpacity>
 );
@@ -242,14 +245,14 @@ const chooseRenderItem_1 = ({ item }) => (
     } 
     else{
      const sourceKeypair = StellarSdk.Keypair.fromSecret(SecretKey);
-    console.log("Sell Offer Peram =>>>>>>>>>>>>", offer_amount, offer_price, SecretKey, AssetIssuerPublicKey)
+    console.log("Sell Offer Peram =>>>>>>>>>>>>", offer_amount, offer_price, SecretKey, AssetIssuerPublicKey,AssetIssuerPublicKey1)
     try {
       const account = await server.loadAccount(sourceKeypair.publicKey());
    const base_asset_sell = SelectedBaseValue==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(SelectedBaseValue, AssetIssuerPublicKey);
-      const counter_asset_buy = selectedValue==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(selectedValue, AssetIssuerPublicKey);
+      const counter_asset_buy = selectedValue==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(selectedValue, AssetIssuerPublicKey1);
       const transaction = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
       const offer = StellarSdk.Operation.manageOffer({
         selling: base_asset_sell,
@@ -261,7 +264,7 @@ const chooseRenderItem_1 = ({ item }) => (
 
       const offerTx = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
         .addOperation(offer)
         .setTimeout(30)
@@ -302,14 +305,14 @@ const chooseRenderItem_1 = ({ item }) => (
       ShowErrotoast(toast, "Invalid value");
     } else{
     const sourceKeypair = StellarSdk.Keypair.fromSecret(SecretKey);
-    console.log("Buy Offer Peram =>>>>>>>>>>>>", offer_amount, offer_price, SecretKey, AssetIssuerPublicKey)
+    console.log("Buy Offer Peram =>>>>>>>>>>>>", offer_amount, offer_price, SecretKey, AssetIssuerPublicKey,AssetIssuerPublicKey1)
     try {
       const account = await server.loadAccount(sourceKeypair.publicKey());
       const counter_asset_buy = top_value==="XLM"?new StellarSdk.Asset.native():new StellarSdk.Asset(top_value_0, AssetIssuerPublicKey);
-      const  base_asset_sell= top_value_0==="XLM"?new StellarSdk.Asset.native():new StellarSdk.Asset(top_value, AssetIssuerPublicKey);
+      const  base_asset_sell= top_value_0==="XLM"?new StellarSdk.Asset.native():new StellarSdk.Asset(top_value, AssetIssuerPublicKey1);
       const transaction = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
       const offer = StellarSdk.Operation.manageOffer({
         selling: counter_asset_buy,
@@ -321,7 +324,7 @@ const chooseRenderItem_1 = ({ item }) => (
 
       const offerTx = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
         .addOperation(offer)
         .setTimeout(30)
@@ -425,7 +428,7 @@ const chooseRenderItem_1 = ({ item }) => (
         }
     } catch (error) {
         console.log("Error in get_stellar");
-        Showsuccesstoast(toast, "Please wait, account is updating....");
+        // Showsuccesstoast(toast, "Please wait, account is updating....");
         setshow(false);
         setreserveLoading(false);
     }
@@ -582,12 +585,18 @@ const chooseRenderItem_1 = ({ item }) => (
         setassetInfo(false)
         settop_value(back_data?.params?.tradeAssetType || chooseItemList[0].visible_0);
         settop_value_0(chooseItemList[0].visible_1)
+        setAssetIssuerPublicKey(back_data?.params?.tradeAssetIssuer ||chooseItemList[0].visible0Issuer)
+        setAssetIssuerPublicKey1(chooseItemList[0].visible1Issuer)
         setloading_trust_modal(false)
         setALL_STELLER_BALANCES(state?.assetData)
         setshow_trust_modal(false);
         setactiv(false)
         setshow_bal(true)
         await get_stellar(back_data?.params?.tradeAssetType || "native")
+        if(state.STELLAR_ADDRESS_STATUS===false)
+        {
+            setACTIVATION_MODAL_PROD(true)
+        }
       } catch (error) {
         console.log("=-====#", error)
       }
@@ -658,9 +667,11 @@ useEffect(() => {
   ).start();
 }, []);
 
-const reves_fun=async(fist_data,second_data)=>{
+const reves_fun=async(fist_data,second_data,Issuer1,Issuer2)=>{
   settop_value_0(fist_data)
   settop_value(second_data)
+  setAssetIssuerPublicKey1(Issuer1)
+  setAssetIssuerPublicKey(Issuer2)
   settop_domain(top_domain_0);
   settop_domain_0(top_domain)
   setSelectedValue(SelectedBaseValue)
@@ -668,12 +679,12 @@ const reves_fun=async(fist_data,second_data)=>{
 }
 
 
-const change_Trust_New = async (assetName) => {
+const change_Trust_New = async (assetName,domainIssuerPublicKey) => {
   setloading_trust_modal(true)
   try {
       console.log(":++++ Entered into trusting ++++:")
       const server = new StellarSdk.Server(STELLAR_URL.URL);
-      StellarSdk.Network.useTestNetwork();
+      StellarSdk.Network.usePublicNetwork();
       const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
       const transaction = new StellarSdk.TransactionBuilder(account, {
           fee: StellarSdk.BASE_FEE,
@@ -681,7 +692,7 @@ const change_Trust_New = async (assetName) => {
       })
           .addOperation(
               StellarSdk.Operation.changeTrust({
-                  asset: new StellarSdk.Asset(assetName, "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"),
+                  asset: new StellarSdk.Asset(assetName, domainIssuerPublicKey),
               })
           )
           .setTimeout(30)
@@ -748,6 +759,13 @@ const handleCloseModal = () => {
     }
   }, [Balance])
 
+  const ActivateModal = () => {
+    setACTIVATION_MODAL_PROD(false);
+    navigation.goBack()
+  };
+  
+  console.log("0---",AssetIssuerPublicKey)
+  console.log("1---",AssetIssuerPublicKey1)
   return (
    
    <>
@@ -771,7 +789,7 @@ const handleCloseModal = () => {
           <Text style={styles.pairNameText}>{top_value}</Text>
           <Text style={styles.pairNameText.pairDomainText}>{top_domain}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.pairSwapCon} onPress={()=>{settop_domain(top_domain_0),settop_value(top_value_0),settop_domain_0(top_domain),settop_value_0(top_value)}}>
+        <TouchableOpacity style={styles.pairSwapCon} onPress={()=>{settop_domain(top_domain_0),settop_value(top_value_0),settop_domain_0(top_domain),settop_value_0(top_value),setAssetIssuerPublicKey(AssetIssuerPublicKey1),setAssetIssuerPublicKey1(AssetIssuerPublicKey)}}>
           <Icon name="swap" type={"antDesign"} size={25} color={"#141C2B"} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.pairNameCon}>
@@ -796,10 +814,10 @@ const handleCloseModal = () => {
         </TouchableOpacity>
         <Text style={[styles.pairHeadingText, { marginTop: 13, }]}>Select Offer</Text>
         <View style={styles.offerSelctionCon}>
-          <TouchableOpacity style={[styles.offerSelctionBtn,{ backgroundColor: btnRoot===0?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("BUY"),setbtnRoot(0),reves_fun(top_value, top_value_0)}}>
+          <TouchableOpacity style={[styles.offerSelctionBtn,{ backgroundColor: btnRoot===0?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("BUY"),setbtnRoot(0),reves_fun(top_value, top_value_0, AssetIssuerPublicKey,AssetIssuerPublicKey1)}}>
             <Text style={styles.pairSelectionSubCon.pairSelectionName}>Buy</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.offerSelctionBtn, { backgroundColor: btnRoot===1?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("SELL"),setbtnRoot(1),reves_fun(top_value, top_value_0)}}>
+          <TouchableOpacity style={[styles.offerSelctionBtn, { backgroundColor: btnRoot===1?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("SELL"),setbtnRoot(1),reves_fun(top_value, top_value_0, AssetIssuerPublicKey,AssetIssuerPublicKey1)}}>
             <Text style={styles.pairSelectionSubCon.pairSelectionName}>Sell</Text>
           </TouchableOpacity>
           <Modal
@@ -836,7 +854,7 @@ const handleCloseModal = () => {
           <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"} style={{marginLeft:3}}/>
           </TouchableOpacity>
           {reserveLoading?<ActivityIndicator color={"green"}/>:
-          <Text style={styles.accountInfoCon.accountInfoText} numberOfLines={1}>{Balance ? Number(Balance).toFixed(5) : 0.0} </Text>}
+          <Text style={styles.accountInfoCon.accountInfoText} numberOfLines={1}>{Balance!=="Error" ? Number(Balance).toFixed(5) : 0.0} </Text>}
         </View>
       </View>
       {/* amount input */}
@@ -969,7 +987,7 @@ const handleCloseModal = () => {
                 <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={() => {setshow_trust_modal(false),navigation.goBack()}}>
                    <Text style={styles.Accounbtntext}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={()=>{change_Trust_New(usdcBidgeTrust?"USDC":tradeTrust?top_value_0:top_value)}}>
+                <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={()=>{change_Trust_New(usdcBidgeTrust?"USDC":tradeTrust?top_value_0:top_value,tradeTrust?AssetIssuerPublicKey1:AssetIssuerPublicKey)}}>
                    <Text style={styles.Accounbtntext}>{loading_trust_modal?<ActivityIndicator color={"green"}/>:"Trust"}</Text>
                 </TouchableOpacity>
               </View>
@@ -977,6 +995,14 @@ const handleCloseModal = () => {
           </View>
         </Modal>
 </ScrollView>
+        <WalletActivationComponent
+          isVisible={ACTIVATION_MODAL_PROD}
+          onClose={() => {ActivateModal}}
+          onActivate={ActivateModal}
+          navigation={navigation}
+          appTheme={true}
+          shouldNavigateBack={true}
+        />
         </KeyboardAvoidingView>
         </>
 

@@ -24,6 +24,7 @@ import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
 import { ethers } from 'ethers';
 import { OneTapContractAddress, OneTapUSDCAddress, RPC } from '../../../../constants';
 import Clipboard from '@react-native-clipboard/clipboard';
+import WalletActivationComponent from '../utils/WalletActivationComponent';
 const classic = ({ route }) => {
   const Focused=useIsFocused();
   const toast=useToast();
@@ -51,6 +52,8 @@ const classic = ({ route }) => {
   const [WALLETBALANCE,setWALLETBALANCE]=useState('')
   const [balanceLoading,setbalanceLoading]=useState(false);
   const [fianl_modal_text,setfianl_modal_text]=useState("Transaction Faild")
+  const [ACTIVATION_MODAL_PROD,setACTIVATION_MODAL_PROD]=useState(false);
+
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
@@ -68,8 +71,16 @@ const classic = ({ route }) => {
     isEmailVerified: false,
 });
 const [open, setOpen] = useState(false);
+const ActivateModal = () => {
+  setACTIVATION_MODAL_PROD(false);
+  navigation.goBack()
+};
   const fetchUSDCBalnce = async (addresses) => {
     try {
+      if(state.STELLAR_ADDRESS_STATUS===false)
+        {
+            setACTIVATION_MODAL_PROD(true)
+        }
       const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
       const usdtAddress = OneTapUSDCAddress.Address;
       const usdtAbi = [
@@ -272,8 +283,16 @@ const getOffersData = async () => {
     alert("success", "Copied to clipboard!");
   };
   return (
-    <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
+    <View style={{ backgroundColor: "#011434",flex:1}}>
      <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
+     <WalletActivationComponent
+        isVisible={ACTIVATION_MODAL_PROD}
+        onClose={() => {ActivateModal}}
+        onActivate={ActivateModal}
+        navigation={navigation}
+        appTheme={true}
+        shouldNavigateBack={true}
+      /> 
       <View style={styles.modalHeader}>
             <Text style={styles.textModal}>Import Assets on Trade Wallet</Text>
           </View>

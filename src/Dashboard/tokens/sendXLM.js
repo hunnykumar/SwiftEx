@@ -39,9 +39,10 @@ import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 import ErrorComponet from "../../utilities/ErrorComponet";
 import { GetStellarAvilabelBalance } from "../../utilities/StellarUtils";
 import StellarAccountReserve from "../exchange/crypto-exchange-front-end-main/src/utils/StellarReserveComponent";
+import WalletActivationComponent from "../exchange/crypto-exchange-front-end-main/src/utils/WalletActivationComponent";
 const StellarSdK = require('stellar-base');
 const StellarSdk = require('stellar-sdk');
-StellarSdk.Network.useTestNetwork();
+StellarSdk.Network.usePublicNetwork();
 const SendXLM = (props) => {
     const toast=useToast();
     const FOCUSED = useIsFocused()
@@ -55,6 +56,7 @@ const SendXLM = (props) => {
     const [steller_key_private, setsteller_key_private] = useState();
     const [disable, setdisable] = useState(false);
     const [ACTIVATION_MODAL, setACTIVATION_MODAL] = useState(false);
+    const [ACTIVATION_MODAL_PROD, setACTIVATION_MODAL_PROD] = useState(false);
     const [Message, setMessage] = useState("");
     const [Payment_loading,setPayment_loading]=useState(false);
     const cameraRef = useRef(null);
@@ -111,6 +113,7 @@ const SendXLM = (props) => {
         const token_1 = await AsyncStorageLib.getItem(REACT_APP_LOCAL_TOKEN);
         settoken(token_1)
         setACTIVATION_MODAL(false)
+        setACTIVATION_MODAL_PROD(false)
           setAddress()
           setAmount()
           setdisable(false)
@@ -173,8 +176,8 @@ const SendXLM = (props) => {
     }
 
     const get_stellar = async (steller_key) => {
-        StellarSdk.Network.useTestNetwork();
-        const server = new StellarSdk.Server(STELLAR_URL.URL);
+      StellarSdk.Network.usePublicNetwork();
+      const server = new StellarSdk.Server(STELLAR_URL.URL);
         server.loadAccount(steller_key)
             .then(account => {
                 account.balances.forEach(balance => {
@@ -197,10 +200,19 @@ const SendXLM = (props) => {
                 console.log('Error loading account:', error);
                 setLoading(false);
                 setdisable(true);
-                setACTIVATION_MODAL(true)
                 setMessage("Activation required for Stellar Account")
+                if(STELLAR_URL.USERTYPE!=="PROD"){
+                  setACTIVATION_MODAL(true)
+                }
+                else{
+                  setACTIVATION_MODAL_PROD(true);
+                }
             });
     }
+    const ActivateModal = () => {
+      setACTIVATION_MODAL_PROD(false);
+      navigation.goBack()
+    };
     const handleUsernameChange = (text) => {
         // Remove whitespace from the username
         const formattedUsername = text.replace(/\s/g, '');
@@ -223,27 +235,27 @@ const SendXLM = (props) => {
         async function send_XLM(sourceSecret, destinationPublic, amount) {
             Keyboard.dismiss();
             try {
-            Showsuccesstoast(toast,"Sending Payment");
-            const server = new StellarSdk.Server(STELLAR_URL.URL);
-            StellarSdk.Networks.TESTNET;
+              Showsuccesstoast(toast,"Sending Payment");
+              const server = new StellarSdk.Server(STELLAR_URL.URL);
+              StellarSdk.Network.PUBLIC;
               // Load the source account
               const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecret);
               const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());
           
               // Create the transaction
               const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
-                fee: await server.fetchBaseFee(),
-                networkPassphrase: StellarSdk.Networks.TESTNET,
+                  fee: await server.fetchBaseFee(),
+                  networkPassphrase: StellarSdk.Networks.PUBLIC,
               })
-                .addOperation(
+              .addOperation(
                   StellarSdk.Operation.payment({
-                    destination: destinationPublic,
-                    asset: StellarSdk.Asset.native(),
-                    amount: amount,
+                      destination: destinationPublic,
+                      asset: StellarSdk.Asset.native(),
+                      amount: amount,
                   })
-                )
-                .setTimeout(30)
-                .build();
+              )
+              .setTimeout(30)
+              .build();
           
               // Sign the transaction
               transaction.sign(sourceKeypair);
@@ -326,6 +338,14 @@ useEffect(() => {
           onClose={() => setErroVisible(false)}
           message="The scanned QR code contains an invalid public key. Please make sure you're scanning the correct QR code and try again."
         />
+         <WalletActivationComponent 
+       isVisible={ACTIVATION_MODAL_PROD}
+       onClose={() => {ActivateModal}}
+       onActivate={ActivateModal}
+       navigation={navigation}
+       appTheme={state.THEME.THEME}
+       shouldNavigateBack={true}
+      />
          <StellarAccountReserve
                 isVisible={reservedError}
                 onClose={handleCloseModal}

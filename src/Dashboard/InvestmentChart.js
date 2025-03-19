@@ -340,7 +340,7 @@ function InvestmentChart(setCurrentWallet) {
         const parsedData = JSON.parse(storedData);
         const matchedData = parsedData.filter(item => item.Ether_address === state.wallet.address);
         try {
-          StellarSdk.Network.useTestNetwork();
+          StellarSdk.Network.usePublicNetwork();
           const server = new StellarSdk.Server(STELLAR_URL.URL);
           server.loadAccount(matchedData[0].publicKey)
             .then(account => {
@@ -389,7 +389,7 @@ function InvestmentChart(setCurrentWallet) {
             get_stellar(publicKey);
             const secretKey_Key = matchedData[0].secretKey;
             setSecretKey(secretKey_Key)
-            StellarSdk.Network.useTestNetwork();
+            StellarSdk.Network.usePublicNetwork();
             const server = new StellarSdk.Server(STELLAR_URL.URL);
             server.loadAccount(matchedData[0].publicKey)
               .then(account => {
@@ -451,7 +451,7 @@ function InvestmentChart(setCurrentWallet) {
     try {
       console.log("<><", publicKey)
 
-      StellarSdk.Network.useTestNetwork();
+      StellarSdk.Network.usePublicNetwork();
       const server = new StellarSdk.Server(STELLAR_URL.URL);
       server.loadAccount(publicKey)
         .then(account => {

@@ -27,7 +27,7 @@ const Assets_manage = ({route}) => {
     const dispatch_ = useDispatch()
     const [modalContainer_menu, setmodalContainer_menu] = useState(false);
     const [TRUST_ASSET, setTRUST_ASSET] = useState(false);
-    const [Loading,setLoading]=useState(false);
+    const [Loading,setLoading]=useState(null);
     const [Loading_assets_bal,setLoading_assets_bal]=useState(false);
     const [assets, setassets] = useState([
         {
@@ -47,7 +47,7 @@ const Assets_manage = ({route}) => {
             //     const parsedData = JSON.parse(storedData);
             //     const matchedData = parsedData.filter(item => item.Ether_address === state.wallet.address);
             //     const publicKey = matchedData[0].publicKey;
-                StellarSdk.Network.useTestNetwork();
+                StellarSdk.Network.usePublicNetwork();
                 const server = new StellarSdk.Server(STELLAR_URL.URL);
                 server.loadAccount(state.STELLAR_PUBLICK_KEY)
                     .then(account => {
@@ -74,23 +74,23 @@ const Assets_manage = ({route}) => {
     }
 
     const AVL_ASSETS = [
-        { name: 'USDC', domain: "USDC (center.io)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" },
-        { name: 'Tanzania Shiling', domain: "TZS (connect.clickpesa.com)",img:CLICKPESA },
-        { name: 'BTC', domain: "BTC (ultracapital.xyz)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png" },
-        { name: 'ETH', domain: "ETH (ultracapital.xyz)",img:ethereum },
-        { name: 'EURC', domain: "EURC (circle.com)",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420" },
-        { name: 'yUSDC', domain: "yUSDC (ultracapital.xyz)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" },
-        { name: 'yXLM', domain: "yXLM (ultracapital.xyz)",img:stellar },
+        { name: 'USDC', domain: "USDC (center.io)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",issuerAddress:"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN" },
+        { name: 'BTC', domain: "BTC (ultracapital.xyz)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",issuerAddress:"GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM" },
+        { name: 'ETH', domain: "ETH (ultracapital.xyz)",img:ethereum,issuerAddress:"GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" },
+        { name: 'EURC', domain: "EURC (circle.com)",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420",issuerAddress:"GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2" },
+        { name: 'yUSDC', domain: "yUSDC (ultracapital.xyz)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",issuerAddress:"GDGTVWSM4MGS4T7Z6W4RPWOCHE2I6RDFCIFZGS3DOA63LWQTRNZNTTFF" },
+        { name: 'yXLM', domain: "yXLM (ultracapital.xyz)",img:stellar,issuerAddress:"GARDNV3Q7YGT4AKSDF25LT32YSCCW4EV22Y2TV3I2PU2MMXJTEDL5T55" },
+        // { name: 'Tanzania Shiling', domain: "TZS (connect.clickpesa.com)",img:CLICKPESA,issuerAddress:"" },
     ];
 
 
 
-    const changeTrust = async () => {
-        setLoading(true)
+    const changeTrust = async (domainName,domainIssuerAddress) => {
+        setLoading(domainName)
         try {
             console.log(":++++ Entered into trusting ++++:")
             const server = new StellarSdk.Server(STELLAR_URL.URL);
-            StellarSdk.Network.useTestNetwork();
+            StellarSdk.Network.usePublicNetwork();
             const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
             const transaction = new StellarSdk.TransactionBuilder(account, {
                 fee: StellarSdk.BASE_FEE,
@@ -98,7 +98,7 @@ const Assets_manage = ({route}) => {
             })
                 .addOperation(
                     StellarSdk.Operation.changeTrust({
-                        asset: new StellarSdk.Asset("USDC", "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"),
+                        asset: new StellarSdk.Asset(domainName, domainIssuerAddress),
                     })
                 )
                 .setTimeout(30)
@@ -107,7 +107,7 @@ const Assets_manage = ({route}) => {
             const result = await server.submitTransaction(transaction);
             console.log(`Trustline updated successfully`);
             Snackbar.show({
-                text: 'USDC added successfully',
+                text: `${domainName} added successfully`,
                 duration: Snackbar.LENGTH_SHORT,
                 backgroundColor:'green',
             });
@@ -116,7 +116,7 @@ const Assets_manage = ({route}) => {
                     console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);
                     account.balances.forEach(balance => {
                         setassets(account.balances)
-                        setLoading(false)
+                        setLoading(null)
                         dispatch_({
                             type: SET_ASSET_DATA,
                             payload: account.balances,
@@ -125,16 +125,16 @@ const Assets_manage = ({route}) => {
                 })
                 .catch(error => {
                     console.log('Error loading account:', error);
-                    setLoading(false)
+                    setLoading(null)
                     Snackbar.show({
-                        text: 'USDC failed to be added',
+                        text: `${domainName} failed to be added`,
                         duration: Snackbar.LENGTH_SHORT,
                         backgroundColor:'red',
                     });
                 });
         } catch (error) {
             console.error(`Error changing trust:`, error);
-            setLoading(false)
+            setLoading(null)
             Snackbar.show({
                 text: 'USDC failed to be added',
                 duration: Snackbar.LENGTH_SHORT,
@@ -165,7 +165,7 @@ const Assets_manage = ({route}) => {
                 <View style={styles.assets_con}>
                     {assets.map((list, index) => {
                         return (
-                            <TouchableOpacity style={styles.assets_card} onPress={() => { navigation.navigate("send_recive",{bala:list.balance,asset_name:list.asset_type === "native" ? "native" : list.asset_code=== "USDC"?"USDC":list.asset_code}) }}>
+                            <TouchableOpacity style={styles.assets_card} onPress={() => { navigation.navigate("send_recive",{bala:list.balance,assetIssuer:list.asset_type==="native"?"native":list?.asset_issuer,asset_name:list.asset_type === "native" ? "native" : list.asset_code=== "USDC"?"USDC":list.asset_code}) }}>
                                 <View style={{ flexDirection: "column" }}>
                                     <Text style={[styles.mode_text, { fontSize: 19, fontWeight: "300" }]}>{list.asset_type === "native" ? "Lumens" : list.asset_code}</Text>
                                     <Text style={[styles.mode_text, { fontSize: 16, fontWeight: "300", color: "silver" }]}>{list.asset_type === "native" ? "(stellar.org)" : list.asset_code==="USDC"?"(centre.io)":list.asset_code==="ETH"?"(ultracapital.xyz)":"(ultracapital.xyz)"}</Text>
@@ -207,7 +207,7 @@ const Assets_manage = ({route}) => {
                         return (
                             <View style={[styles.search_bar, { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }]}>
                                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                                {index==0||index==2||index==5||index==4?<Image source={{uri:list.img}} style={styles.modal_IMG} />:<Image source={list.img} style={styles.modal_IMG} />}
+                                {list.name==="ETH"||list.name==="yXLM"?<Image source={list.img} style={styles.modal_IMG} />:<Image source={{uri:list.img}} style={styles.modal_IMG} />}
                                     <View>
                                         <Text style={styles.modal_sub_heading}>{list.name}</Text>
                                         <Text style={[styles.modal_sub_heading, { fontSize: 10, color: "gray" }]}>{list.domain}</Text>
@@ -223,10 +223,10 @@ const Assets_manage = ({route}) => {
                                             style={{paddingHorizontal:"10%"}}
                                         />
                                     </View> :
-                                <TouchableOpacity style={styles.btn} disabled={Loading} onPress={()=>{
-                                    list.name==="USDC"?changeTrust():alert_message(list.name+' Added Soon.')
+                                <TouchableOpacity style={styles.btn} disabled={Loading===list.name} onPress={()=>{
+                                    changeTrust(list.name,list.issuerAddress)
                                 }}>
-                                    {Loading&&index==0?<ActivityIndicator color={"green"}/>:<Text style={[styles.modal_sub_heading]}>Add Asset</Text>}
+                                    {Loading===list.name?<ActivityIndicator color={"green"}/>:<Text style={[styles.modal_sub_heading]}>Add Asset</Text>}
                                 </TouchableOpacity>
                                 }
                             </View>

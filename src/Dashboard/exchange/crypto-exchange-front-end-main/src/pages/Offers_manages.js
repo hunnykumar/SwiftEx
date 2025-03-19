@@ -24,8 +24,9 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import BigNumber from 'bignumber.js';
+import { STELLAR_URL } from '../../../../constants';
 
-const STELLAR_NETWORK = StellarSdk.Networks.TESTNET;
+const STELLAR_NETWORK = StellarSdk.Networks.PUBLIC;
 
 const Offers_manages = () => {
   const state = useSelector((state) => state);
@@ -50,7 +51,7 @@ const Offers_manages = () => {
   const [lastOfferAmount,setlastOfferAmount]=useState('');
 
 
-  const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
+  const server = new StellarSdk.Server(STELLAR_URL.URL);
 
   useEffect(() => {
     setLoading(true);
@@ -93,7 +94,7 @@ const Offers_manages = () => {
   const fetchOffers = async () => {
     setLoading(true);
     try {
-      const apiUrl = `https://horizon-testnet.stellar.org/accounts/${state?.STELLAR_PUBLICK_KEY}/offers?limit=200&order=desc`;
+      const apiUrl = `${STELLAR_URL.URL}/accounts/${state?.STELLAR_PUBLICK_KEY}/offers?limit=200&order=desc`;
       const response = await axios.get(apiUrl);
       const fetchedOffers = response.data._embedded?.records || [];
 

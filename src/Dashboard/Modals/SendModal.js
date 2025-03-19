@@ -89,7 +89,7 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
     if (JSON.parse(walletType) == "Ethereum") {
       const settings = {
         apiKey: EthereumSecret.apiKey,
-        network: Network.ETH_SEPOLIA,
+        network: Network.ETH_MAINNET,
       };
 
       alchemyProvider = new Alchemy(settings);
@@ -111,7 +111,7 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
         maxFeePerGas: maxFee.maxFeePerGas,
         nonce: nonce,
         type: 2,
-        chainId: 5,
+        chainId: 1,
       };
       console.log(transaction);
 
@@ -147,7 +147,7 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
         );
         console.log(alchemy.core.getNetwork());
         const transaction = {
-          chainId: 80001,
+          chainId: 1,
           from: addressFrom,
           nonce: nonce,
           to: addressTo,

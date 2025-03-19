@@ -37,6 +37,7 @@ import WebView from "react-native-webview";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import Offers_manages from "./Offers_manages";
 import CustomOrderBook from "./stellar/CustomOrderBook";
+import { STELLAR_URL } from "../../../../constants";
 
 
 
@@ -271,7 +272,7 @@ export const OfferListViewHome = () => {
                                 <TouchableOpacity style={{ alignSelf: "flex-end", marginRight: 10, marginTop: 10 }} onPress={() => { setopen_details(false); }}>
                                   <Icon name={"close"} type={"antDesign"} size={28} color={"black"} />
                                 </TouchableOpacity>
-                                <WebView source={{ uri: `https://stellar.expert/explorer/testnet/tx/${id}`}} />
+                                <WebView source={{ uri: `${STELLAR_URL.EXPERT_URL}/tx/${id}`}} />
                               </View>
                             </Modal>
                           </View>
@@ -537,14 +538,16 @@ tabContainer: {
   flexDirection: "row",
   justifyContent: "space-between",
   paddingVertical: 0.1,
-  paddingHorizontal:10
+  paddingHorizontal:10,
+  width:wp(100)
 },
 tabButton: {
   paddingVertical: 12,
-  paddingHorizontal: 50,
+  width:wp(45),
   marginHorizontal: 5,
   borderRadius: 10,
   backgroundColor: "gray",
+  alignItems:"center"
 },
 activeTab: {
   backgroundColor: "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",

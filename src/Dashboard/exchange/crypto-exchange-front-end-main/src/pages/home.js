@@ -57,7 +57,7 @@ import useFirebaseCloudMessaging from "../../../../notifications/firebaseNotific
 import DeviceInfo from 'react-native-device-info';
 // import StellarSdk from '@stellar/stellar-sdk';
 const StellarSdk = require('stellar-sdk');
-StellarSdk.Network.useTestNetwork();
+StellarSdk.Network.usePublicNetwork();
 
 export const HomeView = ({ setPressed }) => {
   const { FCM_getToken, requestUserPermission } = useFirebaseCloudMessaging();
@@ -289,7 +289,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
           },
         })
         console.log(`Trustline updated successfully`);
-        StellarSdk.Network.useTestNetwork();
+        StellarSdk.Network.usePublicNetwork();
           server.loadAccount(state.STELLAR_PUBLICK_KEY)
             .then(account => {
               console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);
@@ -386,7 +386,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
     }
   };
   useEffect(()=>{
-    if(state.STELLAR_ADDRESS_STATUS===false)
+    if(state.STELLAR_ADDRESS_STATUS===false&&STELLAR_URL.USERTYPE!=="PROD")
     {
       active_account()
     }

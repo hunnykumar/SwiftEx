@@ -6,7 +6,7 @@ import { ethers } from "ethers";
 import { saveFile, encryptFile } from "../../../utilities/utilities";
 import { urls, RPC, WSS } from "../../../Dashboard/constants";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
-import { NativeModules } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 const StellarSdk = require('stellar-sdk');
 const { EthereumWallet } = NativeModules;
 
@@ -238,7 +238,7 @@ const getBalance = async (address) => {
 const getEthBalance = async (address) => {
   try {
     if (address) {
-      const provider = ethers.getDefaultProvider("sepolia");
+      const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
       const EthBalance = await provider.getBalance(address);
       const balanceInEth = ethers.utils.formatEther(EthBalance);
 
@@ -413,6 +413,7 @@ const Generate_Wallet = async (
 // };
 
 const Generate_Wallet2 = async () => {
+  if(Platform.OS==="android"){
   console.log("starting");
   // const wallet = ethers.Wallet.createRandom();
   // const words = wallet.mnemonic.phrase;
@@ -443,6 +444,38 @@ const Generate_Wallet2 = async () => {
       wallet: Wallet,
     };
   }
+}
+else{
+  console.log("starting");
+  const wallet = ethers.Wallet.createRandom();
+  const words = wallet.mnemonic.phrase;
+  // const entropy = ethers.utils.mnemonicToEntropy(words);// UNCOMMENT
+  // const xrpWallet = xrpl.Wallet.fromEntropy(entropy.split("x")[1]);// UNCOMMENT
+
+  let node = ethers.utils.HDNode.fromMnemonic(words);
+  let account1 = node.derivePath("m/44'/60'/0'/0/0");
+  const Wallet = {
+    address: account1.address,
+    privateKey: account1.privateKey,
+    mnemonic: account1.mnemonic.phrase,
+    xrp:{
+      // address:xrpWallet.classicAddress, // UNCOMMENT
+      // privateKey:xrpWallet.seed // UNCOMMENT
+      address: "000000000",
+      privateKey: "000000000",
+    },
+    walletType: "Multi-coin",
+  };
+  if (wallet) {
+    // AsyncStorage.setItem("Wallet", JSON.stringify(Wallet));
+
+    return {
+      status: "success",
+      message: "Wallet generation successful",
+      wallet: Wallet,
+    };
+  }
+}
 };
 
 async function ImportWallet(privatekey, mnemonic, name, wallets, user) {

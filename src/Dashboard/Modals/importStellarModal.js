@@ -5,6 +5,7 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -30,6 +31,7 @@ const ImportStellarModal = ({
   const state = useSelector((state) => state);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [secretkey, setsecretkey] = useState("");
+  const [loadingAccount, setloadingAccount] = useState(false);
   const navigation = useNavigation();
   const dispatch = useDispatch()
 
@@ -45,6 +47,7 @@ const add_wallet=()=>{
 const storeData = async (secretKey) => {
         
     try {
+      setloadingAccount(true);
       const data_1=await AsyncStorageLib.getItem('myDataKey');
       console.log('Data ',data_1);
       try {
@@ -57,10 +60,12 @@ const storeData = async (secretKey) => {
           };
           await storeData_marge(data.key1,data.key2,data.Ether_address)
       } catch (error) {
+        setloadingAccount(false);
         console.error('Error storing data:', error);
         alert('error', "Account Not import yet.");
       }
     } catch (error) {
+      setloadingAccount(false);
       console.error('Error clearing data:', error);
     }
    
@@ -100,7 +105,7 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
     alert('success', "Account Imported.");
     setWalletVisible(false);
     try {
-      StellarSdk.Network.useTestNetwork();
+      StellarSdk.Network.usePublicNetwork();
       const server = new StellarSdk.Server(STELLAR_URL.URL);
       server.loadAccount(publicKey)
         .then(account => {
@@ -120,6 +125,7 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
           })
           dispatch(getEthBalance(Ether_address))
           console.log("==Dispacthed+Waller+success==")
+          setloadingAccount(false);
           setTimeout(() => {
             navigation.navigate("Home");
           }, 1000);
@@ -138,14 +144,17 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
           })
           console.log("==Dispacthed+success==")
           console.log(':===ERROR +STELLER ACCOUNT NEED TO ACTIVATE===:');
+          setloadingAccount(false);
           setTimeout(() => {
             navigation.navigate("Home");
           }, 1000);
         });
     } catch (error) {
+      setloadingAccount(false);
       console.log("Error in +get_stellar")
     }
   } catch (error) {
+    setloadingAccount(false);
     console.error('Error saving +payout:', error);
     throw error;
   }
@@ -219,8 +228,8 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
               }}
             />
           </View>
-          <TouchableOpacity style={style.btn} onPress={()=>{add_wallet()}}>
-            <Text style={{ color: "white" }}>Import</Text>
+          <TouchableOpacity style={[style.btn,{backgroundColor:loadingAccount?"gray":"#4CA6EA"}]} disabled={loadingAccount} onPress={()=>{add_wallet()}}>
+            {loadingAccount?<ActivityIndicator color={"#4CA6EA"} size={"small"}/>:<Text style={{ color: "white" }}>Import</Text>}
           </TouchableOpacity>
         </View>
       </Modal>

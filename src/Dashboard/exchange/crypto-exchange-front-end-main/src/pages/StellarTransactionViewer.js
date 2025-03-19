@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Linking, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
+import { STELLAR_URL } from '../../../../constants';
 
 const StellarTransactionViewer = ({ route }) => {
     const navigation = useNavigation();
@@ -22,7 +23,7 @@ const StellarTransactionViewer = ({ route }) => {
         <View style={styles.container}>
             <Exchange_screen_header title="Transactions" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
             <WebView
-                source={{ uri: `https://stellar.expert/explorer/testnet/tx/${transactionPath}` }}
+                source={{ uri: `${STELLAR_URL.EXPERT_URL}/tx/${transactionPath}` }}
                 style={styles.webview}
                 onLoad={() => setLoading(false)}
                 onError={() => {
