@@ -82,29 +82,30 @@ const send_recive = ({route}) => {
       };
 
     const get_data=async()=>{
-        setLoading(true);
-            setqrvalue(state?.STELLAR_PUBLICK_KEY)
-            if(asset_name==="native")
-            {
-              GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
-                setresStellarbal(result?.availableBalance)
-                setLoading(false);
-              }).catch(error => {
-                console.log('Error loading account:', error);
-                setLoading(false);
-              });
-            }
-            if(asset_name==="USDC"||asset_name==="ETH"||asset_name==="BTC")
-            {
-              GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,asset_name).then((result) => {
-                console.log("-------jhdkjas",result)
-                setresStellarbal(result?.availableBalance)
-                setLoading(false);
-              }).catch(error => {
-                console.log('Error loading account:', error);
-                setLoading(false);
-              });
-            }
+      setresStellarbal(0.00)
+        // setLoading(true);
+            setqrvalue(state?.wallet?.xrp?.address)
+            // if(asset_name==="native")
+            // {
+            //   GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
+            //     setresStellarbal(result?.availableBalance)
+            //     setLoading(false);
+            //   }).catch(error => {
+            //     console.log('Error loading account:', error);
+            //     setLoading(false);
+            //   });
+            // }
+            // if(asset_name==="USDC"||asset_name==="ETH"||asset_name==="BTC")
+            // {
+            //   GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,asset_name).then((result) => {
+            //     console.log("-------jhdkjas",result)
+            //     setresStellarbal(result?.availableBalance)
+            //     setLoading(false);
+            //   }).catch(error => {
+            //     console.log('Error loading account:', error);
+            //     setLoading(false);
+            //   });
+            // }
     }
     function validateStellarAddress(address) {
       if (address.length !== 56 || address[0] !== 'G') {
@@ -293,7 +294,7 @@ const send_recive = ({route}) => {
                             />
                             </TouchableOpacity>
                             </View>
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10 }]}>Available: {asset_name==="native"||asset_name==="USDC"?!resStellarbal?<ActivityIndicator/>:resStellarbal:resStellarbal}</Text>
+                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10 }]}>Available: {resStellarbal}</Text>
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Amount</Text>
                             <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="number-pad" style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_amount(value) }} />
                             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Transaction memo</Text>

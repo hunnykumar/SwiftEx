@@ -29,6 +29,7 @@ import {
 import Bnbimage from "../../../assets/bnb-icon2_2x.png";
 import Etherimage from "../../../assets/ethereum.png";
 import stellar from "../../../assets/Stellar_(XLM).png";
+import dydxImg from "../../../assets/dydx.jpeg";
 import Xrpimage from "../../../assets/xrp.png";
 import Maticimage from "../../../assets/matic.png";
 import { useNavigation } from "@react-navigation/native";
@@ -132,8 +133,8 @@ const ChooseTokens = ({ setModalVisible }) => {
             }}
           >
             <View style={style.flatView}>
-              <Image source={stellar} style={style.img} />
-              <Text style={{ marginHorizontal: wp(4),color:state.THEME.THEME===false?"black":"#E0E0E0" }}>XLM</Text>
+              <Image source={dydxImg} style={style.img} />
+              <Text style={{ marginHorizontal: wp(4),color:state.THEME.THEME===false?"black":"#E0E0E0" }}>DYDX</Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity

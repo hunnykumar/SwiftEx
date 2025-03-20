@@ -308,10 +308,17 @@ const CheckNewWalletMnemonic = ({
                               AsyncStorageLib.setItem("currentWallet",Wallet?.accountName)
                               dispatch(
                                 setCurrentWallet(
-                                  Wallet?.address,
-                                  Wallet?.accountName,
-                                  Wallet?.privateKey,
-                                  Wallet?.mnemonic ? Wallet.mnemonic : ""
+                                  Wallet.address,
+                                  Wallet.accountName,
+                                  Wallet.privateKey,
+                                  Wallet.mnemonic,
+                                  Wallet.xrp.address
+                                    ? Wallet.xrp.address
+                                    : "",
+                                  Wallet.xrp.privateKey
+                                    ? Wallet.xrp.privateKey
+                                    : "",
+                                    (walletType = "Multi-coin")
                                 )
                               )
                               setTimeout(() => {

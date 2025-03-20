@@ -423,14 +423,14 @@ const Generate_Wallet2 = async () => {
   // let account1 = node.derivePath("m/44'/60'/0'/0/0");
   const result = await EthereumWallet.createWallet();
   const Wallet = {
-    address: result.address,
-    privateKey: result.privateKey,
+    address: result.ethAddress,
+    privateKey: result.ethPrivateKey,
     mnemonic: result.mnemonic,
     xrp:{
       // address:xrpWallet.classicAddress, // UNCOMMENT
       // privateKey:xrpWallet.seed // UNCOMMENT
-      address: "000000000",
-      privateKey: "000000000",
+      address: result.starkAddress,
+      privateKey: result.starkPrivateKey,
     },
     walletType: "Multi-coin",
   };

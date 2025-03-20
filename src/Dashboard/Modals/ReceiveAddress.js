@@ -23,6 +23,7 @@ import Etherimage from "../../../assets/ethereum.png";
 import maticImage from "../../../assets/matic.png";
 import xrpImage from "../../../assets/xrp.png";
 import stellar from "../../../assets/Stellar_(XLM).png";
+import dydxImg from "../../../assets/dydx.jpeg";
 import Modal from "react-native-modal";
 import QRCode from "react-native-qrcode-svg";
 import  Clipboard from "@react-native-clipboard/clipboard";
@@ -62,8 +63,9 @@ const RecieveAddress = ({ modalVisible, setModalVisible, iconType }) => {
         //     const parsedData = JSON.parse(storedData);
         //     const matchedData = parsedData.filter(item => item.Ether_address === state.wallet.address);
         //     const publicKey = matchedData[0].publicKey;
-            setStellar_add(state.STELLAR_PUBLICK_KEY)
-    }
+        setStellar_add(state?.wallet?.xrp?.address)
+        console.log("---",state?.wallet?.xrp)
+      }
 
   let EtherLeftContent = (props) => (
     <Avatar.Image {...props} source={Etherimage} size={50} />
@@ -83,7 +85,7 @@ const RecieveAddress = ({ modalVisible, setModalVisible, iconType }) => {
   const onShare = async () => {
     try {
       const result = await Share.share({
-        message: `${iconType==="XLM"?Stellar_add:state.wallet.address}`,//TO-DO
+        message: `${iconType==="DYDX"?Stellar_add:state.wallet.address}`,//TO-DO
       });
       if (result.action === Share.sharedAction) {
         if (result.activityType) {
@@ -101,7 +103,7 @@ const RecieveAddress = ({ modalVisible, setModalVisible, iconType }) => {
 
   const copyToClipboard = () => {
     Clipboard.setString(
-      iconType==="XLM"?Stellar_add:iconType === "Xrp" && state.wallet.xrp
+      iconType==="DYDX"?Stellar_add:iconType === "Xrp" && state.wallet.xrp
         ? state.wallet.xrp.address
         : state.wallet.address
     );
@@ -514,7 +516,7 @@ const RecieveAddress = ({ modalVisible, setModalVisible, iconType }) => {
             <Image
               style={{ width: wp(14.3), height: hp(7) }}
               source={
-                iconType === "BNB"? Bnbimage: iconType === "ETH"? Etherimage: iconType === "Xrp"? xrpImage: iconType==="XLM"?stellar:maticImage
+                iconType === "BNB"? Bnbimage: iconType === "ETH"? Etherimage: iconType === "Xrp"? xrpImage: iconType==="DYDX"?dydxImg:maticImage
               }
             />
 
@@ -527,7 +529,7 @@ const RecieveAddress = ({ modalVisible, setModalVisible, iconType }) => {
           <View style={{ alignSelf: "center", marginTop: hp(1) }}>
             <QRCode
               //QR code value
-              value={iconType==="XLM"?Stellar_add:qrvalue ? qrvalue : "NA"}
+              value={iconType==="DYDX"?Stellar_add:qrvalue ? qrvalue : "NA"}
               //size of QR Code
               size={250}
               //Color of the QR Code (Optional)
@@ -549,7 +551,7 @@ const RecieveAddress = ({ modalVisible, setModalVisible, iconType }) => {
             />
           </View>
           <Text style={[style.addressTxt,{color:state.THEME.THEME===false?"black":"#fff"}]}>
-            {iconType==="XLM"?Stellar_add:WalletAddress ? WalletAddress :""}
+            {iconType==="DYDX"?Stellar_add:WalletAddress ? WalletAddress :""}
           </Text>
         </View>
 

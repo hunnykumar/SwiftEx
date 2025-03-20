@@ -31,7 +31,13 @@ const Assets_manage = ({route}) => {
     const [Loading_assets_bal,setLoading_assets_bal]=useState(false);
     const [assets, setassets] = useState([
         {
-            "asset_type": "native",
+            "asset_code": "DYDX",
+            "balance": "0.0000000",
+            "buying_liabilities": "0.0000000",
+            "selling_liabilities": "0.0000000",
+        },
+        {
+            "asset_code": "USDC",
             "balance": "0.0000000",
             "buying_liabilities": "0.0000000",
             "selling_liabilities": "0.0000000",
@@ -51,8 +57,8 @@ const Assets_manage = ({route}) => {
                 const server = new StellarSdk.Server(STELLAR_URL.URL);
                 server.loadAccount(state.STELLAR_PUBLICK_KEY)
                     .then(account => {
-                        setassets([])
-                        setassets(account.balances)
+                        // setassets([])
+                        // setassets(account.balances)
                         dispatch_({
                             type: SET_ASSET_DATA,
                             payload: account.balances,
@@ -115,7 +121,7 @@ const Assets_manage = ({route}) => {
                 .then(account => {
                     console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);
                     account.balances.forEach(balance => {
-                        setassets(account.balances)
+                        // setassets(account.balances)
                         setLoading(false)
                         dispatch_({
                             type: SET_ASSET_DATA,
@@ -168,7 +174,7 @@ const Assets_manage = ({route}) => {
                             <TouchableOpacity style={styles.assets_card} onPress={() => { navigation.navigate("send_recive",{bala:list.balance,asset_name:list.asset_type === "native" ? "native" : list.asset_code=== "USDC"?"USDC":list.asset_code}) }}>
                                 <View style={{ flexDirection: "column" }}>
                                     <Text style={[styles.mode_text, { fontSize: 19, fontWeight: "300" }]}>{list.asset_type === "native" ? "Lumens" : list.asset_code}</Text>
-                                    <Text style={[styles.mode_text, { fontSize: 16, fontWeight: "300", color: "silver" }]}>{list.asset_type === "native" ? "(stellar.org)" : list.asset_code==="USDC"?"(centre.io)":list.asset_code==="ETH"?"(ultracapital.xyz)":"(ultracapital.xyz)"}</Text>
+                                    {/* <Text style={[styles.mode_text, { fontSize: 16, fontWeight: "300", color: "silver" }]}>{list.asset_type === "native" ? "(stellar.org)" : list.asset_code==="USDC"?"(centre.io)":list.asset_code==="ETH"?"(ultracapital.xyz)":"(ultracapital.xyz)"}</Text> */}
                                 </View>
                                 {/* <ScrollView style={{height:hp52)}}> */}
 

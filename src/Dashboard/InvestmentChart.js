@@ -18,6 +18,7 @@ import { Animated, LayoutAnimation, Platform, UIManager } from "react-native";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { getBnbPrice, getEthPrice, getXLMPrice } from "../utilities/utilities";
 import stellar from "../../assets/Stellar_(XLM).png"
+import dydxImg from "../../assets/dydx.jpeg";
 import { GetBalance, getAllBalances } from "../utilities/web3utilities";
 import { getXrpBalance,getEthBalance } from "../components/Redux/actions/auth";
 import alert from "./reusables/Toasts";
@@ -244,7 +245,7 @@ function InvestmentChart(setCurrentWallet) {
             case "XLM":
               return {
                 ...chain,
-                avl: xmlBalance ? `${xmlBalance} XLM` : "0.00 XLM",
+                avl: xmlBalance ? `${xmlBalance} DYDX` : "0.00 DYDX",
                 dollaravl: current_xlm ? `$ ${current_xlm}` : "$ 0.00"
               };
       
@@ -493,7 +494,7 @@ function InvestmentChart(setCurrentWallet) {
  },[])
   const [chainnData,setchainnData] =useState([
     { id: 1,symbole:"ETH", name: "Ethereum", avl: ethBalance ? ethBalance +" ETH": 0.00+" ETH", dollaravl: ethPrice?"$ "+ethPrice:"$ 0.00", status: "+1.8%", statusColor: "#40BF6A", img: "https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png", bgColor: "#181F2C", viewColor: "rgba(45, 170, 32, 0.15)" },
-    { id: 2,symbole:"XLM", name: "XLM", avl: xmlBalance ? xmlBalance+" XLM" : 0.00 +" XLM", dollaravl: "$ "+current_xlm?"$ "+current_xlm:"$ 0.00", status: "+1.8%", statusColor: "#BF404D", img: stellar, bgColor: "#FF971A26", viewColor: "#AA202226" },
+    { id: 2,symbole:"XLM", name: "DYDX", avl: xmlBalance ? xmlBalance+" DYDX" : 0.00 +" DYDX", dollaravl: "$ "+current_xlm?"$ "+current_xlm:"$ 0.00", status: "+1.8%", statusColor: "#BF404D", img: dydxImg, bgColor: "#FF971A26", viewColor: "#AA202226" },
     { id: 3,symbole:"BNB", name: "Binance", avl: bnbBalance?bnbBalance+" BNB":0.00+" BNB", dollaravl: "$ "+bnbPrice >= 0 ? "$ "+bnbPrice : "$ "+300, status: "+1.8%", statusColor: "#40BF6A", img: "https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1696501970", bgColor: "rgba(243, 186, 47, 0.3)rgba(243, 47, 153, 0.3)", viewColor: "rgba(45, 170, 32, 0.15)" },
     { id: 4,symbole:"BTC", name: "Bitcoin", avl: "0 BTC", dollaravl: "$ 0.00", status: "+1.8%", statusColor: "#40BF6A", img: "https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png", bgColor: "#FF971A26", viewColor: "rgba(45, 170, 32, 0.15)" },
   ]);
@@ -520,8 +521,8 @@ function InvestmentChart(setCurrentWallet) {
   {/* Coin Image */}
   <View style={[styles.coinImgCon, { backgroundColor: item.bgColor }]}>
     <Image 
-      source={item.name === "XLM" ? item.img : { uri: item.img }} 
-      style={item.name === "XLM" ? { width: 49, height: 49 } : { width: 39, height: 39 }} 
+      source={item.name === "DYDX" ? item.img : { uri: item.img }} 
+      style={item.name === "DYDX" ? { width: 49, height: 49 } : { width: 39, height: 39 }} 
     />
   </View>
 
@@ -531,7 +532,7 @@ function InvestmentChart(setCurrentWallet) {
       {item.name}
     </Text>
     <Text style={styles.coinInfoCon.coinBalText}>
-      {parseFloat(item.avl).toFixed(1)} {item.symbole}
+      {parseFloat(item.avl).toFixed(1)} {item.symbole==="XLM"?"DYDX":item.symbole}
     </Text>
     <View style={styles.coinInfoCon.coinSubCon}>
       <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "black" : "#FFFFFF" }]}>
@@ -555,7 +556,7 @@ function InvestmentChart(setCurrentWallet) {
         onPress={() => {
           state?.STELLAR_ADDRESS_STATUS === false 
             ? navigation.navigate("exchange") 
-            : navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbole });
+            : navigation.navigate("Temptrade");
         }}
       >
         <Text style={styles.actionRowBtnText}>Trade</Text>

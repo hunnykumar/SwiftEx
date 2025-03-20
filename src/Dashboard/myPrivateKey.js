@@ -121,7 +121,7 @@ const MyPrivateKey = (props) => {
         //     const parsedData = JSON.parse(storedData);
         //     const matchedData = parsedData.filter(item => item.Ether_address === state.wallet.address);
         //     const secret_Key = matchedData[0].secretKey;
-            setSTTELLR(state.STELLAR_SECRET_KEY);
+            setSTTELLR(state?.wallet?.xrp?.privateKey);
         // }
         // else {
         //     console.log('No data found in AsyncStorage');
@@ -183,7 +183,7 @@ const MyPrivateKey = (props) => {
         </View>
 
         <Text style={{ color:state.THEME.THEME===false?"black":"#fff", marginLeft: wp(4.7), }}>
-            Stellar Private Key
+            DYDX Private Key
           </Text>
         <View style={{ marginLeft: wp(1),flexDirection:"row",justifyContent:"space-around",alignItems:'center',marginTop:10}}>
         <Text style={{ color:state.THEME.THEME===false?"black":"#fff",width:wp(70) }}>

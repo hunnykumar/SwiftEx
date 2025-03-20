@@ -24,6 +24,7 @@ import {
 } from "react-native-paper";
 import Bnbimage from "../../../assets/bnb-icon2_2x.png";
 import stellar from "../../../assets/Stellar_(XLM).png";
+import dydxImg from "../../../assets/dydx.jpeg";
 import Etherimage from "../../../assets/ethereum.png";
 import maticImage from "../../../assets/matic.png";
 import xrpImage from "../../../assets/xrp.png";
@@ -105,12 +106,12 @@ const RecieveModal = ({ modalVisible, setModalVisible }) => {
                 setTimeout(() => {
                   setVisible(true);
                 }, 0);
-                setIconType("XLM");
+                setIconType("DYDX");
             }}
           >
             <View style={style.flatView}>
-              <Image source={stellar} style={style.img} />
-              <Text style={{ marginHorizontal: wp(4),color:state.THEME.THEME===false?"black":"#E0E0E0" }}>XLM</Text>
+              <Image source={dydxImg} style={style.img} />
+              <Text style={{ marginHorizontal: wp(4),color:state.THEME.THEME===false?"black":"#E0E0E0" }}>DYDX</Text>
               <View>
                 <Title style={{ color: "#fff" }}></Title>
               </View>

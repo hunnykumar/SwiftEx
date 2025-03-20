@@ -564,13 +564,14 @@ const Offer_condition=(data,para)=>{
       walletType === "Multi-coin"
     ) {
       // setOpen(true);
-      navigation.navigate("newOffer_modal",{
-        user:{profile},
-                    open:{open},
-                    // onCrossPress={()=>{setOpen(false)}},
-                    // setOpen:{setOpen}
-                    getOffersData:{getOffersData}
-      });
+      // navigation.navigate("newOffer_modal",{
+      //   user:{profile},
+      //               open:{open},
+      //               // onCrossPress={()=>{setOpen(false)}},
+      //               // setOpen:{setOpen}
+      //               getOffersData:{getOffersData}
+      // });
+      navigation.navigate("Temptrade")
     } else {
       
       alert('error',"Only Ethereum wallet are supported");
@@ -874,13 +875,13 @@ useEffect(() => {
                   </View> 
 
                   <View style={{marginVertical:hp(1),borderBottomColor:"gray",borderColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",borderWidth:2}}>
-                    <Text style={styles.textColor}>Stellar Public Key</Text>
+                    <Text style={styles.textColor}>DYDX Public Key</Text>
                     <View style={{flexDirection:"row"}}>
                     {loading&&!steller_key?<View style={{width: wp(70)}}>
                            <Exchange_single_loading/>
                         </View>:
                       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 2.9, borderRadius: 5 }}>
-                        <Text style={[styles.textColor, styles.width_scrroll]}>{steller_key}</Text>
+                        <Text style={[styles.textColor, styles.width_scrroll]}>{state?.wallet?.xrp?.address}</Text>
                       </ScrollView>}
                       <TouchableOpacity onPress={() => { copyToClipboard(steller_key) }}>
                         <Icon
