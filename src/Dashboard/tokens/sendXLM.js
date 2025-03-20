@@ -197,8 +197,9 @@ const SendXLM = (props) => {
                 console.log('Error loading account:', error);
                 setLoading(false);
                 setdisable(true);
-                setACTIVATION_MODAL(true)
-                setMessage("Activation required for Stellar Account")
+                setBalance(0.00)
+                // setACTIVATION_MODAL(true)
+                // setMessage("Activation required for Stellar Account")
             });
     }
     const handleUsernameChange = (text) => {
@@ -365,7 +366,7 @@ useEffect(() => {
                         {Loading === true ? <ActivityIndicator color={"green"} style={{ marginTop: 15, marginLeft: 5 }} /> : <></>}
                     </View>
                 </View>
-          <TouchableOpacity style={style.extraInfoCon} onPress={() => {setreservedError(!reservedError)}}>
+          {/* <TouchableOpacity style={style.extraInfoCon} onPress={() => {setreservedError(!reservedError)}}>
             <Icon
               name={"information-outline"}
               type={"materialCommunity"}
@@ -373,7 +374,7 @@ useEffect(() => {
               size={21}
             />
             <Text style={[{ color: state.THEME.THEME === false ? "black" : "#fff" }]}> {!reservedBalance?"":reservedBalance+" XLM are reserved"}</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
                 <View style={style.inputView}>
                     <TextInput
                         value={amount}

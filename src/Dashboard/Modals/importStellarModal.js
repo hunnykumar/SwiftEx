@@ -199,7 +199,7 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
       >
         <View style={style.Body}>
           <Icon type={'entypo'} name='cross' color={'gray'} size={24} style={style.crossIcon} onPress={onCrossPress} />
-          <Text style={style.coinText}>Stellar wallet</Text>
+          <Text style={style.coinText}>DYDX wallet</Text>
           <View style={style.inputView}>
             <TouchableOpacity
               onPress={async () => {

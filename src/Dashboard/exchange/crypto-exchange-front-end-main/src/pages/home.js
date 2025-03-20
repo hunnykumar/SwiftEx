@@ -388,7 +388,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
   useEffect(()=>{
     if(state.STELLAR_ADDRESS_STATUS===false)
     {
-      active_account()
+      // active_account()
     }
     getAccountDetails();
     getData_new_Kyc()
@@ -883,7 +883,7 @@ useEffect(() => {
                       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 2.9, borderRadius: 5 }}>
                         <Text style={[styles.textColor, styles.width_scrroll]}>{state?.wallet?.xrp?.address}</Text>
                       </ScrollView>}
-                      <TouchableOpacity onPress={() => { copyToClipboard(steller_key) }}>
+                      <TouchableOpacity onPress={() => { copyToClipboard(state?.wallet?.xrp?.address) }}>
                         <Icon
                           name={"content-copy"}
                           type={"materialCommunity"}

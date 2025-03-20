@@ -541,7 +541,7 @@ tabContainer: {
 },
 tabButton: {
   paddingVertical: 12,
-  paddingHorizontal: 50,
+  paddingHorizontal: 40,
   marginHorizontal: 5,
   borderRadius: 10,
   backgroundColor: "gray",

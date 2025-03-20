@@ -545,7 +545,7 @@ function InvestmentChart(setCurrentWallet) {
   
     {/* Center: Coin Chart */}
     <View style={{ flex: 1, alignItems: "center" }}>
-      <ResponsiveLineChart width={89} height={70} symbol={item.symbole} />
+      <ResponsiveLineChart width={89} height={70} symbol={item.symbole==="XLM"?"DYDX":item.symbole} />
     </View>
   
     {/* Right: Action Buttons */}

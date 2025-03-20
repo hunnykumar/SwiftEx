@@ -20,7 +20,7 @@ import { useSelector } from "react-redux";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { LineChart } from "react-native-gifted-charts";
 import Ether_image from "../../assets/ethereum.png";
-import Stellar_image from "../../assets/Stellar_(XLM).png";
+import Stellar_image from "../../assets/dydx.jpeg";
 import Bnb_image from "../../assets/bnb-icon2_2x.png";
 
 
@@ -76,7 +76,7 @@ const Asset_info = ({ route }) => {
                 seticonType("");
                 setTimeout(() => {
                     handle_asset_call(asset_type)
-                getChart(asset_type)
+                getChart(asset_type==="XLM"?"DYDX":asset_type)
                 }, 500);
             } catch (error) {
                 console.log("error fetch chart",error)
@@ -114,7 +114,7 @@ const Asset_info = ({ route }) => {
             redirect: "follow"
         };
 
-        fetch("https://api.coingecko.com/api/v3/coins/stellar", requestOptions)
+        fetch("https://api.coingecko.com/api/v3/coins/dydx", requestOptions)
             .then((response) => response.json())
             .then((result) => {
                 let temp=[
@@ -236,11 +236,7 @@ const Asset_info = ({ route }) => {
             console.log(err)
         }
 
-        navigation.navigate("newOffer_modal", {
-            user: { Profile },
-            open: { open },
-            getOffersData: { getOffersData }
-        });
+        navigation.navigate("Temptrade");
 
     }
 
@@ -259,11 +255,11 @@ const Asset_info = ({ route }) => {
       },[chart])
     return (
         <>
-        <Wallet_screen_header title={asset_type} onLeftIconPress={() => navigation.goBack()} />
+        <Wallet_screen_header title={asset_type==="XLM"?"DYDX":asset_type} onLeftIconPress={() => navigation.goBack()} />
             <View style={[styles.main_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
                <View style={{flexDirection:"row",paddingHorizontal:wp(4),paddingVertical:hp(0.3),alignItems:"center"}}>
                <Image source={asset_type==="ETH"?Ether_image:asset_type==="XLM"?Stellar_image:Bnb_image} style={{width:wp(6.5),height:hp(3)}}/>
-               <Text style={[styles.chart_top,{color: state.THEME.THEME === false ? "black" : "#fff",fontSize:13,marginHorizontal:hp(0.3)}]}>{asset_type==="ETH"?"Ethereum":asset_type==="XLM"?"Lumens":"Binance"}</Text>
+               <Text style={[styles.chart_top,{color: state.THEME.THEME === false ? "black" : "#fff",fontSize:13,marginHorizontal:hp(0.3)}]}>{asset_type==="ETH"?"Ethereum":asset_type==="XLM"?"DYDX":"Binance"}</Text>
                </View>
                 <Text style={[styles.chart_top,{color: state.THEME.THEME === false ? "black" : "#fff",marginVertical: hp(-0.5),}]}>$ {!points_data?0.00:points_data} </Text>
                 <Text style={[styles.chart_top,{color: state.THEME.THEME === false ? "black" : "#fff",fontSize:13}]}>{points_data_time} </Text>
@@ -383,7 +379,7 @@ const Asset_info = ({ route }) => {
                     </TouchableOpacity>
                     <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_cons} onPress={() => {
                         setVisible(true);
-                        seticonType(asset_type);
+                        seticonType(asset_type==="XLM"?"DYDX":asset_type);
                     }}>
                         <View style={styles.opt_icon}>
                         <Icon type={'materialCommunity'} name='arrow-bottom-left' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"}  />
@@ -420,7 +416,7 @@ const Asset_info = ({ route }) => {
                             return (
                                 <>
                                     <View style={[styles.opt_other_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-                                    <Text style={[styles.opt_market_head, { marginTop: hp(1),color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type} price (24H)</Text>
+                                    <Text style={[styles.opt_market_head, { marginTop: hp(1),color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type==="XLM"?"DYDX":asset_type} price (24H)</Text>
                                         <View style={{ padding: 4 }}>
                                         <View style={{ flexDirection: "row",alignItems:"center" }}>
                                             <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 14, color: "gray",width:wp(35) }]}>Price</Text>

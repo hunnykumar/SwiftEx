@@ -24,10 +24,10 @@ import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 const Payout = () => {
   const state = useSelector((state) => state);
   const Assets = [
-    { name: "USDC",by:"centre.io", address: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",dis_ass:"GA5...KZVN",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" },
-    { name: "ETH",by:"ultracapital.xyz", address: "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2", dis_ass:"GDH...NPP2",img:"https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png"},
-    { name: "BTC",by:"ultracapital.xyz", address: "GDYSPBVZHPQTYMGSYNOHRZQNLB3ZWFVQ2F7EP7YBOLRGD42XIC3QUX5G",dis_ass:"GDY...UX5G",img:"https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png" },
-    { name: "EURC",by:"circle.com", address: "GDYSPBVZHPQTYMGSYNOHRZQNLB3ZWFVQ2F7EP7YBOLRGD42XIC3QUX5G",dis_ass:"GDY...UX5G",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420" }
+    { name: "USDC",by:"circle.com", address: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",dis_ass:"GA5...KZVN",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" },
+    // { name: "ETH",by:"ultracapital.xyz", address: "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2", dis_ass:"GDH...NPP2",img:"https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png"},
+    // { name: "BTC",by:"ultracapital.xyz", address: "GDYSPBVZHPQTYMGSYNOHRZQNLB3ZWFVQ2F7EP7YBOLRGD42XIC3QUX5G",dis_ass:"GDY...UX5G",img:"https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png" },
+    // { name: "EURC",by:"circle.com", address: "GDYSPBVZHPQTYMGSYNOHRZQNLB3ZWFVQ2F7EP7YBOLRGD42XIC3QUX5G",dis_ass:"GDY...UX5G",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420" }
   ];
   const Anchors=[
     // {name:"SwiftEx",by:"centre.io", address: state.wallet.address,image: require('../../../../../../assets/darkBlue.png'), seps: ["SEP 6", "SEP 12", "SEP 24"]},

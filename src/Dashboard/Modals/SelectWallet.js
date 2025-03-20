@@ -29,7 +29,7 @@ import Bnbimage from "../../../assets/bnb-icon2_2x.png";
 import Etherimage from "../../../assets/ethereum.png";
 import Xrpimage from "../../../assets/xrp.png";
 import Maticimage from "../../../assets/matic.png";
-import stellarImg from "../../../assets/Stellar_(XLM).png"
+import stellarImg from "../../../assets/dydx.jpeg"
 import Modal from "react-native-modal";
 import ImportBinanceWallet from "./importBinance";
 import ImportEthereumModal from "./importEthereumModal";
@@ -180,7 +180,7 @@ const SelectWallet = ({ props, visible, setVisible, setModalVisible }) => {
           }}
         >
           <Image source={stellarImg} style={style.img} />
-          <Text style={[style.text,{color:state.THEME.THEME===false?"black":"#fff"}]}> Stellar</Text>
+          <Text style={[style.text,{color:state.THEME.THEME===false?"black":"#fff"}]}> DYDX</Text>
         </TouchableOpacity>
       </View>
       <View>

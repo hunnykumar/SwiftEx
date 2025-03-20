@@ -184,9 +184,9 @@ const Assets_manage = ({route}) => {
                         )
                     })}
                 </View>
-                <TouchableOpacity style={[styles.assets_con, { alignItems: "center", marginTop: 60 }]} onPress={() => { setTRUST_ASSET(true) }}>
+                {/* <TouchableOpacity style={[styles.assets_con, { alignItems: "center", marginTop: 60 }]} onPress={() => { setTRUST_ASSET(true) }}>
                     <Text style={[styles.mode_text, { fontSize: 19, fontWeight: "300" }]}>Add Asset</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
             <Modal
                 animationType="slide"
