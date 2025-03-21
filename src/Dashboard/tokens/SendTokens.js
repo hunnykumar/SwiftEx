@@ -92,7 +92,7 @@ const SendTokens = (props) => {
 
 
   const handleCameraStatus = (status) => {
-    if (status === "NOT_AUTHORIZED") {
+    if (status === "NOT_AUTHORIZED"||status === undefined) {
       setModalVisible(false);
       Alert.alert(
         "Camera Permissions Required.",
