@@ -71,20 +71,9 @@ const KycComponent = ({ route }) => {
             )}
 
             {/* Pair container */}
-            <View style={[styles.pariViewCon, { width: "100%",paddingHorizontal:6 }]}>
-              <TouchableOpacity 
-                style={[
-                  styles.pairNameCon, 
-                  { backgroundColor: "#2164C1", width: getPairButtonWidth() }
-                ]}
-              >
-                <Text style={styles.pairNameText}>XLM</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.pairNameCon, { width: getPairButtonWidth() }]}
-              >
-                <Text style={styles.pairNameText}>USDC</Text>
-              </TouchableOpacity>
+            <View style={[styles.pariViewCon, { width: "100%",paddingHorizontal:16 }]}>
+            <Text style={styles.pairNameText}>Asset:</Text>
+            <Text style={styles.pairNameText}>USDC</Text>
             </View>
 
             {/* First Amount Container */}
@@ -233,8 +222,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#1F2937",
   },
   pairNameText: {
-    fontSize: 16,
+    fontSize: 20,
     color: "#FFFFFF",
+    fontWeight:"500"
   },
   amountInfoCon: {
     backgroundColor: "#1F2937",

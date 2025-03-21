@@ -460,7 +460,7 @@ export const ProfileView = (props) => {
   ];
   const navigation = useNavigation();
   const copyToClipboard = () => {
-    Clipboard.setString(state.STELLAR_PUBLICK_KEY);
+    Clipboard.setString(state?.wallet?.address);
     alert("success", "Copied");
   };
   const logout_functio=async()=>{
