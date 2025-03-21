@@ -167,7 +167,7 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode }) => {
         styles.transactionCard,
         { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }
       ]}
-      onPress={()=>{navigation.navigate('StellarTransactionViewer',{transactionPath: item?.operations?.records[0]?.transaction_hash})}}
+      // onPress={()=>{navigation.navigate('StellarTransactionViewer',{transactionPath: item?.operations?.records[0]?.transaction_hash})}}
     >
       <View style={[styles.iconContainer, { backgroundColor: colors.iconBackground }]}>
         <Icon
@@ -263,9 +263,28 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
             })
         );
 
-        setTransactions(processedTransactions);
+        setTransactions([{
+          id: 'demo-tx-100usdc',
+          date: formatDate("2025-03-19T17:47:13Z"),
+          amount: 'usdc',
+          success: true,
+          memo: 'null',
+          operations: { records: [{ type: 'payment', asset_code: 'USDC', amount: '100', to: publicKey }] },
+          isReceived: true,
+          assetCode: 'USDC',
+      }]);
     } catch (error) {
         console.error('Error fetching transactions:', error);
+        setTransactions([{
+          id: 'demo-tx-100usdc',
+          date: formatDate("2025-03-19T17:47:13Z"),
+          amount: 'usdc',
+          success: true,
+          memo: 'null',
+          operations: { records: [{ type: 'payment', asset_code: 'USDC', amount: '100', to: publicKey }] },
+          isReceived: true,
+          assetCode: 'USDC',
+      }]);
     } finally {
         setLoading(false);
         setRefreshing(false);

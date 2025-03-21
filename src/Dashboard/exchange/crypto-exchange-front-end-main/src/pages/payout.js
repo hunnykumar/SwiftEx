@@ -37,7 +37,7 @@ const Payout = () => {
     // {name:"Clickpesa", address: state.wallet.address,image: require('../../../../../../assets/CLICKPESA.png'),dis_ass:"clickpesa.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://clickpesa.com/"},
     // {name:"Finclusive", address: state.wallet.address,image: require('../../../../../../assets/FINCLUSIVE.png'),dis_ass:"finclusive.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://finclusive.com/"},
     {name:"Alchemy Pay", address: state.wallet.address,image: require('../../../../../../assets/AlcamyPay.jpg'),dis_ass:"alchemypay.org",tom_url:"https://www.alchemypay.org/"},
-    {name:"Mykobo", address: state.wallet.address,image: require('../../../../../../assets/MYKOBO.png'),dis_ass:"mykobo.co", seps: ["SEP 6"],tom_url:"https://mykobo.co/"},
+    // {name:"Mykobo", address: state.wallet.address,image: require('../../../../../../assets/MYKOBO.png'),dis_ass:"mykobo.co", seps: ["SEP 6"],tom_url:"https://mykobo.co/"},
   ];
   const price_data=[
     { name: "USDC", price: "100", fee:"0.5", asset_code:"USDC" },
