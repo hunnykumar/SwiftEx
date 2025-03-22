@@ -64,6 +64,7 @@ import { SwapEthForTokens } from "../tokens/swapFunctions";
 import { SwapTokensToTokens, UniSwap } from "../tokens/UniswapFunctions";
 import { useBiometricsForSwapTransaction } from "../../biometrics/biometric";
 import { alert } from "../reusables/Toasts";
+import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 
 const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
   const FOCUSED=useIsFocused()
@@ -119,6 +120,9 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
   console.log(state.wallet);
   
     useEffect(() => {
+    setTrade();
+    setMessage("");
+    setAmount("");
       const fetchData = async () => {
         try {
           let bal = await AsyncStorageLib.getItem("EthBalance");
@@ -985,7 +989,7 @@ fetchData();
       }
     }
     fetchData()
-  }, [coin0.address]);
+  }, [coin1,coin0.address]);
 
   useEffect(() => {
    const fetch=async()=>{
@@ -1037,6 +1041,7 @@ fetchData();
   }, [amount]);
 
   const swap_get= async(amount)=>{
+    setTrade();
     setLoading2(true);
     console.log(coin1.address);
     const token = await state.token;
@@ -1402,166 +1407,105 @@ fetchData();
           setModalVisible(false);
         }}
       >
-        <View style={[styles.mainContainermodal,{backgroundColor:state.THEME.THEME===false?"white":"black",borderColor:"#4CA6EA",borderWidth:0.5}]}>
-          <View style={styles.leftView}>
-            <MaterialCommunityIcons
-              name="arrow-left"
-              size={20}
-              color={state.THEME.THEME===false?"black":"#fff"}
-              style={{ padding: hp(2) }}
-              onPress={() => {
-                setModalVisible(!modalVisible);
-                setTrade(0);
-              }}
-            />
-            <Text style={[styles.swapText,{color:state.THEME.THEME===false?"black":"#fff"}]}>Swap</Text>
-          </View>
-          <View style={styles.cardBoxContainer}>
-            {/* <TokenHeader setVisible={setModalVisible} name={name} /> */}
-            <View
-              style={styles.cardmainContainer}
-              onStartShouldSetResponder={() => Keyboard.dismiss()}
-            >
-              <View style={styles.tokenView}>
-                {/* <Text style={{ color: "#C1BDBD" }}>You Pay</Text> */}
-                <Text style={{ color: state.THEME.THEME===false?"black":"#fff" }}>You Pay</Text>
-                <Text style={{ color: state.THEME.THEME===false?"black":"#fff" }}>{coin0.name}</Text>
+        <View style={[styles.mainContainermodal,{backgroundColor:state.THEME.THEME===false?"white":"black"}]}>
+         <Wallet_screen_header title="Send" onLeftIconPress={() => {setModalVisible(false)}} />
+          <View style={[styles.cardBoxContainer,{backgroundColor:state?.THEME?.THEME===false?"#ebebeb":"#171616"}]}>
+             <Text style={styles.labelCon}>From</Text>
+            <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: state?.THEME?.THEME === false ? "#f8f9fa" : "#080a0a" }]} onPress={()=>{setCoinType("0"),setOpenChain(true)}}>
+              <View style={styles.tokenContainer}>
+                <Image source={{  uri: coin0.logoUri
+                        ? coin0.logoUri
+                        : "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png", }} style={[styles.logoImage, { marginRight: 5 }]} />
+                <Text style={[styles.tokenSymbol, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>{coin0.name}</Text>
               </View>
-              <View style={styles.tokenView}>
-                <TextInput
-                  keyboardType="numeric"
+            
+              <View style={{ width: wp(30), flexDirection: "row", alignItems: "center" }}>
+                <Text style={styles.tokenBalance}>Balance:</Text>
+                <Text
+                  style={[styles.tokenBalance, { flexShrink: 1 }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {balance ?? "0.00"}
+                </Text>
+              </View>
+
+            </TouchableOpacity>
+            <TextInput
+                  maxLength={30}
+                  returnKeyType='done'
+                  style={[styles.input,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a",color:state?.THEME?.THEME===false?"black":"#fff"}]}
+                  value={amount}
                   onChangeText={(text) => {
                     swap_get(text);
                     setAmount(text);
                   }}
-                  placeholder="0"
-                  placeholderTextColor={"gray"}
-                  style={[styles.textinputCon,{backgroundColor:state.THEME.THEME===false?"#fff":"black",color:state.THEME.THEME===false?"black":"#fff"}]}
+                  placeholder="0.0"
+                  keyboardType="decimal-pad"
+                  placeholderTextColor="#666"
                 />
-                <TouchableOpacity
-                  onPress={() => {
-                    setCoinType("0");
-                    setOpenChain(true);
-                  }}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginHorizontal: wp(5),
-                  }}
-                >
-                  <Image
-                    source={{
-                      uri: coin0.logoUri
-                        ? coin0.logoUri
-                        : "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-                    }}
-                    style={{ height: hp(3), width: wp(6) }}
-                  />
-                  <Text style={{ marginRight: wp(13),color:state.THEME.THEME===false?"black":"#fff" }}>
-                    {coin0.symbol ? coin0.symbol==="WETH"?" ETH":coin0.symbol : "ETH"}
-                  </Text>
-                </TouchableOpacity>
+            <View style={styles.swapButton}>
 
-                <AntDesign
-                  onPress={() => {
-                    setCoinType("0");
-                    setOpenChain(true);
-                  }}
-                  name={"right"}
-                  size={15}
-                  color={"gray"}
-                  style={{ marginRight: wp(10), marginLeft: -34 }}
+              <View style={[styles.divider, { backgroundColor: state?.THEME?.THEME === false ? "#c7c5c5" : "#080a0a" }]} />
+              <TouchableOpacity style={styles.swapButtonCircle} onPress={() => { setCoin0(coin1), setCoin1(coin0) }}>
+                <Icon
+                  name={"swap-vertical"}
+                  size={23}
+                  color={"#3574B6"}
                 />
-              </View>
-
-              <View style={{ flexDirection: "row", width: wp(90) }}>
-                <Text style={{ marginLeft: wp(5), marginTop: hp(2),color:state.THEME.THEME===false?"black":"#fff" }}>Balance:{" "}</Text>
-                <View style={{ width: wp(13) }}>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(11) }}>
-                    <Text style={{ marginLeft: wp(1), marginTop: hp(2),color:state.THEME.THEME===false?"black":"#fff" }}>
-                      {balance ? balance : <Text style={{ color:state.THEME.THEME===false?"black":"#fff" }}>0</Text>}
-                    </Text>
-                  </ScrollView>
-                </View>
-              </View>
-
-              {/* <Text style={{ color: "black", marginHorizontal: wp(5) }}>
-                {" "}
-                Balance:
-                {balance ? (
-                  Number(balance).toFixed(2)
-                ) : (
-                  <Text style={{ color: "#C1BDBD" }}>0</Text>
-                )}
-              </Text> */}
-              <Text style={styles.color}></Text>
+              </TouchableOpacity>
+              <View style={[styles.divider, { backgroundColor: state?.THEME?.THEME === false ? "#c7c5c5" : "#080a0a" }]} />
             </View>
-
             
 
-            <TouchableOpacity style={[styles.swapiconView,{borderColor:"#3574B6",borderWidth:1,backgroundColor:state.THEME.THEME===false?"#fff":"black"}]} onPress={() => { setCoin0(coin1), setCoin1(coin0) }}>
-              <Icon
-                name={"swap-vertical"}
-                size={15}
-                color={"#3574B6"}
-                style={{ alignSelf: "center", marginTop: hp(1) }}
-              />
-            </TouchableOpacity>
-            <View
-              style={styles.cardmainContainer1}
-              onStartShouldSetResponder={() => Keyboard.dismiss()}
-            >
-              <View style={styles.tokenView}>
-                {/* <Text style={{ color: "#C1BDBD" }}>You Get</Text> */}
-                <Text style={{ color:state.THEME.THEME===false?"black":"#fff" }}>You Get</Text>
-                <Text style={{ color:state.THEME.THEME===false?"black":"#fff" }}> {coin1.name}</Text>
-              </View>
-              <View style={styles.tokenView}>
-                <View style={{ flexDirection: "row", width: wp(19) }}>
-                  <View style={{ width: wp(13) }}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(11) }}>
-                      <Text style={{ marginLeft: wp(1), marginTop: hp(2),color:state.THEME.THEME===false?"black":"#fff" }}>
-                        {trade ? `${trade.minimumAmountOut}` : <Text style={{ color:state.THEME.THEME===false?"black":"#fff"}}>0</Text>}
-                      </Text>
-                    </ScrollView>
-                  </View>
-                </View>
-                
-                <TouchableOpacity
-                  onPress={() => {
-                    setCoinType("1");
-                    setVisible(true);
-                  }}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginHorizontal: wp(5),
-                  }}
-                >
-                  <Image
-                    source={{
-                      uri: coin1.logoUri
+          <Text style={styles.labelCon}>To</Text>
+          <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: state?.THEME?.THEME === false ? "#f8f9fa" : "#080a0a" }]} onPress={()=>{setCoinType("1"),setVisible(true)}}>
+              <View style={styles.tokenContainer}>
+                <Image source={{ uri: coin1.logoUri
                         ? coin1.logoUri
                         : "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png ",
-                    }}
-                    style={{ height: hp(3), width: wp(6) }}
-                  />
-                  <Text style={{ marginRight: wp(13),color:state.THEME.THEME===false?"black":"#fff" }}>
-                    { coin1.symbol ? coin1.symbol : "WBTC"}
-                  </Text>
-                </TouchableOpacity>
-                <AntDesign
-                  onPress={() => {
-                    setCoinType("1");
-                    setVisible(true);
-                  }}
-                  name={"right"}
-                  size={15}
-                  color={"grey"}
-                  style={styles.rightICon}
-                />
+                    }} style={[styles.logoImage, { marginRight: 5 }]} />
+                <Text style={[styles.tokenSymbol, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}> { coin1.symbol ? coin1.symbol : "WBTC"}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
+           {trade && (
+                      <View style={[styles.quoteTextCon,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>
+                        <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>≈</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>{trade.minimumAmountOut}</Text>
+                        </ScrollView>
+                      <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>{ coin1.symbol ? coin1.symbol : "WBTC"}</Text>
+                      </View>
+                    )}
+{/* {"token1totoken2": "10.501", "token2totoken1": "0.0895357", "trade": {"minimumAmountOut": "10.501", "slippageTolerance": "1"}} */}
+         
+                 {trade && (
+                   <View style={[styles.quoteDetailsContainer,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>
+                     <Text style={[styles.quoteTitle,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>Quote Details</Text>
+                     
+                     <View style={styles.quoteRow}>
+                       <Text style={styles.quoteLabel}>Rate</Text>
+                       <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>
+                         1 {coin0.name} = {trade?.conversionRate} {coin1.symbol ? coin1.symbol : "WBTC"}
+                       </Text>
+                     </View>
+         
+                     <View style={styles.quoteRow}>
+                       <Text style={styles.quoteLabel}>Slippage</Text>
+                       <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{trade?.slippageTolerance}%</Text>
+                     </View>
+         
+                     <View style={styles.quoteRow}>
+                       <Text style={styles.quoteLabel}>Minimum Received</Text>
+                       <View style={{width:wp(25),flexDirection:"row"}}>
+                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                           <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{trade.minimumAmountOut}</Text>
+                         </ScrollView>
+                         <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}> {coin1.symbol ? coin1.symbol : "WBTC"}</Text>
+                       </View>
+                     </View>
+                   </View>
+                 )}
 
             <View
               style={{
@@ -2185,16 +2129,12 @@ export default SwapModal;
 
 const styles = StyleSheet.create({
   mainContainermodal: {
-    borderColor: "#C1BDBD",
-    backgroundColor: "white",
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
     alignSelf: "center",
-    borderRadius: hp(1),
-    borderWidth: StyleSheet.hairlineWidth * 1,
-    borderColor: "gray",
-    height: hp(80),
-    width: wp(98),
+    height: hp(100),
+    width: wp(100),
     marginTop: "auto",
-    // backgroundColor: "#131E3A",
   },
   modelView: {
     paddingTop: hp(1),
@@ -2250,14 +2190,26 @@ const styles = StyleSheet.create({
     borderColor: "#fff",
   },
   cardBoxContainer: {
-    borderWidth: StyleSheet.hairlineWidth * 1,
-    borderColor: "gray",
-    marginTop: hp(5),
-    width: wp(90),
-    alignSelf: "center",
-    borderRadius: hp(1),
-    borderColor:"#4CA6EA",
-    borderWidth:0.5
+    backgroundColor: '#ebebeb',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  input:{
+    fontSize: 24,
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    color: '#000',
+  },
+  labelCon: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
   },
   swapText: {
     color: "black",
@@ -2510,5 +2462,89 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     textAlign: "left"
-  }
+  },
+  tokenSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  tokenContainer:{
+    flexDirection:"row",
+    alignItems:"center",
+  },
+  logoImage:{
+    height: hp(4.1),
+    width: wp(8)
+  },
+  tokenSymbol: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color:"black"
+  },
+  tokenBalance: {
+    fontSize: 14,
+    color: '#666',
+  },
+  swapButton:{
+    marginTop:14,
+    flexDirection: "row",
+    paddingHorizontal:10,
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  swapButtonCircle:{
+    borderColor:"#3574B6",
+    borderWidth:2,
+    borderRadius:100,
+    padding:5
+  },
+  divider: {
+    height: wp(0.5),
+    width:wp(33),
+    backgroundColor: '#c7c5c5',
+  },
+  quoteTextCon: {
+    flexDirection:"row",
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  quoteText: {
+    fontSize: 24,
+    color: '#666',
+    // padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  quoteDetailsContainer: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  quoteTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color:"black"
+  },
+  quoteRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  quoteLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  quoteValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color:"black"
+  },
 });

@@ -268,11 +268,11 @@ function toHex(Amount) {
 async function getETHtoTokenPrice(tokenAddress, ethAmount) {
   console.log("----->getting Enter",tokenAddress,ethAmount)
   const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC)
-  
+
   const chainId = ChainId.MAINNET;
   const token = await Fetcher.fetchTokenData(chainId, tokenAddress, provider);
   const weth = WETH[chainId];
-  
+
   const pair = await Fetcher.fetchPairData(token, weth, provider);
   const route = new Route([pair], weth);
 
@@ -290,6 +290,7 @@ async function getETHtoTokenPrice(tokenAddress, ethAmount) {
   const tradeDetails = {
     slippageTolerance: slippageTolerance.toSignificant(1),
     minimumAmountOut: trade.minimumAmountOut(slippageTolerance).toSignificant(6),
+    conversionRate: trade2.executionPrice.toSignificant(6)
   };
   console.log("----->getting Return",  token1totoken2,token2totoken1,tradeDetails,)
   return {
