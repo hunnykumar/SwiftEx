@@ -16,7 +16,7 @@ const UniSwap = async (privateKey, walletAddress, token2, amount) => {
     // providerUrl: YOUR_PROVIDER_URL,
     // OR if you want to inject your own ethereum provider (no need for chainId if so)
     // ethereumProvider: YOUR_WEB3_ETHERS_OR_CUSTOM_ETHEREUM_PROVIDER,
-    chainId: ChainId.GÖRLI,
+    chainId: ChainId.MAINNET,
   });
   console.log(uniswapPair);
 
@@ -124,7 +124,7 @@ const SwapTokensToTokens = async (
     // providerUrl: YOUR_PROVIDER_URL,
     // OR if you want to inject your own ethereum provider (no need for chainId if so)
     // ethereumProvider: YOUR_WEB3_ETHERS_OR_CUSTOM_ETHEREUM_PROVIDER,
-    chainId: ChainId.GÖRLI,
+    chainId: ChainId.MAINNET,
   });
   console.log(uniswapPair);
 
@@ -226,7 +226,7 @@ const tokenTotokenPrice = async (walletAddress, token1, token2, amount) => {
     // providerUrl: YOUR_PROVIDER_URL,
     // OR if you want to inject your own ethereum provider (no need for chainId if so)
     // ethereumProvider: YOUR_WEB3_ETHERS_OR_CUSTOM_ETHEREUM_PROVIDER,
-    chainId: ChainId.GÖRLI,
+    chainId: ChainId.MAINNET,
   });
   //console.log(uniswapPair)
 
