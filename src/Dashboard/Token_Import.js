@@ -88,29 +88,31 @@ import TokenQrCode from './Modals/TokensQrCode';
     // Default tokens array
     const DEFAULT_TOKENS = [
       {
-        symbol: "USDT",
-        img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
-        address: "0x7e9fbbf33c595430848e767E162e4b0FF6b8205b" 
-      },
-      {
-        symbol: "UNI",
-        img_url: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
-        address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
-      },
-      {
-        symbol: "ETH",
-        img_url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png", 
-        address: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
-      }
+          symbol: "USDT",
+          img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
+          address: "0xdAC17F958D2ee523a2206206994597C13D831ec7" 
+        },
+        {
+          symbol: "UNI",
+          img_url: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
+          address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
+        },
+        {
+          symbol: "1INCH",
+          img_url: "https://assets.coingecko.com/coins/images/13469/thumb/1inch-token.png?1608803028", 
+          address: "0x111111111117dC0aa78b770fA6A738034120C302"
+        }
     ];
+    
     // Default BNB Tokens
     const DEFAULT_BNB_TOKENS = [
       {
-        symbol: "USDT",
-        img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png", 
-        address: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
-      }
-    ];
+          symbol: "USDT",
+          img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png", 
+          address: "0x55d398326f99059fF775485246999027B3197955"
+        }
+    ]
+  
   
     // Fetch token details
     const fetchTokenInfo = async (address, img_url = '', symbol = '') => {
@@ -433,9 +435,9 @@ import TokenQrCode from './Modals/TokensQrCode';
                 <TouchableOpacity disabled={!newTokenAddress} style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: !newTokenAddress ? "gray" : "green" }]} onPress={() => { selectedToken.name==="Ethereum"?handleAddToken():handleAddBNBToken() }}>
                  {isLoading?<ActivityIndicator color='#fff'/>:<Text style={[styles.text, { color: state.THEME.THEME === false ? "#fff" : "#fff" }]}>Add Asset</Text>}
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: "green" }]} onPress={() => { setShowTokenList(true) }}>
+                {/* <TouchableOpacity style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: "green" }]} onPress={() => { setShowTokenList(true) }}>
                   <Text style={[styles.text, { color: state.THEME.THEME === false ? "#fff" : "#fff" }]}>View</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
           </>
         )}
@@ -519,9 +521,9 @@ import TokenQrCode from './Modals/TokensQrCode';
       marginTop: 20,
     },
     Add_asset_btn:{
-      width:wp(40),
-      height:hp(6),
-      marginTop:hp(3),
+      width:wp(95),
+      height:hp(8),
+      marginTop:hp(1),
       borderColor: "#4CA6EA",
       borderWidth:1,
       borderRadius:10,

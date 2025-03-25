@@ -7,7 +7,7 @@ async function getAmountsOut(amountIn, inToken, outToken, type) {
   console.log("======================================GETTING ERROR FROM SWAP")
   try {
     const factory = "0x182859893230dC89b114d6e2D547BFFE30474a21";
-    const routerAddress = "0xD99D1c33F9fC3444f8101754aBC46c52416550D1";
+    const routerAddress = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
     //const {amountIn, inToken,outToken,type} = input
     // console.log(amountIn, inToken,outToken,type)
     const provider = new ethers.providers.JsonRpcProvider(RPC.BSCRPC);

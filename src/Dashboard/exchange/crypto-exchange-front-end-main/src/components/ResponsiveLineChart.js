@@ -9,14 +9,43 @@ const ResponsiveLineChart = ({ symbol, width, height }) => {
     useEffect(()=>{
         async function getChart(name) {
             await fetch(
-                `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1h&limit=30`,
+                `https://api.binance.com/api/v1/klines?symbol=${name==="USDT"?"USDC":name}USDT&interval=1h&limit=30`,
                 {
                     method: "GET",
                 }
             )
                 .then((resp) => resp.json())
                 .then((resp) => {
-                   setdata(resp)
+                    if(resp.msg==="Invalid symbol."||resp.code==="-1100")
+                    {
+                        getChart1(name)
+                    }
+                    if(Array.isArray(resp))
+                    {
+                        setdata(resp)
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                });
+        }
+        async function getChart1(name) {
+            await fetch(
+                `https://api.binance.com/api/v1/klines?symbol=${name}USD&interval=1h&limit=30`,
+                {
+                    method: "GET",
+                }
+            )
+                .then((resp) => resp.json())
+                .then((resp) => {
+                    if(resp.msg==="Invalid symbol."||resp.code==="-1100")
+                    {
+                        console.log("-----",resp)
+                    }
+                    if(Array.isArray(resp))
+                    {
+                        setdata(resp)
+                    }
                 })
                 .catch((err) => {
                     console.log(err);

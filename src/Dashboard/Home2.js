@@ -116,7 +116,7 @@ const Home2 = ({ navigation }) => {
   const [visible, setVisible] = useState(false)
   const [routes] = useState([
     { key: "first", title: "Assets" },
-    { key: "second", title: "Tokens" },
+    { key: "second", title: "Add Tokens" },
   ]);
   const Navigation = useNavigation();
   const { getToken, requestUserPermission } = useFirebaseCloudMessaging();

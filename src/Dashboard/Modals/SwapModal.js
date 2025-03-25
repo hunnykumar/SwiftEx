@@ -50,7 +50,7 @@ import {
 import { tokenTotokenPrice } from "../tokens/UniswapFunctions";
 import tokenList from "../tokens/tokenList.json";
 import PancakeList from "../tokens/pancakeSwap/PancakeList.json";
-import chooseSwap from "../tokens/chooseSwap.json";
+// import chooseSwap from "../tokens/chooseSwap.json";
 import { getSwapPrice } from "../tokens/pancakeSwap/pancakeFunctions";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import SwapPinModal from "./swapPinModal";
@@ -67,6 +67,24 @@ import { alert } from "../reusables/Toasts";
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 
 const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
+  const chooseSwap=[
+    {
+      "name": "Binance",
+      "symbol": "BNB",
+      "address": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+      "chainId": 56,
+      "decimals": 18,
+      "logoURI": "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png"
+    },
+    {
+    "name": "Ethereum",
+   "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "symbol": "WETH",
+    "decimals": 18,
+     "chainId": 1,
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png"
+        },
+  ]
   const FOCUSED=useIsFocused()
   const state = useSelector((state) => state);
   const [loading, setLoading] = useState(false);
@@ -92,6 +110,7 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
       name: "Ethereum",
       address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       symbol: "WETH",
+      decimals: 18,
       ChainId: "1",
       logoUri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
     }
@@ -107,6 +126,7 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
     name: "1inch",
     address: "0x111111111117dC0aa78b770fA6A738034120C302",
     symbol: "1INCH",
+    decimals: 18,
     ChainId: "1",
     logoUri: "https://assets.coingecko.com/coins/images/13469/thumb/1inch-token.png?1608803028",
   });
@@ -123,6 +143,8 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
     setTrade();
     setMessage("");
     setAmount("");
+    setLoading2(false);
+    setSwapType("ETH")
       const fetchData = async () => {
         try {
           let bal = await AsyncStorageLib.getItem("EthBalance");
@@ -1918,12 +1940,12 @@ fetchData();
         >
           <View
             style={{
-              height: hp(98),
+              height: hp(100),
               width: wp(99),
               backgroundColor: "#ddd",
               borderTopRightRadius: 10,
               borderTopLeftRadius: 10,
-              marginTop: hp(5),
+              // marginTop: hp(5),
               left: wp(-4.5),
             }}
           >
@@ -1955,12 +1977,12 @@ fetchData();
         >
           <View
             style={{
-              height: hp(98),
+              height: hp(100),
               width: wp(99),
               backgroundColor: "#ddd",
               borderTopRightRadius: 10,
               borderTopLeftRadius: 10,
-              marginTop: hp(5),
+              // marginTop: hp(5),
               left: wp(-4.5),
             }}
           >

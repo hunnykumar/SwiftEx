@@ -27,6 +27,8 @@ import { RAPID_STELLAR, SET_ASSET_DATA } from "../components/Redux/actions/type"
 import { enableBiometrics } from "../biometrics/biometric";
 import { STELLAR_URL } from "./constants";
 import ResponsiveLineChart from "./exchange/crypto-exchange-front-end-main/src/components/ResponsiveLineChart";
+import fetchAllTokensData from "../utilities/TokenUtils";
+import LinearGradient from "react-native-linear-gradient";
 const StellarSdk = require('stellar-sdk');
 
 function InvestmentChart(setCurrentWallet) {
@@ -51,6 +53,7 @@ function InvestmentChart(setCurrentWallet) {
   const [bnbPrice, setBnbPrice] = useState();
   const [loading, setLoading] = useState(false);
   const [ACTIVATION_MODAL, setACTIVATION_MODAL] = useState(false);
+  const [tokenInfoList, setTokenInfoList] = useState(null);
   const dispatch = useDispatch()
   const getEthBnbPrice = async () => {
     await getEthPrice().then((response) => {
@@ -315,6 +318,12 @@ function InvestmentChart(setCurrentWallet) {
       
         setchainnData(updatedChainData);
         console.log("--2`",chainnData)
+        fetchAllTokensData(state?.wallet.address)
+          .then(result => setTokenInfoList(result?.tokens))
+          .catch(error => {
+            console.log("---> Error from Token Info", error)
+            setTokenInfoList(null)
+          })
       } catch (e) {
         console.log(e);
       }
@@ -478,6 +487,12 @@ function InvestmentChart(setCurrentWallet) {
     } catch (error) {
       console.log("Error in get_stellar")
     }
+    fetchAllTokensData(state?.wallet.address)
+    .then(result => setTokenInfoList(result?.tokens))
+    .catch(error => {
+      console.log("---> Error from Token Info", error)
+      setTokenInfoList(null)
+    })
   }
  useEffect(()=>{
    const get_new_all_bal = async () => {
@@ -505,7 +520,7 @@ function InvestmentChart(setCurrentWallet) {
       styles.coinMainCon, 
       { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#18181C" }
     ]} 
-    onPress={() => navigation.navigate("Asset_info", { asset_type: item.symbole })}
+    onPress={() => navigation.navigate("Asset_info", { asset_type: item })}
   >
     {item.id === 4 && (
       <View style={[styles.TokenInfo]}>
@@ -554,8 +569,8 @@ function InvestmentChart(setCurrentWallet) {
         style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
         onPress={() => {
           state?.STELLAR_ADDRESS_STATUS === false 
-            ? navigation.navigate("exchange") 
-            : navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbole });
+            // ? navigation.navigate("exchange") :
+             navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbole });
         }}
       >
         <Text style={styles.actionRowBtnText}>Trade</Text>
@@ -569,6 +584,87 @@ function InvestmentChart(setCurrentWallet) {
         <Text style={styles.actionRowBtnText}>Buy</Text>
       </TouchableOpacity>
     </View>:<View style={{ width: 107,}}/>}
+  </TouchableOpacity>
+  
+  )
+}
+
+const renderTokens = ({ item }) => {
+  return (
+    <TouchableOpacity 
+    style={[
+      styles.coinMainCon, 
+      { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#18181C" }
+    ]} 
+    onPress={() => navigation.navigate("Asset_info", { asset_type: item })}
+  >
+  
+    {/* Left: Coin Image & Info */}
+    
+{/* Left: Coin Image & Info */}
+<View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+  {/* Coin Image */}
+  <View style={[styles.coinImgCon, { backgroundColor: "#181F2C" }]}>
+    
+     {item.img_url ?
+                            <Image 
+                            source={item?.symbol?.toUpperCase() === "XLM" ? item.img_url : { uri: item.img_url }} 
+                            style={item?.symbol?.toUpperCase() === "XLM" ? { width: 49, height: 49 } : { width: 39, height: 39 }} 
+                          /> :
+                            <LinearGradient
+                              colors={['#3b82f6', '#8b5cf6']}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 1, y: 0 }}
+                              style={[styles.tokenImage, { borderRadius: 30, justifyContent: "center", alignItems: "center" }]}
+                            >
+                              <Text style={[styles.tokenName, { color: "#fff", fontSize: 28 }]}>{item?.name?.charAt(0)}</Text>
+                            </LinearGradient>}
+  </View>
+
+  {/* Coin Info - Adjusted with marginLeft */}
+  <View style={[styles.coinInfoCon, { marginLeft: 10 }]}>
+    <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "black" : "#FFFFFF" }]}>
+      {item?.symbol?.toUpperCase()} <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "gray" : "gray",fontSize:10 }]}>({item.network})</Text>
+    </Text>
+    <Text style={styles.coinInfoCon.coinBalText}>
+      {parseFloat(item.balance).toFixed(1)} {item?.symbol?.toUpperCase()}
+    </Text>
+    <View style={styles.coinInfoCon.coinSubCon}>
+      <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "black" : "#FFFFFF" }]}>
+        $ {item.price}
+      </Text>
+    </View>
+  </View>
+</View>
+
+  
+    {/* Center: Coin Chart */}
+    <View style={{ flex: 1, alignItems: "center" }}>
+      <ResponsiveLineChart width={89} height={70} symbol={item?.symbol?.toUpperCase()} />
+    </View>
+  
+    {/* Right: Action Buttons */}
+    <View style={{ alignItems: "center", paddingRight: 5 }}>
+      <TouchableOpacity 
+        disabled={item.id === 4} 
+        style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
+        onPress={() => {
+          // state?.STELLAR_ADDRESS_STATUS === false 
+            // ? navigation.navigate("exchange") :
+             navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbol?.toUpperCase() });
+        }}
+      >
+        <Text style={styles.actionRowBtnText}>Trade</Text>
+      </TouchableOpacity>
+  
+      <TouchableOpacity 
+        disabled={item.id === 4} 
+        style={styles.actionBuyBtn} 
+        onPress={() => navigation.navigate("payout")}
+      >
+        <Text style={styles.actionRowBtnText}>Buy</Text>
+      </TouchableOpacity>
+    </View>
   </TouchableOpacity>
   
   )
@@ -603,6 +699,11 @@ function InvestmentChart(setCurrentWallet) {
           data={chainnData}
           renderItem={renderCoins}
           keyExtractor={item => item.id}
+        />
+        <FlatList
+          data={tokenInfoList}
+          renderItem={renderTokens}
+          keyExtractor={(item,index) => {index}}
         />
         </>
 
@@ -817,5 +918,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 12,
     fontWeight: "bold",
+  },
+  tokenImage: {
+    width: 39,
+    height: 39,
+  },
+  tokenName: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

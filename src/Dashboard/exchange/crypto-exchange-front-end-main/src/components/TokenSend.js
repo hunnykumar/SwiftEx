@@ -169,7 +169,7 @@ const TokenSend = ({ route }) => {
         setLoading(true)
         setMessage();
         setPayment_loading(false);
-        if (route?.params?.tokenType?.name === "Ethereum") {
+        if (route?.params?.tokenType === "Ethereum") {
           const newToken = await fetchTokenInfo(route?.params?.tokenAddress);
           setBalance(newToken?.balance);
           setLoading(false);
@@ -396,10 +396,10 @@ const TokenSend = ({ route }) => {
                 if (validateTokenAddress(address)) {
                   Showsuccesstoast(toast, "Valid token address");
                   // sendToken(walletPublickKey, address, amount) --TO DO
-                  if (route?.params?.tokenType?.name === "Binance") {
+                  if (route?.params?.tokenType === "Binance") {
                     sendBNBToken(route?.params?.tokenAddress)
                   }
-                  if (route?.params?.tokenType?.name === "Ethereum") {
+                  if (route?.params?.tokenType === "Ethereum") {
                     sendEthTokens(route?.params?.tokenAddress)
                   }
                 } else {

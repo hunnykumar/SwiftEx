@@ -29,7 +29,7 @@ export const smart_contract_Address="0xCa124C14aF433fc779932803C33Ee9f10edcD09c"
 export const tokenAddresses = {
   BNB: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
   ETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-  WBNB: "0xae13d989dac2f0debff460ac112a837c89baa7cd",
+  WBNB: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
   BUSD: "0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee",
   USDT: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
   DAI: "0xEC5dCb5Dbf4B114C9d0F65BcCAb49EC54F6A0867",
@@ -45,11 +45,11 @@ export const faucets ={
 export const jwtSecret = "0xC02aaA3MunziAppTestMode0xbb4CdB9";
 
 export const RPC = {
-  BSCRPC: "https://data-seed-prebsc-1-s1.binance.org:8545",
+  BSCRPC: "https://bsc-dataseed.binance.org",
   BSCRPC2:
     // "https://bsc.getblock.io/a011daa0-3099-4f55-b22c-c3a3d55898d0/testnet/", //OLD
     // "https://bsc-testnet.blockpi.network/v1/rpc/public",
-    'https://bsc-testnet.bnbchain.org',
+    'https://bsc-dataseed.binance.org',
   MATICRPC:
     "https://polygon-mumbai.g.alchemy.com/v2/WUJnVsFyDvgwlbSdNrpr-lMg0-NKaNLH",
   // ETHRPC:"https://eth-goerli.g.alchemy.com/v2/E1L1Ovo8ZG9-8UjFrNY39wcjPSa0uYLG",  //OLD
