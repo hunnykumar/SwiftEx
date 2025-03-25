@@ -79,6 +79,7 @@ const ConfirmTransaction = (props) => {
         .catch((e) => {
           console.log(e);
           setLoading(false);
+          setDisable(false);
         });
       const tx = txx.wait();
       console.log("Sent transaction", await tx);
@@ -301,6 +302,7 @@ const ConfirmTransaction = (props) => {
               return;
             } catch (e) {
               console.log(e);
+              setDisable(false);
             }
           }
 
@@ -309,7 +311,7 @@ const ConfirmTransaction = (props) => {
           console.log(type);
           setPinViewVisible(true);
           setLoading(true);
-          setDisable(true);
+          // setDisable(true);
         }}
       >
         <Text style={{ color: "white" }}>{Loading?<ActivityIndicator size={'small'} color={'white'}/>: 'Send'}</Text>

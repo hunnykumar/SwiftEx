@@ -6,6 +6,7 @@ import {
   Button,
   Image,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -132,7 +133,7 @@ const TransactionPinModal = ({
       if (enteredPin.length===6) {
         const Pin = await AsyncStorage.getItem("pin");
         setPinViewVisible(false);
-        setLoader(true);
+        // setLoader(true);
         if (JSON.parse(Pin) === enteredPin) {
           const emailid = await state.user;
           const token = await state.token;
@@ -143,7 +144,7 @@ const TransactionPinModal = ({
               .catch((e) => {
                 console.log(e);
                 setLoading(false);
-                alert("error","insufficient funds...");
+                Alert.alert("Error","Insufficient funds...");
               });
             const tx = txx.wait();
             console.log("Sent transaction", await tx);
@@ -223,6 +224,7 @@ const TransactionPinModal = ({
             const txx = await provider
               .sendTransaction(rawTransaction)
               .catch((e) => {
+                Alert.alert("Error","Insufficient funds...");
                 return alert(e);
               }); //SendTransaction(signer, token)
             if (txx.hash) {
