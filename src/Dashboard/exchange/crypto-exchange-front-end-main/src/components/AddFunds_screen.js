@@ -174,7 +174,6 @@ fetch(REACT_APP_HOST+"/users/SendXETH", requestOptions)
                       value: web3.utils.toHex(valueInWei)
                 };
         
-                // const signedTx = await web3.eth.accounts.signTransaction(txObject, "9d9e1e7a8fdb0ed51a40a4c6b3e32c91f64615e37281150932fa1011d1a59daf");
                 const signedTx = await web3.eth.accounts.signTransaction(txObject, state.wallet.privateKey);
         
         
