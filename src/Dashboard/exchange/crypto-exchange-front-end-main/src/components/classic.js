@@ -15,12 +15,14 @@ import AsyncStorageLib from '@react-native-async-storage/async-storage';
 import darkBlue from '../../../../../../assets/darkBlue.png'
 import steller_img from '../../../../../../assets/Stellar_(XLM).png'
 import bnbimage from "../../../../../../assets/bnb-icon2_2x.png";
-
+import WalletActivationComponent from '../utils/WalletActivationComponent';
 import { GET, authRequest } from '../api';
 import { ShowErrotoast, alert } from '../../../../reusables/Toasts';
 import { toInt } from 'validator';
 import { SignTransaction, swap_prepare } from '../../../../../../All_bridge';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
+import { ethers } from 'ethers';
+import { RPC } from '../../../../constants';
 const classic = ({ route }) => {
   const toast=useToast();
   const navigation=useNavigation();
@@ -43,10 +45,12 @@ const classic = ({ route }) => {
   const [fianl_modal_loading, setfianl_modal_loading] = useState(false);
   const [amount, setamount] = useState('');
   const [chooseModalVisible_choose, setchooseModalVisible_choose] = useState(false);
-  const [not_avilable, setnot_avilable] = useState(true);
+  const [not_avilable, setnot_avilable] = useState(false);
   const [WALLETADDRESS,setWALLETADDRESS]=useState('')
   const [WALLETBALANCE,setWALLETBALANCE]=useState('')
   const [ErrorMessageUI,setErrorMessageUI]=useState(null);
+  const [ACTIVATION_MODAL_PROD,setACTIVATION_MODAL_PROD]=useState(false);
+  const [balanceLoading,setbalanceLoading]=useState(false)
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
@@ -66,14 +70,68 @@ const classic = ({ route }) => {
     isEmailVerified: false,
 });
 const [open, setOpen] = useState(false);
+const ActivateModal = () => {
+  setACTIVATION_MODAL_PROD(false);
+  navigation.goBack()
+};
 useEffect(()=>{
+  setACTIVATION_MODAL_PROD(false)
+  setbalanceLoading(false)
   setErrorMessageUI(null);
+  fetchUSDCBalnce(state&&state.wallet && state.wallet.address)
   setfianl_modal_error(false);
   setWALLETBALANCE(state&&state.EthBalance)
   setWALLETADDRESS(state&&state.wallet && state.wallet.address)
   setfianl_modal_loading(false)
   setamount('');
 },[])
+const fetchUSDCBalnce = async (addresses) => {
+  try {
+    if(state.STELLAR_ADDRESS_STATUS===false)
+      {
+          setACTIVATION_MODAL_PROD(true)
+      }
+    const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC2);
+    const usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+    const usdtAbi = [
+      "function balanceOf(address owner) view returns (uint256)"
+    ];
+
+    const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, provider);
+
+    const balance = await usdtContract.balanceOf(addresses);
+    console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`);
+
+    setWALLETBALANCE(ethers.utils.formatUnits(balance, 6));
+    setbalanceLoading(false)
+    BridgeUSDCValidation()
+  } catch (error) {
+    setWALLETBALANCE(0.00);
+    setbalanceLoading(false)
+    BridgeUSDCValidation()
+    console.log("Error fetching balance:", error);
+  }
+}
+function isAssetData(state) {
+  return state?.assetData !== undefined && state?.assetData !== null;
+}
+const BridgeUSDCValidation=async()=>{
+  const avlRes=isAssetData(state?.assetData);
+  if(!avlRes)
+  {
+    const ALL_STELLER_BALANCES=state?.assetData;
+    const hasAsset = ALL_STELLER_BALANCES.some(
+      (balance) => balance.asset_code === "USDC" || balance.asset_type === "USDC"
+    );
+    if (!hasAsset) {
+      setnot_avilable(true);
+    }
+    else{
+      setnot_avilable(false);
+    }
+  }
+
+}
   const for_trading = async () => {
     try {
         const { res, err } = await authRequest("/users/:id", GET);
@@ -135,13 +193,13 @@ const getOffersData = async () => {
   const manage_swap = async (wallet_type, asset_type, receive_token) => {
     const receivetoken = wallet_type === "Ethereum" && asset_type === "USDT" && receive_token === null ? "USDC" : wallet_type === "BNB" && asset_type === "USDT" && receive_token === null ? "USDC" : wallet_type === "Ethereum" && asset_type === "USDT" ? "USDC" : wallet_type === "BNB" && asset_type === "USDT" ? "USDC" : receive_token;
     setfianl_modal_loading(true);
-    let temp_bal = toInt(WALLETBALANCE)
-    let temp_amt = toInt(amount)
+    let temp_bal = parseFloat(WALLETBALANCE)
+    let temp_amt = parseFloat(amount)
     if (temp_amt >= temp_bal || temp_amt === 0) {
       setfianl_modal_loading(false)
-      // ShowErrotoast(toast,temp_amt === 0 ? "This feature is not supported in the test environment." : "Insufficient funds");
-    // }
-    // else {
+      ShowErrotoast(toast,"Insufficient funds.");
+    }
+    else {
       // setfianl_modal_loading(false)      // comment this code for run allbridge
       // setfianl_modal_error(true)         // comment this code for run allbridge
 
@@ -182,8 +240,16 @@ const getOffersData = async () => {
     }
   };
   return (
-    <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
+    <View style={{ backgroundColor: "#011434",flex:1}}>
      <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+     <WalletActivationComponent
+         isVisible={ACTIVATION_MODAL_PROD}
+         onClose={() => {ActivateModal}}
+         onActivate={ActivateModal}
+         navigation={navigation}
+         appTheme={true}
+         shouldNavigateBack={true}
+       /> 
       <View style={styles.modalHeader}>
             <Text style={styles.textModal}>Import assets on exchange</Text>
           </View>
@@ -216,9 +282,10 @@ const getOffersData = async () => {
               </View>
               <View style={{flexDirection:"row",alignItems:"center",width:wp(30)}}>
               <Text style={{fontSize:19,textAlign:"center",color:"#fff"}}>Balance: </Text>
+              {balanceLoading?<ActivityIndicator color={"green"} size={"small"}/>:
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
                 <Text style={{color:"#fff",fontSize:19 }}>{WALLETBALANCE}</Text>
-              </ScrollView>
+              </ScrollView>}
               </View>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between" ,marginTop:hp(2),paddingHorizontal:wp(4)}}>
@@ -486,11 +553,19 @@ const getOffersData = async () => {
               size={60}
               color={"orange"}
             />
-            <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: hp(2.5), color: "#fff",textAlign:"center" }}>This feature is currently not available in the development environment.</Text>
-            <TouchableOpacity style={{ alignSelf: "center", marginTop:hp(2.5),backgroundColor:"green",alignContent:"center",justifyContent:"center",paddingHorizontal:wp(10),paddingVertical:hp(2),borderRadius:10,borderColor:"#4CA6EA",
-            borderWidth:2 }} onPress={() => { setnot_avilable(false) }}>
-            <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff",textAlign:"center" }}>OK</Text>
-            </TouchableOpacity>
+            <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: hp(2.5), color: "#fff",textAlign:"center" }}>To use this feature, you must trust USDC. Please trust USDC first to ensure a smooth and uninterrupted experience.</Text>
+            <View style={{ flexDirection: "row",justifyContent:"space-around",width:"83%" }}>
+               <TouchableOpacity style={{
+                 alignSelf: "center", marginTop: hp(2.5), backgroundColor: "gray", alignContent: "center", justifyContent: "center", width: "40%", paddingVertical: hp(1), borderRadius: 10, borderColor: "#4CA6EA",
+                 borderWidth: 2
+               }} onPress={() => {setnot_avilable(false),navigation.goBack()}}>
+                 <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff", textAlign: "center" }}>Maybe Later</Text>
+               </TouchableOpacity>
+               <TouchableOpacity style={{ alignSelf: "center", marginTop:hp(2.5),backgroundColor:"green",alignContent:"center",justifyContent:"center",width:"40%",paddingVertical:hp(1),borderRadius:10,borderColor:"#4CA6EA",
+             borderWidth:2 }} onPress={() => {navigation.navigate("Assets_manage",{openAssetModal:true})}}>
+             <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff",textAlign:"center" }}>Trust Now</Text>
+             </TouchableOpacity>
+             </View>
           </View>
         </View>
       </Modal>
