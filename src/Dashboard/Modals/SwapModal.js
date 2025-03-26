@@ -145,6 +145,7 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
     setAmount("");
     setLoading2(false);
     setSwapType("ETH")
+    setCoinType("1")
       const fetchData = async () => {
         try {
           let bal = await AsyncStorageLib.getItem("EthBalance");
@@ -863,7 +864,7 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
           setWalletType(Type);
     
           if (Type === "Multi-coin") {
-            setData(chooseSwap);
+            setData(tokenList);
             setChooseChain(chooseSwap);
           } else if (Type === "Ethereum") {
             const data = tokenList.reverse();
@@ -901,7 +902,7 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
       setWalletType(Type);
 
       if (Type === "Multi-coin") {
-        setData(chooseSwap);
+        setData(tokenList);
         setChooseChain(chooseSwap);
       } else if (Type === "Ethereum") {
         const data = tokenList.reverse();

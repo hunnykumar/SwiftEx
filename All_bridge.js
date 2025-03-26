@@ -27,9 +27,10 @@ const { getAuth } = require("./src/Dashboard/exchange/crypto-exchange-front-end-
   try {
     const response = await fetch(REACT_APP_HOST+"/users/swap_exchange_prepare", requestOptions);
     const result = await response.json();
-    if (result.response.status_swap) {
+    console.log("swap_exchange_prepare--",result)
+    if (result.response.status_swap||result.status===200) {
      const res=await sendEvmRawTransaction(privateKey,result.response.res)
-     console.log("@@@@@@@",res)
+     console.log("swap_exchange_prepare-->sendEvmRawTransaction",res)
      if(res.status===true)
      {
        await swap_execute(privateKey,fromAddress,toAddress,amount,sourceToken,destinationToken,walletType)
@@ -78,10 +79,10 @@ const { getAuth } = require("./src/Dashboard/exchange/crypto-exchange-front-end-
   try {
     const response = await fetch(REACT_APP_HOST+"/users/swap_exchange_execute", requestOptions);
     const result = await response.json();
-    console.log("---===0",result)
+    console.log("swap_exchange_execute--->",result)
     if (result.response.status_swap) {
      const res=await sendEvmRawTransaction(privateKey,result.response.res)
-     console.log("@@@@@@@",res)
+     console.log("swap_exchange_execute--->sendEvmRawTransaction",res)
      if(res.status===true)
      {
       return {
@@ -113,8 +114,6 @@ const { getAuth } = require("./src/Dashboard/exchange/crypto-exchange-front-end-
 
 
 async function sendEvmRawTransaction(privateKey, rawTransaction) {
-  console.log("--------",privateKey)
-  console.log("----rawTransaction----",rawTransaction)
 
   try {
     const web3 = new Web3(new Web3.providers.HttpProvider(ETH_PROVIDER_NEW));
