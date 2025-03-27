@@ -28,12 +28,17 @@ const { getAuth } = require("./src/Dashboard/exchange/crypto-exchange-front-end-
     const response = await fetch(REACT_APP_HOST+"/users/swap_exchange_prepare", requestOptions);
     const result = await response.json();
     console.log("swap_exchange_prepare--",result)
-    if (result.response.status_swap||result.status===200) {
+    if (result.response.status_swap||result.status===200||result.status===201) {
      const res=await sendEvmRawTransaction(privateKey,result.response.res)
      console.log("swap_exchange_prepare-->sendEvmRawTransaction",res)
      if(res.status===true)
      {
-       await swap_execute(privateKey,fromAddress,toAddress,amount,sourceToken,destinationToken,walletType)
+      console.log("----transaction complted here no need to swap execute.....")
+      return {
+        res:res,
+        status_task:true
+      }
+      //  await swap_execute(privateKey,fromAddress,toAddress,amount,sourceToken,destinationToken,walletType)
      }
      else{
       return {
