@@ -23,6 +23,7 @@ import { SignTransaction, swap_prepare } from '../../../../../../All_bridge';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
 import { ethers } from 'ethers';
 import { RPC } from '../../../../constants';
+import { QuoteModalBottomSheet } from '../utils/QuotesComponent';
 const classic = ({ route }) => {
   const toast=useToast();
   const navigation=useNavigation();
@@ -51,6 +52,7 @@ const classic = ({ route }) => {
   const [ErrorMessageUI,setErrorMessageUI]=useState(null);
   const [ACTIVATION_MODAL_PROD,setACTIVATION_MODAL_PROD]=useState(false);
   const [balanceLoading,setbalanceLoading]=useState(false)
+  const [onTapFeature,setonTapFeature]=useState(false)
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
@@ -75,6 +77,7 @@ const ActivateModal = () => {
   navigation.goBack()
 };
 useEffect(()=>{
+  setonTapFeature(false)
   setACTIVATION_MODAL_PROD(false)
   setbalanceLoading(false)
   setErrorMessageUI(null);
@@ -87,6 +90,7 @@ useEffect(()=>{
 },[])
 const fetchUSDCBalnce = async (addresses) => {
   try {
+    setbalanceLoading(true)
     if(state.STELLAR_ADDRESS_STATUS===false)
       {
           setACTIVATION_MODAL_PROD(true)
@@ -103,6 +107,10 @@ const fetchUSDCBalnce = async (addresses) => {
     console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`);
 
     setWALLETBALANCE(ethers.utils.formatUnits(balance, 6));
+    if(parseFloat(ethers.utils.formatUnits(balance, 6))===0)
+    {
+      setonTapFeature(true)
+    }
     setbalanceLoading(false)
     BridgeUSDCValidation()
   } catch (error) {
@@ -250,6 +258,10 @@ const getOffersData = async () => {
          appTheme={true}
          shouldNavigateBack={true}
        /> 
+         <QuoteModalBottomSheet
+            isVisible={onTapFeature}
+            onClose={()=>{setonTapFeature(false)}}
+         />
       <View style={styles.modalHeader}>
             <Text style={styles.textModal}>Import assets on exchange</Text>
           </View>
