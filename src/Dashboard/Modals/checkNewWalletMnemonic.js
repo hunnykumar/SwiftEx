@@ -381,7 +381,7 @@ export default CheckNewWalletMnemonic;
 const style = StyleSheet.create({
   Body: {
     width: wp(100),
-    height:hp(100),
+    height:hp(95),
     alignSelf:"center",
     textAlign: "center",
   },

@@ -2157,7 +2157,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     height: hp(100),
     width: wp(100),
-    marginTop: "auto",
+    marginTop: hp(3),
   },
   modelView: {
     paddingTop: hp(1),

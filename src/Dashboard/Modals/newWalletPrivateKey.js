@@ -307,9 +307,8 @@ export default NewWalletPrivateKey;
 
 const style = StyleSheet.create({
   Body: {
-    borderRadius: hp(2),
     width: wp(100),
-    height:hp(100),
+    height:hp(90),
     alignSelf:"center",
     textAlign: "center",
   },
@@ -423,7 +422,8 @@ const style = StyleSheet.create({
     backgroundColor: "white",
     paddingLeft: wp(3),
     paddingVertical: hp(1.6),
-    fontSize:15
+    fontSize:15,
+    color:"black"
   },
   label: {
     marginLeft: 20,

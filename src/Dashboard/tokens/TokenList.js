@@ -248,7 +248,7 @@ const TokenList = ({
   }, []);
 
   return (
-    <View style={{ width: wp(100),height:hp(100) }}>
+    <View style={{ width: wp(100),height:hp(100),marginTop:hp(2.3) }}>
       <Wallet_screen_header title="Tokens" onLeftIconPress={() => {setVisible(false)}} />
       {/* <TokenHeader setVisible={setVisible} name={name} /> */}
       <View style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>

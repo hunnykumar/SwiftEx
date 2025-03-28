@@ -26,7 +26,7 @@ import { RPC } from '../../../../constants';
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 
-export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote }) => {
+export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
 
   const styles = StyleSheet.create({
     quoteTextCon: {
@@ -83,7 +83,7 @@ export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationTo
     <View style={{ padding: 3 }}>
       {quoteInfo !== null && (
         <View style={[styles.quoteDetailsContainer, { marginBottom: 10 }]}>
-          <Text style={styles.quoteTitle}>Quote Details</Text>
+          <Text style={styles.quoteTitle}>{typeProvider} Quote</Text>
 
           <View style={styles.quoteRow}>
             <Text style={styles.quoteLabel}>Rate</Text>
@@ -135,12 +135,13 @@ const QuotesResComponent = ({ quoteInfo, sourceToken,quoteInfoDes, destinationTo
     quoteTextCon: {
       flexDirection: "row",
       padding: 9,
-      backgroundColor: "#33373DCC",
+      backgroundColor: "#10B981",
+      borderRadius:10,
       bt: 8,
     },
     quoteText: {
       fontSize: 24,
-      color: 'silver',
+      color: 'white',
       borderRadius: 8,
     },
   });
@@ -148,10 +149,10 @@ const QuotesResComponent = ({ quoteInfo, sourceToken,quoteInfoDes, destinationTo
   if (!quoteInfo && !quoteInfoDes) return null;
 
   return (
-    <View style={{ padding: 3, backgroundColor: "#33373DCC" }}>
+    <View style={{ padding: 3, backgroundColor: "#10B981",borderRadius:10 }}>
     {(quoteInfo || quoteInfoDes) && (
       <>
-        {sourceToken && quoteInfo && (
+        {/* {sourceToken && quoteInfo && (
           <View style={styles.quoteTextCon}>
             <Text style={styles.quoteText}>≈</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -159,7 +160,7 @@ const QuotesResComponent = ({ quoteInfo, sourceToken,quoteInfoDes, destinationTo
             </ScrollView>
             <Text style={styles.quoteText}> USDT</Text>
           </View>
-        )}
+        )} */}
   
         {destinationToken && quoteInfoDes && (
           <View style={styles.quoteTextCon}>
@@ -256,7 +257,7 @@ export const CustomQuotes = ({
       fontSize: 16,
     },
     approveCon: {
-      width: wp(90),
+      width: wp(93),
       backgroundColor: "#3574B6",
       justifyContent: "center",
       alignItems: "center",
@@ -373,7 +374,7 @@ export const CustomQuotes = ({
     return !isNaN(num) && num !== 0;
   };
   const fetchQuote = useCallback(
-    debounce((value,token) => {
+    debounce((value,token,tokenAddre) => {
       setApproved(false)
       setmessageError(null);
       if (isValidNumber(value)&&value!=="null") {
@@ -382,7 +383,7 @@ export const CustomQuotes = ({
         setusdtResLoading(true)
         setusdcRes(null)
         setusdcResLoading(true)
-        handleUSDT(value,tokenAddress,token)
+        handleUSDT(value,tokenAddre,token)
       }
       else {
         setmessageError("Invalid Amount");
@@ -394,7 +395,7 @@ export const CustomQuotes = ({
   const handleInputChange = (text) => {
     const numericText = text.replace(/[^0-9.]/g, '');
     setInputAmount(numericText);
-    fetchQuote(text,tokenName);
+    fetchQuote(text,tokenName,tokenAddress);
   };
 
   const handlleMultiProcces = async () => {
@@ -499,6 +500,7 @@ export const CustomQuotes = ({
                 sourceToken={tokenName}
                 destinationToken={"USDT"}
                 hideQuote={false}
+                typeProvider={tokenChain==="ETH"?"Uniswap":"PancakeSwap"}
               />
               {/*USDC Quote Details Component */}
               <QuotesComponent
@@ -507,6 +509,7 @@ export const CustomQuotes = ({
                 sourceToken={"USDT"}
                 destinationToken={"USDC"}
                 hideQuote={false}
+                typeProvider={"Allbridge"}
               />
               <QuotesResComponent 
                 quoteInfo={usdtRes}
@@ -764,6 +767,7 @@ const styles = StyleSheet.create({
   },
 });
 const getTokenQuoteToUSDT=async(tokenAddres, amount, slippageTolerance = 0.01)=> {
+  console.log("----",tokenAddres,amount)
     // Setup provider (replace with your preferred Ethereum node provider)
     const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC2);
   
