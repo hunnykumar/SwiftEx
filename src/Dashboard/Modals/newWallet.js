@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Pressable,
   TouchableOpacity,
+  SafeAreaView,
 } from "react-native";
 import { TextInput, Checkbox, Switch } from "react-native-paper";
 import {
@@ -81,21 +82,22 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
           setVisible(false);
         }}
       >
-        <View style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
+        <SafeAreaView style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
           <TouchableOpacity disabled={loading} onPress={()=>{onCrossPress(),setCheckBox2(false),setCheckBox(false)}}>
-          <Icon type={'entypo'} name='cross' size={29} color={"white"} style={style.crossIcon} />
+          <Icon name={"arrow-left"} type={"materialCommunity"} size={29} color={"white"} style={style.crossIcon} />
           </TouchableOpacity>
           <View style={{alignSelf:"center",alignItems:"center"}}>
           <Animated.Image
             style={{
-              width: wp("12"),
-              height: hp("12"),
+              width: 202.16,
+              height: 212,
               padding: 30,
+              marginTop:19
             }}
             source={darkBlue}
           />
 
-          <Text style={style.welcomeText}> Back up you wallet now </Text>
+          <Text style={style.welcomeText}>Back up you wallet now</Text>
           <Text style={style.welcomeText}>
             In the next page, you will see your secret phrase
           </Text>
@@ -155,9 +157,21 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
           {loading ? (
             <ActivityIndicator size="large" color="white" />
           ) : (
-            
+            <>
+            <View style={style.infoCon}>
+            <Icon
+          name={"information"}
+          type={"materialCommunity"}
+          size={25}
+          color={"#F7CC49"}
+          />
+          <Text style={{width:wp(80),fontSize:15,color:"white"}}>
+          Your private key is solely your responsibility SwfitEx cannot be held liable for any loss or sharing of your private key.
+          </Text>
+
+            </View>
 <TouchableOpacity
-            style={[style.PresssableBtn,{width:wp(30),alignItems:"center",backgroundColor:  Checked && Checked2? "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)":"gray"}]}
+            style={[style.PresssableBtn,{backgroundColor:  Checked && Checked2? "#2164C1":"gray"}]}
               disabled={loading ? true : Checked && Checked2 ? false : true}
               onPress={async() => {
                 await AsyncStorageLib.setItem('wallet_backup',await state.wallet.address);
@@ -205,14 +219,15 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
             // style={style.PresssableBtn}
           > */}
 
-              <Text style={{ color: "white" }}>Continue</Text>
+              <Text style={{ color: "white",fontSize:16 }}>Continue</Text>
           {/* </LinearGradient> */}
             </TouchableOpacity>
+            </>
           )}
           </View>
           {/* <ModalHeader Function={closeModal} name={"Import"} /> */}
           
-        </View>
+        </SafeAreaView>
         <NewWalletPrivateKey
           Wallet={Wallet}
           onCrossPress={()=>{setNewWalletPrivateKey(false)}}
@@ -230,13 +245,14 @@ export default NewWalletModal;
 
 const style = StyleSheet.create({
   Body: {
-    borderColor:"#145DA0",
-    borderWidth:0.9,
-    paddingTop:hp(1),
-    paddingBottom:hp(8),
-    justifyContent: "center",
+    // borderColor:"#145DA0",
+    // borderWidth:0.9,
+    // paddingTop:hp(1),
+    // paddingBottom:hp(8),
+    // justifyContent: "center",
     borderRadius: hp(2),
-    width: wp(99),
+    width: wp(100),
+    height:hp(100),
     // alignItems: "center",
     alignSelf:"center",
     textAlign: "center",
@@ -244,7 +260,7 @@ const style = StyleSheet.create({
   welcomeText: {
     color: "white",
     marginTop: hp(2),
-    fontWeight:"900"
+    fontWeight:"600"
   },
   welcomeText2: {
     fontSize: 15,
@@ -278,19 +294,26 @@ const style = StyleSheet.create({
     backgroundColor: "white",
   },
   PresssableBtn: {
-    padding: hp(1),
-    width: wp(30),
+    width:wp(90),
+    padding:16,
+    alignItems:"center",
     alignSelf: "center",
     paddingHorizontal: wp(3),
-    borderRadius: hp(0.8),
+    borderRadius: 50,
     marginBottom: hp(2),
-    marginTop:hp(3),
     alignItems: "center",
-    borderColor:"rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
-    borderWidth:1.3,
   },
   crossIcon:{
-    alignSelf:"flex-end",
+    alignSelf:"flex-start",
     padding:hp(1)
+  },
+  infoCon:{
+    marginVertical:hp(4),
+    flexDirection:"row",
+    backgroundColor:"#F9FC691A",
+    padding:5,
+    width:wp(90),
+    justifyContent:"space-around",
+    borderRadius:10
   }
 });

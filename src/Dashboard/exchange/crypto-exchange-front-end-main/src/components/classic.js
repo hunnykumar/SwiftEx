@@ -107,7 +107,7 @@ const fetchUSDCBalnce = async (addresses) => {
     console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`);
 
     setWALLETBALANCE(ethers.utils.formatUnits(balance, 6));
-    if(parseFloat(ethers.utils.formatUnits(balance, 6))===0)
+    if(parseFloat(ethers.utils.formatUnits(balance, 6))===0&&state.STELLAR_ADDRESS_STATUS===true)
     {
       setonTapFeature(true)
     }
@@ -263,7 +263,7 @@ const getOffersData = async () => {
             onClose={()=>{setonTapFeature(false)}}
          />
       <View style={styles.modalHeader}>
-            <Text style={styles.textModal}>Import assets on exchange</Text>
+            <Text style={styles.textModal}>Import assets on trade wallet</Text>
           </View>
 
           <View style={{ marginTop: hp(3),paddingHorizontal:wp(4),alignSelf:"flex-start" }}>

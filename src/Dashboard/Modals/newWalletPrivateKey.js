@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   TextInput,
   Keyboard,
+  SafeAreaView,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -184,16 +185,31 @@ const NewWalletPrivateKey = ({
         }}
       >
 
-        <View style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
+        <SafeAreaView style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
           {/* <ModalHeader Function={closeModal} name={'Private Key'}/> */}
           <Icon
-            type={"entypo"}
-            name={"cross"}
+            name={"arrow-left"} 
+            type={"materialCommunity"}
             color={"#fff"}
             size={24}
             style={style.croosIcon}
             onPress={onCrossPress}
           />
+            <View style={{marginTop:hp(1)}}>
+            <Text style={style.label}>Account Name</Text>
+            <TextInput
+              value={accountName}
+              returnKeyType="done"
+              onChangeText={(text) => {
+                handleUsernameChange(text)
+              }}
+              style={style.labelInputContainer}
+              placeholder={user ? user : "Enter your account name"}
+              placeholderTextColor={"gray"}
+              maxLength={20}
+            />
+          </View>
+
           <Text style={[style.backupText,{color:"#fff"}]}>Backup Mnemonic Phrase</Text>
           <Text style={style.welcomeText1}>
             Please select the mnemonic in order to ensure the backup is
@@ -228,20 +244,7 @@ const NewWalletPrivateKey = ({
           </Text> */}
           {/* <Text style={style.welcomeText2}> Account Name</Text> */}
 
-          <View style={[style.labelInputContainer,{marginTop:text_input_up?"-60%":38}]}>
-            <Text style={[style.label,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>Account Name</Text>
-            <TextInput
-              value={accountName}
-              returnKeyType="done"
-              onChangeText={(text) => {
-                handleUsernameChange(text)
-              }}
-              style={{ width: wp("78%"),color:"black" }}
-              placeholder={user ? user : "Enter your account name"}
-              placeholderTextColor={"gray"}
-              maxLength={20}
-            />
-          </View>
+          
 
           {/* <TextInput
           placeholder="Enter your account name"
@@ -252,20 +255,18 @@ const NewWalletPrivateKey = ({
             autoCapitalize={"none"}
           /> */}
 
-          <View style={{ width: wp(95) }}>
+          <View style={{ width: wp(100) }}>
             <TouchableOpacity
               style={{
                 // backgroundColor:
                   // accountName && !/\s/.test(accountName) ? "#4CA6EA" : "gray",
-                  backgroundColor:!accountName || !/\S/.test(accountName)?"gray":"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
-                width: wp(55),
+                  backgroundColor:!accountName || !/\S/.test(accountName)?"gray":"#2164C1",
+                width: wp(90),
                 alignSelf: "center",
                 alignItems: "center",
-                borderRadius: 10,
-                marginTop: hp(1.5),
+                borderRadius: 50,
+                marginTop: hp(3),
                 paddingVertical: hp(1.7),
-                borderColor:"#145DA0",
-                borderWidth:0.9
               }}
               // disabled={accountName && !/\s/.test(accountName) ? false : true}
               disabled={!accountName || !/\S/.test(accountName)}
@@ -280,10 +281,10 @@ const NewWalletPrivateKey = ({
                 setMnemonicVisible(true);
               }}
             >
-              <Text style={{ color: "white" }}>Done</Text>
+              <Text style={{ color: "white",fontSize:16  }}>Done</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </SafeAreaView>
         {MnemonicVisible && (
           <CheckNewWalletMnemonic
             Wallet={newWallet}
@@ -306,16 +307,11 @@ export default NewWalletPrivateKey;
 
 const style = StyleSheet.create({
   Body: {
-    backgroundColor: "white",
-    // paddingVertical:hp(2),
-    height: hp(90),
     borderRadius: hp(2),
-    width: wp(95),
-    alignSelf: "center",
-    paddingBottom: hp(2),
-    marginTop: hp(3),
-    borderColor:"#145DA0",
-    borderWidth:0.9,
+    width: wp(100),
+    height:hp(100),
+    alignSelf:"center",
+    textAlign: "center",
   },
   welcomeText: {
     fontSize: 20,
@@ -380,7 +376,7 @@ const style = StyleSheet.create({
   flatBtn: {
     backgroundColor: "#F2F2F2",
     borderRadius: hp(0.3),
-    width: wp(28),
+    width: wp(30),
     paddingVertical: hp(2),
     borderWidth: 0.3,
     borderColor: "#D7D7D7",
@@ -392,6 +388,7 @@ const style = StyleSheet.create({
     color: "black",
     marginLeft: 20,
     marginBottom: hp(1),
+    marginTop:hp(2.5)
   },
   welcomeText1: {
     marginLeft: wp(4.7),
@@ -418,32 +415,24 @@ const style = StyleSheet.create({
     textAlign: "center",
   },
   labelInputContainer: {
-    position: "relative",
+    marginTop:hp(1),
     width: wp(90),
-    flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     alignSelf: "center",
-    marginTop: hp(4),
     borderRadius: wp(2),
     backgroundColor: "white",
-    borderWidth: 1,
     paddingLeft: wp(3),
-    paddingVertical: hp(1.2),
-    borderColor: "#DADADA",
+    paddingVertical: hp(1.6),
+    fontSize:15
   },
   label: {
-    position: "absolute",
-    zIndex: 100,
-    backgroundColor: "#011434",
-    paddingHorizontal: 5,
-    left: 12,
-    color: "#4CA6EA",
-    top: -12,
-    borderRadius:10
+    marginLeft: 20,
+    fontSize:16,
+    color:"white",
+    fontWeight: "bold",
   },
   croosIcon: {
-    alignSelf: "flex-end",
+    alignSelf: "flex-start",
     padding: hp(1.2),
   },
 });

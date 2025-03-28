@@ -29,6 +29,7 @@ import { STELLAR_URL } from "./constants";
 import ResponsiveLineChart from "./exchange/crypto-exchange-front-end-main/src/components/ResponsiveLineChart";
 import fetchAllTokensData from "../utilities/TokenUtils";
 import LinearGradient from "react-native-linear-gradient";
+import { CustomQuotes } from "./exchange/crypto-exchange-front-end-main/src/utils/CustomQuotes";
 const StellarSdk = require('stellar-sdk');
 
 function InvestmentChart(setCurrentWallet) {
@@ -53,6 +54,10 @@ function InvestmentChart(setCurrentWallet) {
   const [bnbPrice, setBnbPrice] = useState();
   const [loading, setLoading] = useState(false);
   const [ACTIVATION_MODAL, setACTIVATION_MODAL] = useState(false);
+  const [TokenChain, setTokenChain] = useState(null);
+  const [TokenName, setTokenName] = useState(null);
+  const [TokenAddress, setTokenAddress] = useState(null);
+  const [CustomImport, setCustomImport] = useState(false);
   const [tokenInfoList, setTokenInfoList] = useState(null);
   const dispatch = useDispatch()
   const getEthBnbPrice = async () => {
@@ -202,6 +207,10 @@ function InvestmentChart(setCurrentWallet) {
   }
   useEffect(()=>{
     // await getData_dispatch();
+    setTokenAddress(null)
+    setTokenName(null)
+    setTokenChain(null)
+    setCustomImport(false)
     const get_dataa=async()=>{
      try {
       await get_stellar();
@@ -651,7 +660,11 @@ const renderTokens = ({ item }) => {
         onPress={() => {
           // state?.STELLAR_ADDRESS_STATUS === false 
             // ? navigation.navigate("exchange") :
-             navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbol?.toUpperCase() });
+            //  navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbol?.toUpperCase() });
+            setTokenChain(item.network)
+            setTokenName(item?.symbol?.toUpperCase())
+            setTokenAddress(item?.address)
+            setCustomImport(true)
         }}
       >
         <Text style={styles.actionRowBtnText}>Trade</Text>
@@ -740,6 +753,14 @@ const renderTokens = ({ item }) => {
 
             </TouchableWithoutFeedback>
         </Modal>
+        <CustomQuotes
+          isVisible={CustomImport}
+          onClose={()=>{setCustomImport(false)}}
+          tokenChain={TokenChain}
+          tokenName={TokenName}
+          tokenAddress={TokenAddress}
+          ACTIVATED={state?.STELLAR_ADDRESS_STATUS}
+        />
     </ScrollView>
     </View>
   );

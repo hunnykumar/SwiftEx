@@ -173,16 +173,27 @@ const requestOptions = {
                       props.navigation.navigate("CoinDetails", { data: data });
                     }}
                   >
-                    <Image source={{ uri: image }} style={Styles.img} />
-                    <View style={Styles.flatContainerText}>
-                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>{item.name}</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        <View style={[Styles.imgCon,{backgroundColor: state.THEME.THEME === false ?"#F2F0EF":"#171616"}]}>
+                          <Image source={{ uri: image }} style={Styles.img} />
+                        </View>
+                        <View style={Styles.flatContainerText}>
+                          <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff" }}>{item.name}</Text>
+                          <Text style={{ color: "gray", fontSize: 12, marginTop: hp(0.4) }}>{item?.symbol?.toUpperCase()}</Text>
+                        </View>
+                      </View>
+                      <View style={Styles.flatContainerPrice}>
                       <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>{`$ ${item.current_price ? item.current_price.toFixed(2) : "0"
                         }`}</Text>
-                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>{`Last 24h: ${item.price_change_percentage_24h
-                          ? item.price_change_percentage_24h.toFixed(1)
+                        <View style={{flexDirection:"row",alignItems:"center"}}>
+                          {/* Number.isSafeInteger(item.price_change_percentage_24h) */}
+                          <Icon name={Number.isSafeInteger(item.price_change_percentage_24h)?"menu-down":"menu-down"} type="materialCommunity" size={20} color={Number.isSafeInteger(item.price_change_percentage_24h)?"green":"red"} />
+<Text style={{color:Number.isSafeInteger(item.price_change_percentage_24h)?"green":"red",fontSize:13}}>{`${item.price_change_percentage_24h
+                          ? item.price_change_percentage_24h.toFixed(3)
                           : "0"
                         }%`}</Text>
-                    </View>
+                        </View>
+                        </View>
                   </TouchableOpacity>
                 </ScrollView>
                   </View>
@@ -215,14 +226,25 @@ const Styles = StyleSheet.create({
     marginTop: hp(3),
     alignItems: "center",
     flexDirection: "row",
+    justifyContent:"space-between"
 
   },
   flatContainerText: {
-    marginHorizontal: wp(4),
+    marginHorizontal: wp(2),
+  },
+  flatContainerPrice: {
+    alignItems:"flex-end"
   },
   img: {
     height: hp(5),
-    width: wp(10),
+    width: wp(11),
+  },
+  imgCon: {
+    height: hp(6),
+    width: wp(13),
+    justifyContent:"center",
+    alignItems:"center",
+    borderRadius:10
   },
   monkey_img:{
     width:hp(20),

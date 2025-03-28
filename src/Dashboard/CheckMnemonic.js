@@ -547,11 +547,11 @@ const CheckMnemonic = (props) => {
         Please top on the correct answer of the below seed phrases.
         </Text>
 
-        <View style={{ marginTop: hp(8) }}>
+        <View style={{ marginTop: hp(2) }}>
         {shuffledQuestions.map((q, index) => (
             <View key={index} style={{ marginVertical: 5 }}>
               <Text style={{marginLeft:wp(3),color:"black"}}>{q.question}</Text>
-             <View style={{flexDirection:"row",marginLeft:wp(19)}}>
+             <View style={{flexDirection:"row"}}>
              {q.options.map((option, optIndex) => (
                 <TouchableOpacity
                   key={optIndex}
@@ -561,10 +561,11 @@ const CheckMnemonic = (props) => {
                     borderColor:"#4CA6EA",
                     borderWidth:0.6,
                     marginHorizontal:wp(1.5),
-                    width:wp(20),
+                    width:wp(26),
                     height:hp(5),
                     alignItems:"center",
-                    justifyContent:"center"
+                    justifyContent:"center",
+                    marginTop:hp(1)
                   }}
                   onPress={() => handleAnswer(index, option)}
                 >
@@ -708,7 +709,7 @@ const CheckMnemonic = (props) => {
           }
           }}
         >
-          <Text style={{ color: "white" }}>Done</Text>
+          <Text style={{ color: "white",fontSize:15 }}>Done</Text>
         </TouchableOpacity>
         }
       </View>
@@ -721,9 +722,11 @@ export default CheckMnemonic;
 const style = StyleSheet.create({
   Body: {
     backgroundColor: "white",
-    height: hp(100),
-
+    width: wp(100),
+    height:hp(100),
+    alignSelf:"center",
     textAlign: "center",
+    paddingLeft:wp(5)
   },
   welcomeText: {
     fontSize: 15,
@@ -795,24 +798,24 @@ const style = StyleSheet.create({
     color: "black",
     fontSize: 16,
     fontWeight: "600",
-    textAlign: "center",
-    marginTop: hp(2),
+    textAlign: "left",
+    marginTop: hp(3),
+    marginHorizontal: wp(2),
   },
   wordText: {
     color: "black",
-    textAlign: "center",
-    marginTop: hp(1),
+    textAlign: "left",
+    marginTop: hp(2),
     width: wp(88),
-    marginHorizontal: wp(5),
+    marginHorizontal: wp(2),
   },
   ButtonView: {
     backgroundColor: "#4CA6EA",
-    width: wp(85),
-    alignSelf: "center",
+    width: wp(90),
     alignItems: "center",
-    padding: 10,
-    borderRadius: 10,
-    marginTop: hp(6),
+    padding: 15,
+    borderRadius: 50,
+    marginTop: hp(5),
   },
   pressable: {
     borderColor: "#D7D7D7",
