@@ -317,31 +317,49 @@ export const CustomQuotes = ({
       fontSize: 14,
     },
   });
+  
+  const handleUSDTBNB = async (value,address,token) => {
+    if(token==="USDT")
+    {
+      setusdtRes(null)
+      setusdtResLoading(false)
+      await handleUSDC(value,"BSC")
+    }else{
+      const res=await getBNBTokenQuoteToUSDT(address,value)
+      if(res.status)
+        {
+          setusdtRes(res)
+          setusdtResLoading(false)
+          await handleUSDC(res?.minimumAmountOut?.toFixed(6)?.toString(),"BSC")
+        }
+    }
+  }
 
   const handleUSDT = async (value,address,token) => {
     if(token==="USDT")
     {
       setusdtRes(null)
       setusdtResLoading(false)
-      await handleUSDC(value)
+      await handleUSDC(value,"ETH")
     }else{
       const res=await getTokenQuoteToUSDT(address,value)
       if(res.status)
         {
           setusdtRes(res)
           setusdtResLoading(false)
-          await handleUSDC(res?.minimumAmountOut?.toFixed(6)?.toString())
+          await handleUSDC(res?.minimumAmountOut?.toFixed(6)?.toString(),"ETH")
         }
     }
   }
 
-  const handleUSDC = async (value) => {
+  const handleUSDC = async (value,typeOfchain) => {
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
     myHeaders.append("Authorization", "Bearer " + await getToken());
 
     const raw = JSON.stringify({
-      "amount": value
+      "amount": value,
+      "chainType":typeOfchain
     });
 
     const requestOptions = {
@@ -374,7 +392,7 @@ export const CustomQuotes = ({
     return !isNaN(num) && num !== 0;
   };
   const fetchQuote = useCallback(
-    debounce((value,token,tokenAddre) => {
+    debounce((value,token,tokenAddre,chaiType) => {
       setApproved(false)
       setmessageError(null);
       if (isValidNumber(value)&&value!=="null") {
@@ -383,7 +401,14 @@ export const CustomQuotes = ({
         setusdtResLoading(true)
         setusdcRes(null)
         setusdcResLoading(true)
-        handleUSDT(value,tokenAddre,token)
+        if(chaiType==="ETH")
+        {
+          handleUSDT(value,tokenAddre,token)
+        }
+        if(chaiType==="BSC")
+          {
+            handleUSDTBNB(value,tokenAddre,token)
+          }
       }
       else {
         setmessageError("Invalid Amount");
@@ -395,7 +420,7 @@ export const CustomQuotes = ({
   const handleInputChange = (text) => {
     const numericText = text.replace(/[^0-9.]/g, '');
     setInputAmount(numericText);
-    fetchQuote(text,tokenName,tokenAddress);
+    fetchQuote(text,tokenName,tokenAddress,tokenChain);
   };
 
   const handlleMultiProcces = async () => {
@@ -832,3 +857,68 @@ const getTokenQuoteToUSDT=async(tokenAddres, amount, slippageTolerance = 0.01)=>
     }
   }
   
+
+  async function getBNBTokenQuoteToUSDT(tokenAddress, amount, slippageTolerance = 0.01) {
+    // Setup provider for Binance Smart Chain
+    const provider = new ethers.providers.JsonRpcProvider(RPC.BSCRPC2);
+  
+    // PancakeSwap V2 Router address on BSC
+    const PANCAKESWAP_V2_ROUTER = '0x10ED43C718714eb63d5aA57B78B54704E256024E';
+  
+    // USDT token address on Binance Smart Chain
+    const USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955';
+  
+    // ABI for the PancakeSwap V2 Router
+    const PANCAKESWAP_V2_ROUTER_ABI = [
+      'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)'
+    ];
+  
+    try {
+      // Create contract instance for PancakeSwap Router
+      const pancakeswapRouter = new ethers.Contract(
+        PANCAKESWAP_V2_ROUTER, 
+        PANCAKESWAP_V2_ROUTER_ABI, 
+        provider
+      );
+  
+      // Specify the path: Token -> WBNB -> USDT
+      const path = [
+        tokenAddress,
+        '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', // WBNB address
+        USDT_ADDRESS
+      ];
+  
+      // Convert amount to token's smallest unit (consider token's decimals)
+      const amountIn = ethers.utils.parseUnits(amount.toString(), 18);
+  
+      // Get amounts out (quote)
+      const amounts = await pancakeswapRouter.getAmountsOut(amountIn, path);
+  
+      // Convert result to human-readable format
+      const outputAmount = ethers.utils.formatUnits(amounts[2], 18);
+      
+      // Calculate conversion rate
+      const conversionRate = outputAmount / amount;
+  
+      // Calculate minimum receive amount with slippage tolerance
+      const minimumReceiveAmount = outputAmount * (1 - slippageTolerance);
+  
+      // Construct result object
+      const result = {
+        conversionRate,
+        minimumAmountOut: minimumReceiveAmount,
+        slippageTolerance,
+        inputAmount: amount,
+        inputToken: tokenAddress,
+        outputAmount: parseFloat(outputAmount),
+        outputToken: USDT_ADDRESS,
+        status:true
+      };
+  
+      return result;
+    } catch (error) {
+      console.error('Error fetching quote:', error);
+      const result = {status:false}
+      return result;
+    }
+  }

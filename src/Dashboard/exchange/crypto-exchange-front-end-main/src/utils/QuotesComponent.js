@@ -22,7 +22,7 @@ import { getToken } from '../api';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../../../../../icon';
 
-export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken }) => {
+export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
 
   const styles = StyleSheet.create({
     quoteTextCon: {
@@ -78,18 +78,8 @@ export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationTo
   return (
     <View style={{ padding: 3 }}>
       {quoteInfo !== null && (
-        <View style={styles.quoteTextCon}>
-          <Text style={styles.quoteText}>≈</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <Text style={styles.quoteText}>{quoteInfo.minimumAmountOut}</Text>
-          </ScrollView>
-          <Text style={styles.quoteText}>{destinationToken}</Text>
-        </View>
-      )}
-
-      {quoteInfo !== null && (
         <View style={[styles.quoteDetailsContainer, { marginBottom: 10 }]}>
-          <Text style={styles.quoteTitle}>Quote Details</Text>
+          <Text style={styles.quoteTitle}>{typeProvider} Quote</Text>
 
           <View style={styles.quoteRow}>
             <Text style={styles.quoteLabel}>Rate</Text>
@@ -116,6 +106,15 @@ export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationTo
           </View>
         </View>
       )}
+      {hideQuote ? (quoteInfo !== null && (
+  <View style={styles.quoteTextCon}>
+    <Text style={styles.quoteText}>≈</Text>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <Text style={styles.quoteText}>{quoteInfo.minimumAmountOut}</Text>
+    </ScrollView>
+    <Text style={styles.quoteText}>{destinationToken}</Text>
+  </View>
+)) : null}
 
       {loading && (
         <View style={styles.loadingContainer}>
@@ -124,6 +123,55 @@ export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationTo
         </View>
       )}
     </View>
+  );
+};
+
+const QuotesResComponent = ({ quoteInfo, sourceToken,quoteInfoDes, destinationToken }) => {
+  const styles = StyleSheet.create({
+    quoteTextCon: {
+      flexDirection: "row",
+      padding: 9,
+      backgroundColor: "#10B981",
+      borderRadius:10,
+      bt: 8,
+    },
+    quoteText: {
+      fontSize: 24,
+      color: 'white',
+      borderRadius: 8,
+    },
+  });
+
+  if (!quoteInfo && !quoteInfoDes) return null;
+
+  return (
+    <View style={{ padding: 3, backgroundColor: "#10B981",borderRadius:10 }}>
+    {(quoteInfo || quoteInfoDes) && (
+      <>
+        {/* {sourceToken && quoteInfo && (
+          <View style={styles.quoteTextCon}>
+            <Text style={styles.quoteText}>≈</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <Text style={styles.quoteText}>{quoteInfo?.minimumAmountOut || "--"}</Text>
+            </ScrollView>
+            <Text style={styles.quoteText}> USDT</Text>
+          </View>
+        )} */}
+  
+        {destinationToken && quoteInfoDes && (
+          <View style={styles.quoteTextCon}>
+            <Text style={styles.quoteText}>≈</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <Text style={styles.quoteText}>{quoteInfoDes?.minimumAmountOut || "--"}</Text>
+            </ScrollView>
+            <Text style={styles.quoteText}>{destinationToken}</Text>
+          </View>
+        )}
+      </>
+    )}
+  </View>
+  
+  
   );
 };
 
@@ -193,7 +241,7 @@ export const QuoteModalBottomSheet = ({
       fontSize: 16,
     },
     approveCon: {
-      width: wp(90),
+      width: wp(94),
       backgroundColor: "#3574B6",
       justifyContent: "center",
       alignItems: "center",
@@ -214,6 +262,11 @@ export const QuoteModalBottomSheet = ({
     const res = await getETHtoTokenPrice(USDT, value)
     setusdtRes(res?.trade)
     setusdtResLoading(false)
+    if(res.trade.minimumAmountOut)
+    {
+      const data=parseFloat(res?.trade?.minimumAmountOut).toFixed(6)
+      await handleUSDC(data.toString())
+    }
   }
 
   const handleUSDC = async (value) => {
@@ -222,7 +275,8 @@ export const QuoteModalBottomSheet = ({
     myHeaders.append("Authorization", "Bearer " + await getToken());
 
     const raw = JSON.stringify({
-      "amount": value
+      "amount": value,
+      "chainType":"ETH"
     });
 
     const requestOptions = {
@@ -264,7 +318,6 @@ export const QuoteModalBottomSheet = ({
         setusdcRes(null)
         setusdcResLoading(true)
         handleUSDT(value)
-        handleUSDC(value)
       }
       else {
         setmessageError("Invalid Amount");
@@ -316,7 +369,7 @@ export const QuoteModalBottomSheet = ({
 
              {!Approved?
              <>
-                <Text style={styles.quoteTitle}>How many USDT do you need?</Text>
+                <Text style={styles.quoteTitle}>How much USDC you want on trade wallet?</Text>
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Enter Amount</Text>
                 <TextInput
@@ -331,20 +384,30 @@ export const QuoteModalBottomSheet = ({
               </View>
 
               {/* USDT Quote Details Component */}
+        
               <QuotesComponent
-                quoteInfo={usdtRes}
-                loading={usdtResLoading}
-                sourceToken={"ETH"}
-                destinationToken={"USDT"}
-              />
+                              quoteInfo={usdtRes}
+                              loading={usdtResLoading}
+                              sourceToken={"ETH"}
+                              destinationToken={"USDT"}
+                              hideQuote={false}
+                              typeProvider={"Uniswap"}
+                            />
               {/*USDC Quote Details Component */}
-              <QuotesComponent
-                quoteInfo={usdcRes}
-                loading={usdcResLoading}
+               <QuotesComponent
+                               quoteInfo={usdcRes}
+                               loading={usdcResLoading}
+                              sourceToken={"USDT"}
+                              destinationToken={"USDC"}
+                              hideQuote={false}
+                              typeProvider={"Allbridge"}
+                            />
+              <QuotesResComponent 
+                quoteInfo={usdtRes}
                 sourceToken={"USDT"}
+                quoteInfoDes={usdcRes}
                 destinationToken={"USDC"}
               />
-
               <TouchableOpacity disabled={usdcResLoading || usdtResLoading || !usdcRes || !usdtRes} style={[styles.approveCon, { backgroundColor: usdcResLoading || usdtResLoading || !usdcRes || !usdtRes ? "gray" : Approved ? "green" : "#3574B6" }]} onPress={() => { handlleMultiProcces() }}>
                 {Approved ? <Icon name={"check-circle-outline"} type={"materialCommunity"} size={25} color={"white"} /> : <Text style={styles.approveConText}>{ usdcResLoading?"Getting best quote...":"Approve"}</Text>}
               </TouchableOpacity>
