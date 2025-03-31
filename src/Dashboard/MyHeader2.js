@@ -108,8 +108,8 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
     ) {
       setModalVisible(false);
       setModalVisible2(false);
-      setModalVisible3(true); //uncommet for old swap and comment EthSwap
-      // navigation.navigate("EthSwap")
+      // setModalVisible3(true); //uncommet for old swap and comment EthSwap
+      navigation.navigate("EthSwap")
     } else {
       alert("Swapping is only supported for Ethereum and Binance ");
     }

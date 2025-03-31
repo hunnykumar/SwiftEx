@@ -26,7 +26,7 @@ import {
 import BigNumber from 'bignumber.js';
 import { STELLAR_URL } from '../../../../constants';
 
-const STELLAR_NETWORK = StellarSdk.Networks.PUBLIC;
+const STELLAR_NETWORK = StellarSdk.Networks.TESTNET;
 
 const Offers_manages = () => {
   const state = useSelector((state) => state);

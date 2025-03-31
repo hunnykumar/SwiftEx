@@ -76,7 +76,7 @@ const ThemeProvider = ({ children }) => {
 const useTheme = () => useContext(ThemeContext);
 const settings = {
   apiKey: 'k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo',
-  network: Network.ETH_MAINNET,
+  network: Network.ETH_SEPOLIA,
 };
 const alchemy = new Alchemy(settings);
 
@@ -192,7 +192,7 @@ const TransactionHistory = () => {
 
     return (
       <TouchableOpacity style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-        <TouchableOpacity style={[styles.card, { backgroundColor: colors.cardBackground }]}  onPress={()=>{navigation.navigate("TxDetail",{transactionPath:"https://etherscan.io/tx/"+item.hash})}}>
+        <TouchableOpacity style={[styles.card, { backgroundColor: colors.cardBackground }]}  onPress={()=>{navigation.navigate("TxDetail",{transactionPath:"https://sepolia.etherscan.io/tx/"+item.hash})}}>
           <View style={styles.leftSection}>
             <View style={[styles.iconContainer, { backgroundColor: colors.iconContainer }]}>
               <Text style={{ fontSize: 25, fontWeight: "500", color: '#3b82f6' }}>{item?.asset?.charAt(0)?.toLocaleUpperCase() || "E"}</Text>

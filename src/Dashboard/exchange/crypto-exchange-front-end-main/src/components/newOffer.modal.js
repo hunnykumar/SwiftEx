@@ -48,7 +48,7 @@ import InfoComponent from "./InfoComponent";
 import WalletActivationComponent from "../utils/WalletActivationComponent";
 const Web3 = require('web3');
 const StellarSdk = require('stellar-sdk');
-      StellarSdk.Network.usePublicNetwork();
+      StellarSdk.Network.useTestNetwork();
 const alchemyUrl = RPC.ETHRPC;
 const server = new StellarSdk.Server(STELLAR_URL.URL);
 export const NewOfferModal = () => {
@@ -138,11 +138,11 @@ const getAccountDetails = async () => {
 const [amountSuggest, setamountSuggest] = useState([{ id: 1, amountSuggest: "25%" }, { id: 2, amountSuggest: "50%" }, { id: 3, amountSuggest: "75%" }, { id: 4, amountSuggest: "100%" },]);
 
 const chooseItemList = [
-  { id: 1, name: "XLM/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"XLM",visible_1:"USDC",asset_dom:"steller.org",asset_dom_1:"centre.io",visible0Issuer:"native",visible1Issuer:"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"},
-  { id: 2, name: "ETH/BTC" ,base_value:"BTC",counter_value:"ETH",visible_0:"ETH",visible_1:"BTC",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz",visible0Issuer:"GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC",visible1Issuer:"GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM"},
-  { id: 3, name: "ETH/USDC" ,base_value:"USDC",counter_value:"ETH",visible_0:"ETH",visible_1:"USDC",asset_dom:"ultracapital.xyz",asset_dom_1:"centre.io",visible0Issuer:"GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC",visible1Issuer:"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"},
-  { id: 4, name: "BTC/ETH" ,base_value:"ETH",counter_value:"BTC",visible_0:"BTC",visible_1:"ETH",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz",visible0Issuer:"GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM",visible1Issuer:"GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC"},
-  { id: 5, name: "XLM/BTC" ,base_value:"BTC",counter_value:"native",visible_0:"XLM",visible_1:"BTC",asset_dom:"steller.org",asset_dom_1:"centre.io",visible0Issuer:"native",visible1Issuer:"GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM"},
+  { id: 1, name: "XLM/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"XLM",visible_1:"USDC",asset_dom:"steller.org",asset_dom_1:"centre.io",visible0Issuer:"native",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
+  { id: 2, name: "ETH/BTC" ,base_value:"BTC",counter_value:"ETH",visible_0:"ETH",visible_1:"BTC",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
+  { id: 3, name: "ETH/USDC" ,base_value:"USDC",counter_value:"ETH",visible_0:"ETH",visible_1:"USDC",asset_dom:"ultracapital.xyz",asset_dom_1:"centre.io",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
+  { id: 4, name: "BTC/ETH" ,base_value:"ETH",counter_value:"BTC",visible_0:"BTC",visible_1:"ETH",asset_dom:"ultracapital.xyz",asset_dom_1:"ultracapital.xyz",visible0Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
+  { id: 5, name: "XLM/BTC" ,base_value:"BTC",counter_value:"native",visible_0:"XLM",visible_1:"BTC",asset_dom:"steller.org",asset_dom_1:"centre.io",visible0Issuer:"native",visible1Issuer:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"},
   // { id: 2, name: "ETH/USDC" ,base_value:"USDC",counter_value:"native",visible_0:"ETH",visible_1:"USDC",asset_dom:"allbridge.io",asset_dom_1:"allbridge.io"},
   // { id: 3, name: "BNB/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"BNB",visible_1:"XLM",asset_dom:"allbridge.io",asset_dom_1:"allbridge.io"},
   // { id: 4, name: "SWIFTEX/XLM" ,base_value:"native",counter_value:"USDC",visible_0:"SWIFTEX",visible_1:"XLM",asset_dom:"swiftex",asset_dom_1:"steller.org"},
@@ -252,7 +252,7 @@ const chooseRenderItem_1 = ({ item }) => (
       const counter_asset_buy = selectedValue==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(selectedValue, AssetIssuerPublicKey1);
       const transaction = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.PUBLIC
+        networkPassphrase: StellarSdk.Networks.TESTNET
       })
       const offer = StellarSdk.Operation.manageOffer({
         selling: base_asset_sell,
@@ -264,7 +264,7 @@ const chooseRenderItem_1 = ({ item }) => (
 
       const offerTx = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.PUBLIC
+        networkPassphrase: StellarSdk.Networks.TESTNET
       })
         .addOperation(offer)
         .setTimeout(30)
@@ -312,7 +312,7 @@ const chooseRenderItem_1 = ({ item }) => (
       const  base_asset_sell= top_value_0==="XLM"?new StellarSdk.Asset.native():new StellarSdk.Asset(top_value, AssetIssuerPublicKey1);
       const transaction = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.PUBLIC
+        networkPassphrase: StellarSdk.Networks.TESTNET
       })
       const offer = StellarSdk.Operation.manageOffer({
         selling: counter_asset_buy,
@@ -324,7 +324,7 @@ const chooseRenderItem_1 = ({ item }) => (
 
       const offerTx = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.PUBLIC
+        networkPassphrase: StellarSdk.Networks.TESTNET
       })
         .addOperation(offer)
         .setTimeout(30)
@@ -684,7 +684,7 @@ const change_Trust_New = async (assetName,domainIssuerPublicKey) => {
   try {
       console.log(":++++ Entered into trusting ++++:")
       const server = new StellarSdk.Server(STELLAR_URL.URL);
-      StellarSdk.Network.usePublicNetwork();
+      StellarSdk.Network.useTestNetwork();
       const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
       const transaction = new StellarSdk.TransactionBuilder(account, {
           fee: StellarSdk.BASE_FEE,

@@ -18,14 +18,19 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import { getETHtoTokenPrice } from '../../../../tokens/swapFunctions';
 import { USDT } from './assetAddress';
 import { REACT_APP_HOST } from '../ExchangeConstants';
-import { getToken } from '../api';
+import { authRequest, GET, getToken, POST } from '../api';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../../../../../icon';
 import { ethers } from 'ethers';
-import { RPC } from '../../../../constants';
+import { RPC, STELLAR_URL } from '../../../../constants';
 import Ionicons from "react-native-vector-icons/Ionicons";
-
-
+import { useDispatch, useSelector } from 'react-redux';
+import { RAPID_STELLAR, SET_ASSET_DATA } from '../../../../../components/Redux/actions/type';
+import useFirebaseCloudMessaging from '../../../../notifications/firebaseNotifications';
+import DeviceInfo from 'react-native-device-info';
+import AsyncStorageLib from "@react-native-async-storage/async-storage";
+import Snackbar from 'react-native-snackbar';
+const StellarSdk = require('stellar-sdk');
 export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
 
   const styles = StyleSheet.create({
@@ -187,6 +192,7 @@ export const CustomQuotes = ({
   tokenAddress,
   ACTIVATED
 }) => {
+  const navigation=useNavigation();
   const [inputAmount, setInputAmount] = useState('');
   const [usdtRes, setusdtRes] = useState(null);
   const [usdtResLoading, setusdtResLoading] = useState(false);
@@ -194,7 +200,15 @@ export const CustomQuotes = ({
   const [usdcResLoading, setusdcResLoading] = useState(false);
   const [messageError, setmessageError] = useState(null);
   const [Approved, setApproved] = useState(false);
+  const [not_avilable, setnot_avilable] = useState(false);
+  const [Loading,setLoading]=useState(false);
+  const state = useSelector((state) => state);
+  const dispatch_ = useDispatch()
+  const [Wallet_activation,setWallet_activation]=useState(false)
+  const { FCM_getToken } = useFirebaseCloudMessaging();
    useEffect(()=>{
+    setLoading(false)
+    setnot_avilable(false)
     setApproved(false);
     setInputAmount(null)
     setusdtRes(null)
@@ -202,7 +216,93 @@ export const CustomQuotes = ({
     setusdcRes(null)
     setusdcResLoading(null)
     setmessageError(null)
+    if(ACTIVATED)
+    {
+      BridgeUSDCValidation()
+    }
    },[isVisible])
+
+   function isAssetData(state) {
+    return state?.assetData !== undefined && state?.assetData !== null;
+  }
+   const BridgeUSDCValidation=async()=>{
+    const avlRes=isAssetData(state?.assetData);
+    if(!avlRes)
+    {
+      const ALL_STELLER_BALANCES=state?.assetData;
+      const hasAsset = ALL_STELLER_BALANCES.some(
+        (balance) => balance.asset_code === "USDC" || balance.asset_type === "USDC"
+      );
+      if (!hasAsset) {
+        setnot_avilable(true);
+      }
+      else{
+        setnot_avilable(false);
+      }
+    }
+  
+  }
+
+  const changeTrust = async (domainName,domainIssuerAddress) => {
+    setLoading(true)
+    try {
+        console.log(":++++ Entered into trusting ++++:")
+        const server = new StellarSdk.Server(STELLAR_URL.URL);
+        StellarSdk.Network.useTestNetwork();
+        const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
+        const transaction = new StellarSdk.TransactionBuilder(account, {
+            fee: StellarSdk.BASE_FEE,
+            networkPassphrase: StellarSdk.Network.current().networkPassphrase,
+        })
+            .addOperation(
+                StellarSdk.Operation.changeTrust({
+                    asset: new StellarSdk.Asset(domainName, domainIssuerAddress),
+                })
+            )
+            .setTimeout(30)
+            .build();
+        transaction.sign(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY));
+        const result = await server.submitTransaction(transaction);
+        console.log(`Trustline updated successfully`);
+        Snackbar.show({
+            text: "USDT added successfully",
+            duration: Snackbar.LENGTH_SHORT,
+            backgroundColor:'green',
+        });
+        server.loadAccount(state.STELLAR_PUBLICK_KEY)
+            .then(account => {
+                console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);
+                account.balances.forEach(balance => {
+                  dispatch_({
+                    type: SET_ASSET_DATA,
+                    payload: account.balances,
+                  })
+                  setLoading(false)
+                  onClose();
+                });
+            })
+            .catch(error => {
+                console.log('Error loading account:', error);
+                setLoading(false)
+                Snackbar.show({
+                    text: "USDT failed to be added",
+                    duration: Snackbar.LENGTH_SHORT,
+                    backgroundColor:'red',
+                });
+                onClose();
+            });
+    } catch (error) {
+        console.error(`Error changing trust:`, error);
+        setLoading(false)
+        Snackbar.show({
+            text: 'USDC failed to be added',
+            duration: Snackbar.LENGTH_SHORT,
+            backgroundColor:'red',
+        });
+        onClose();
+    }
+};
+
   const styles = StyleSheet.create({
     modalOverlay: {
       flex: 1,
@@ -437,6 +537,129 @@ export const CustomQuotes = ({
     backdropColor: 'rgba(0, 0, 0, 0.7)'
   };
 
+  const syncDevice = async () => {
+    const token = await FCM_getToken();
+    console.log(token);
+    console.log("hi----->>>ttokenb", token);
+    const device_info = {
+      'deviceBrand': await DeviceInfo.getBrand(),
+      'deviceModel': await DeviceInfo.getModel(),
+      'systemVersion': await DeviceInfo.getSystemVersion(),
+      "deviceUniqueID": await DeviceInfo.getUniqueIdSync(),
+      "deviceIP": await DeviceInfo.getIpAddressSync(),
+      "deviceType": await DeviceInfo.getDeviceType(),
+      "deviceMacAddress": await DeviceInfo.getMacAddress()
+    }
+    try {
+      const { res } = await authRequest(
+        `/users/getInSynced/${token}`,
+        GET
+      );
+      if (res.isInSynced) {
+        const { err } = await authRequest("/users/syncDevice", POST, {
+          fcmRegToken: token,
+          deviceInfo:device_info
+        });
+        if (err){
+          return { status: false };
+        } 
+        return { status: true };
+      }
+
+      return { status: true }; 
+    } catch (err) {
+      console.log(err)
+      return { status: false };
+    }
+  };
+ 
+  const active_account = async () => {
+    console.log("<<<<<<<clicked");
+    try {  
+      // Retrieve token and stored email in parallel
+      const [token, storedEmail] = await Promise.all([
+        getToken(),
+        AsyncStorageLib.getItem('user_email')
+      ]);
+  
+      console.log("Token:", token);
+  
+      const postData = {
+        email: storedEmail,
+        publicKey: state?.STELLAR_PUBLICK_KEY,
+        wallletPublicKey:state?.ETH_KEY
+      };
+  
+      // Update public key by email
+      const response = await fetch(`${REACT_APP_HOST}/users/updatePublicKeyByEmail`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(postData),
+      });
+      
+      const data = await response.json();
+      console.log("--->>>>", data);
+  
+      if (data.message === "Funded successfully") {
+        // Dispatch success action and load account details from Stellar in parallel
+       await dispatch_({
+          type: RAPID_STELLAR,
+          payload: {
+            ETH_KEY: state.ETH_KEY,
+            STELLAR_PUBLICK_KEY: state.STELLAR_PUBLICK_KEY,
+            STELLAR_SECRET_KEY: state.STELLAR_SECRET_KEY,
+            STELLAR_ADDRESS_STATUS: true
+          },
+        });
+        await dispatch_({
+          type: SET_ASSET_DATA,
+          payload:[{"asset_type": "native", "balance": "5.0000000", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000"}],
+        })
+        setWallet_activation(false);
+        Snackbar.show({
+          text: 'Wallet Activated',
+          duration: Snackbar.LENGTH_SHORT,
+          backgroundColor:'green',
+      });
+        onClose()
+      } else if (data.message === "Error funding account") {
+        console.log("Error: Funding account failed.");
+        setWallet_activation(false);
+        onClose()
+        Snackbar.show({
+          text: 'Activation failed',
+          duration: Snackbar.LENGTH_SHORT,
+          backgroundColor:'red',
+      });
+      }
+  
+    } catch (error) {
+      console.error('Network or fetch error:', error);
+      setWallet_activation(false);
+      Snackbar.show({
+        text: 'Activation failed',
+        duration: Snackbar.LENGTH_SHORT,
+        backgroundColor:'red',
+    });
+      onClose()
+    }
+  };
+
+
+  const ActivationHandle=async()=>{
+    setWallet_activation(true)
+   const res=await syncDevice()
+   if(res.status)
+   {
+    await active_account()
+   }else{
+    setWallet_activation(false)
+   }
+  }
+
   return (
     <Modal
       transparent={true}
@@ -455,6 +678,7 @@ export const CustomQuotes = ({
             {!Approved&&<TouchableOpacity
               style={styles.closeButton}
               onPress={onClose}
+              disabled={Loading||Wallet_activation}
             >
                 <MaterialCommunityIcons
                   name={'close-circle-outline'}
@@ -486,15 +710,17 @@ export const CustomQuotes = ({
                        </Text>
                        
                        <TouchableOpacity 
-                         style={styles.activateButton}
-                         onPress={onClose}
+                         style={[styles.activateButton,{backgroundColor:Wallet_activation?"gray":"#4F8EF7"}]}
+                         onPress={()=>{ActivationHandle()}}
+                         disabled={Wallet_activation}
                        >
-                         <Text style={styles.buttonText}>Claim 5 XLM Now!</Text>
+                         {Wallet_activation?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={styles.buttonText}>Claim 5 XLM Now!</Text>}
                        </TouchableOpacity>
                        
                        <TouchableOpacity 
                          style={styles.cancelButton}
                          onPress={onClose}
+                         disabled={Wallet_activation}
                        >
                          <Text style={[styles.cancelText, { color: theme.secondaryText }]}>
                            Remind Me Later
@@ -502,6 +728,37 @@ export const CustomQuotes = ({
                        </TouchableOpacity>
                      </View>
              :
+             not_avilable?
+             <View style={styles.content}>
+             <View style={[styles.iconContainer, { backgroundColor: theme.accentBackground }]}>
+             <Ionicons name="warning-outline" size={40} color={theme.accentColor} />
+             </View>
+             
+             <Text style={[styles.title, { color: theme.text }]}>
+              Trust USDC
+             </Text>
+             <Text style={[styles.description, { color: theme.secondaryText }]}>
+            Please trust USDC first to ensure a smooth and uninterrupted experience.
+             </Text>
+             
+             <TouchableOpacity 
+               style={[styles.activateButton,{backgroundColor:Loading?"gray":"#4F8EF7"}]}
+               disabled={Loading}
+               onPress={()=>{changeTrust("USDC","GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID")}}
+             >
+               {Loading?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={styles.buttonText}>Trust Now!</Text>}
+             </TouchableOpacity>
+             
+             <TouchableOpacity 
+               style={styles.cancelButton}
+               onPress={onClose}
+               disabled={Loading}
+             >
+               <Text style={[styles.cancelText, { color: theme.secondaryText }]}>
+                 Remind Me Later
+               </Text>
+             </TouchableOpacity>
+           </View>:
                 <>
                 <Text style={styles.quoteTitle}>How much {tokenName} you want on trade wallet?</Text>
               <View style={styles.inputContainer}>
@@ -542,7 +799,7 @@ export const CustomQuotes = ({
                 quoteInfoDes={usdcRes}
                 destinationToken={"USDC"}
               />
-              {!ACTIVATED?null:
+              {!ACTIVATED?null:not_avilable?null:
               <TouchableOpacity disabled={usdcResLoading || usdtResLoading || !usdcRes } style={[styles.approveCon, { backgroundColor: usdcResLoading || usdtResLoading || !usdcRes  ? "gray" : Approved ? "green" : "#3574B6" }]} onPress={() => { handlleMultiProcces() }}>
                 {Approved ? <Icon name={"check-circle-outline"} type={"materialCommunity"} size={25} color={"white"} /> : <Text style={styles.approveConText}>{ usdcResLoading?"Getting best quote...":"Approve"}</Text>}
               </TouchableOpacity>}
