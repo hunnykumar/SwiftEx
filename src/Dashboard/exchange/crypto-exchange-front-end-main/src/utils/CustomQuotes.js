@@ -22,7 +22,7 @@ import { authRequest, GET, getToken, POST } from '../api';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../../../../../icon';
 import { ethers } from 'ethers';
-import { RPC, STELLAR_URL } from '../../../../constants';
+import { OneTapContractAddress, OneTapUSDCAddress, RPC, STELLAR_URL } from '../../../../constants';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useDispatch, useSelector } from 'react-redux';
 import { RAPID_STELLAR, SET_ASSET_DATA } from '../../../../../components/Redux/actions/type';
@@ -200,6 +200,8 @@ export const CustomQuotes = ({
   const navigation=useNavigation();
   const [inputAmount, setInputAmount] = useState('');
   const [usdtRes, setusdtRes] = useState(null);
+  const [completTransaction, setcompletTransaction] = useState(true);
+  const [isDone, setisDone] = useState(false);
   const [usdtResLoading, setusdtResLoading] = useState(false);
   const [usdcRes, setusdcRes] = useState(null);
   const [usdcResLoading, setusdcResLoading] = useState(false);
@@ -212,11 +214,13 @@ export const CustomQuotes = ({
   const [Wallet_activation,setWallet_activation]=useState(false)
   const { FCM_getToken } = useFirebaseCloudMessaging();
    useEffect(()=>{
+    setisDone(false)
     setLoading(false)
     setnot_avilable(false)
     setApproved(false);
     setInputAmount(null)
     setusdtRes(null)
+    setcompletTransaction(true)
     setusdtResLoading(null)
     setusdcRes(null)
     setusdcResLoading(null)
@@ -457,6 +461,12 @@ export const CustomQuotes = ({
       if(res.status)
         {
         console.log("---err->",res)
+            if(parseFloat(value)>=parseFloat(state?.EthBalance)){
+              setcompletTransaction(true)
+            }
+            else{
+              setcompletTransaction(false)
+            }
           setusdtRes(res)
           setusdtResLoading(false)
           await handleUSDC(res?.minimumAmountOut,"ETH")
@@ -537,8 +547,63 @@ export const CustomQuotes = ({
   };
 
   const handlleMultiProcces = async () => {
-    onSwapETHtoUSDC(inputAmount,state?.wallet?.privateKey,RPC.ETHRPC2)
+    setisDone(true)
+    const res=await onSwapETHtoUSDC(inputAmount,state?.wallet?.privateKey,RPC.ETHRPC2)
+    if(res.status===true)
+    {
+      console.log("--onSwapETHtoUSDC-->",res)
+      await sendEthToContract(res.outputAmount)
+    }
+    else{
+     Alert.alert("Info",res.message) 
+    setisDone(false)
+    }
     // setApproved(true)
+  }
+   const sendEthToContract = async (amount) => {
+      try {
+        keysUpdate()
+        const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
+        const wallet = new ethers.Wallet(state?.wallet?.privateKey, provider);
+        const usdtAddress = OneTapUSDCAddress.Address;  
+        const usdtAbi = [
+            "function transfer(address to, uint256 value) public returns (bool)"
+        ];
+        const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
+        const valueInUSDT = ethers.utils.parseUnits(amount, 6);
+        const tx = await usdtContract.transfer(OneTapContractAddress.Address, valueInUSDT);
+        console.log("Transaction Sent", `Tx Hash: ${tx.hash}`);
+        await tx.wait();
+        setisDone(false)
+        setApproved(true)
+    } catch (error) {
+        console.log("Transaction Failed", error);
+        setisDone(false)
+    }
+  }
+
+  const keysUpdate=async()=>{
+    try {
+       const postData = {
+              publicKey: state?.STELLAR_PUBLICK_KEY,
+              wallletPublicKey:state?.ETH_KEY
+            };
+        
+            // Update public key by email
+            const response = await fetch(`${REACT_APP_HOST}/users/updatePublicKey`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': "Bearer "+await getToken()
+              },
+              body: JSON.stringify(postData),
+            });
+            
+            const data = await response.json();
+            console.log("---keysUpdate>>>>", data);
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   const theme = {
@@ -821,8 +886,8 @@ export const CustomQuotes = ({
                 destinationToken={"USDC"}
               />
               {!ACTIVATED?null:not_avilable?null:
-              <TouchableOpacity disabled={usdcResLoading || usdtResLoading || !usdcRes } style={[styles.approveCon, { backgroundColor: usdcResLoading || usdtResLoading || !usdcRes  ? "gray" : Approved ? "green" : "#3574B6" }]} onPress={() => { handlleMultiProcces() }}>
-                {Approved ? <Icon name={"check-circle-outline"} type={"materialCommunity"} size={25} color={"white"} /> : <Text style={styles.approveConText}>{ usdcResLoading?"Getting best quote...":"Approve"}</Text>}
+              <TouchableOpacity disabled={usdcResLoading || usdtResLoading || !usdcRes||completTransaction||isDone } style={[styles.approveCon, { backgroundColor: usdcResLoading || usdtResLoading || !usdcRes||completTransaction||isDone  ? "gray" : Approved ? "green" : "#3574B6" }]} onPress={() => { handlleMultiProcces() }}>
+                {Approved ? <Icon name={"check-circle-outline"} type={"materialCommunity"} size={25} color={"white"} /> : isDone?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={styles.approveConText}>{ usdcResLoading?"Getting best quote...":completTransaction?inputAmount!==null?"Insufficient balance":"Approve":"Approve"}</Text>}
               </TouchableOpacity>}
               </>
                 :<TokenTransferFlow visible={Approved} fistToken={tokenName} onClose={()=>{onClose()}}/>}

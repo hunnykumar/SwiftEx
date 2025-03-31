@@ -94,7 +94,7 @@ async function onSwapETHtoUSDC(amount, privateKey, rpcUrl) {
             status: true,
             message: "Swap completed successfully",
             inputAmount: `${amount} ETH`,
-            outputAmount: `${ethers.utils.formatUnits(quotedAmountOut[0], 6)} USDC`,
+            outputAmount: `${ethers.utils.formatUnits(quotedAmountOut[0], 6)}`,
             transactions: {
                 wrap: wrapTxHash ? `https://sepolia.etherscan.io/tx/${wrapTxHash}` : null,
                 approve: `https://sepolia.etherscan.io/tx/${approveReceipt.transactionHash}`,
