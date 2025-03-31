@@ -225,6 +225,7 @@ export const CustomQuotes = ({
     setusdcRes(null)
     setusdcResLoading(null)
     setmessageError(null)
+    fetchUSDTBAL()
     if(ACTIVATED)
     {
       BridgeUSDCValidation()
@@ -234,6 +235,32 @@ export const CustomQuotes = ({
    function isAssetData(state) {
     return state?.assetData !== undefined && state?.assetData !== null;
   }
+
+  const fetchUSDTBAL=async(value)=>{
+    try {
+      const addresses=state&&state.wallet && state.wallet.address;
+      const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
+      const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
+      const usdtAbi = [
+        "function balanceOf(address owner) view returns (uint256)"
+      ];
+
+      const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, provider);
+
+      const balance = await usdtContract.balanceOf(addresses);
+      console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`); 
+      if(parseFloat(value)>=parseFloat(ethers.utils.formatUnits(balance, 6))){
+        setcompletTransaction(true)
+      }
+      else{
+        setcompletTransaction(false)
+      }
+    } catch (error) {
+      console.log("USDT->Bala",error)
+    }
+  }
+
+
    const BridgeUSDCValidation=async()=>{
     const avlRes=isAssetData(state?.assetData);
     if(!avlRes)
@@ -453,6 +480,7 @@ export const CustomQuotes = ({
   const handleUSDT = async (value,address,token) => {
     if(token==="USDT")
     {
+      fetchUSDTBAL(value)
       setusdtRes(null)
       setusdtResLoading(false)
       await handleUSDC(value,"ETH")
@@ -546,17 +574,23 @@ export const CustomQuotes = ({
     fetchQuote(text,tokenName,tokenAddress,tokenChain);
   };
 
-  const handlleMultiProcces = async () => {
-    setisDone(true)
-    const res=await onSwapETHtoUSDC(inputAmount,state?.wallet?.privateKey,RPC.ETHRPC2)
-    if(res.status===true)
-    {
-      console.log("--onSwapETHtoUSDC-->",res)
-      await sendEthToContract(res.outputAmount)
+  const handlleMultiProcces = async (token,value1) => {
+    if (token === "USDT") {
+      setisDone(true)
+      const resAmt=parseFloat(value1).toFixed(6).toString();
+      await sendEthToContract(resAmt)
     }
-    else{
-     Alert.alert("Info",res.message) 
-    setisDone(false)
+    if (token !== "USDT") {
+      setisDone(true)
+      const res = await onSwapETHtoUSDC(inputAmount, state?.wallet?.privateKey, RPC.ETHRPC2)
+      if (res.status === true) {
+        console.log("--onSwapETHtoUSDC-->", res)
+        await sendEthToContract(res.outputAmount)
+      }
+      else {
+        Alert.alert("Info", res.message)
+        setisDone(false)
+      }
     }
     // setApproved(true)
   }
@@ -886,7 +920,7 @@ export const CustomQuotes = ({
                 destinationToken={"USDC"}
               />
               {!ACTIVATED?null:not_avilable?null:
-              <TouchableOpacity disabled={usdcResLoading || usdtResLoading || !usdcRes||completTransaction||isDone } style={[styles.approveCon, { backgroundColor: usdcResLoading || usdtResLoading || !usdcRes||completTransaction||isDone  ? "gray" : Approved ? "green" : "#3574B6" }]} onPress={() => { handlleMultiProcces() }}>
+              <TouchableOpacity disabled={usdcResLoading || usdtResLoading || !usdcRes||completTransaction||isDone } style={[styles.approveCon, { backgroundColor: usdcResLoading || usdtResLoading || !usdcRes||completTransaction||isDone  ? "gray" : Approved ? "green" : "#3574B6" }]} onPress={() => { handlleMultiProcces(tokenName,usdcRes?.minimumAmountOut) }}>
                 {Approved ? <Icon name={"check-circle-outline"} type={"materialCommunity"} size={25} color={"white"} /> : isDone?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={styles.approveConText}>{ usdcResLoading?"Getting best quote...":completTransaction?inputAmount!==null?"Insufficient balance":"Approve":"Approve"}</Text>}
               </TouchableOpacity>}
               </>
