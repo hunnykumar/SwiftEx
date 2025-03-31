@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, Picker, ActivityIndicator, StyleSheet, TouchableOpacity, TextInput, Image, Platform, Keyboard } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Modal, View, Text, Picker, ActivityIndicator, StyleSheet, TouchableOpacity, TextInput, Image, Platform, Keyboard, Alert, BackHandler } from 'react-native';
 import Icon from "../../../../../icon";
 import { FlatList, useToast } from 'native-base';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
 import Bridge from "../../../../../../assets/Bridge.png";
 import { useSelector } from 'react-redux';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -10,26 +10,27 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { REACT_APP_LOCAL_TOKEN } from '../ExchangeConstants';
+import { REACT_APP_HOST, REACT_APP_LOCAL_TOKEN } from '../ExchangeConstants';
 import AsyncStorageLib from '@react-native-async-storage/async-storage';
 import darkBlue from '../../../../../../assets/darkBlue.png'
 import steller_img from '../../../../../../assets/Stellar_(XLM).png'
 import bnbimage from "../../../../../../assets/bnb-icon2_2x.png";
 import WalletActivationComponent from '../utils/WalletActivationComponent';
-import { GET, authRequest } from '../api';
+import { GET, authRequest, getToken } from '../api';
 import { ShowErrotoast, alert } from '../../../../reusables/Toasts';
 import { toInt } from 'validator';
 import { SignTransaction, swap_prepare } from '../../../../../../All_bridge';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
 import { ethers } from 'ethers';
-import { RPC } from '../../../../constants';
+import { OneTapContractAddress, OneTapUSDCAddress, RPC } from '../../../../constants';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { QuoteModalBottomSheet } from '../utils/QuotesComponent';
 const classic = ({ route }) => {
+  const Focused=useIsFocused();
   const toast=useToast();
   const navigation=useNavigation();
   const { Asset_type } = route.params;
   const TEMPCHOSE=Asset_type==="ETH"?"Ethereum":Asset_type==="BNB"?"BNB":Asset_type 
-  console.log("-=-=-=-=-=-=-=-------=======",Asset_type,TEMPCHOSE)
   const state = useSelector((state) => state);
   const nav = useNavigation();
   const [chooseModalVisible, setChooseModalVisible] = useState(false);
@@ -53,15 +54,14 @@ const classic = ({ route }) => {
   const [ACTIVATION_MODAL_PROD,setACTIVATION_MODAL_PROD]=useState(false);
   const [balanceLoading,setbalanceLoading]=useState(false)
   const [onTapFeature,setonTapFeature]=useState(false)
+  const [fianl_modal_text,setfianl_modal_text]=useState("Transaction Faild")
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
-    // { id: 3, name: "Matic", url: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" },
   ]
   const chooseItemList_ETH = [
     { id: 1, name: "USDT", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" },
-    chooseSelectedItemId === "Ethereum" ? { id: 2, name: "USDC", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" } :
-    chooseSelectedItemId === "Matic"?{ id: 2, name: "Matic", url: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }:{ id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
+    { id: 2, name: "USDC", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }
   ];
   const [Profile, setProfile] = useState({
     isVerified: false,
@@ -88,58 +88,69 @@ useEffect(()=>{
   setfianl_modal_loading(false)
   setamount('');
 },[])
-const fetchUSDCBalnce = async (addresses) => {
-  try {
-    setbalanceLoading(true)
-    if(state.STELLAR_ADDRESS_STATUS===false)
-      {
-          setACTIVATION_MODAL_PROD(true)
-      }
-    const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC2);
-    const usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-    const usdtAbi = [
-      "function balanceOf(address owner) view returns (uint256)"
-    ];
+  const fetchUSDCBalnce = async (addresses) => {
+    try {
+      setbalanceLoading(true)
+      if(state.STELLAR_ADDRESS_STATUS===false)
+        {
+            setACTIVATION_MODAL_PROD(true)
+        }
+      const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
+      const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
+      const usdtAbi = [
+        "function balanceOf(address owner) view returns (uint256)"
+      ];
 
-    const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, provider);
+      const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, provider);
 
-    const balance = await usdtContract.balanceOf(addresses);
-    console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`);
+      const balance = await usdtContract.balanceOf(addresses);
+      console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`);
 
-    setWALLETBALANCE(ethers.utils.formatUnits(balance, 6));
-    if(parseFloat(ethers.utils.formatUnits(balance, 6))===0&&state.STELLAR_ADDRESS_STATUS===true)
+      setWALLETBALANCE(ethers.utils.formatUnits(balance, 6));
+      if(parseFloat(ethers.utils.formatUnits(balance, 6))===0&&state.STELLAR_ADDRESS_STATUS===true)
+        {
+          setonTapFeature(true)
+        }
+      setbalanceLoading(false)
+      BridgeUSDCValidation()
+    } catch (error) {
+      setWALLETBALANCE(0.00);
+      setbalanceLoading(false)
+      BridgeUSDCValidation()
+      console.log("Error fetching balance:", error);
+    }
+  }
+  function isAssetData(state) {
+    return state?.assetData !== undefined && state?.assetData !== null;
+}
+  const BridgeUSDCValidation=async()=>{
+    const avlRes=isAssetData(state?.assetData);
+    if(!avlRes)
     {
-      setonTapFeature(true)
+      const ALL_STELLER_BALANCES=state?.assetData;
+      const hasAsset = ALL_STELLER_BALANCES.some(
+        (balance) => balance.asset_code === "USDC" || balance.asset_type === "USDC"
+      );
+      if (!hasAsset) {
+        setnot_avilable(true);
+      }
+      else{
+        setnot_avilable(false);
+      }
     }
-    setbalanceLoading(false)
-    BridgeUSDCValidation()
-  } catch (error) {
-    setWALLETBALANCE(0.00);
-    setbalanceLoading(false)
-    BridgeUSDCValidation()
-    console.log("Error fetching balance:", error);
+    
   }
-}
-function isAssetData(state) {
-  return state?.assetData !== undefined && state?.assetData !== null;
-}
-const BridgeUSDCValidation=async()=>{
-  const avlRes=isAssetData(state?.assetData);
-  if(!avlRes)
-  {
-    const ALL_STELLER_BALANCES=state?.assetData;
-    const hasAsset = ALL_STELLER_BALANCES.some(
-      (balance) => balance.asset_code === "USDC" || balance.asset_type === "USDC"
-    );
-    if (!hasAsset) {
-      setnot_avilable(true);
-    }
-    else{
-      setnot_avilable(false);
-    }
-  }
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate('/');
+        return true;
+      };
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [navigation])
+  );
 
-}
   const for_trading = async () => {
     try {
         const { res, err } = await authRequest("/users/:id", GET);
@@ -198,58 +209,89 @@ const getOffersData = async () => {
     }, 1300)
   }
 
-  const manage_swap = async (wallet_type, asset_type, receive_token) => {
-    const receivetoken = wallet_type === "Ethereum" && asset_type === "USDT" && receive_token === null ? "USDC" : wallet_type === "BNB" && asset_type === "USDT" && receive_token === null ? "USDC" : wallet_type === "Ethereum" && asset_type === "USDT" ? "USDC" : wallet_type === "BNB" && asset_type === "USDT" ? "USDC" : receive_token;
-    setfianl_modal_loading(true);
-    let temp_bal = parseFloat(WALLETBALANCE)
-    let temp_amt = parseFloat(amount)
-    if (temp_amt >= temp_bal || temp_amt === 0) {
-      setfianl_modal_loading(false)
-      ShowErrotoast(toast,"Insufficient funds.");
-    }
-    else {
-      // setfianl_modal_loading(false)      // comment this code for run allbridge
-      // setfianl_modal_error(true)         // comment this code for run allbridge
-
-      // uncomment this code for run allbridge
-
-      const ressult_swap = await swap_prepare(state.wallet.privateKey, state.wallet.address, state.STELLAR_PUBLICK_KEY, amount, "USDT", "USDC", "Ethereum")
-      console.log("last ui res ---->", ressult_swap)
-      if (ressult_swap.status_task) {
-        setfianl_modal_loading(false)
-        setfianl_modal(true)
-      }
-      else {
-        const res=errorExtractor(ressult_swap);
-        if(res!=="Error")
-        {
-          setErrorMessageUI(`Insufficient funds you have ${res.haveFunds} want ${res.wantFunds}`);
-        }
-        setfianl_modal_loading(false)
-        setfianl_modal_error(true)
-      }
+  const keysUpdate=async()=>{
+    try {
+       const postData = {
+              publicKey: state?.STELLAR_PUBLICK_KEY,
+              wallletPublicKey:state?.ETH_KEY
+            };
+        
+            // Update public key by email
+            const response = await fetch(`${REACT_APP_HOST}/users/updatePublicKey`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': "Bearer "+await getToken()
+              },
+              body: JSON.stringify(postData),
+            });
+            
+            const data = await response.json();
+            console.log("---keysUpdate>>>>", data);
+    } catch (error) {
+      console.log(error)
     }
   }
-  const errorExtractor = (resp) => {
+
+  const sendEthToContract = async () => {
     try {
-      const errorString = resp.res.toString();
-      const fundMatchResult = errorString.match(/have\s*(\d+)\s*want\s*(\d+)/);
-      if (fundMatchResult) {
-        const [, haveFunds, wantFunds] = fundMatchResult;
-        const fundsAnalysis = {
-          haveFunds: haveFunds,
-          wantFunds: wantFunds
-        }; 
-        return fundsAnalysis;
-      }
-      return 'Error';
-    } catch (error) {
-      return 'Error';
+      keysUpdate()
+      const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
+      const wallet = new ethers.Wallet(state?.wallet?.privateKey, provider);
+      const usdtAddress = OneTapUSDCAddress.Address;  
+      const usdtAbi = [
+          "function transfer(address to, uint256 value) public returns (bool)"
+      ];
+      const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
+      const valueInUSDT = ethers.utils.parseUnits(amount, 6);
+      const tx = await usdtContract.transfer(OneTapContractAddress.Address, valueInUSDT);
+      console.log("Transaction Sent", `Tx Hash: ${tx.hash}`);
+  
+      setfianl_modal_text("Transaction Successful");
+      await tx.wait();
+      setfianl_modal_loading(false);
+      setfianl_modal_error(true);
+  } catch (error) {
+      setfianl_modal_text("Transaction Failed");
+      console.log("Transaction Failed", error);
+      setfianl_modal_loading(false);
+      setfianl_modal_error(true);
+  }
+  
+  };
+  const manage_swap = async () => {
+    setfianl_modal_loading(true);
+    const amountValue = parseFloat(amount);
+    const walletBalanceValue = parseFloat(WALLETBALANCE);
+    if (isNaN(amount)||amountValue == 0) {
+      setfianl_modal_loading(false);
+      ShowErrotoast(toast, "Invalid amount");
+      setamount("");
     }
+    else{
+      if (amountValue <= 0 || amountValue > walletBalanceValue) {
+        setfianl_modal_loading(false);
+        ShowErrotoast(toast, "Insufficient funds");
+        setamount("");
+      }
+      else{
+        sendEthToContract()
+      }
+      
+    }
+      
+      // setfianl_modal_loading(false) //error alert
+      // setfianl_modal_error(true)
+
+
+  }
+  const copyToClipboard = (tokenAddress) => {
+    Clipboard.setString(tokenAddress);
+    alert("success", "Copied to clipboard!");
   };
   return (
-    <View style={{ backgroundColor: "#011434",flex:1}}>
-     <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+    <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
+     <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
      <WalletActivationComponent
          isVisible={ACTIVATION_MODAL_PROD}
          onClose={() => {ActivateModal}}
@@ -263,7 +305,7 @@ const getOffersData = async () => {
             onClose={()=>{setonTapFeature(false)}}
          />
       <View style={styles.modalHeader}>
-            <Text style={styles.textModal}>Import assets on trade wallet</Text>
+            <Text style={styles.textModal}>Import Assets on Trade Wallet</Text>
           </View>
 
           <View style={{ marginTop: hp(3),paddingHorizontal:wp(4),alignSelf:"flex-start" }}>
@@ -280,7 +322,27 @@ const getOffersData = async () => {
               <Text style={[styles.textModal, { fontSize: 18 }]}>Choose asset</Text>
               <TouchableOpacity style={[styles.modalOpen, { width: wp(90) }]} onPress={() => { setchooseModalVisible_choose(true); setIdIndex(3); }}>
                 {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} />}
-                <Text style={{color:"#fff",fontSize:19,marginLeft:wp(1.3)}}>{chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho}</Text>
+               <View>
+               <Text style={{color:"#fff",fontSize:19,marginLeft:wp(1.3)}}>{chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho}</Text>
+                <View style={{flexDirection:"row",alignItems:"center"}}>
+                <Text style={{ color: "#fff", fontSize: 10, marginLeft: wp(1.3) }}>
+                {chooseSelectedItemIdCho === null
+                  ? "0x7e9fbbf33c595430848e767E162e4b0FF6b8205b"
+                  : chooseSelectedItemIdCho === "USDT"
+                    ? "0x7e9fbbf33c595430848e767E162e4b0FF6b8205b"
+                    : "Arriving soon"}
+              </Text>
+              {chooseSelectedItemIdCho === "USDT"||chooseSelectedItemIdCho === null?<TouchableOpacity onPress={()=>{copyToClipboard("0x7e9fbbf33c595430848e767E162e4b0FF6b8205b")}} style={{ marginLeft: 5 }}>
+              <Icon
+                          name={"content-copy"}
+                          type={"materialCommunity"}
+                          color={"rgba(129, 108, 255, 0.97)"}
+                          size={24}
+                        />
+              </TouchableOpacity>:<></>}
+
+                </View>
+               </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -294,24 +356,23 @@ const getOffersData = async () => {
               </View>
               <View style={{flexDirection:"row",alignItems:"center",width:wp(30)}}>
               <Text style={{fontSize:19,textAlign:"center",color:"#fff"}}>Balance: </Text>
-              {balanceLoading?<ActivityIndicator color={"green"} size={"small"}/>:
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
-                <Text style={{color:"#fff",fontSize:19 }}>{WALLETBALANCE}</Text>
-              </ScrollView>}
+                {balanceLoading?<ActivityIndicator color={"green"}/>:<Text style={{color:"#fff",fontSize:19 }}>{WALLETBALANCE}</Text>}
+              </ScrollView>
               </View>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between" ,marginTop:hp(2),paddingHorizontal:wp(4)}}>
             <View style={{ width: wp(40), alignSelf: "center" }}>
             <Text style={[styles.textModal, { fontSize: 18 }]}>Amount</Text>
-              <TextInput placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" style={[styles.modalOpen, { padding:10, width: wp(40),fontSize:18,color:"#fff" }]} onChangeText={(value) => { setamount(value) }} returnKeyType="done"/>
+              <TextInput maxLength={2} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" style={[styles.modalOpen, { padding:10, width: wp(40),fontSize:18,color:"#fff" }]} onChangeText={(value) => { setamount(value) }} returnKeyType="done"/>
             </View>
             <View style={{ width: wp(40), alignSelf: "center" }}>
               <Text style={[styles.textModal, { fontSize: 18 }]}>Receive</Text>
               <View style={[styles.modalOpen, { backgroundColor: "#33373DCC", width: wp(40) }]} onPress={() => { setchooseModalVisible_choose(true); setIdIndex(3); }}>
-                {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} />}
+                {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} />}
                 <View>
                 <Text style={{color:"#fff",fontSize:19,marginLeft:2}}>{chooseSelectedItemIdCho === null ? "USDC" : chooseSelectedItemIdCho === "USDC" ? chooseSelectedItemId === "Matic" || chooseSelectedItemIdCho === "Matic" ? "apUSDC" : "USDC" : chooseSelectedItemIdCho === "BNB" ? "BNB" : chooseSelectedItemIdCho === "Matic" ? "apMATIC" : "USDC"}</Text>
-                {chooseSelectedItemIdCho === null||chooseSelectedItemIdCho ==="USDC"?<Text style={{color:"gray",fontSize:10}}>centre.io</Text>:chooseSelectedItemIdCho ==="USDT"?<Text style={{color:"gray",fontSize:10}}>allbridge.io</Text>:<></>}
+                {chooseSelectedItemIdCho === null||chooseSelectedItemIdCho ==="USDC"?<Text style={{color:"gray",fontSize:10}}>centre.io</Text>:chooseSelectedItemIdCho ==="USDT"?<Text style={{color:"gray",fontSize:10}}>centre.io</Text>:<></>}
                 </View>
               </View>
             </View>
@@ -320,10 +381,10 @@ const getOffersData = async () => {
 
             <TouchableOpacity
               // disabled={chooseSelectedItemIdCho === null||chooseSelectedItemId === null} 
-              style={[styles.nextButton, { backgroundColor: !amount?"gray":'#2F7DFF',height:hp(6),marginTop:hp(5) }]}
-            disabled={!amount||fianl_modal_loading} onPress={() => { Keyboard.dismiss(),manage_swap(chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho,chooseSelectedItemIdCho) }}
+              style={[styles.nextButton, { backgroundColor: !amount||balanceLoading?"gray":'#2F7DFF',height:hp(6),marginTop:hp(5) }]}
+            disabled={!amount||fianl_modal_loading||balanceLoading} onPress={() => { Keyboard.dismiss(),manage_swap() }}
             >
-              {fianl_modal_loading===true?<ActivityIndicator color={"white"}/>:<Text style={styles.nextButtonText}>Confirm Transaction</Text>}
+              {fianl_modal_loading?<ActivityIndicator color={"white"}/>:<Text style={styles.nextButtonText}>Confirm Transaction</Text>}
             </TouchableOpacity>
       <Modal
         animationType="fade"
@@ -418,7 +479,7 @@ const getOffersData = async () => {
               </ScrollView>
             </View>
             <View style={styles.inputContainer}>
-              <TextInput placeholder='Amount' placeholderTextColor="gray" keyboardType="number-pad" style={styles.input} onChangeText={(value) => { setamount(value) }} />
+              <TextInput placeholder='Amount' placeholderTextColor="gray" keyboardType="number-pad" value={amount} style={styles.input} onChangeText={(value) => { setamount(value) }} />
             </View>
             <TouchableOpacity style={[styles.confirmButton, { backgroundColor: !amount ? "gray" : "green" }]} disabled={!amount} onPress={() => { setConfirmModalVisible(false), setfianl_modal(true) }}>
               <Text style={styles.confirmButtonText}>Confirm</Text>
@@ -461,35 +522,29 @@ const getOffersData = async () => {
         transparent={true}
         visible={fianl_modal_error}>
           
-        <TouchableOpacity style={styles.modalContainer} onPress={()=>{setfianl_modal_error(false)}}>
+        <View style={styles.modalContainer}>
           <View style={{
             backgroundColor: 'rgba(33, 43, 83, 1)',
-            padding: 10,
+            padding: 20,
             borderRadius: 10,
             alignItems: 'center',
             width: "90%",
-            height: "25%",
-            // justifyContent: "center"
+            height: "30%",
           }}>
-             <TouchableOpacity style={{alignSelf:"flex-end",marginTop:-5,marginRight:-5}} onPress={()=>{setfianl_modal_error(false)}}>
-          <Icon
-              name={"close-circle-outline"}
-              type={"materialCommunity"}
-              size={35}
-              color={"orange"}
-            />
-          </TouchableOpacity>
+            
             <Icon
-              name={"alert-circle-outline"}
+              name={fianl_modal_text==="Transaction Faild"?"alert-circle-outline":"check-circle-outline"}
               type={"materialCommunity"}
-              size={40}
-              color={"red"}
-              style={{marginTop:10}}
+              size={60}
+              color={fianl_modal_text==="Transaction Faild"?"red":"green"}
+              style={{marginTop:19}}
             />
-            <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 10, color: "#fff" }}>Transaction Faild</Text>
-            <Text style={{ fontSize: 10, fontWeight: "bold", marginTop: 10, color: "#fff",textAlign:"center" }}>{ErrorMessageUI==null?"":ErrorMessageUI}</Text>
+            <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical: 19, color: "#fff" }}>{fianl_modal_text}</Text>
+            <TouchableOpacity style={styles.alertBtn} onPress={()=>{fianl_modal_text==="Transaction Faild"?setfianl_modal_error(false):[setfianl_modal_error(false),navigation.navigate("Assets_manage")]}}>
+              <Text style={styles.alertBtnText}>Ok</Text>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
 
 
@@ -547,7 +602,7 @@ const getOffersData = async () => {
         animationType="fade"
         transparent={true}
         visible={not_avilable}>
-        <View style={styles.modalContainer} onPress={() => { setfianl_modal_error(false) }}>
+        <View style={styles.modalContainer}>
           <View style={{
             backgroundColor: 'rgba(33, 43, 83, 1)',
             padding: 10,
@@ -567,17 +622,18 @@ const getOffersData = async () => {
             />
             <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: hp(2.5), color: "#fff",textAlign:"center" }}>To use this feature, you must trust USDC. Please trust USDC first to ensure a smooth and uninterrupted experience.</Text>
             <View style={{ flexDirection: "row",justifyContent:"space-around",width:"83%" }}>
-               <TouchableOpacity style={{
-                 alignSelf: "center", marginTop: hp(2.5), backgroundColor: "gray", alignContent: "center", justifyContent: "center", width: "40%", paddingVertical: hp(1), borderRadius: 10, borderColor: "#4CA6EA",
-                 borderWidth: 2
-               }} onPress={() => {setnot_avilable(false),navigation.goBack()}}>
-                 <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff", textAlign: "center" }}>Maybe Later</Text>
-               </TouchableOpacity>
-               <TouchableOpacity style={{ alignSelf: "center", marginTop:hp(2.5),backgroundColor:"green",alignContent:"center",justifyContent:"center",width:"40%",paddingVertical:hp(1),borderRadius:10,borderColor:"#4CA6EA",
-             borderWidth:2 }} onPress={() => {navigation.navigate("Assets_manage",{openAssetModal:true})}}>
-             <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff",textAlign:"center" }}>Trust Now</Text>
-             </TouchableOpacity>
-             </View>
+              <TouchableOpacity style={{
+                alignSelf: "center", marginTop: hp(2.5), backgroundColor: "gray", alignContent: "center", justifyContent: "center", width: "40%", paddingVertical: hp(1), borderRadius: 10, borderColor: "#4CA6EA",
+                borderWidth: 2
+              }} onPress={() => {setnot_avilable(false),navigation.goBack()}}>
+                <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff", textAlign: "center" }}>Maybe Later</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={{ alignSelf: "center", marginTop:hp(2.5),backgroundColor:"green",alignContent:"center",justifyContent:"center",width:"40%",paddingVertical:hp(1),borderRadius:10,borderColor:"#4CA6EA",
+            borderWidth:2 }} onPress={() => {navigation.navigate("Assets_manage",{openAssetModal:true})}}>
+            <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff",textAlign:"center" }}>Trust Now</Text>
+            </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -732,8 +788,8 @@ const styles = StyleSheet.create({
     marginLeft: wp(22),
   },
   logoImg_TOP_1: {
-    height: hp(4.5),
-    width: wp(9),
+    height: 39,
+    width: 39,
     marginLeft: wp(1),
     marginRight: 3
   },
@@ -840,6 +896,21 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "gray",
     marginStart: 5
+  },
+  alertBtn: {
+    width: "90%",
+    height: 40,
+    borderRadius: 80,
+    marginTop:19,
+    backgroundColor:"#2164C1",
+    alignItems:"center",
+    justifyContent:"center"
+  },
+  alertBtnText:{
+      textAlign:"center",
+      fontSize:19,
+      fontWeight:"400",
+      color:"#fff"
   }
 });
 export default classic;

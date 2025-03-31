@@ -30,6 +30,8 @@ import useFirebaseCloudMessaging from '../../../../notifications/firebaseNotific
 import DeviceInfo from 'react-native-device-info';
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import Snackbar from 'react-native-snackbar';
+import { getCUSTOMSwapQuote } from './QuotesUtil';
+import { onSwapETHtoUSDC } from './OneTapPayExecution';
 const StellarSdk = require('stellar-sdk');
 export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
 
@@ -46,9 +48,7 @@ export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationTo
       borderRadius: 8,
     },
     quoteDetailsContainer: {
-      backgroundColor: '#33373DCC',
-      marginTop: 3,
-      padding: 16,
+      paddingHorizontal: 1,
       borderRadius: 8,
     },
     quoteTitle: {
@@ -85,10 +85,15 @@ export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationTo
   if (!quoteInfo && !loading) return null;
 
   return (
-    <View style={{ padding: 3 }}>
+    <View style={{ padding: 1 }}>
       {quoteInfo !== null && (
-        <View style={[styles.quoteDetailsContainer, { marginBottom: 10 }]}>
-          <Text style={styles.quoteTitle}>{typeProvider} Quote</Text>
+        <View style={[styles.quoteDetailsContainer]}>
+          <View style={styles.quoteRow}>
+            <Text style={styles.quoteLabel}>Provider</Text>
+            <Text style={styles.quoteValue}>
+              {typeProvider}
+            </Text>
+          </View>
 
           <View style={styles.quoteRow}>
             <Text style={styles.quoteLabel}>Rate</Text>
@@ -416,6 +421,12 @@ export const CustomQuotes = ({
     cancelText: {
       fontSize: 14,
     },
+    quoteTitleCon:{
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 12,
+      color: '#fff',
+    },
   });
   
   const handleUSDTBNB = async (value,address,token) => {
@@ -442,12 +453,13 @@ export const CustomQuotes = ({
       setusdtResLoading(false)
       await handleUSDC(value,"ETH")
     }else{
-      const res=await getTokenQuoteToUSDT(address,value)
+      const res=await getTokenQuoteToUSDT(address,value,token)
       if(res.status)
         {
+        console.log("---err->",res)
           setusdtRes(res)
           setusdtResLoading(false)
-          await handleUSDC(res?.minimumAmountOut?.toFixed(6)?.toString(),"ETH")
+          await handleUSDC(res?.minimumAmountOut,"ETH")
         }
     }
   }
@@ -472,6 +484,7 @@ export const CustomQuotes = ({
     fetch(REACT_APP_HOST + "/users/swapInfo", requestOptions)
       .then((response) => response.json())
       .then((result) => {
+        console.log("---err->",result)
         if (result?.status === 200) {
           setusdcRes(result?.response),
             setusdcResLoading(false)
@@ -524,7 +537,8 @@ export const CustomQuotes = ({
   };
 
   const handlleMultiProcces = async () => {
-    setApproved(true)
+    onSwapETHtoUSDC(inputAmount,state?.wallet?.privateKey,RPC.ETHRPC2)
+    // setApproved(true)
   }
 
   const theme = {
@@ -701,12 +715,11 @@ export const CustomQuotes = ({
                        </View>
                        
                        <Text style={[styles.title, { color: theme.text }]}>
-                       Activate Your Wallet
+                       Activate and Trust USDT
                        </Text>
                        
                        <Text style={[styles.description, { color: theme.secondaryText }]}>
-                       Your Stellar wallet isn’t activated yet.
-                       Activate it now to start using all the features seamlessly!
+                       Your Stellar wallet isn’t activated yet. Activate it now to automatically trust USDC and start using all features seamlessly!
                        </Text>
                        
                        <TouchableOpacity 
@@ -760,7 +773,7 @@ export const CustomQuotes = ({
              </TouchableOpacity>
            </View>:
                 <>
-                <Text style={styles.quoteTitle}>How much {tokenName} you want on trade wallet?</Text>
+                <Text style={styles.quoteTitle}>How much {tokenName==="WETH"?"USDT":tokenName} you want on trade wallet?</Text>
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Enter Amount</Text>
                 <TextInput
@@ -775,6 +788,13 @@ export const CustomQuotes = ({
               </View>
                 </>}
 
+                  <View style={{
+                    padding: 9,
+                    backgroundColor: "#33373DCC",
+                    borderRadius: 8,
+                    marginBottom:hp(2)
+                  }}>
+                     {usdtRes!==null||usdcRes!==null?<Text style={styles.quoteTitleCon}>Quote Details</Text>:null}
               {/* USDT Quote Details Component */}
               <QuotesComponent
                 quoteInfo={usdtRes}
@@ -793,6 +813,7 @@ export const CustomQuotes = ({
                 hideQuote={false}
                 typeProvider={"Allbridge"}
               />
+              </View>
               <QuotesResComponent 
                 quoteInfo={usdtRes}
                 sourceToken={tokenName}
@@ -919,7 +940,7 @@ const TokenTransferFlow = ({ visible = false,fistToken,onClose }) => {
 
         {showEstimate ? (
           <View style={styles.notificationContainer}>
-            <Text style={styles.notificationText}>Estimated time: 19 min. We'll notify you when complete.</Text>
+            <Text style={styles.notificationText}>Estimated time: 2 min. We'll notify you when complete.</Text>
           </View>
         ) : (
           <View style={styles.progressContainer}>
@@ -1048,70 +1069,8 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
   },
 });
-const getTokenQuoteToUSDT=async(tokenAddres, amount, slippageTolerance = 0.01)=> {
-  console.log("----",tokenAddres,amount)
-    // Setup provider (replace with your preferred Ethereum node provider)
-    const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC2);
-  
-    // Uniswap V2 Router address
-    const UNISWAP_V2_ROUTER = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D';
-  
-    // USDT token address on Ethereum mainnet
-    const USDT_ADDRESS = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
-  
-    // ABI for the Uniswap V2 Router
-    const UNISWAP_V2_ROUTER_ABI = [
-      'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)'
-    ];
-  
-    try {
-      // Create contract instance for Uniswap Router
-      const uniswapRouter = new ethers.Contract(
-        UNISWAP_V2_ROUTER, 
-        UNISWAP_V2_ROUTER_ABI, 
-        provider
-      );
-  
-      // Specify the path: Token -> WETH -> USDT
-      const path = [
-        tokenAddres,
-        '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH address
-        USDT_ADDRESS
-      ];
-  
-      // Convert amount to token's smallest unit (consider token's decimals)
-      const amountIn = ethers.utils.parseUnits(amount.toString(), 18);
-  
-      // Get amounts out (quote)
-      const amounts = await uniswapRouter.getAmountsOut(amountIn, path);
-  
-      // Convert result to human-readable format
-      const outputAmount = ethers.utils.formatUnits(amounts[2], 6);
-      
-      // Calculate conversion rate
-      const conversionRate = outputAmount / amount;
-  
-      // Calculate minimum receive amount with slippage tolerance
-      const minimumReceiveAmount = outputAmount * (1 - slippageTolerance);
-  
-      // Construct result object
-      const result = {
-        conversionRate,
-        minimumAmountOut: minimumReceiveAmount,
-        slippageTolerance,
-        inputAmount: amount,
-        inputToken: tokenAddres,
-        outputAmount: parseFloat(outputAmount),
-        outputToken: USDT_ADDRESS,
-        status:true
-      };
-  
-      return result;
-    } catch (error) {
-      console.error('Error fetching quote:', error);
-      const result = {status:false}
-      return result;
-    }
+const getTokenQuoteToUSDT=async(tokenAddres, amount, token)=> {
+     return await getCUSTOMSwapQuote(tokenAddres, amount,token)
   }
   
 

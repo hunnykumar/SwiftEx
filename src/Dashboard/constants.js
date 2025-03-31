@@ -73,7 +73,7 @@ export const STELLAR_URL={
   // USERTYPE:"PROD",//LiveEnv
   URL:"https://horizon-testnet.stellar.org",//TestEnv
   EXPERT_URL:"https://stellar.expert/explorer/testnet",//TestEnv
-  USERTYPE:"DEV",//DevEnv
+  USERTYPE:"PROD",//LiveEnv
 
 }
 

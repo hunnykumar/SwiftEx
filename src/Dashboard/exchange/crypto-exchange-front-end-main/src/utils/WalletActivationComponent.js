@@ -264,12 +264,11 @@ const WalletActivationComponent = ({
           </View>
           
           <Text style={[styles.title, { color: theme.text }]}>
-          Activate Your Wallet
+          Activate and Trust USDT
           </Text>
           
           <Text style={[styles.description, { color: theme.secondaryText }]}>
-          Your Stellar wallet isn’t activated yet.
-          Activate it now to start using all the features seamlessly!
+          Your Stellar wallet isn’t activated yet. Activate it now to automatically trust USDC and start using all features seamlessly!
           </Text>
           
           <TouchableOpacity 
