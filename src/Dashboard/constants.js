@@ -45,11 +45,11 @@ export const faucets ={
 export const jwtSecret = "0xC02aaA3MunziAppTestMode0xbb4CdB9";
 
 export const RPC = {
-  BSCRPC: "https://bsc-dataseed.binance.org",
+  BSCRPC: "https://bnb-testnet.g.alchemy.com/v2/k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo",
   BSCRPC2:
     // "https://bsc.getblock.io/a011daa0-3099-4f55-b22c-c3a3d55898d0/testnet/", //OLD
     // "https://bsc-testnet.blockpi.network/v1/rpc/public",
-    'https://bsc-dataseed.binance.org',
+    'https://bnb-testnet.g.alchemy.com/v2/k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo',
   MATICRPC:
     "https://polygon-mumbai.g.alchemy.com/v2/WUJnVsFyDvgwlbSdNrpr-lMg0-NKaNLH",
   // ETHRPC:"https://eth-goerli.g.alchemy.com/v2/E1L1Ovo8ZG9-8UjFrNY39wcjPSa0uYLG",  //OLD
