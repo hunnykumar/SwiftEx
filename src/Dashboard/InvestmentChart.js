@@ -664,7 +664,7 @@ const renderTokens = ({ item }) => {
     {/* Right: Action Buttons */}
     <View style={{ alignItems: "center", paddingRight: 5 }}>
       <TouchableOpacity 
-        disabled={item.id === 4} 
+        // disabled={item.id === 4} 
         style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
         onPress={() => {
           // state?.STELLAR_ADDRESS_STATUS === false 
@@ -680,7 +680,7 @@ const renderTokens = ({ item }) => {
       </TouchableOpacity>
   
       <TouchableOpacity 
-        disabled={item.id === 4} 
+        // disabled={item.id === 4} 
         style={styles.actionBuyBtn} 
         onPress={() => navigation.navigate("payout")}
       >
