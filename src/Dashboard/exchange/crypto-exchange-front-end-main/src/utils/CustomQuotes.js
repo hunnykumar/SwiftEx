@@ -314,7 +314,8 @@ export const CustomQuotes = ({
                     payload: account.balances,
                   })
                   setLoading(false)
-                  onClose();
+                  setnot_avilable(false)
+                  // onClose();
                 });
             })
             .catch(error => {
@@ -737,7 +738,7 @@ export const CustomQuotes = ({
           duration: Snackbar.LENGTH_SHORT,
           backgroundColor:'green',
       });
-        onClose()
+        // onClose()
       } else if (data.message === "Error funding account") {
         console.log("Error: Funding account failed.");
         setWallet_activation(false);
