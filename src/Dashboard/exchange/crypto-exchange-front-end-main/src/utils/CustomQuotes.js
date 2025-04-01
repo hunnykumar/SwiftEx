@@ -316,6 +316,7 @@ export const CustomQuotes = ({
                   setLoading(false)
                   setnot_avilable(false)
                   // onClose();
+                setWallet_activation(false)
                 });
             })
             .catch(error => {
@@ -326,11 +327,13 @@ export const CustomQuotes = ({
                     duration: Snackbar.LENGTH_SHORT,
                     backgroundColor:'red',
                 });
+                setWallet_activation(false)
                 onClose();
             });
     } catch (error) {
         console.error(`Error changing trust:`, error);
         setLoading(false)
+        setWallet_activation(false)
         Snackbar.show({
             text: 'USDC failed to be added',
             duration: Snackbar.LENGTH_SHORT,
@@ -686,7 +689,7 @@ export const CustomQuotes = ({
       return { status: false };
     }
   };
- 
+  const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
   const active_account = async () => {
     console.log("<<<<<<<clicked");
     try {  
@@ -718,6 +721,8 @@ export const CustomQuotes = ({
       console.log("--->>>>", data);
   
       if (data.message === "Funded successfully") {
+        await delay(3000)
+          await changeTrust("USDC","GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID")
         // Dispatch success action and load account details from Stellar in parallel
        await dispatch_({
           type: RAPID_STELLAR,
@@ -732,7 +737,7 @@ export const CustomQuotes = ({
           type: SET_ASSET_DATA,
           payload:[{"asset_type": "native", "balance": "5.0000000", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000"}],
         })
-        setWallet_activation(false);
+        // setWallet_activation(false);
         Snackbar.show({
           text: 'Wallet Activated',
           duration: Snackbar.LENGTH_SHORT,
