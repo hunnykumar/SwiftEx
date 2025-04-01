@@ -25,6 +25,7 @@ import { ethers } from 'ethers';
 import { OneTapContractAddress, OneTapUSDCAddress, RPC } from '../../../../constants';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { QuoteModalBottomSheet } from '../utils/QuotesComponent';
+import { CustomQuotes } from '../utils/CustomQuotes';
 const classic = ({ route }) => {
   const Focused=useIsFocused();
   const toast=useToast();
@@ -300,10 +301,14 @@ const getOffersData = async () => {
          appTheme={true}
          shouldNavigateBack={true}
        /> 
-         <QuoteModalBottomSheet
-            isVisible={onTapFeature}
-            onClose={()=>{setonTapFeature(false)}}
-         />
+         <CustomQuotes
+                   isVisible={onTapFeature}
+                   onClose={()=>{setonTapFeature(false)}}
+                   tokenChain={"ETH"}
+                   tokenName={"WETH"}
+                   tokenAddress={"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"}
+                   ACTIVATED={state?.STELLAR_ADDRESS_STATUS}
+                 />
       <View style={styles.modalHeader}>
             <Text style={styles.textModal}>Import Assets on Trade Wallet</Text>
           </View>
