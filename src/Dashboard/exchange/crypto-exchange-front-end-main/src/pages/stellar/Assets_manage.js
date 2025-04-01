@@ -193,7 +193,7 @@ const Assets_manage = ({route}) => {
                 <View style={styles.modalView}>
                    <View style={{flexDirection:"row",justifyContent:"space-between",width:"100%"}}>
                      <Text style={styles.modal_heading}>Add Asset</Text>
-                     <TouchableOpacity disabled={Loading} onPress={()=>{setTRUST_ASSET(false)}}>
+                     <TouchableOpacity onPress={()=>{setTRUST_ASSET(false)}}>
                      <Icon
                             name={"close"}
                             type={"antDesign"}
@@ -223,7 +223,7 @@ const Assets_manage = ({route}) => {
                                             style={{paddingHorizontal:"10%"}}
                                         />
                                     </View> :
-                                <TouchableOpacity style={styles.btn} disabled={Loading===list.name} onPress={()=>{
+                                <TouchableOpacity style={styles.btn}  onPress={()=>{
                                     changeTrust(list.name,list.issuerAddress)
                                 }}>
                                     {Loading===list.name?<ActivityIndicator color={"green"}/>:<Text style={[styles.modal_sub_heading]}>Add Asset</Text>}

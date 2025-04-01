@@ -108,7 +108,7 @@ useEffect(()=>{
       console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`);
 
       setWALLETBALANCE(ethers.utils.formatUnits(balance, 6));
-      if(parseFloat(ethers.utils.formatUnits(balance, 6))===0&&state.STELLAR_ADDRESS_STATUS===true)
+      if(parseFloat(ethers.utils.formatUnits(balance, 6))===0||state.STELLAR_ADDRESS_STATUS===false)
         {
           setonTapFeature(true)
         }
@@ -133,7 +133,7 @@ useEffect(()=>{
         (balance) => balance.asset_code === "USDC" || balance.asset_type === "USDC"
       );
       if (!hasAsset) {
-        setnot_avilable(true);
+        // setnot_avilable(true);
       }
       else{
         setnot_avilable(false);
@@ -290,20 +290,24 @@ const getOffersData = async () => {
     Clipboard.setString(tokenAddress);
     alert("success", "Copied to clipboard!");
   };
+  const handleClose=()=>{
+    setonTapFeature(false)
+    navigation.goBack();
+  }
   return (
     <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
      <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
-     <WalletActivationComponent
+     {/* <WalletActivationComponent
          isVisible={ACTIVATION_MODAL_PROD}
          onClose={() => {ActivateModal}}
          onActivate={ActivateModal}
          navigation={navigation}
          appTheme={true}
          shouldNavigateBack={true}
-       /> 
+       />  */}
          <CustomQuotes
                    isVisible={onTapFeature}
-                   onClose={()=>{setonTapFeature(false)}}
+                   onClose={()=>{handleClose()}}
                    tokenChain={"ETH"}
                    tokenName={"WETH"}
                    tokenAddress={"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"}
