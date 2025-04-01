@@ -993,14 +993,14 @@ const TokenTransferFlow = ({ visible = false,fistToken,onClose }) => {
 
   if (!visible) return null;
 
-  useEffect(() => {
-    if (showEstimate) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 3000);
-      return () => clearTimeout(timer); 
-    }
-  }, [showEstimate]);
+  // useEffect(() => {
+  //   if (showEstimate) {
+  //     const timer = setTimeout(() => {
+  //       onClose();
+  //     }, 3000);
+  //     return () => clearTimeout(timer); 
+  //   }
+  // }, [showEstimate]);
 
   return (
     <View style={styles.container}>
@@ -1044,9 +1044,14 @@ const TokenTransferFlow = ({ visible = false,fistToken,onClose }) => {
       </View>
 
         {showEstimate ? (
+         <>
           <View style={styles.notificationContainer}>
             <Text style={styles.notificationText}>Estimated time: 2 min. We'll notify you when complete.</Text>
           </View>
+          <TouchableOpacity style={styles.approveCon} onPress={() => {onClose()}}>
+          <Text style={styles.approveConText}>Okay</Text>
+        </TouchableOpacity>
+         </>
         ) : (
           <View style={styles.progressContainer}>
           <Animated.Text style={styles.progressText}>Progress: {progressText}</Animated.Text>
@@ -1172,6 +1177,22 @@ const styles = StyleSheet.create({
     height: 8,
     backgroundColor: '#3B82F6',
     borderRadius: 9999,
+  },
+  approveCon: {
+    width: '100%',
+    backgroundColor: "#3574B6",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: hp(0.6),
+    marginBottom: hp(0.6),
+    padding: 14,
+    borderRadius: 20
+
+  },
+  approveConText: {
+    fontSize: 19,
+    color: "#fff",
+    fontWeight: "600"
   },
 });
 const getTokenQuoteToUSDT=async(tokenAddres, amount, token)=> {
