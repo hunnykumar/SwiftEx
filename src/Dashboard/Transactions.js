@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     width:69,
-    paddingHorizontal: 12,
+    paddingHorizontal: 11,
     paddingVertical: 6,
     borderRadius: 15,
     alignItems:"center"

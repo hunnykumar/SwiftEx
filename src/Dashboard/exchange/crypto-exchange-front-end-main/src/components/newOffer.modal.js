@@ -46,6 +46,7 @@ import StellarAccountReserve from "../utils/StellarReserveComponent";
 import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../utilities/StellarUtils";
 import InfoComponent from "./InfoComponent";
 import WalletActivationComponent from "../utils/WalletActivationComponent";
+import CustomOrderBook from "../pages/stellar/CustomOrderBook";
 const Web3 = require('web3');
 const StellarSdk = require('stellar-sdk');
       StellarSdk.Network.useTestNetwork();
@@ -57,6 +58,7 @@ export const NewOfferModal = () => {
   const [chooseSearchQuery, setChooseSearchQuery] = useState('');
   const back_data=useRoute();
   // const { user, open, getOffersData, onCrossPress }=back_data.params;
+  const [activeTab, setActiveTab] = useState(0);
   const isFocused = useIsFocused();
   const state = useSelector((state) => state);
   const [ALL_STELLER_BALANCES,setALL_STELLER_BALANCES]=useState([]);
@@ -767,16 +769,16 @@ const handleCloseModal = () => {
   console.log("0---",AssetIssuerPublicKey)
   console.log("1---",AssetIssuerPublicKey1)
   return (
-   
-   <>
+    
+    <View style={styles.scrollView0}>
        {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={"#011434"}/>}
       <Exchange_screen_header title="Trade" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+    <ScrollView>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : null}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         style={{ flex: 1, backgroundColor: "#011434", }}
       >
-        <ScrollView contentContainerStyle={styles.scrollView}>
       
         <InfoComponent
           visible={infoVisible}
@@ -797,6 +799,34 @@ const handleCloseModal = () => {
           <Text style={styles.pairNameText.pairDomainText}>{top_domain_0}</Text>
         </TouchableOpacity>
       </View>
+       <View style={styles.tabContainer}>
+              <TouchableOpacity 
+                style={[styles.tab, activeTab === 0 && styles.activeTab]} 
+                onPress={() => setActiveTab(0)}
+              >
+                <Text style={[styles.tabText, activeTab === 0 && styles.activeTabText]}>Overview</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.tab, activeTab === 1 && styles.activeTab]} 
+                onPress={() => setActiveTab(1)}
+              >
+                <Text style={[styles.tabText, activeTab === 1 && styles.activeTabText]}>Trade</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.tab, activeTab === 2 && styles.activeTab]} 
+                onPress={() => setActiveTab(2)}
+              >
+                <Text style={[styles.tabText, activeTab === 2 && styles.activeTabText]}>Orderbook</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.tab, activeTab === 3 && styles.activeTab]} 
+                onPress={() => setActiveTab(3)}
+              >
+                <Text style={[styles.tabText, activeTab === 3 && styles.activeTabText]}>Last Trade</Text>
+              </TouchableOpacity>
+            </View>
+        <View>
+      <ScrollView contentContainerStyle={styles.scrollView}>
         {assetInfo&&
            <View style={styles.informationContiner}>
            <Text style={styles.amountSugCon.amountSugCardText}>Click 'Import' to add token.</Text>
@@ -805,196 +835,216 @@ const handleCloseModal = () => {
            </TouchableOpacity>
          </View>
         }
-       {/* offer seletion container */}
-      <View style={[styles.pairSelectionCon]}>
-        <Text style={styles.pairHeadingText}>Trading Pair</Text>
-        <TouchableOpacity style={styles.pairSelectionSubCon} onPress={()=>{setchooseModalPair(true)}}>
-          <Text style={styles.pairSelectionSubCon.pairSelectionName}>{top_value+" / "+top_value_0}</Text>
-          <Icon name="down" type={"antDesign"} size={20} color={"#FFFFFF"} />
-        </TouchableOpacity>
-        <Text style={[styles.pairHeadingText, { marginTop: 13, }]}>Select Offer</Text>
-        <View style={styles.offerSelctionCon}>
-          <TouchableOpacity style={[styles.offerSelctionBtn,{ backgroundColor: btnRoot===0?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("BUY"),setbtnRoot(0),reves_fun(top_value, top_value_0, AssetIssuerPublicKey,AssetIssuerPublicKey1)}}>
-            <Text style={styles.pairSelectionSubCon.pairSelectionName}>Buy</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.offerSelctionBtn, { backgroundColor: btnRoot===1?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("SELL"),setbtnRoot(1),reves_fun(top_value, top_value_0, AssetIssuerPublicKey,AssetIssuerPublicKey1)}}>
-            <Text style={styles.pairSelectionSubCon.pairSelectionName}>Sell</Text>
-          </TouchableOpacity>
-          <Modal
-        animationType="slide"
-        transparent={true}
-        visible={chooseModalPair}
-        >
-        <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setchooseModalPair(false)}>
-          <View style={styles.chooseModalContent}>
-          <Text style={styles.chooseItem_text}>Select Trading Pair</Text>
-            <FlatList
-              data={chooseFilteredItemList}
-              renderItem={chooseRenderItem}
-              keyExtractor={(item) => item.id.toString()}
-              />
-          </View>
-        </TouchableOpacity>
-      </Modal>
-        </View>
-      </View>
-            {/* account info container */}
-            <View style={styles.pairSelectionCon}>
-        <View style={styles.accountInfoCon}>
-          <Text style={styles.pairHeadingText}>Account</Text>
-          <View style={{width:wp(60)}}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60) }}>
-          <Text style={styles.accountInfoCon.accountInfoText} numberOfLines={1}>{PublicKey}</Text>
-          </ScrollView>
-          </View>
-        </View>
-        <View style={[styles.accountInfoCon, { marginTop: 9 }]}>
-          <TouchableOpacity style={{flexDirection:"row",alignItems:"center"}} onPress={()=>{setreservedError(true)}}>
-          <Text style={styles.pairHeadingText}>Balance</Text>
-          <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"} style={{marginLeft:3}}/>
-          </TouchableOpacity>
-          {reserveLoading?<ActivityIndicator color={"green"}/>:
-          <Text style={styles.accountInfoCon.accountInfoText} numberOfLines={1}>{Balance!=="Error" ? Number(Balance).toFixed(5) : 0.0} </Text>}
-        </View>
-      </View>
-      {/* amount input */}
-      <View style={styles.amountCon}>
-        <View style={styles.amountSubinfo}>
-          <Text style={[styles.pairHeadingText]}>Amount </Text>
-          <TouchableOpacity onPress={()=>{setinfoVisible(true),setinfotype("success"),setinfomessage(`Offered Amount for ${SelectedBaseValue==="native"?"XLM":SelectedBaseValue}`)}}>
-          <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"}/>
-                      </TouchableOpacity>
-        </View>
-        <View style={styles.amountInputCon}>
-          <TextInput  
-          style={{color:"#fff",fontSize:16,width:"100%",height:"100%"}}
-              keyboardType="numeric"
-                returnKeyType="done"
-                value={offer_amount}
-                contextMenuHidden={true}
-                disableFullscreenUI={true}
-                placeholder={SelectedBaseValue==="native"?"Amount of XLM":"Amount of "+SelectedBaseValue}
-                placeholderTextColor={"gray"}
-                onChangeText={(text) => {
-                  onChangeamount(text)
-                  if (offer_amount > Balance) {
-                    setinfoVisible(true),setinfotype("error"),setinfomessage("Inputed Balance not found in account.")
-                  }
-                }}
-                disabled={Balance==="0.0000000"||Balance==="0"}
-                autoCapitalize={"none"}/>
-        </View>
-        <View style={styles.amountSugCon}>
-          {amountSuggest.map((item, index) => {
-            return (
-              <TouchableOpacity style={styles.amountSugCon.amountSugCard} key={index}>
-                <Text style={styles.amountSugCon.amountSugCardText}>{item.amountSuggest}</Text>
-              </TouchableOpacity>
-            )
-          })}
-        </View>
-      </View>
+  {activeTab===1&&
+    <>
+    {/* offer seletion container */}
+    <View style={[styles.pairSelectionCon,{marginTop:hp(-4)}]}>
+     <Text style={styles.pairHeadingText}>Trading Pair</Text>
+     <TouchableOpacity style={styles.pairSelectionSubCon} onPress={()=>{setchooseModalPair(true)}}>
+       <Text style={styles.pairSelectionSubCon.pairSelectionName}>{top_value+" / "+top_value_0}</Text>
+       <Icon name="down" type={"antDesign"} size={20} color={"#FFFFFF"} />
+     </TouchableOpacity>
+     <Text style={[styles.pairHeadingText, { marginTop: 13, }]}>Select Offer</Text>
+     <View style={styles.offerSelctionCon}>
+       <TouchableOpacity style={[styles.offerSelctionBtn,{ backgroundColor: btnRoot===0?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("BUY"),setbtnRoot(0),reves_fun(top_value, top_value_0, AssetIssuerPublicKey,AssetIssuerPublicKey1)}}>
+         <Text style={styles.pairSelectionSubCon.pairSelectionName}>Buy</Text>
+       </TouchableOpacity>
+       <TouchableOpacity style={[styles.offerSelctionBtn, { backgroundColor: btnRoot===1?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("SELL"),setbtnRoot(1),reves_fun(top_value, top_value_0, AssetIssuerPublicKey,AssetIssuerPublicKey1)}}>
+         <Text style={styles.pairSelectionSubCon.pairSelectionName}>Sell</Text>
+       </TouchableOpacity>
+       <Modal
+     animationType="slide"
+     transparent={true}
+     visible={chooseModalPair}
+     >
+     <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setchooseModalPair(false)}>
+       <View style={styles.chooseModalContent}>
+       <Text style={styles.chooseItem_text}>Select Trading Pair</Text>
+         <FlatList
+           data={chooseFilteredItemList}
+           renderItem={chooseRenderItem}
+           keyExtractor={(item) => item.id.toString()}
+           />
+       </View>
+     </TouchableOpacity>
+   </Modal>
+     </View>
+   </View>
+         {/* account info container */}
+         <View style={styles.pairSelectionCon}>
+     <View style={styles.accountInfoCon}>
+       <Text style={styles.pairHeadingText}>Account</Text>
+       <View style={{width:wp(60)}}>
+       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60) }}>
+       <Text style={styles.accountInfoCon.accountInfoText} numberOfLines={1}>{PublicKey}</Text>
+       </ScrollView>
+       </View>
+     </View>
+     <View style={[styles.accountInfoCon, { marginTop: 9 }]}>
+       <TouchableOpacity style={{flexDirection:"row",alignItems:"center"}} onPress={()=>{setreservedError(true)}}>
+       <Text style={styles.pairHeadingText}>Balance</Text>
+       <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"} style={{marginLeft:3}}/>
+       </TouchableOpacity>
+       {reserveLoading?<ActivityIndicator color={"green"}/>:
+       <Text style={styles.accountInfoCon.accountInfoText} numberOfLines={1}>{Balance!=="Error" ? Number(Balance).toFixed(5) : 0.0} </Text>}
+     </View>
+   </View>
+   {/* amount input */}
+   <View style={styles.amountCon}>
+     <View style={styles.amountSubinfo}>
+       <Text style={[styles.pairHeadingText]}>Amount </Text>
+       <TouchableOpacity onPress={()=>{setinfoVisible(true),setinfotype("success"),setinfomessage(`Offered Amount for ${SelectedBaseValue==="native"?"XLM":SelectedBaseValue}`)}}>
+       <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"}/>
+                   </TouchableOpacity>
+     </View>
+     <View style={styles.amountInputCon}>
+       <TextInput  
+       style={{color:"#fff",fontSize:16,width:"100%",height:"100%"}}
+           keyboardType="numeric"
+             returnKeyType="done"
+             value={offer_amount}
+             contextMenuHidden={true}
+             disableFullscreenUI={true}
+             placeholder={SelectedBaseValue==="native"?"Amount of XLM":"Amount of "+SelectedBaseValue}
+             placeholderTextColor={"gray"}
+             onChangeText={(text) => {
+               onChangeamount(text)
+               if (offer_amount > Balance) {
+                 setinfoVisible(true),setinfotype("error"),setinfomessage("Inputed Balance not found in account.")
+               }
+             }}
+             disabled={Balance==="0.0000000"||Balance==="0"}
+             autoCapitalize={"none"}/>
+     </View>
+     <View style={styles.amountSugCon}>
+       {amountSuggest.map((item, index) => {
+         return (
+           <TouchableOpacity style={styles.amountSugCon.amountSugCard} key={index}>
+             <Text style={styles.amountSugCon.amountSugCardText}>{item.amountSuggest}</Text>
+           </TouchableOpacity>
+         )
+       })}
+     </View>
+   </View>
 
-      {/* price input */}
-      <View style={[styles.amountCon,{marginTop:"14%"}]}>
-        <View style={styles.amountSubinfo}>
-          <Text style={[styles.pairHeadingText]}>Price </Text>
-          <TouchableOpacity onPress={()=>{setinfoVisible(true),setinfotype("success"),setinfomessage(`Offered Price for ${selectedValue==="native"?"XLM":selectedValue}`)}}>
-          <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.amountInputCon}>
+   {/* price input */}
+   <View style={[styles.amountCon,{marginTop:"14%"}]}>
+     <View style={styles.amountSubinfo}>
+       <Text style={[styles.pairHeadingText]}>Price </Text>
+       <TouchableOpacity onPress={()=>{setinfoVisible(true),setinfotype("success"),setinfomessage(`Offered Price for ${selectedValue==="native"?"XLM":selectedValue}`)}}>
+       <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"} />
+       </TouchableOpacity>
+     </View>
+     <View style={styles.amountInputCon}>
 
-          <TextInput 
-                style={{color:"#fff",fontSize:16,width:"100%",height:"100%"}}
-                returnKeyType="done"
-                keyboardType="numeric"
-                value={offer_price}
-                contextMenuHidden={true}
-                disableFullscreenUI={true}
-                placeholder={"Price of " + route.toLocaleLowerCase()}
-                placeholderTextColor={"gray"}
-                onChangeText={(text) => {
-                  onChangename(text)
-                }}
-                autoCapitalize={"none"}
-                disabled={Balance === "0.0000000" || Balance === "0"}
-              />
-        </View>
-        </View>
-        {/* total view */}
-        <View style={styles.priceInfoCon}>
-        <View style={styles.amountSubinfo}>
-          <Text style={[styles.pairHeadingText]}>Total </Text>
-          <TouchableOpacity onPress={()=>{setinfoVisible(true),setinfotype("success"),setinfomessage(`Total for ${selectedValue==="native"?"XLM":selectedValue}`)}}>
-          <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"} />
-          </TouchableOpacity>
-        </View>
-          <Text style={[styles.accountInfoCon.accountInfoText,{fontWeight:"900"}]} numberOfLines={1}>{offer_price*offer_amount}</Text>
-        </View>
-        {/* create offer button */}
+       <TextInput 
+             style={{color:"#fff",fontSize:16,width:"100%",height:"100%"}}
+             returnKeyType="done"
+             keyboardType="numeric"
+             value={offer_price}
+             contextMenuHidden={true}
+             disableFullscreenUI={true}
+             placeholder={"Price of " + route.toLocaleLowerCase()}
+             placeholderTextColor={"gray"}
+             onChangeText={(text) => {
+               onChangename(text)
+             }}
+             autoCapitalize={"none"}
+             disabled={Balance === "0.0000000" || Balance === "0"}
+           />
+     </View>
+     </View>
+     {/* total view */}
+     <View style={styles.priceInfoCon}>
+     <View style={styles.amountSubinfo}>
+       <Text style={[styles.pairHeadingText]}>Total </Text>
+       <TouchableOpacity onPress={()=>{setinfoVisible(true),setinfotype("success"),setinfomessage(`Total for ${selectedValue==="native"?"XLM":selectedValue}`)}}>
+       <Icon name={"information-outline"} type={"materialCommunity"} size={15} color={"#818895"} />
+       </TouchableOpacity>
+     </View>
+       <Text style={[styles.accountInfoCon.accountInfoText,{fontWeight:"900"}]} numberOfLines={1}>{offer_price*offer_amount}</Text>
+     </View>
+     {/* create offer button */}
 
-        
-        <View
-          style={{
-            display: "flex",
-            alignItems: "center",
-            marginTop:Platform.OS==="ios"?30:30
-          }}
-          >
-            <View style={{display: "flex", alignSelf: "center",}}>
-              <StellarAccountReserve
-                isVisible={reservedError}
-                onClose={handleCloseModal}
-                title="Reserved"
-                />
-            </View>
-        </View>
+     
+     <View
+       style={{
+         display: "flex",
+         alignItems: "center",
+         marginTop:Platform.OS==="ios"?30:30
+       }}
+       >
+         <View style={{display: "flex", alignSelf: "center",}}>
+           <StellarAccountReserve
+             isVisible={reservedError}
+             onClose={handleCloseModal}
+             title="Reserved"
+             />
+         </View>
+     </View>
 
-              <TouchableOpacity
-                activeOpacity={true}
-                style={[styles.submitBtn,{backgroundColor:Loading === true?"gray":"#2164C1"}]}
-                onPress={() => { setLoading(true), offer_creation() }}
-                color="green"
-                disabled={Loading||Balance==="0.0000000"||parseFloat(Balance)===0}
-                >
-                <Text style={styles.textColor}>{Loading === true ? <ActivityIndicator color={"white"} /> :"Create Offer"}</Text>
-              </TouchableOpacity>
-            
-          {loading ? (
-            <ActivityIndicator size="small" color="blue" />
-          ) : (
-            <View></View>
-          )}
+           <TouchableOpacity
+             activeOpacity={true}
+             style={[styles.submitBtn,{backgroundColor:Loading === true?"gray":"#2164C1"}]}
+             onPress={() => { setLoading(true), offer_creation() }}
+             color="green"
+             disabled={Loading||Balance==="0.0000000"||parseFloat(Balance)===0}
+             >
+             <Text style={styles.textColor}>{Loading === true ? <ActivityIndicator color={"white"} /> :"Create Offer"}</Text>
+           </TouchableOpacity>
+         
+       {loading ? (
+         <ActivityIndicator size="small" color="blue" />
+       ) : (
+         <View></View>
+       )}
 
 
 
-      <Modal
-          animationType="fade"
-          transparent={true}
-          visible={show_trust_modal}
-          >
-          <View style={styles.AccountmodalContainer}>
-            <View style={styles.AccounsubContainer}>
-              <Icon
-                name={"alert-circle-outline"}
-                type={"materialCommunity"}
-                size={60}
-                color={"orange"}
-                />
-              <Text style={styles.AccounheadingContainer}>Please trust {usdcBidgeTrust?"USDC":tradeTrust?top_value_0:top_value} first before creating your offer.</Text>
-              <View style={{ flexDirection: "row",justifyContent:"space-around",width:wp(80),marginTop:hp(3),alignItems:"center" }}>
-                <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={() => {setshow_trust_modal(false),navigation.goBack()}}>
-                   <Text style={styles.Accounbtntext}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={()=>{change_Trust_New(usdcBidgeTrust?"USDC":tradeTrust?top_value_0:top_value,tradeTrust?AssetIssuerPublicKey1:AssetIssuerPublicKey)}}>
-                   <Text style={styles.Accounbtntext}>{loading_trust_modal?<ActivityIndicator color={"green"}/>:"Trust"}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+   <Modal
+       animationType="fade"
+       transparent={true}
+       visible={show_trust_modal}
+       >
+       <View style={styles.AccountmodalContainer}>
+         <View style={styles.AccounsubContainer}>
+           <Icon
+             name={"alert-circle-outline"}
+             type={"materialCommunity"}
+             size={60}
+             color={"orange"}
+             />
+           <Text style={styles.AccounheadingContainer}>Please trust {usdcBidgeTrust?"USDC":tradeTrust?top_value_0:top_value} first before creating your offer.</Text>
+           <View style={{ flexDirection: "row",justifyContent:"space-around",width:wp(80),marginTop:hp(3),alignItems:"center" }}>
+             <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={() => {setshow_trust_modal(false),navigation.goBack()}}>
+                <Text style={styles.Accounbtntext}>Cancel</Text>
+             </TouchableOpacity>
+             <TouchableOpacity disabled={loading_trust_modal} style={styles.AccounbtnContainer} onPress={()=>{change_Trust_New(usdcBidgeTrust?"USDC":tradeTrust?top_value_0:top_value,tradeTrust?AssetIssuerPublicKey1:AssetIssuerPublicKey)}}>
+                <Text style={styles.Accounbtntext}>{loading_trust_modal?<ActivityIndicator color={"green"}/>:"Trust"}</Text>
+             </TouchableOpacity>
+           </View>
+         </View>
+       </View>
+     </Modal>
+ </>
+  }
+  {activeTab===0&&
+    <View style={{width:"100%"}}>
+     <CustomOrderBook visibleTabs={['chart']} />
+   </View>
+  }
+  {activeTab===2&&
+    <View style={{width:"100%"}}>
+     <CustomOrderBook visibleTabs={['bids']} />
+   </View>
+  }
+    {activeTab===3&&
+    <View style={{width:"100%"}}>
+     <CustomOrderBook visibleTabs={['trades']} />
+   </View>
+  }
 </ScrollView>
+  </View>
         <WalletActivationComponent
           isVisible={ACTIVATION_MODAL_PROD}
           onClose={() => {ActivateModal}}
@@ -1004,7 +1054,8 @@ const handleCloseModal = () => {
           shouldNavigateBack={true}
         />
         </KeyboardAvoidingView>
-        </>
+        </ScrollView>
+        </View>
 
 );
 };
@@ -1332,13 +1383,20 @@ searchInput: {
     flexGrow: 1,
     alignItems:"center"
   },
+  scrollView0:{
+    flex:1,
+    alignItems:"center",
+    backgroundColor: "#011434",
+  },
   pariViewCon: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignSelf:"center",
     backgroundColor: "#141C2B",
     alignItems: "center",
-    width: "95%",
-    height: "9%",
+    width: "98%",
+    // height: "9%",
+    height: 69,
     top: 30,
     borderRadius: 16,
     borderWidth: 1,
@@ -1381,7 +1439,7 @@ searchInput: {
     justifyContent: "space-between",
     backgroundColor: "#141C2B",
     alignItems: "flex-start",
-    width: "95%",
+    width: "98%",
     top: 30,
     borderRadius: 16,
     borderWidth: 1,
@@ -1436,7 +1494,7 @@ searchInput: {
     }
   },
   amountCon: {
-    width: "95%",
+    width: "98%",
     height: 71,
     marginTop: "11%",
     gap: 2,
@@ -1483,7 +1541,7 @@ searchInput: {
     paddingHorizontal: 15,
     justifyContent: "space-between",
     alignItems: "center",
-    width: "95%",
+    width: "98%",
     height: 48,
     borderRadius: 16,
     borderWidth: 1,
@@ -1500,6 +1558,7 @@ searchInput: {
     height: 48,
     borderRadius: 37,
     marginTop: "1%",
+    marginBottom:"10%",
     alignSelf:"center",
     backgroundColor:"#2164C1",
     submitBtnText:{
@@ -1530,5 +1589,34 @@ searchInput: {
     height: 33,
     borderRadius: 8,
     backgroundColor: "gray",
-  }
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#011434',
+    alignSelf:"center",
+    top: 45,
+    marginBottom:"13%",
+    width: "98%",
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    backgroundColor: '#141C2B',
+    borderBottomColor: '#2b3c57',
+    borderTopLeftRadius:15,
+    borderTopRightRadius:15
+  },
+  tabText: {
+    color: 'gray',
+    fontWeight: '300',
+  },
+  activeTabText: {
+    color: 'white',
+    fontWeight: '500',
+  },
 });

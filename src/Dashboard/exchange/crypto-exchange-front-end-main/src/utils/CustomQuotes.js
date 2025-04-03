@@ -212,8 +212,18 @@ export const CustomQuotes = ({
   const state = useSelector((state) => state);
   const dispatch_ = useDispatch()
   const [Wallet_activation,setWallet_activation]=useState(false)
+    const [statusMap, setStatusMap] = useState({
+      'ETH→USDT': 'default',
+      'USDT→USDC': 'default',
+      'USDC→Wallet': 'default'
+    });
   const { FCM_getToken } = useFirebaseCloudMessaging();
    useEffect(()=>{
+    setStatusMap({
+      'ETH→USDT': 'default',
+      'USDT→USDC': 'default',
+      'USDC→Wallet': 'default'
+    });
     setisDone(false)
     setLoading(false)
     setnot_avilable(false)
@@ -577,21 +587,35 @@ export const CustomQuotes = ({
     setInputAmount(numericText);
     fetchQuote(text,tokenName,tokenAddress,tokenChain);
   };
+   // Function to update a specific step's status
+   const handleStepUpdate = (stepKey, status) => {
+    setStatusMap(prevStatus => ({
+      ...prevStatus,
+      [stepKey]: status
+    }));
+  };
 
   const handlleMultiProcces = async (token,value1) => {
+    setApproved(true)
     if (token === "USDT") {
+      handleStepUpdate("USDT→USDT","done")
       setisDone(true)
       const resAmt=parseFloat(value1).toFixed(6).toString();
       await sendEthToContract(resAmt)
     }
     if (token !== "USDT") {
       setisDone(true)
+      handleStepUpdate("WETH→USDT","pending")
       const res = await onSwapETHtoUSDC(inputAmount, state?.wallet?.privateKey, RPC.ETHRPC2)
       if (res.status === true) {
+      handleStepUpdate("WETH→USDT","done")
         console.log("--onSwapETHtoUSDC-->", res)
         await sendEthToContract(res.outputAmount)
       }
       else {
+      handleStepUpdate("WETH→USDT","error")
+      handleStepUpdate("USDT→USDC","error")
+      handleStepUpdate("USDC→Wallet","error")
         Alert.alert("Info", res.message)
         setisDone(false)
       }
@@ -601,6 +625,7 @@ export const CustomQuotes = ({
    const sendEthToContract = async (amount) => {
       try {
         keysUpdate()
+        handleStepUpdate("USDT→USDC","pending")
         const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
         const wallet = new ethers.Wallet(state?.wallet?.privateKey, provider);
         const usdtAddress = OneTapUSDCAddress.Address;  
@@ -613,10 +638,16 @@ export const CustomQuotes = ({
         console.log("Transaction Sent", `Tx Hash: ${tx.hash}`);
         await tx.wait();
         setisDone(false)
-        setApproved(true)
+        handleStepUpdate("USDT→USDC","done")
+        setTimeout(()=>{
+          handleStepUpdate("USDC→Wallet","done")
+        },2000);
+        // setApproved(true)
     } catch (error) {
         console.log("Transaction Failed", error);
         setisDone(false)
+        handleStepUpdate("USDT→USDC","error")
+        handleStepUpdate("USDC→Wallet","error")
     }
   }
 
@@ -930,7 +961,7 @@ export const CustomQuotes = ({
                 {Approved ? <Icon name={"check-circle-outline"} type={"materialCommunity"} size={25} color={"white"} /> : isDone?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={styles.approveConText}>{ usdcResLoading?"Getting best quote...":completTransaction?inputAmount!==null?"Insufficient balance":"Approve":"Approve"}</Text>}
               </TouchableOpacity>}
               </>
-                :<TokenTransferFlow visible={Approved} fistToken={tokenName} onClose={()=>{onClose()}}/>}
+                :<TokenTransferFlow visible={Approved} fistToken={tokenName} statusMap={statusMap} onClose={()=>{onClose()}}/>}
 
             </ScrollView>
           </View>
@@ -940,134 +971,155 @@ export const CustomQuotes = ({
   );
 };
 
-const TokenTransferFlow = ({ visible = false,fistToken,onClose }) => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  const [progressText, setProgressText] = useState('0%');
-  const [showEstimate, setShowEstimate] = useState(false);
-  const [progressStopped, setProgressStopped] = useState(false);
+const TokenTransferFlow = ({ 
+  visible = false, 
+  fistToken = 'ETH', 
+  statusMap = {}, 
+  onClose 
+}) => {
+  const [showNotification, setShowNotification] = useState(false);
+  const progressAnimation = useRef(new Animated.Value(0)).current;
+  const prevCompletedStepsRef = useRef(0);
+  
   const tokens = [
-    { from: fistToken, to: 'USDT', icon: 'swap-horizontal' },
-    { from: 'USDT', to: 'USDC', icon: 'repeat' },
-    { from: 'USDC', to: 'Wallet', icon: 'wallet' }
+    { from: fistToken, to: 'USDT', key: `${fistToken}→USDT` },
+    { from: 'USDT', to: 'USDC', key: 'USDT→USDC' },
+    { from: 'USDC', to: 'Wallet', key: 'USDC→Wallet' }
   ];
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible) {
+      // Reset when not visible
+      progressAnimation.setValue(0);
+      prevCompletedStepsRef.current = 0;
+      setShowNotification(false);
+      return;
+    }
 
-    progressAnim.setValue(0);
-    setCurrentStep(0);
-    setShowEstimate(false);
-    setProgressStopped(false);
-
-    const animation = Animated.timing(progressAnim, {
-      toValue: 60, // 60% pe ruk jayegi
-      duration: 4000, // Smooth animation
-      useNativeDriver: false,
+    let completedSteps = 0;
+    tokens.forEach(token => {
+      if (statusMap[token.key] === 'done') completedSteps++;
     });
 
-    animation.start();
+    // Only update if number of completed steps has changed
+    if (completedSteps !== prevCompletedStepsRef.current) {
+      // Calculate progress (ensuring it maxes at 100%)
+      const newProgress = Math.min(completedSteps * (100/3), 100);
+      
+      // Animate progress bar from current value to new value
+      Animated.timing(progressAnimation, {
+        toValue: newProgress,
+        duration: 600, // Animation duration in ms
+        useNativeDriver: false
+      }).start();
 
-    const listener = progressAnim.addListener(({ value }) => {
-      setProgressText(`${Math.round(value)}%`);
+      // Update reference for next comparison
+      prevCompletedStepsRef.current = completedSteps;
+    }
 
-      if (value >= 60) {
-        setShowEstimate(true);
-        setProgressStopped(true);
-        animation.stop(); // Yahan progress stop ho jayegi
-      }
+    // Show notification when all steps are complete
+    if (completedSteps === tokens.length) {
+      setShowNotification(true);
+    } else {
+      setShowNotification(false);
+    }
+  }, [visible, statusMap, progressAnimation, tokens]);
 
-      if (value >= 30) {
-        setCurrentStep(1); // USDT → USDC green ho jayega
-      }
-      if (value >= 60) {
-        setCurrentStep(2); // USDC → Wallet pe aayega (yellow)
-      }
+  // For display in the text element
+  const [progressTextValue, setProgressTextValue] = useState(0);
+
+  // Update the text value when animation changes
+  useEffect(() => {
+    const listener = progressAnimation.addListener(({ value }) => {
+      setProgressTextValue(Math.round(value));
     });
-
+    
     return () => {
-      progressAnim.removeListener(listener);
-      animation.stop();
+      progressAnimation.removeListener(listener);
     };
-  }, [visible]);
+  }, [progressAnimation]);
 
   if (!visible) return null;
-
-  // useEffect(() => {
-  //   if (showEstimate) {
-  //     const timer = setTimeout(() => {
-  //       onClose();
-  //     }, 3000);
-  //     return () => clearTimeout(timer); 
-  //   }
-  // }, [showEstimate]);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Token Transfer Flow</Text>
-        <Text style={styles.headerSubtitle}>Real-time Token Conversion</Text>
       </View>
 
       <View style={styles.tokenTransferContainer}>
-        {tokens.map((token, index) => {
-          const isCompleted = index < currentStep;
-          const isCurrent = index === currentStep;
-          const isLastStep = index === tokens.length - 1;
+        {tokens.map((token) => {
+          const status = statusMap[token.key] || 'default';
+          const isCompleted = status === 'done';
+          const isError = status === 'error';
+          const isPending = status === 'pending';
 
           return (
-            <View key={token.from} style={styles.tokenStep}>
+            <View key={token.key} style={styles.tokenStep}>
               <View style={[
                 styles.tokenCircle,
                 isCompleted ? styles.completedTokenCircle : {},
-                isCurrent && !isLastStep ? styles.inProgressTokenCircle : {},
-                isLastStep && isCurrent ? styles.pendingTokenCircle : {}
+                isPending ? styles.pendingTokenCircle : {},
+                isError ? styles.errorTokenCircle : {},
+                !isCompleted && !isPending && !isError ? styles.defaultTokenCircle : {},
               ]}>
                 <MaterialCommunityIcons
-                  name={isCompleted ? 'check-circle' : token.icon}
+                  name={
+                    isCompleted ? 'check-circle' 
+                    : isError ? 'close-circle' 
+                    : isPending ? 'timer-outline' 
+                    : 'swap-horizontal'
+                  }
                   size={32}
-                  color={isCompleted?'#10B981':isCurrent?'#FBBF24':'#9CA3AF'}
+                  color={
+                    isCompleted ? '#10B981' 
+                    : isError ? '#EF4444' 
+                    : isPending ? '#FBBF24' 
+                    : '#9CA3AF'
+                  }
                 />
               </View>
               <Text style={[
                 styles.tokenText,
                 isCompleted ? styles.completedTokenText : {},
-                isCurrent && !isLastStep ? styles.inProgressTokenText : {},
-                isLastStep && isCurrent ? styles.pendingTokenText : {}
+                isError ? styles.errorTokenText : {},
+                isPending ? styles.pendingTokenText : {},
+                !isCompleted && !isPending && !isError ? styles.defaultTokenText : {},
               ]}>
                 {token.from} <MaterialCommunityIcons
-                  name={"arrow-right"} size={15} color={isCompleted?'#10B981':isCurrent?'#FBBF24':'#9CA3AF'}/> {token.to}
+                  name={"arrow-right"} size={15} 
+                  color={isCompleted ? '#10B981' : isError ? '#EF4444' : isPending ? '#FBBF24' : '#9CA3AF'}/> {token.to}
               </Text>
             </View>
           );
         })}
       </View>
 
-        {showEstimate ? (
-         <>
-          <View style={styles.notificationContainer}>
-            <Text style={styles.notificationText}>Estimated time: 2 min. We'll notify you when complete.</Text>
-          </View>
-          <TouchableOpacity style={styles.approveCon} onPress={() => {onClose()}}>
-          <Text style={styles.approveConText}>Okay</Text>
-        </TouchableOpacity>
-         </>
-        ) : (
-          <View style={styles.progressContainer}>
-          <Animated.Text style={styles.progressText}>Progress: {progressText}</Animated.Text>
-        <View style={styles.progressBarBackground}>
-          <Animated.View style={[
-            styles.progressBar,
-            {
-              width: progressAnim.interpolate({
-                inputRange: [0, 60],
-                outputRange: ['0%', '60%']
-              }),
-            }
-          ]} />
+      {showNotification ? (
+        <View style={styles.notificationContainer}>
+          <Text style={styles.notificationText}>Estimated time: 19 min. We'll notify you when complete.</Text>
+          <TouchableOpacity style={styles.button} onPress={() => {onClose()}}>
+            <Text style={styles.buttonText}>Okay</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-        )}
+      ) : (
+        <View style={styles.progressContainer}>
+          <Text style={styles.progressText}>
+            Progress: {progressTextValue}%
+          </Text>
+          <View style={styles.progressBarBackground}>
+            <Animated.View 
+              style={[
+                styles.progressBar, 
+                { width: progressAnimation.interpolate({
+                  inputRange: [0, 100],
+                  outputRange: ['0%', '100%']
+                })}
+              ]} 
+            />
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -1094,11 +1146,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#F0F9FF',
   },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 8,
-  },
   tokenTransferContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1113,22 +1160,25 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     borderWidth: 4,
-    borderColor: 'gray',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'white',
+  },
+  defaultTokenCircle: {
+    borderColor: '#9CA3AF',
+    backgroundColor: '#E5E7EB',
   },
   completedTokenCircle: {
     borderColor: '#10B981',
     backgroundColor: '#ECFDF5',
   },
-  inProgressTokenCircle: {
-    borderColor: '#FBBF24',
-    backgroundColor: '#FEF9C3',
-  },
   pendingTokenCircle: {
     borderColor: '#FBBF24',
     backgroundColor: '#FEF9C3',
+  },
+  errorTokenCircle: {
+    borderColor: '#EF4444',
+    backgroundColor: '#FEE2E2',
   },
   tokenText: {
     marginTop: 10,
@@ -1139,13 +1189,16 @@ const styles = StyleSheet.create({
     color: '#10B981',
     fontWeight: 'bold',
   },
-  inProgressTokenText: {
-    color: '#F59E0B',
-    fontWeight: 'bold',
-  },
   pendingTokenText: {
     color: '#F59E0B',
     fontWeight: 'bold',
+  },
+  errorTokenText: {
+    color: '#EF4444',
+    fontWeight: 'bold',
+  },
+  defaultTokenText: {
+    color: '#9CA3AF',
   },
   progressContainer: {
     marginTop: 20,
@@ -1155,17 +1208,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4B5563',
     marginBottom: 8,
-  },
-  notificationContainer: {
-    backgroundColor: '#171616',
-    borderRadius: 8,
-    padding: 12,
-    width: '100%',
-  },
-  notificationText: {
-    fontSize: 14,
-    color: '#1E40AF',
-    textAlign: 'center',
   },
   progressBarBackground: {
     width: '100%',
@@ -1178,7 +1220,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#3B82F6',
     borderRadius: 9999,
   },
-  approveCon: {
+  notificationContainer: {
+    backgroundColor: '#171616',
+    borderRadius: 8,
+    padding: 12,
+    width: '100%',
+  },
+  notificationText: {
+    fontSize: 14,
+    color: '#1E40AF',
+    textAlign: 'center',
+  },
+  button: {
     width: '100%',
     backgroundColor: "#3574B6",
     justifyContent: "center",
@@ -1189,7 +1242,7 @@ const styles = StyleSheet.create({
     borderRadius: 20
 
   },
-  approveConText: {
+  buttonText: {
     fontSize: 19,
     color: "#fff",
     fontWeight: "600"

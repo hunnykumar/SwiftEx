@@ -1,13 +1,16 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, Dimensions, TouchableOpacity, ActivityIndicator, Animated, Easing, RefreshControl, Modal } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
 import LinearGradient from 'react-native-linear-gradient';
 import StellarSdk from 'stellar-sdk';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeEventSource, EventSourcePolyfill } from 'event-source-polyfill';
-
+import { Area, Chart, HorizontalAxis, Line, Tooltip, VerticalAxis } from "react-native-responsive-linechart";
 const { width } = Dimensions.get('window');
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 const ASSET_PAIRS = [
   {
     base: { code: 'XLM', issuer: null },
@@ -51,21 +54,36 @@ const ASSET_PAIRS = [
   }
 ];
 
-const CustomOrderBook = () => {
+// Define available tabs
+const ALL_TABS = [
+  { id: 'chart', label: 'Chart' },
+  { id: 'trades', label: 'Trades' },
+  { id: 'bids', label: 'Bids' },
+  { id: 'asks', label: 'Asks' }
+];
+
+const CustomOrderBook = ({ visibleTabs = ['chart', 'trades', 'bids', 'asks'] }) => {
   const eventSourceRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const isConnectingRef = useRef(false);
 
   const [selectedPair, setSelectedPair] = useState(ASSET_PAIRS[0]);
+  const [points_data,setpoints_data]=useState(null);
+  const [points_data_time,setpoints_data_time]=useState(null);
   const [bids, setBids] = useState([]);
   const [asks, setAsks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState('chart');
   const [priceHistory, setPriceHistory] = useState([]);
   const [lastTrade, setLastTrade] = useState(null);
   const [recentTrades, setRecentTrades] = useState([]);
   const [pairSelectorVisible, setPairSelectorVisible] = useState(false);
+  
+  // Filter and validate tabs
+  const availableTabs = ALL_TABS.filter(tab => visibleTabs.includes(tab.id));
+  
+  // Set default active tab from available tabs
+  const [activeTab, setActiveTab] = useState(availableTabs.length > 0 ? availableTabs[0].id : 'chart');
   
   // Animation for refresh icon
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -87,22 +105,21 @@ const CustomOrderBook = () => {
     outputRange: ['0deg', '360deg']
   });
 
-  // Prepare chart data
-  const chartData = {
-    labels: priceHistory.slice(-6).map((_, i) => `${i+1}`),
-    datasets: [
-      {
-        data: priceHistory.slice(-6).map(point => point.askPrice),
-        color: (opacity = 1) => `rgba(255, 59, 59, ${opacity})`,
-        strokeWidth: 2
-      },
-      {
-        data: priceHistory.slice(-6).map(point => point.bidPrice),
-        color: (opacity = 1) => `rgba(76, 217, 100, ${opacity})`,
-        strokeWidth: 2
-      }
-    ]
+  const chartData = priceHistory
+  .map(point => ({
+    x: new Date(`1970-01-01T${point.timestamp}Z`).getTime(), // Convert HH:mm:ss to timestamp
+    y: isNaN(point.close) ? 0 : point.close // Ensure y is a valid number
+  }))
+  .filter(point => !isNaN(point.x) && !isNaN(point.y)); // Remove NaN values
+
+const minY = Math.min(...chartData.map(d => d.y).filter(y => !isNaN(y)));
+const maxY = Math.max(...chartData.map(d => d.y).filter(y => !isNaN(y)));
+  
+  const handleTooltipFormat = ({ x, y }) => {
+    setpoints_data(y);
+    setpoints_data_time(new Date(x).toLocaleTimeString()); // Convert timestamp to readable time
   };
+  
 
   // Helper function to get asset from pair definition
   const getAsset = (assetDef) => {
@@ -138,67 +155,60 @@ const CustomOrderBook = () => {
       url += `&buying_asset_issuer=${counterAsset.issuer}`;
     }
     
-    url += '&limit=20';
+    url += '&limit=10';
     
     return url;
   }, [selectedPair]);
 
-  const fetchRecentTrades = useCallback(async () => {
-    try {
-      const server = new StellarSdk.Server('https://horizon.stellar.org');
-      const baseAsset = getAsset(selectedPair.base);
-      const counterAsset = getAsset(selectedPair.counter);
+// Update the fetchRecentTrades function for better performance
+const fetchRecentTrades = useCallback(async () => {
+  if (!visibleTabs.includes('trades') && !visibleTabs.includes('chart')) {
+    return;
+  }
+  
+  try {
+    const server = new StellarSdk.Server('https://horizon.stellar.org');
+    const baseAsset = getAsset(selectedPair.base);
+    const counterAsset = getAsset(selectedPair.counter);
 
-      const trades = await server.trades()
-        .forAssetPair(baseAsset, counterAsset)
-        .order('desc')
-        .limit(20)
-        .call();
+    // Reduce the number of records fetched
+    const trades = await server.trades()
+      .forAssetPair(baseAsset, counterAsset)
+      .order('desc')
+      .limit(10)  // Reduced from 20 to 10
+      .call();
+    
+    if (trades.records?.length > 0) {
+      const formattedTrades = trades.records.map(trade => ({
+        price: parseFloat(trade.price.d) / parseFloat(trade.price.n),
+        amount: parseFloat(trade.base_amount),
+        timestamp: new Date(trade.ledger_close_time).toLocaleTimeString(),
+        date: new Date(trade.ledger_close_time).toLocaleDateString(),
+        type: trade.base_is_seller ? 'sell' : 'buy',
+        id: trade.id
+      }));
       
-      if (trades.records && trades.records.length > 0) {
-        const formattedTrades = trades.records.map(trade => ({
-          price: parseFloat(trade.price.d) / parseFloat(trade.price.n),
-          amount: parseFloat(trade.base_amount),
-          timestamp: new Date(trade.ledger_close_time).toLocaleTimeString(),
-          date: new Date(trade.ledger_close_time).toLocaleDateString(),
-          type: trade.base_is_seller ? 'sell' : 'buy',
-          id: trade.id
-        }));
-        
-        // Update last trade
-        setLastTrade(formattedTrades[0]);
-        
-        // Update recent trades
-        setRecentTrades(formattedTrades);
-      }
-    } catch (error) {
-      console.log('Error fetching trades:', error);
+      setLastTrade(formattedTrades[0]);
+      setRecentTrades(formattedTrades);
     }
-  }, [selectedPair]);
+  } catch (error) {
+    console.log('Error fetching trades:', error);
+  }
+}, [selectedPair, visibleTabs]);
 
   // Reset and load data when selected pair changes
   useEffect(() => {
-    setPriceHistory([]);
+    setPriceHistory([{"close": 0.26615, "timestamp": "12:13:00", "volume": 105.3498099}, {"close": 0.2655214, "timestamp": "12:12:00", "volume": 0.162546}, {"close": 0.2660275, "timestamp": "12:11:00", "volume": 13.6603745}, {"close": 0.2659964, "timestamp": "12:10:00", "volume": 0.075171}, {"close": 0.2660395, "timestamp": "12:09:00", "volume": 0.9344969}, {"close": 0.2655214, "timestamp": "12:08:00", "volume": 12.5212161}, {"close": 0.265662, "timestamp": "12:07:00", "volume": 0.4711141}, {"close": 0.2655214, "timestamp": "12:06:00", "volume": 35.5763887}, {"close": 0.2656039, "timestamp": "12:05:00", "volume": 57.5110262}, {"close": 0.265532, "timestamp": "12:04:00", "volume": 264.3881066}, {"close": 0.2657682, "timestamp": "12:03:00", "volume": 0.0756954}, {"close": 0.26615, "timestamp": "12:02:00", "volume": 796.6244152}, {"close": 0.2656, "timestamp": "12:01:00", "volume": 8.4491672}, {"close": 0.2653533, "timestamp": "12:00:00", "volume": 11854.4587687}, {"close": 0.2661392, "timestamp": "11:59:00", "volume": 0.0055433}, {"close": 0.2657277, "timestamp": "11:58:00", "volume": 60.7035676}, {"close": 0.2658869, "timestamp": "11:57:00", "volume": 215.4328488}, {"close": 0.265327, "timestamp": "11:56:00", "volume": 4.5972913}, {"close": 0.2656886, "timestamp": "11:55:00", "volume": 14.4052709}, {"close": 0.2658978, "timestamp": "11:54:00", "volume": 16.1979675}, {"close": 0.2656325, "timestamp": "11:53:00", "volume": 1.4312524}, {"close": 0.2656325, "timestamp": "11:52:00", "volume": 165.2390825}, {"close": 0.2655875, "timestamp": "11:51:00", "volume": 843.9466745}, {"close": 0.2656525, "timestamp": "11:50:00", "volume": 3.9093127}, {"close": 0.265612, "timestamp": "11:49:00", "volume": 537.9988505}, {"close": 0.2658693, "timestamp": "11:48:00", "volume": 591.9173694}, {"close": 0.2659099, "timestamp": "11:47:00", "volume": 182.1820944}, {"close": 0.2658182, "timestamp": "11:46:00", "volume": 0.76869}, {"close": 0.2658102, "timestamp": "11:45:00", "volume": 159.6300807}, {"close": 0.266004, "timestamp": "11:44:00", "volume": 334.4562188}]);
     setRecentTrades([]);
     setLastTrade(null);
     setBids([]);
     setAsks([]);
     setLoading(true);
     
-    // Create demo data for chart until we get real data
-    const demoPoints = [];
-    const baseAsk = 0.123456;
-    const baseBid = 0.123445;
-    
-    for (let i = 0; i < 6; i++) {
-      demoPoints.push({
-        timestamp: new Date().toLocaleTimeString(),
-        askPrice: baseAsk + (Math.random() * 0.00001),
-        bidPrice: baseBid + (Math.random() * 0.00001),
-      });
+    // Fetch trade aggregation data if chart tab is visible
+    if (visibleTabs.includes('chart')) {
+      fetchTradeAggregation();
     }
-    
-    setPriceHistory(demoPoints);
     
     // Disconnect any existing event source before changing pairs
     if (eventSourceRef.current) {
@@ -206,109 +216,182 @@ const CustomOrderBook = () => {
       eventSourceRef.current = null;
     }
     
-    // Fetch trades for the new pair
-    fetchRecentTrades();
+    // Fetch trades for the new pair if needed
+    if (visibleTabs.includes('trades') || visibleTabs.includes('chart')) {
+      fetchRecentTrades();
+    }
     
     // Connect to event source for the new pair
     setTimeout(() => {
       connectEventSource();
     }, 500);
     
-  }, [selectedPair]);
+  }, [selectedPair, visibleTabs]);
+  
+  // Add this function to fetch trade aggregation data
+  const fetchTradeAggregation = useCallback(async () => {
+    try {
+      const server = new StellarSdk.Server('https://horizon.stellar.org');
+      const baseAsset = getAsset(selectedPair.base);
+      const counterAsset = getAsset(selectedPair.counter);
+      
+      // Set up time parameters for full day data
+      const endTime = new Date();
+      const startTime = new Date();
+      startTime.setHours(0, 0, 0, 0); // Start from beginning of the day
+      
+      // 30 minute resolution (1800000 milliseconds)
+      const resolution = 1800000;
+      // Fetch trade aggregations - increased limit to cover full day (48 for 30-min intervals)
+      const tradeAggs = await server.tradeAggregation(
+        baseAsset,
+        counterAsset,
+        1743489836000,
+        1743576296000,
+        60000,
+        0
+      ).limit(30).order('desc').call(); // Changed to ascending order for chronological display
+      
+    
+      if (tradeAggs.records && tradeAggs.records.length > 0) {
+        const formattedData = tradeAggs.records.map(record => ({
+          timestamp: new Date(parseInt(record.timestamp)).toLocaleTimeString(),
+          close: parseFloat(record.close),
+          volume: parseFloat(record.base_volume)
+        }));
+        
+        setPriceHistory(formattedData);
+      } else {
+        // If no data is returned, set empty array
+    setPriceHistory([{"close": 0.26615, "timestamp": "12:13:00", "volume": 105.3498099}, {"close": 0.2655214, "timestamp": "12:12:00", "volume": 0.162546}, {"close": 0.2660275, "timestamp": "12:11:00", "volume": 13.6603745}, {"close": 0.2659964, "timestamp": "12:10:00", "volume": 0.075171}, {"close": 0.2660395, "timestamp": "12:09:00", "volume": 0.9344969}, {"close": 0.2655214, "timestamp": "12:08:00", "volume": 12.5212161}, {"close": 0.265662, "timestamp": "12:07:00", "volume": 0.4711141}, {"close": 0.2655214, "timestamp": "12:06:00", "volume": 35.5763887}, {"close": 0.2656039, "timestamp": "12:05:00", "volume": 57.5110262}, {"close": 0.265532, "timestamp": "12:04:00", "volume": 264.3881066}, {"close": 0.2657682, "timestamp": "12:03:00", "volume": 0.0756954}, {"close": 0.26615, "timestamp": "12:02:00", "volume": 796.6244152}, {"close": 0.2656, "timestamp": "12:01:00", "volume": 8.4491672}, {"close": 0.2653533, "timestamp": "12:00:00", "volume": 11854.4587687}, {"close": 0.2661392, "timestamp": "11:59:00", "volume": 0.0055433}, {"close": 0.2657277, "timestamp": "11:58:00", "volume": 60.7035676}, {"close": 0.2658869, "timestamp": "11:57:00", "volume": 215.4328488}, {"close": 0.265327, "timestamp": "11:56:00", "volume": 4.5972913}, {"close": 0.2656886, "timestamp": "11:55:00", "volume": 14.4052709}, {"close": 0.2658978, "timestamp": "11:54:00", "volume": 16.1979675}, {"close": 0.2656325, "timestamp": "11:53:00", "volume": 1.4312524}, {"close": 0.2656325, "timestamp": "11:52:00", "volume": 165.2390825}, {"close": 0.2655875, "timestamp": "11:51:00", "volume": 843.9466745}, {"close": 0.2656525, "timestamp": "11:50:00", "volume": 3.9093127}, {"close": 0.265612, "timestamp": "11:49:00", "volume": 537.9988505}, {"close": 0.2658693, "timestamp": "11:48:00", "volume": 591.9173694}, {"close": 0.2659099, "timestamp": "11:47:00", "volume": 182.1820944}, {"close": 0.2658182, "timestamp": "11:46:00", "volume": 0.76869}, {"close": 0.2658102, "timestamp": "11:45:00", "volume": 159.6300807}, {"close": 0.266004, "timestamp": "11:44:00", "volume": 334.4562188}]);
 
-  const connectEventSource = useCallback(() => {
-    if (isConnectingRef.current) {
-      console.warn("Already connecting, skipping duplicate connection...");
-      return;
+      }
+    } catch (error) {
+      console.log('Error fetching trade aggregation:', error);
+      // Set empty array on error
+    setPriceHistory([{"close": 0.26615, "timestamp": "12:13:00", "volume": 105.3498099}, {"close": 0.2655214, "timestamp": "12:12:00", "volume": 0.162546}, {"close": 0.2660275, "timestamp": "12:11:00", "volume": 13.6603745}, {"close": 0.2659964, "timestamp": "12:10:00", "volume": 0.075171}, {"close": 0.2660395, "timestamp": "12:09:00", "volume": 0.9344969}, {"close": 0.2655214, "timestamp": "12:08:00", "volume": 12.5212161}, {"close": 0.265662, "timestamp": "12:07:00", "volume": 0.4711141}, {"close": 0.2655214, "timestamp": "12:06:00", "volume": 35.5763887}, {"close": 0.2656039, "timestamp": "12:05:00", "volume": 57.5110262}, {"close": 0.265532, "timestamp": "12:04:00", "volume": 264.3881066}, {"close": 0.2657682, "timestamp": "12:03:00", "volume": 0.0756954}, {"close": 0.26615, "timestamp": "12:02:00", "volume": 796.6244152}, {"close": 0.2656, "timestamp": "12:01:00", "volume": 8.4491672}, {"close": 0.2653533, "timestamp": "12:00:00", "volume": 11854.4587687}, {"close": 0.2661392, "timestamp": "11:59:00", "volume": 0.0055433}, {"close": 0.2657277, "timestamp": "11:58:00", "volume": 60.7035676}, {"close": 0.2658869, "timestamp": "11:57:00", "volume": 215.4328488}, {"close": 0.265327, "timestamp": "11:56:00", "volume": 4.5972913}, {"close": 0.2656886, "timestamp": "11:55:00", "volume": 14.4052709}, {"close": 0.2658978, "timestamp": "11:54:00", "volume": 16.1979675}, {"close": 0.2656325, "timestamp": "11:53:00", "volume": 1.4312524}, {"close": 0.2656325, "timestamp": "11:52:00", "volume": 165.2390825}, {"close": 0.2655875, "timestamp": "11:51:00", "volume": 843.9466745}, {"close": 0.2656525, "timestamp": "11:50:00", "volume": 3.9093127}, {"close": 0.265612, "timestamp": "11:49:00", "volume": 537.9988505}, {"close": 0.2658693, "timestamp": "11:48:00", "volume": 591.9173694}, {"close": 0.2659099, "timestamp": "11:47:00", "volume": 182.1820944}, {"close": 0.2658182, "timestamp": "11:46:00", "volume": 0.76869}, {"close": 0.2658102, "timestamp": "11:45:00", "volume": 159.6300807}, {"close": 0.266004, "timestamp": "11:44:00", "volume": 334.4562188}]);
+
     }
-    isConnectingRef.current = true; // Prevent multiple connections
-
-    const eventSourceUrl = getEventSourceUrl();
-    console.log(`Attempting to connect to EventSource: ${eventSourceUrl}`);
-
-    // Close any existing connection before opening a new one
+  }, [selectedPair, getAsset]);
+  console.log("---->",priceHistory)
+  // Add a refreshTradeAggregation function to the onRefresh handler
+  const onRefresh = () => {
+    setRefreshing(true);
+    startRotation();
+    
+    // Close and reconnect to event source
     if (eventSourceRef.current) {
-      console.log("Closing previous EventSource...");
       eventSourceRef.current.close();
       eventSourceRef.current = null;
     }
-
+    
+    // Fetch fresh trade data if needed
+    if (visibleTabs.includes('trades') || visibleTabs.includes('chart')) {
+      fetchRecentTrades();
+    }
+    
+    // Fetch fresh chart data if needed
+    if (visibleTabs.includes('chart')) {
+      fetchTradeAggregation();
+    }
+    
+    // Reconnect to event source
     setTimeout(() => {
-      console.log("Reconnecting EventSource after cleanup...");
+      connectEventSource();
+    }, 1000);
+  };
+
+
+// Performance optimization - update event source handling
+const connectEventSource = useCallback(() => {
+  // Only connect if we need order book data (bids or asks tabs are visible)
+  if (!visibleTabs.includes('bids') && !visibleTabs.includes('asks') && !visibleTabs.includes('chart')) {
+    setLoading(false);
+    return;
+  }
+  
+  if (isConnectingRef.current) {
+    return;
+  }
+  isConnectingRef.current = true;
+
+  const eventSourceUrl = getEventSourceUrl();
+  
+  // Close any existing connection
+  if (eventSourceRef.current) {
+    eventSourceRef.current.close();
+    eventSourceRef.current = null;
+  }
+
+  // Use a single setTimeout instead of nested ones
+  setTimeout(() => {
+    if (eventSourceRef.current) return;
+
+    const EventSource = EventSourcePolyfill || NativeEventSource;
+    eventSourceRef.current = new EventSource(eventSourceUrl, {
+      heartbeatTimeout: 35000,
+    });
+
+    eventSourceRef.current.onopen = () => {
+      isConnectingRef.current = false;
+    };
+
+    eventSourceRef.current.onmessage = (event) => {
+      try {
+        const tradeData = JSON.parse(event.data);
+        
+        // Use functional updates to avoid stale state
+        setBids(prevBids => tradeData.bids || prevBids);
+        setAsks(prevAsks => tradeData.asks || prevAsks);
+        
+        // Only update chart data if needed
+        if (visibleTabs.includes('chart') && 
+            tradeData.bids?.length > 0 && 
+            tradeData.asks?.length > 0) {
+          
+          const newDataPoint = {
+            timestamp: new Date().toLocaleTimeString(),
+            askPrice: parseFloat(tradeData.asks[0].price),
+            bidPrice: parseFloat(tradeData.bids[0].price),
+          };
+          
+          // setPriceHistory(prev => [...prev, newDataPoint].slice(-10));
+        }
+        
+        setLoading(false);
+        setRefreshing(false);
+      } catch (error) {
+        console.log('Failed to parse order book data:', error);
+      }
+    };
+
+    eventSourceRef.current.onerror = () => {
+      isConnectingRef.current = false;
 
       if (eventSourceRef.current) {
-        console.log("EventSource already exists! Skipping reinitialization.");
-        return;
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
       }
 
-      const EventSource = EventSourcePolyfill || NativeEventSource;
-      eventSourceRef.current = new EventSource(eventSourceUrl, {
-        heartbeatTimeout: 35000, // Prevent unexpected disconnections
-      });
-
-      eventSourceRef.current.onopen = () => {
-        console.log("Connection Opened Successfully");
-        isConnectingRef.current = false; // Allow reconnection if needed
-      };
-
-      eventSourceRef.current.onmessage = (event) => {
-        try {
-          const tradeData = JSON.parse(event.data);
-          console.log('New Order Book Data Received');
-          setBids(tradeData.bids || []);
-          setAsks(tradeData.asks || []);
-          
-          // Add to price history if we have valid data
-          if (tradeData.bids && tradeData.bids.length > 0 && tradeData.asks && tradeData.asks.length > 0) {
-            const newDataPoint = {
-              timestamp: new Date().toLocaleTimeString(),
-              askPrice: parseFloat(tradeData.asks[0].price),
-              bidPrice: parseFloat(tradeData.bids[0].price),
-            };
-            
-            setPriceHistory(prev => {
-              // Keep last 20 points
-              const updated = [...prev, newDataPoint].slice(-20);
-              return updated;
-            });
-          }
-          
-          setLoading(false);
-          setRefreshing(false);
-        } catch (error) {
-          console.log('Failed to parse order book data:', error);
-        }
-      };
-
-      eventSourceRef.current.onerror = (error) => {
-        console.log('EventSource error:', JSON.stringify(error));
-
-        isConnectingRef.current = false; // Allow reconnection if needed
-
-        // Close and schedule a reconnect
-        if (eventSourceRef.current) {
-          eventSourceRef.current.close();
-          eventSourceRef.current = null;
-        }
-
-        // Retry connection after 1 seconds
-        if (!reconnectTimeoutRef.current) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            console.log("Retrying EventSource connection...");
-            connectEventSource();
-            reconnectTimeoutRef.current = null; // Clear timeout after retry
-          }, 1000);
-        }
-      };
-    }, 1000); // Small delay before reconnecting
-  }, [getEventSourceUrl]);
+      // Use ref to prevent memory leaks
+      if (!reconnectTimeoutRef.current) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectEventSource();
+          reconnectTimeoutRef.current = null;
+        }, 1000);
+      }
+    };
+  }, 500); // Reduced delay
+}, [getEventSourceUrl, visibleTabs]);
 
   useFocusEffect(
     useCallback(() => {
       connectEventSource();
       
-      // Fetch initial trade data
-      fetchRecentTrades();
+      // Fetch initial trade data if needed
+      if (visibleTabs.includes('trades') || visibleTabs.includes('chart')) {
+        fetchRecentTrades();
+      }
 
       return () => {
         console.log("Disconnecting from EventSource...");
@@ -322,27 +405,10 @@ const CustomOrderBook = () => {
           reconnectTimeoutRef.current = null;
         }
       };
-    }, [connectEventSource, fetchRecentTrades])
+    }, [connectEventSource, fetchRecentTrades, visibleTabs])
   );
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    startRotation();
-    
-    // Close and reconnect to event source
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
-    }
-    
-    // Fetch fresh trade data
-    fetchRecentTrades();
-    
-    // Reconnect to event source
-    setTimeout(() => {
-      connectEventSource();
-    }, 1000);
-  };
+
 
   const handlePairSelect = (pair) => {
     setSelectedPair(pair);
@@ -373,38 +439,42 @@ const CustomOrderBook = () => {
             </View>
             
             {priceHistory.length >= 2 ? (
-              <LineChart
-                data={chartData}
-                width={width - 40}
-                height={220}
-                yAxisLabel={selectedPair.counter.code === 'USDC' ? '$' : ''}
-                yAxisSuffix=""
-                withDots={false}
-                withInnerLines={false}
-                withOuterLines={false}
-                bezier
-                yLabelsOffset={2}
-                chartConfig={{
-                  backgroundColor: '#1C1C24',
-                  backgroundGradientFrom: '#1C1C24',
-                  backgroundGradientTo: '#1C1C24',
-                  decimalPlaces: 5,
-                  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  style: {
-                    borderRadius: 16,
-                  },
-                  propsForDots: {
-                    r: '0',
-                  },
-                  propsForBackgroundLines: {
-                    strokeDasharray: '',
-                    stroke: '#2E2E3A',
-                    strokeWidth: 1
-                  }
-                }}
-                style={styles.chart}
-              />
+      <Chart
+      style={{ width: width - 40, height: 220 }}
+      data={chartData}
+      padding={{ left: 10, bottom: 30, right: 20, top: 30 }}
+      xDomain={{
+        min: Math.min(...chartData.map(d => d.x)),
+        max: Math.max(...chartData.map(d => d.x))
+      }}
+      yDomain={{
+        min: minY - (0.1 * (maxY - minY)), // 10% padding
+        max: maxY + (0.1 * (maxY - minY))
+      }}
+    >
+      <Line
+      tooltipComponent={
+        <Tooltip 
+          theme={{
+            formatter: handleTooltipFormat,
+            shape: {
+              width: 0, // Adjust tooltip size for visibility
+              height: 0,
+              dx: 5,
+              dy: -10,
+              color: 'black',
+            }
+          }} 
+        />
+      }
+  
+        theme={{
+          stroke: { color: '#44bd32', width: 2 },
+          scatter: { selected: { width: 10, height: 11, rx: 5, color: '#2F7DFF' } }
+        }}
+        smoothing="bezier"
+      />
+    </Chart>
             ) : (
               <View style={styles.noChartContainer}>
                 <ActivityIndicator size="small" color="#007AFF" />
@@ -414,13 +484,10 @@ const CustomOrderBook = () => {
 
             <View style={styles.legendContainer}>
               <View style={styles.legendItem}>
-                <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
-                <Text style={styles.legendText}>Bids</Text>
+              <Text style={[styles.legendText,{fontSize:20}]}>$ {points_data}</Text>
+                <Text style={styles.legendText}>{points_data_time}</Text>
               </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendColor, { backgroundColor: '#FF3B3B' }]} />
-                <Text style={styles.legendText}>Asks</Text>
-              </View>
+
             </View>
             
             {lastTrade && (
@@ -510,82 +577,95 @@ const CustomOrderBook = () => {
             )}
           </View>
         );
-      case 'bids':
-        return (
-          <View style={styles.ordersContainer}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.headerText, { flex: 2 }]}>Price ({selectedPair.counter.code})</Text>
-              <Text style={[styles.headerText, { flex: 2 }]}>Amount ({selectedPair.base.code})</Text>
-              <Text style={[styles.headerText, { flex: 1 }]}>Total</Text>
-            </View>
-            {bids.length > 0 ? (
-              bids.map((bid, index) => {
-                const amount = parseFloat(bid.amount);
-                const price = parseFloat(bid.price);
-                const total = (amount * price).toFixed(7);
-                const depth = (index / bids.length) * 100;
+        case 'bids':
+          case 'asks':
+            return (
+              <View style={styles.ordersContainer}>
+                {/* Asks section - reversed to show highest ask at bottom */}
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.headerText, { flex: 2 }]}>Price ({selectedPair.counter.code})</Text>
+                  <Text style={[styles.headerText, { flex: 2 }]}>Amount ({selectedPair.base.code})</Text>
+                  <Text style={[styles.headerText, { flex: 1 }]}>Total</Text>
+                </View>
                 
-                return (
-                  <View key={index} style={styles.orderRow}>
-                    <LinearGradient
-                      colors={['rgba(76, 217, 100, 0.15)', 'rgba(76, 217, 100, 0)']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={[styles.depthIndicator, { width: `${depth}%` }]}
-                    />
-                    <Text style={[styles.priceText, styles.bidText]}>
-                      {selectedPair.counter.code === 'USDC' ? '$' : ''}{parseFloat(bid.price).toFixed(7)}
-                    </Text>
-                    <Text style={[styles.amountText]}>{parseFloat(bid.amount).toFixed(7)}</Text>
-                    <Text numberOfLines={1} style={styles.totalText}>{total}</Text>
+                {asks.length > 0 ? (
+                  [...asks].reverse().map((ask, index) => {
+                    const amount = parseFloat(ask.amount);
+                    const price = parseFloat(ask.price);
+                    const total = (amount * price).toFixed(7);
+                    const depth = (index / asks.length) * 100;
+                    
+                    return (
+                      <View key={`ask-${index}`} style={styles.orderRow}>
+                        <LinearGradient
+                          colors={['rgba(255, 59, 59, 0.15)', 'rgba(255, 59, 59, 0)']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={[styles.depthIndicator, { width: `${depth}%` }]}
+                        />
+                        <Text style={[styles.priceText, styles.askText]}>
+                          {selectedPair.counter.code === 'USDC' ? '$' : ''}{price.toFixed(7)}
+                        </Text>
+                        <Text style={styles.amountText}>{amount.toFixed(7)}</Text>
+                        <Text numberOfLines={1} style={styles.totalText}>{total}</Text>
+                      </View>
+                    );
+                  })
+                ) : (
+                  <View style={styles.noOrdersContainer}>
+                    <Text style={styles.noOrdersText}>No asks found</Text>
                   </View>
-                );
-              })
-            ) : (
-              <View style={styles.noTradesContainer}>
-                <Text style={styles.noTradesText}>No bids found for {selectedPair.displayName}</Text>
-              </View>
-            )}
-          </View>
-        );
-      case 'asks':
-        return (
-          <View style={styles.ordersContainer}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.headerText, { flex: 2 }]}>Price ({selectedPair.counter.code})</Text>
-              <Text style={[styles.headerText, { flex: 2 }]}>Amount ({selectedPair.base.code})</Text>
-              <Text style={[styles.headerText, { flex: 1 }]}>Total</Text>
-            </View>
-            {asks.length > 0 ? (
-              asks.map((ask, index) => {
-                const amount = parseFloat(ask.amount);
-                const price = parseFloat(ask.price);
-                const total = (amount * price).toFixed(7);
-                const depth = ((asks.length - index) / asks.length) * 100;
+                )}
                 
-                return (
-                  <View key={index} style={styles.orderRow}>
-                    <LinearGradient
-                      colors={['rgba(255, 59, 59, 0.15)', 'rgba(255, 59, 59, 0)']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={[styles.depthIndicator, { width: `${depth}%` }]}
-                    />
-                    <Text style={[styles.priceText, styles.askText]}>
-                      {selectedPair.counter.code === 'USDC' ? '$' : ''}{parseFloat(ask.price).toFixed(7)}
-                    </Text>
-                    <Text style={styles.amountText}>{parseFloat(ask.amount).toFixed(7)}</Text>
-                    <Text numberOfLines={1} style={styles.totalText}>{total}</Text>
+                {/* Spread indicator */}
+                <View style={styles.spreadContainer}>
+                  <Text style={styles.spreadLabel}>Spread:</Text>
+                  <Text style={styles.spreadValue}>
+                    {asks.length > 0 && bids.length > 0 ? 
+                      `${(parseFloat(asks[0].price) - parseFloat(bids[0].price)).toFixed(7)} (${
+                        ((parseFloat(asks[0].price) - parseFloat(bids[0].price)) / parseFloat(asks[0].price) * 100).toFixed(2)
+                      }%)` : 
+                      '...'}
+                  </Text>
+                </View>
+                
+                {/* Bids section */}
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.headerText, { flex: 2 }]}>Price ({selectedPair.counter.code})</Text>
+                  <Text style={[styles.headerText, { flex: 2 }]}>Amount ({selectedPair.base.code})</Text>
+                  <Text style={[styles.headerText, { flex: 1 }]}>Total</Text>
+                </View>
+                
+                {bids.length > 0 ? (
+                  bids.map((bid, index) => {
+                    const amount = parseFloat(bid.amount);
+                    const price = parseFloat(bid.price);
+                    const total = (amount * price).toFixed(7);
+                    const depth = (index / bids.length) * 100;
+                    
+                    return (
+                      <View key={`bid-${index}`} style={styles.orderRow}>
+                        <LinearGradient
+                          colors={['rgba(76, 217, 100, 0.15)', 'rgba(76, 217, 100, 0)']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={[styles.depthIndicator, { width: `${depth}%` }]}
+                        />
+                        <Text style={[styles.priceText, styles.bidText]}>
+                          {selectedPair.counter.code === 'USDC' ? '$' : ''}{price.toFixed(7)}
+                        </Text>
+                        <Text style={styles.amountText}>{amount.toFixed(7)}</Text>
+                        <Text numberOfLines={1} style={styles.totalText}>{total}</Text>
+                      </View>
+                    );
+                  })
+                ) : (
+                  <View style={styles.noOrdersContainer}>
+                    <Text style={styles.noOrdersText}>No bids found</Text>
                   </View>
-                );
-              })
-            ) : (
-              <View style={styles.noTradesContainer}>
-                <Text style={styles.noTradesText}>No asks found for {selectedPair.displayName}</Text>
+                )}
               </View>
-            )}
-          </View>
-        );
+            );
       default:
         return null;
     }
@@ -636,32 +716,25 @@ const CustomOrderBook = () => {
         </View>
       </View>
       
-      <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'chart' && styles.activeTab]}
-          onPress={() => setActiveTab('chart')}
-        >
-          <Text style={[styles.tabText, activeTab === 'chart' && styles.activeTabText]}>Chart</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'trades' && styles.activeTab]}
-          onPress={() => setActiveTab('trades')}
-        >
-          <Text style={[styles.tabText, activeTab === 'trades' && styles.activeTabText]}>Trades</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'bids' && styles.activeTab]}
-          onPress={() => setActiveTab('bids')}
-        >
-          <Text style={[styles.tabText, activeTab === 'bids' && styles.activeTabText]}>Bids</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'asks' && styles.activeTab]}
-          onPress={() => setActiveTab('asks')}
-        >
-          <Text style={[styles.tabText, activeTab === 'asks' && styles.activeTabText]}>Asks</Text>
-        </TouchableOpacity>
-      </View>
+      {/* {availableTabs.length > 0 && (
+        <View style={styles.tabContainer}>
+          {availableTabs.map((tab) => (
+            <TouchableOpacity 
+              key={tab.id}
+              style={[
+                styles.tab, 
+                activeTab === tab.id && styles.activeTab,
+                { flex: 1 / availableTabs.length }
+              ]}
+              onPress={() => setActiveTab(tab.id)}
+            >
+              <Text style={[styles.tabText, activeTab === tab.id && styles.activeTabText]}>
+
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )} */}
       
       <ScrollView 
         style={styles.content}
@@ -878,7 +951,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   legendItem: {
-    flexDirection: 'row',
+    flexDirection: "column",
     alignItems: 'center',
     marginHorizontal: 10,
   },
@@ -890,7 +963,8 @@ const styles = StyleSheet.create({
   },
   legendText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14,
+    fontWeight:"800"
   },
   chartInfo: {
     textAlign: 'center',
@@ -1005,6 +1079,8 @@ const styles = StyleSheet.create({
     color: '#8A8A8F',
   },
   tradesContainer: {
+    width:"100%",
+    height:"100%",
     padding: 20,
   },
   tradeRow: {
@@ -1120,6 +1196,41 @@ const styles = StyleSheet.create({
   selectedPairText: {
     fontWeight: '600',
     color: '#007AFF',
+  },
+  orderBookTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 15,
+  },
+  spreadContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#2E2E3A',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    marginVertical: 10,
+  },
+  spreadLabel: {
+    color: '#8A8A8F',
+    fontSize: 14,
+    marginRight: 5,
+  },
+  spreadValue: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  noOrdersContainer: {
+    padding: 15,
+    alignItems: 'center',
+  },
+  noOrdersText: {
+    color: '#8A8A8F',
+    fontSize: 14,
   }
 });
 export default CustomOrderBook;
