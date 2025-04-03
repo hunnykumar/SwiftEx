@@ -106,14 +106,14 @@ const CustomOrderBook = ({ visibleTabs = ['chart', 'trades', 'bids', 'asks'] }) 
   });
 
   const chartData = priceHistory
-  .map(point => ({
-    x: new Date(`1970-01-01T${point.timestamp}Z`).getTime(), // Convert HH:mm:ss to timestamp
-    y: isNaN(point.close) ? 0 : point.close // Ensure y is a valid number
+  ?.map(point => ({
+    x: new Date(`1970-01-01T${point?.timestamp}Z`)?.getTime(), // Convert HH:mm:ss to timestamp
+    y: isNaN(point?.close) ? 0 : point?.close // Ensure y is a valid number
   }))
-  .filter(point => !isNaN(point.x) && !isNaN(point.y)); // Remove NaN values
+  .filter(point => !isNaN(point?.x) && !isNaN(point?.y)); // Remove NaN values
 
-const minY = Math.min(...chartData.map(d => d.y).filter(y => !isNaN(y)));
-const maxY = Math.max(...chartData.map(d => d.y).filter(y => !isNaN(y)));
+const minY = Math.min(...chartData?.map(d => d?.y)?.filter(y => !isNaN(y)));
+const maxY = Math.max(...chartData?.map(d => d?.y)?.filter(y => !isNaN(y)));
   
   const handleTooltipFormat = ({ x, y }) => {
     setpoints_data(y);
@@ -482,13 +482,13 @@ const connectEventSource = useCallback(() => {
               </View>
             )}
 
-            <View style={styles.legendContainer}>
+            {points_data===null?null:<View style={styles.legendContainer}>
               <View style={styles.legendItem}>
               <Text style={[styles.legendText,{fontSize:20}]}>$ {points_data}</Text>
                 <Text style={styles.legendText}>{points_data_time}</Text>
               </View>
 
-            </View>
+            </View>}
             
             {lastTrade && (
               <View style={styles.lastTradeContainer}>

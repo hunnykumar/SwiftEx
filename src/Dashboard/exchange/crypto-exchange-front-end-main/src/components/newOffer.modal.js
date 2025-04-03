@@ -804,13 +804,13 @@ const handleCloseModal = () => {
                 style={[styles.tab, activeTab === 0 && styles.activeTab]} 
                 onPress={() => setActiveTab(0)}
               >
-                <Text style={[styles.tabText, activeTab === 0 && styles.activeTabText]}>Overview</Text>
+                <Text style={[styles.tabText, activeTab === 0 && styles.activeTabText]}>Trade</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.tab, activeTab === 1 && styles.activeTab]} 
                 onPress={() => setActiveTab(1)}
               >
-                <Text style={[styles.tabText, activeTab === 1 && styles.activeTabText]}>Trade</Text>
+                <Text style={[styles.tabText, activeTab === 1 && styles.activeTabText]}>Overview</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.tab, activeTab === 2 && styles.activeTab]} 
@@ -835,10 +835,10 @@ const handleCloseModal = () => {
            </TouchableOpacity>
          </View>
         }
-  {activeTab===1&&
+  {activeTab===0&&
     <>
     {/* offer seletion container */}
-    <View style={[styles.pairSelectionCon,{marginTop:hp(-4)}]}>
+    <View style={[styles.pairSelectionCon,{marginTop:hp(-3)}]}>
      <Text style={styles.pairHeadingText}>Trading Pair</Text>
      <TouchableOpacity style={styles.pairSelectionSubCon} onPress={()=>{setchooseModalPair(true)}}>
        <Text style={styles.pairSelectionSubCon.pairSelectionName}>{top_value+" / "+top_value_0}</Text>
@@ -1028,7 +1028,7 @@ const handleCloseModal = () => {
      </Modal>
  </>
   }
-  {activeTab===0&&
+  {activeTab===1&&
     <View style={{width:"100%"}}>
      <CustomOrderBook visibleTabs={['chart']} />
    </View>
