@@ -295,7 +295,7 @@ const SendXLM = (props) => {
                 await get_stellar(steller_key);
                 setAmount('')
                 setAddress('')
-                navigation.navigate("Transactions");
+                navigation.navigate("Transactions",{txType:"STR"});
               } catch (e) {
                 console.log(e);
                 setAmount('')

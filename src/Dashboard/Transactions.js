@@ -15,8 +15,9 @@ import {
 import { Alchemy, Network } from 'alchemy-sdk';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSelector } from 'react-redux';
-import { Wallet_screen_header } from './reusables/ExchangeHeader';
-import { useNavigation } from '@react-navigation/native';
+import { TransactionForStellar, Wallet_screen_header } from './reusables/ExchangeHeader';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import StellarTransactionHistory from './exchange/crypto-exchange-front-end-main/src/pages/StellarTransactionHistory';
 
 const ThemeContext = React.createContext();
 
@@ -86,6 +87,9 @@ const formatNumber = (value, decimals = 4) => {
 };
 
 const TransactionHistory = () => {
+  const backData=useRoute();
+  const [selectedTab,setselectedTab]=useState(null);
+  const isFocusedTab=useIsFocused();
   const navigation=useNavigation();
   const { theme, colors } = useTheme();
   const [transactions, setTransactions] = useState([]);
@@ -95,6 +99,10 @@ const TransactionHistory = () => {
   const [refreshing, setRefreshing] = useState(false);
   const state = useSelector((state) => state);
   const walletAddress = state?.wallet?.address;;
+
+  useEffect(()=>{
+    setselectedTab(backData?.params?.txType || "ETH");
+  },[isFocusedTab])
 
   useEffect(() => {
     fetchAllTransactions();
@@ -236,10 +244,10 @@ const TransactionHistory = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+
+      {selectedTab==="ETH"?<>
       <Wallet_screen_header title="Transactions" onLeftIconPress={() => navigation.goBack()} />
-
       <HeaderComponent />
-
       {loading && !refreshing ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
@@ -271,6 +279,11 @@ const TransactionHistory = () => {
           }
         />
       )}
+      </>: 
+      <>
+      <TransactionForStellar title="Transactions" onLeftIconPress={() => navigation.goBack()} />
+      <StellarTransactionHistory publicKey={state.STELLAR_PUBLICK_KEY} isDarkMode={true}/>
+      </>}
     </SafeAreaView>
   );
 };

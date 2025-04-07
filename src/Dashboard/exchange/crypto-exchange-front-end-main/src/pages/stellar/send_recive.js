@@ -172,7 +172,7 @@ const send_recive = ({route}) => {
           chainType
         );
         console.log(saveTransaction);
-        navigation.navigate("Transactions");
+        navigation.navigate("Transactions",{txType:"STR"});
       } catch (e) {
         console.log(e);
       }

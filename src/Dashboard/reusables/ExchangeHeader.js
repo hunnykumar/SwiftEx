@@ -228,6 +228,25 @@ export const Exchange_Login_screen = ({ title, onLeftIconPress }) => {
   );
 };
 
+export const TransactionForStellar = ({ title, onLeftIconPress }) => {
+  return (
+    <>
+      <View style={[styles.exchangeheaderContainer, { backgroundColor:"#011434",height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
+        <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
+          <Icon
+            name={"arrow-left"}
+            type={"materialCommunity"}
+            size={30}
+            color={"#fff"}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:"#fff" }]}>{title}</Text>
+      <View style={styles.exchangerightIconContainer} />
+      </View>
+    </>
+  );
+};
+
 const styles = StyleSheet.create({
   mainContainer: {
     backgroundColor: "#fff",
