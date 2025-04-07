@@ -259,7 +259,7 @@ export const CustomQuotes = ({
 
       const balance = await usdtContract.balanceOf(addresses);
       console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`); 
-      if(parseFloat(value)>=parseFloat(ethers.utils.formatUnits(balance, 6))){
+      if(parseFloat(value)>=parseFloat(ethers.utils.formatUnits(balance, 6))||parseFloat(ethers.utils.formatUnits(balance, 6))===0){
         setcompletTransaction(true)
       }
       else{

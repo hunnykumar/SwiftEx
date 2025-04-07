@@ -664,7 +664,7 @@ const renderTokens = ({ item }) => {
     {/* Right: Action Buttons */}
     <View style={{ alignItems: "center", paddingRight: 5 }}>
       <TouchableOpacity 
-        disabled={item.network==="BSC"} 
+        disabled={item.network==="BSC"||item.network==="ETH"&&item?.symbol?.toUpperCase()!=="USDT"} 
         style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
         onPress={() => {
           // state?.STELLAR_ADDRESS_STATUS === false 
