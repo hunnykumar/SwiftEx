@@ -127,6 +127,18 @@ const SendXLM = (props) => {
     }
     insilize()
     }, [])
+    useEffect(() => {
+      const insilize1=async()=>{
+        try {
+            getData()
+            setMessage();
+        } catch (error) {
+          console.log("----",error)
+        }
+      }
+      insilize1()
+      }, [ACTIVATION_MODAL_PROD])
+    
   useEffect(() => {
     const new_data = async () => {
       try {
@@ -341,7 +353,7 @@ useEffect(() => {
          <WalletActivationComponent 
        isVisible={ACTIVATION_MODAL_PROD}
        onClose={() => {ActivateModal}}
-       onActivate={ActivateModal}
+       onActivate={()=>{setACTIVATION_MODAL_PROD(false)}}
        navigation={navigation}
        appTheme={state.THEME.THEME}
        shouldNavigateBack={true}

@@ -574,7 +574,7 @@ function InvestmentChart(setCurrentWallet) {
     {/* Right: Action Buttons */}
     {item?.id!==4?<View style={{ alignItems: "center", paddingRight: 5 }}>
       <TouchableOpacity 
-        disabled={item.id === 4} 
+        disabled={item.id === 4||item.id === 3} 
         style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
         onPress={() => {
           state?.STELLAR_ADDRESS_STATUS === false 
@@ -664,7 +664,7 @@ const renderTokens = ({ item }) => {
     {/* Right: Action Buttons */}
     <View style={{ alignItems: "center", paddingRight: 5 }}>
       <TouchableOpacity 
-        // disabled={item.id === 4} 
+        disabled={item.network==="BSC"} 
         style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
         onPress={() => {
           // state?.STELLAR_ADDRESS_STATUS === false 

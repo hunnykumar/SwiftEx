@@ -456,59 +456,63 @@ const Asset_info = ({ route }) => {
                     </TouchableOpacity>
                   
                 </View>
-                <View style={[styles.opt_other,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
+                <View style={[styles.opt_other,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"black"}]}>
                     <ScrollView style={{paddingBottom:hp(10)}}>
                     {/* <View style={styles.horizontalLine} /> */}
                     {Loading === true ? <ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} style={{ alignSelf: "center" }} /> :
                         final.map((list, index) => {
                             return (
                                 <>
-                                    <View style={[styles.opt_other_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-                                    <Text style={[styles.opt_market_head, { marginTop: hp(1),color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type?.symbol?.toUpperCase()||asset_type?.symbole} price (24H)</Text>
+                                    <View style={[styles.opt_other_con, { backgroundColor: state.THEME.THEME === false ? "#F4F4F4" : "black",borderColor:state.THEME.THEME === false ? "#F4F4F4" : "black" }]}>
+                                        <Text style={[styles.opt_market_head, { marginTop: hp(1), color: state.THEME.THEME === false ? "black" : "#fff" }]}>{asset_type?.symbol?.toUpperCase() || asset_type?.symbole} price (24H)</Text>
                                         <View style={{ padding: 4 }}>
-                                        <View style={{ flexDirection: "row",alignItems:"center" }}>
-                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 14, color: "gray",width:wp(35) }]}>Price</Text>
-                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>{asset_type?.symbol?.toUpperCase()||asset_type?.symbole === "XLM" ? list.current_price : asset_type?.symbol?.toUpperCase()||asset_type?.symbole === "XLM" ? list.current_price : list.current_price} price (24H)</Text>
-                                            </View>
-                                            <View style={{ flexDirection: "row",alignItems:"center" }}>
-                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 14, color: "gray",width:wp(35) }]}>Price (USD)</Text>
-                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase()||asset_type?.symbole === "XLM" ? list.current_price : list.current_price}</Text>
-                                            </View>
-                                            <View style={{ flexDirection: "row",alignItems:"center" }}>
-                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 14, color: "gray",width:wp(35) }]}>24H high</Text>
-                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase()||asset_type?.symbole === "XLM" ? list.high_24h : list.high_24h}</Text>
-                                            </View>
-                                            <View style={{ flexDirection: "row",alignItems:"center" }}>
-                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 14, color: "gray",width:wp(35) }]}>24H low</Text>
-                                            <Text style={[styles.opt_market_head, {paddingLeft:0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase()||asset_type?.symbole === "XLM" ? list.low_24h : list.low_24h}</Text>
-                                            </View>
-                                        </View>
-                                </View>
-                                    {/* Market */}
-                                    <View style={[styles.opt_other_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-                                    <Text style={[styles.opt_market_head, { marginTop: hp(1), marginLeft: 1 ,color:state.THEME.THEME===false?"black":"#fff"}]}>Market stats</Text>
-                                        <View style={{ padding: 4 }}>
-
                                             <View style={{ flexDirection: "row", alignItems: "center" }}>
-                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: "gray", width: wp(35) }]}>Market cap</Text>
-                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase()||asset_type?.symbole === "XLM" ? list.market_cap : list.market_cap}</Text>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(45) }]}>Price (24H)</Text>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>{asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.current_price : asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.current_price : list.current_price}</Text>
+                                                </View>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(50) }]}>Price (USD)</Text>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.current_price : list.current_price}</Text>
+                                                </View>
                                             </View>
                                             <View style={{ flexDirection: "row", alignItems: "center" }}>
-                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: "gray", width: wp(35) }]}>Volume</Text>
-                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" , width: wp(35) }]}>{asset_type?.symbol?.toUpperCase()||asset_type?.symbole === "XLM" ? list.total_volume : list.total_volume}</Text>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(45) }]}>24H high</Text>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.high_24h : list.high_24h}</Text>
+                                                </View>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(50) }]}>24H low</Text>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.low_24h : list.low_24h}</Text>
+                                                </View>
                                             </View>
-
-                                            <View style={{ flexDirection: "row", alignItems: "center" }}>
-
-
-                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: "gray", width: wp(35) }]}>Supply</Text>
-                                                <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" , width: wp(40) }]}>{asset_type?.symbol?.toUpperCase()||asset_type?.symbole === "XLM" ? list.total_supply : list.total_supply}</Text>
-                                            </View>
-                                            <View style={{ flexDirection: "row",alignItems:"center" }}>
-                                            <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: "gray", width: wp(35) }]}>changes 24h</Text>
-                                            <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" , width: wp(35) }]}>{asset_type?.symbol?.toUpperCase()||asset_type?.symbole === "XLM" ? list.price_change_percentage_24h : list.price_change_percentage_24h}</Text>
                                         </View>
                                     </View>
+                                    {/* Market */}
+                                    <View style={[styles.opt_other_con, { backgroundColor: state.THEME.THEME === false ? "#F4F4F4" : "black",borderColor:state.THEME.THEME === false ? "#F4F4F4" : "black" }]}>
+                                        <Text style={[styles.opt_market_head, { marginTop: hp(1), marginLeft: 1, color: state.THEME.THEME === false ? "black" : "#fff" }]}>Market stats</Text>
+                                        <View style={{ padding: 4, flexDirection: "column" }}>
+                                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(45) }]}>Market cap</Text>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.market_cap : list.market_cap}</Text>
+                                                </View>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(50) }]}>Volume</Text>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(35) }]}>{asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.total_volume : list.total_volume}</Text>
+                                                </View>
+                                            </View>
+                                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(45) }]}>Supply</Text>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(40) }]}>{asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.total_supply : list.total_supply}</Text>
+                                                </View>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(50) }]}>changes 24h</Text>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(35) }]}>{asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.price_change_percentage_24h : list.price_change_percentage_24h}</Text>
+                                                </View>
+                                            </View>
+                                        </View>
                                     </View>
                                 </>
                             )
@@ -595,14 +599,13 @@ const styles = StyleSheet.create({
         paddingLeft: 14,
     },
     opt_other_con: {
-        width: wp(90),
-        borderRadius: 10,
-        alignItems: "flex-start",
-        paddingLeft: 10,
-        borderColor:"gray",
-        borderWidth:1,
-        paddingBottom:10,
-        marginTop:10
+        marginTop: hp(1),
+        paddingHorizontal: wp(0.5),
+        paddingVertical:hp(1),
+        borderTopColor: "#75747433",
+        borderWidth: 1,
+        width: wp(95),
+        alignSelf: "center"
     },
     T_C_con: {
         flexDirection: "row",

@@ -605,6 +605,33 @@ const chooseRenderItem_1 = ({ item }) => (
     }
     fetch_ins()
   },[isFocused])
+
+  useEffect(()=>{
+    const fetch_ins1 = async () => {
+      try {
+        setreservedError(false)
+        setassetInfo(false)
+        settop_value(back_data?.params?.tradeAssetType || chooseItemList[0].visible_0);
+        settop_value_0(chooseItemList[0].visible_1)
+        setAssetIssuerPublicKey(back_data?.params?.tradeAssetIssuer ||chooseItemList[0].visible0Issuer)
+        setAssetIssuerPublicKey1(chooseItemList[0].visible1Issuer)
+        setloading_trust_modal(false)
+        setALL_STELLER_BALANCES(state?.assetData)
+        setshow_trust_modal(false);
+        setactiv(false)
+        setshow_bal(true)
+        await get_stellar(back_data?.params?.tradeAssetType || "native")
+        if(state.STELLAR_ADDRESS_STATUS===false)
+        {
+            setACTIVATION_MODAL_PROD(true)
+        }
+      } catch (error) {
+        console.log("=-====#", error)
+      }
+    }
+    fetch_ins1()
+  },[ACTIVATION_MODAL_PROD])
+
   useEffect(()=>{
     getAccountDetails();
     getData();
@@ -1048,7 +1075,7 @@ const handleCloseModal = () => {
         <WalletActivationComponent
           isVisible={ACTIVATION_MODAL_PROD}
           onClose={() => {ActivateModal}}
-          onActivate={ActivateModal}
+          onActivate={()=>{setACTIVATION_MODAL_PROD(false)}}
           navigation={navigation}
           appTheme={true}
           shouldNavigateBack={true}

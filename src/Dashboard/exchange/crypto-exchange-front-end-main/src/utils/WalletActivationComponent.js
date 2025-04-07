@@ -19,7 +19,9 @@ import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { useDispatch, useSelector } from 'react-redux';
 import { RAPID_STELLAR, SET_ASSET_DATA } from '../../../../../components/Redux/actions/type';
 import { REACT_APP_HOST } from '../ExchangeConstants';
-
+import Snackbar from 'react-native-snackbar';
+import { STELLAR_URL } from '../../../../constants';
+const StellarSdk = require('stellar-sdk');
 
 const { height } = Dimensions.get('window');
 
@@ -200,22 +202,59 @@ const WalletActivationComponent = ({
       console.log("--->>>>", data);
   
       if (data.message === "Funded successfully") {
-        // Dispatch success action and load account details from Stellar in parallel
-       await dispatch_({
-          type: RAPID_STELLAR,
-          payload: {
-            ETH_KEY: state.ETH_KEY,
-            STELLAR_PUBLICK_KEY: state.STELLAR_PUBLICK_KEY,
-            STELLAR_SECRET_KEY: state.STELLAR_SECRET_KEY,
-            STELLAR_ADDRESS_STATUS: true
-          },
-        });
-        await dispatch_({
-          type: SET_ASSET_DATA,
-          payload:[{"asset_type": "native", "balance": "5.0000000", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000"}],
+        const keypair = StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY);
+        const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(data?.resXdr, "base64");
+        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.TESTNET);
+        tx.sign(keypair);
+        const server = new StellarSdk.Server(STELLAR_URL.URL);
+        const result = await server.submitTransaction(tx);
+        if (result?.successful === true) {
+          server.loadAccount(state.STELLAR_PUBLICK_KEY)
+        .then(account => {
+            console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);
+            account.balances.forEach(balance => {
+              dispatch_({
+                type: SET_ASSET_DATA,
+                payload: account.balances,
+              })
+               dispatch_({
+                type: RAPID_STELLAR,
+                payload: {
+                  ETH_KEY: state.ETH_KEY,
+                  STELLAR_PUBLICK_KEY: state.STELLAR_PUBLICK_KEY,
+                  STELLAR_SECRET_KEY: state.STELLAR_SECRET_KEY,
+                  STELLAR_ADDRESS_STATUS: true
+                },
+              });
+              Snackbar.show({
+                text: 'Wallet Activated',
+                duration: Snackbar.LENGTH_SHORT,
+                backgroundColor:'green',
+            });
+            setWallet_activation(false);
+            onActivate()
+            });
         })
-        setWallet_activation(false);
-        handleClose()
+        .catch(error => {
+            console.log('Error loading account:', error);
+            setLoading(false)
+            Snackbar.show({
+                text: "USDT failed to be added",
+                duration: Snackbar.LENGTH_SHORT,
+                backgroundColor:'red',
+            });
+            setWallet_activation(false);
+            handleClose()
+        });
+        }
+        else {
+          console.log("Error: Funding account failed.");
+          setWallet_activation(false);
+          handleClose()
+        }
+
+        // setWallet_activation(false);
+        // handleClose()
       } else if (data.message === "Error funding account") {
         console.log("Error: Funding account failed.");
         setWallet_activation(false);

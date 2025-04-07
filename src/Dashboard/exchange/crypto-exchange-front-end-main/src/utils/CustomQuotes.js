@@ -752,28 +752,69 @@ export const CustomQuotes = ({
       console.log("--->>>>", data);
   
       if (data.message === "Funded successfully") {
-        await delay(3000)
-          await changeTrust("USDC","GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID")
+         const keypair = StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY);
+        const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(data?.resXdr, "base64");
+        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.TESTNET);
+        tx.sign(keypair);
+        const server = new StellarSdk.Server(STELLAR_URL.URL);
+        const result = await server.submitTransaction(tx);
+        if(result?.successful===true)
+        {        
+        // await delay(3000)
+          // await changeTrust("USDC","GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID")
         // Dispatch success action and load account details from Stellar in parallel
-       await dispatch_({
-          type: RAPID_STELLAR,
-          payload: {
-            ETH_KEY: state.ETH_KEY,
-            STELLAR_PUBLICK_KEY: state.STELLAR_PUBLICK_KEY,
-            STELLAR_SECRET_KEY: state.STELLAR_SECRET_KEY,
-            STELLAR_ADDRESS_STATUS: true
-          },
-        });
-        await dispatch_({
-          type: SET_ASSET_DATA,
-          payload:[{"asset_type": "native", "balance": "5.0000000", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000"}],
+        server.loadAccount(state.STELLAR_PUBLICK_KEY)
+        .then(account => {
+            console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);
+            account.balances.forEach(balance => {
+              dispatch_({
+                type: SET_ASSET_DATA,
+                payload: account.balances,
+              })
+               dispatch_({
+                type: RAPID_STELLAR,
+                payload: {
+                  ETH_KEY: state.ETH_KEY,
+                  STELLAR_PUBLICK_KEY: state.STELLAR_PUBLICK_KEY,
+                  STELLAR_SECRET_KEY: state.STELLAR_SECRET_KEY,
+                  STELLAR_ADDRESS_STATUS: true
+                },
+              });
+              Snackbar.show({
+                text: 'Wallet Activated',
+                duration: Snackbar.LENGTH_SHORT,
+                backgroundColor:'green',
+            });
+            setLoading(false)
+            setWallet_activation(false)
+            });
         })
+        .catch(error => {
+            console.log('Error loading account:', error);
+            setLoading(false)
+            Snackbar.show({
+                text: "USDT failed to be added",
+                duration: Snackbar.LENGTH_SHORT,
+                backgroundColor:'red',
+            });
+            setWallet_activation(false)
+            onClose();
+        });
+        
         // setWallet_activation(false);
-        Snackbar.show({
-          text: 'Wallet Activated',
-          duration: Snackbar.LENGTH_SHORT,
-          backgroundColor:'green',
-      });
+       
+    }
+    else{
+      console.log("Error: Funding account failed.");
+      setWallet_activation(false);
+      onClose()
+      Snackbar.show({
+        text: 'Activation failed',
+        duration: Snackbar.LENGTH_SHORT,
+        backgroundColor:'red',
+    });
+    }
+
         // onClose()
       } else if (data.message === "Error funding account") {
         console.log("Error: Funding account failed.");
