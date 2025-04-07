@@ -18,7 +18,7 @@ import { useNavigation } from "@react-navigation/native";
 import { getNonce } from "../../utilities/utilities";
 import { Network, Alchemy } from "alchemy-sdk";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
-import { EthereumSecret, PolygonSecret } from "../constants";
+import { EthereumSecret, PolygonSecret, RPC } from "../constants";
 import ChooseTokens from "../tokens/ChooseTokens";
 import "react-native-get-random-values";
 import "@ethersproject/shims";
@@ -59,7 +59,7 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
     console.log(walletType);
     if (JSON.parse(walletType) == "BSC") {
       provider = new ethers.providers.JsonRpcProvider(
-        "https://data-seed-prebsc-1-s1.binance.org:8545"
+        RPC.BSCRPC
       );
     }
     const emailid = await state.user;
@@ -89,7 +89,7 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
     if (JSON.parse(walletType) == "Ethereum") {
       const settings = {
         apiKey: EthereumSecret.apiKey,
-        network: Network.ETH_MAINNET,
+        network: Network.ETH_SEPOLIA,
       };
 
       alchemyProvider = new Alchemy(settings);
@@ -111,7 +111,7 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
         maxFeePerGas: maxFee.maxFeePerGas,
         nonce: nonce,
         type: 2,
-        chainId: 1,
+        chainId: 5,
       };
       console.log(transaction);
 
@@ -147,7 +147,7 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
         );
         console.log(alchemy.core.getNetwork());
         const transaction = {
-          chainId: 1,
+          chainId: 80001,
           from: addressFrom,
           nonce: nonce,
           to: addressTo,
@@ -179,7 +179,7 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
       }
     } else if (JSON.parse(walletType) == "BSC") {
       provider = new ethers.providers.JsonRpcProvider(
-        "https://data-seed-prebsc-1-s1.binance.org:8545"
+        RPC.BSCRPC
       );
 
       const walletPrivateKey = new ethers.Wallet(privateKey);
