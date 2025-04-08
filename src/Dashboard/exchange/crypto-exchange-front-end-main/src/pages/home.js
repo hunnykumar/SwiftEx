@@ -822,8 +822,8 @@ useEffect(() => {
               <View style={[styles.linearContainer,{backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)"}]}>
               <SELECT_WALLET_EXC
         visible={VISIBLE_SELECT}
-        setVisible={setVISIBLE_SELECT}
-        setModalVisible={setVISIBLE_SELECT}
+        setVisible={()=>{setVISIBLE_SELECT(false)}}
+        setModalVisible={()=>{setVISIBLE_SELECT(false)}}
       />
             {state.wallet ? (
               <View>
@@ -849,13 +849,13 @@ useEffect(() => {
                 </View>
                 <View style={{}}>
 
-                  <View style={{marginVertical:hp(1)}}>
+                  <View style={{marginVertical:hp(0.5)}}>
                     <Text style={styles.textColor}>Stellar Public Key</Text>
                     <View style={{flexDirection:"row"}}>
                     {loading&&!steller_key?<View style={{width: wp(70)}}>
                            <Exchange_single_loading/>
                         </View>:
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 2.9, borderRadius: 5 }}>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 1, borderRadius: 5 }}>
                         <Text style={[styles.textColor, styles.width_scrroll]}>{steller_key}</Text>
                       </ScrollView>}
                       <TouchableOpacity onPress={() => { copyToClipboard(steller_key) }}>
@@ -909,7 +909,7 @@ useEffect(() => {
                   }}
                 >
                    <Icon name={"wallet"} type={"material"} color={"#fff"} size={30}/>
-                  <Text style={styles.PresssableBtnText}>Bridge Tokens</Text>
+                  <Text style={styles.PresssableBtnText}>Import USDC</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -1038,8 +1038,9 @@ const styles = StyleSheet.create({
   },
   linearContainer: {
     width: wp(94),
-    padding: hp(1.2),
-    paddingVertical: hp(2),
+    padding: hp(1),
+    marginTop:"1%",
+    // paddingVertical: hp(2),
     borderRadius: hp(2),
     borderColor:"#FFFFFF33",
     borderWidth:1
@@ -1204,7 +1205,7 @@ const styles = StyleSheet.create({
     // alignItems: 'center',
     // justifyContent: 'center',
     // backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
-    margin:10,
+    // margin:10,
     borderRadius:10
   },
   card: {

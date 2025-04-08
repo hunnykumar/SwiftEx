@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Modal, View, Text, Picker, ActivityIndicator, StyleSheet, TouchableOpacity, TextInput, Image, Platform, Keyboard, Alert, BackHandler } from 'react-native';
+import { Modal, View, Text, Picker, ActivityIndicator, StyleSheet, TouchableOpacity, TextInput, Image, Platform, Keyboard, Alert, BackHandler, TouchableWithoutFeedback } from 'react-native';
 import Icon from "../../../../../icon";
 import { FlatList, useToast } from 'native-base';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
@@ -26,6 +26,7 @@ import { OneTapContractAddress, OneTapUSDCAddress, RPC } from '../../../../const
 import Clipboard from '@react-native-clipboard/clipboard';
 import { QuoteModalBottomSheet } from '../utils/QuotesComponent';
 import { CustomQuotes } from '../utils/CustomQuotes';
+import Wallet_selection_bottom from '../../../../Wallets/Wallet_selection_bottom';
 const classic = ({ route }) => {
   const Focused=useIsFocused();
   const toast=useToast();
@@ -55,6 +56,7 @@ const classic = ({ route }) => {
   const [ACTIVATION_MODAL_PROD,setACTIVATION_MODAL_PROD]=useState(false);
   const [balanceLoading,setbalanceLoading]=useState(false)
   const [onTapFeature,setonTapFeature]=useState(false)
+  const [Wallet_modal,setWallet_modal]=useState(false);
   const [fianl_modal_text,setfianl_modal_text]=useState("Transaction Faild")
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
@@ -89,6 +91,18 @@ useEffect(()=>{
   setfianl_modal_loading(false)
   setamount('');
 },[])
+useEffect(()=>{
+  setonTapFeature(false)
+  setACTIVATION_MODAL_PROD(false)
+  setbalanceLoading(false)
+  setErrorMessageUI(null);
+  fetchUSDCBalnce(state&&state.wallet && state.wallet.address)
+  setfianl_modal_error(false);
+  setWALLETBALANCE(state&&state.EthBalance)
+  setWALLETADDRESS(state&&state.wallet && state.wallet.address)
+  setfianl_modal_loading(false)
+  setamount('');
+},[state?.wallet?.address])
   const fetchUSDCBalnce = async (addresses) => {
     try {
       setbalanceLoading(true)
@@ -108,10 +122,10 @@ useEffect(()=>{
       console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`);
 
       setWALLETBALANCE(ethers.utils.formatUnits(balance, 6));
-      if(parseFloat(ethers.utils.formatUnits(balance, 6))===0||state.STELLAR_ADDRESS_STATUS===false)
-        {
-          setonTapFeature(true)
-        }
+      // if(parseFloat(ethers.utils.formatUnits(balance, 6))===0||state.STELLAR_ADDRESS_STATUS===false)
+      //   {
+      //     // setonTapFeature(true)
+      //   }
       setbalanceLoading(false)
       BridgeUSDCValidation()
     } catch (error) {
@@ -297,30 +311,35 @@ const getOffersData = async () => {
   return (
     <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
      <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
-     {/* <WalletActivationComponent
+     <WalletActivationComponent
          isVisible={ACTIVATION_MODAL_PROD}
          onClose={() => {ActivateModal}}
-         onActivate={ActivateModal}
+         onActivate={()=>{setACTIVATION_MODAL_PROD(false)}}
          navigation={navigation}
          appTheme={true}
          shouldNavigateBack={true}
-       />  */}
-         <CustomQuotes
+       /> 
+         {/* <CustomQuotes
                    isVisible={onTapFeature}
                    onClose={()=>{handleClose()}}
                    tokenChain={"ETH"}
                    tokenName={"WETH"}
                    tokenAddress={"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"}
                    ACTIVATED={state?.STELLAR_ADDRESS_STATUS}
-                 />
+                 /> */}
       <View style={styles.modalHeader}>
-            <Text style={styles.textModal}>Import Assets on Trade Wallet</Text>
+            <Text style={styles.textModal}>Import USDC on Trade Wallet</Text>
           </View>
 
-          <View style={{ marginTop: hp(3),paddingHorizontal:wp(4),alignSelf:"flex-start" }}>
+          <View style={{ marginTop: hp(1.2),paddingHorizontal:wp(4),alignSelf:"flex-start" }}>
 
             <View style={{ width: wp(40), alignSelf: "center" }}>
-              <Text style={[styles.textModal, { fontSize: 18 }]}>Select wallet</Text>
+              <View style={{flexDirection:"row",justifyContent:"space-between",width: wp(90)}}>
+              <Text style={[styles.textModal, { fontSize: 18 }]}>Select chain</Text>
+              <TouchableOpacity onPress={()=>{setWallet_modal(true)}}>
+              <Text style={[styles.textModal, { fontSize: 18,color:"rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)" }]}>Change</Text>
+              </TouchableOpacity>
+              </View>
 
               <TouchableOpacity style={[styles.modalOpen, { width: wp(90) }]} onPress={() => { setChooseModalVisible(true); setIdIndex(1); }}>
                 {chooseSelectedItemId === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemId === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemId === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} />}
@@ -360,13 +379,13 @@ const getOffersData = async () => {
               <View style={{flexDirection:"row",alignItems:"center",width:wp(85)}}>
               <Text style={{fontSize:16,textAlign:"center",color:"#fff",fontSize:19}}>Address: </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%",borderRadius:10}}>
-                <Text style={{fontSize:17,color:"#fff" }}>{WALLETADDRESS}</Text>
+                <Text style={{fontSize:17,color:"gray" }}>{WALLETADDRESS}</Text>
               </ScrollView>
               </View>
               <View style={{flexDirection:"row",alignItems:"center",width:wp(30)}}>
               <Text style={{fontSize:19,textAlign:"center",color:"#fff"}}>Balance: </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
-                {balanceLoading?<ActivityIndicator color={"green"}/>:<Text style={{color:"#fff",fontSize:19 }}>{WALLETBALANCE}</Text>}
+                {balanceLoading?<ActivityIndicator color={"green"}/>:<Text style={{color:"gray",fontSize:17 }}>{WALLETBALANCE}</Text>}
               </ScrollView>
               </View>
           </View>
@@ -380,7 +399,7 @@ const getOffersData = async () => {
               <View style={[styles.modalOpen, { backgroundColor: "#33373DCC", width: wp(40) }]} onPress={() => { setchooseModalVisible_choose(true); setIdIndex(3); }}>
                 {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} />}
                 <View>
-                <Text style={{color:"#fff",fontSize:19,marginLeft:2}}>{chooseSelectedItemIdCho === null ? "USDC" : chooseSelectedItemIdCho === "USDC" ? chooseSelectedItemId === "Matic" || chooseSelectedItemIdCho === "Matic" ? "apUSDC" : "USDC" : chooseSelectedItemIdCho === "BNB" ? "BNB" : chooseSelectedItemIdCho === "Matic" ? "apMATIC" : "USDC"}</Text>
+                <Text style={{color:"gray",fontSize:19,marginLeft:2}}>{chooseSelectedItemIdCho === null ? "USDC" : chooseSelectedItemIdCho === "USDC" ? chooseSelectedItemId === "Matic" || chooseSelectedItemIdCho === "Matic" ? "apUSDC" : "USDC" : chooseSelectedItemIdCho === "BNB" ? "BNB" : chooseSelectedItemIdCho === "Matic" ? "apMATIC" : "USDC"}</Text>
                 {chooseSelectedItemIdCho === null||chooseSelectedItemIdCho ==="USDC"?<Text style={{color:"gray",fontSize:10}}>centre.io</Text>:chooseSelectedItemIdCho ==="USDT"?<Text style={{color:"gray",fontSize:10}}>centre.io</Text>:<></>}
                 </View>
               </View>
@@ -647,11 +666,74 @@ const getOffersData = async () => {
         </View>
       </Modal>
 
+      <Modal
+          animationType="slide"
+          transparent={true}
+          visible={Wallet_modal}
+          onRequestClose={() => setWallet_modal(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => {setWallet_modal(false)}}>
+            <View style={styles.modalBackground}>
+              <TouchableOpacity
+                onPress={() => setWallet_modal(false)}
+                style={{ marginBottom: Platform.OS === "ios" ? hp(-1.5) : hp(-2) }}
+              >
+              </TouchableOpacity>
+              <View style={[styles.modalView, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black", borderBottomColor: state.THEME.THEME === false ? "#fff" : "black" }]}>
+                <View style={styles.modal_heading_view}>
+                  <Text style={[styles.modalText, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>Choose wallet</Text>
+                  <TouchableOpacity
+                    onPress={() => [setWallet_modal(false), navigation.navigate("Wallet")]}
+                  >
+                    <Text style={[styles.modalText, { color: '#2196F3' }]}>Add Wallet</Text>
+                  </TouchableOpacity>
+                </View>
+                <Wallet_selection_bottom onClose={()=>{setWallet_modal(false)}} />
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  modalView: {
+    width: wp(100),
+    height: hp(30),
+    backgroundColor: 'white',
+    borderRadius: 10,
+    paddingVertical: hp(1.5),
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    borderColor: "#2196F3",
+    borderWidth: 0.9,
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: "400"
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  modal_heading_view: {
+    flexDirection: "row",
+    width: wp(100),
+    paddingVertical: 5,
+    paddingHorizontal: 16,
+    justifyContent: "space-between"
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -666,7 +748,7 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     justifyContent: "flex-start",
-    marginTop: 19,
+    marginTop: 1,
     paddingLeft:wp(5)
   },
   textModal: {

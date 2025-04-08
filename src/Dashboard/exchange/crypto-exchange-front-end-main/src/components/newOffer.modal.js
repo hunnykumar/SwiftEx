@@ -47,6 +47,8 @@ import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../
 import InfoComponent from "./InfoComponent";
 import WalletActivationComponent from "../utils/WalletActivationComponent";
 import CustomOrderBook from "../pages/stellar/CustomOrderBook";
+import AMMSwap from "../pages/stellar/AMMSwap";
+import InstentTradeHistory from "../pages/stellar/InstentTradeHistory";
 const Web3 = require('web3');
 const StellarSdk = require('stellar-sdk');
       StellarSdk.Network.useTestNetwork();
@@ -59,6 +61,7 @@ export const NewOfferModal = () => {
   const back_data=useRoute();
   // const { user, open, getOffersData, onCrossPress }=back_data.params;
   const [activeTab, setActiveTab] = useState(0);
+  const [activeTradeType, setactiveTradeType] = useState(0);
   const isFocused = useIsFocused();
   const state = useSelector((state) => state);
   const [ALL_STELLER_BALANCES,setALL_STELLER_BALANCES]=useState([]);
@@ -583,6 +586,7 @@ const chooseRenderItem_1 = ({ item }) => (
   useEffect(()=>{
     const fetch_ins = async () => {
       try {
+        setactiveTradeType(1)
         setreservedError(false)
         setassetInfo(false)
         settop_value(back_data?.params?.tradeAssetType || chooseItemList[0].visible_0);
@@ -800,32 +804,24 @@ const handleCloseModal = () => {
     <View style={styles.scrollView0}>
        {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={"#011434"}/>}
       <Exchange_screen_header title="Trade" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
-    <ScrollView>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : null}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-        style={{ flex: 1, backgroundColor: "#011434", }}
-      >
-      
-        <InfoComponent
-          visible={infoVisible}
-          type={infotype}
-          message={infomessage}
-          onClose={() => setinfoVisible(false)}
-        />
-      <View style={styles.pariViewCon}>
-        <TouchableOpacity style={styles.pairNameCon}>
-          <Text style={styles.pairNameText}>{top_value}</Text>
-          <Text style={styles.pairNameText.pairDomainText}>{top_domain}</Text>
+        
+      <View style={styles.tradeContainer}>
+        <TouchableOpacity
+          style={[styles.tradetab, activeTradeType === 1 && styles.tradeactiveTab]}
+          onPress={() =>{setActiveTab(0),setactiveTradeType(1)}}
+        >
+          <Icon type={"ionicon"} name="flash" size={20} color="#EFBF04" />
+          <Text style={[styles.tabText, activeTradeType === 1 && styles.tradeactiveTabText]}> Instant trade</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.pairSwapCon} onPress={()=>{settop_domain(top_domain_0),settop_value(top_value_0),settop_domain_0(top_domain),settop_value_0(top_value),setAssetIssuerPublicKey(AssetIssuerPublicKey1),setAssetIssuerPublicKey1(AssetIssuerPublicKey)}}>
-          <Icon name="swap" type={"antDesign"} size={25} color={"#141C2B"} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.pairNameCon}>
-          <Text style={styles.pairNameText}>{top_value_0}</Text>
-          <Text style={styles.pairNameText.pairDomainText}>{top_domain_0}</Text>
+        <TouchableOpacity
+          style={[styles.tradetab, activeTradeType === 0 && styles.tradeactiveTab]}
+          onPress={() => {setActiveTab(0),setactiveTradeType(0)}}
+        >
+          <Icon type={"ionicon"} name="analytics-outline" size={20} color="gray" />
+          <Text style={[styles.tabText, activeTradeType === 0 && styles.tradeactiveTabText]}> Large Order Trade</Text>
         </TouchableOpacity>
       </View>
+
        <View style={styles.tabContainer}>
               <TouchableOpacity 
                 style={[styles.tab, activeTab === 0 && styles.activeTab]} 
@@ -839,19 +835,41 @@ const handleCloseModal = () => {
               >
                 <Text style={[styles.tabText, activeTab === 1 && styles.activeTabText]}>Overview</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.tab, activeTab === 2 && styles.activeTab]} 
-                onPress={() => setActiveTab(2)}
+              {activeTradeType===1&&<TouchableOpacity 
+                style={[styles.tab, activeTab === 4 && styles.activeTab]} 
+                onPress={() => {setActiveTab(4)}}
               >
-                <Text style={[styles.tabText, activeTab === 2 && styles.activeTabText]}>Orderbook</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
+                <Text style={[styles.tabText, activeTab === 4 && styles.activeTabText]}>Transactions</Text>
+              </TouchableOpacity>}
+
+
+              {activeTradeType===0&&<TouchableOpacity 
+                style={[styles.tab, activeTab === 2 && styles.activeTab]} 
+                onPress={() => {setActiveTab(2)}}
+              >
+                <Text style={[styles.tabText, activeTab === 2 && styles.activeTabText]}>{"Orderbook"}</Text>
+              </TouchableOpacity>}
+              {activeTradeType===0&&<TouchableOpacity 
                 style={[styles.tab, activeTab === 3 && styles.activeTab]} 
                 onPress={() => setActiveTab(3)}
               >
                 <Text style={[styles.tabText, activeTab === 3 && styles.activeTabText]}>Last Trade</Text>
-              </TouchableOpacity>
+              </TouchableOpacity>}
             </View>
+    <ScrollView style={{ width: "99%"}}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : null}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        style={{ flex: 1, backgroundColor: "#011434", }}
+      >
+      
+        <InfoComponent
+          visible={infoVisible}
+          type={infotype}
+          message={infomessage}
+          onClose={() => setinfoVisible(false)}
+        />
+
         <View>
       <ScrollView contentContainerStyle={styles.scrollView}>
         {assetInfo&&
@@ -862,10 +880,24 @@ const handleCloseModal = () => {
            </TouchableOpacity>
          </View>
         }
-  {activeTab===0&&
+  {activeTab===0&&(
+  activeTradeType===1?<AMMSwap/>:
     <>
+          <View style={styles.pariViewCon}>
+        <TouchableOpacity style={styles.pairNameCon}>
+          <Text style={styles.pairNameText}>{top_value}</Text>
+          <Text style={styles.pairNameText.pairDomainText}>{top_domain}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.pairSwapCon} onPress={()=>{settop_domain(top_domain_0),settop_value(top_value_0),settop_domain_0(top_domain),settop_value_0(top_value),setAssetIssuerPublicKey(AssetIssuerPublicKey1),setAssetIssuerPublicKey1(AssetIssuerPublicKey)}}>
+          <Icon name="swap" type={"antDesign"} size={25} color={"#141C2B"} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.pairNameCon}>
+          <Text style={styles.pairNameText}>{top_value_0}</Text>
+          <Text style={styles.pairNameText.pairDomainText}>{top_domain_0}</Text>
+        </TouchableOpacity>
+      </View>
     {/* offer seletion container */}
-    <View style={[styles.pairSelectionCon,{marginTop:hp(-3)}]}>
+    <View style={[styles.pairSelectionCon]}>
      <Text style={styles.pairHeadingText}>Trading Pair</Text>
      <TouchableOpacity style={styles.pairSelectionSubCon} onPress={()=>{setchooseModalPair(true)}}>
        <Text style={styles.pairSelectionSubCon.pairSelectionName}>{top_value+" / "+top_value_0}</Text>
@@ -1053,7 +1085,7 @@ const handleCloseModal = () => {
          </View>
        </View>
      </Modal>
- </>
+ </>)
   }
   {activeTab===1&&
     <View style={{width:"100%"}}>
@@ -1070,8 +1102,15 @@ const handleCloseModal = () => {
      <CustomOrderBook visibleTabs={['trades']} />
    </View>
   }
+  {activeTab===4&&
+    <View style={{width:"100%"}}>
+     <InstentTradeHistory/>
+   </View>
+  }
 </ScrollView>
   </View>
+        </KeyboardAvoidingView>
+        </ScrollView>
         <WalletActivationComponent
           isVisible={ACTIVATION_MODAL_PROD}
           onClose={() => {ActivateModal}}
@@ -1080,8 +1119,6 @@ const handleCloseModal = () => {
           appTheme={true}
           shouldNavigateBack={true}
         />
-        </KeyboardAvoidingView>
-        </ScrollView>
         </View>
 
 );
@@ -1424,11 +1461,11 @@ searchInput: {
     width: "98%",
     // height: "9%",
     height: 69,
-    top: 30,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#FFFFFF33",
-    paddingHorizontal: 13
+    paddingHorizontal: 13,
+    marginTop:"1%"
   },
   pairNameCon: {
     width: 122,
@@ -1467,7 +1504,6 @@ searchInput: {
     backgroundColor: "#141C2B",
     alignItems: "flex-start",
     width: "98%",
-    top: 30,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#FFFFFF33",
@@ -1523,7 +1559,7 @@ searchInput: {
   amountCon: {
     width: "98%",
     height: 71,
-    marginTop: "11%",
+    marginTop: "3%",
     gap: 2,
   },
   amountSubinfo: {
@@ -1621,9 +1657,36 @@ searchInput: {
     flexDirection: 'row',
     backgroundColor: '#011434',
     alignSelf:"center",
-    top: 45,
-    marginBottom:"13%",
+    marginBottom:"2%",
     width: "98%",
+  },
+  tradeContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#011434',
+    alignSelf:"center",
+    marginBottom:"2%",
+    width: "98%",
+    marginTop:"2%"
+  },
+  tradetab: {
+    flex: 1,
+    flexDirection:"row",
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent:"center",
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  tradeactiveTab: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: '#2b3c57',
+    borderTopLeftRadius:15,
+    borderTopRightRadius:15
+  },
+  tradeactiveTabText: {
+    fontSize:16,
+    color: 'white',
+    fontWeight: '500',
   },
   tab: {
     flex: 1,
@@ -1633,12 +1696,13 @@ searchInput: {
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    backgroundColor: '#141C2B',
+    // backgroundColor: '#141C2B',
     borderBottomColor: '#2b3c57',
     borderTopLeftRadius:15,
     borderTopRightRadius:15
   },
   tabText: {
+    fontSize:15,
     color: 'gray',
     fontWeight: '300',
   },

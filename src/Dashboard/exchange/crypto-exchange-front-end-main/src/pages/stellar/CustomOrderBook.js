@@ -198,7 +198,7 @@ const fetchRecentTrades = useCallback(async () => {
 
   // Reset and load data when selected pair changes
   useEffect(() => {
-    setPriceHistory([{"close": 0.26615, "timestamp": "12:13:00", "volume": 105.3498099}, {"close": 0.2655214, "timestamp": "12:12:00", "volume": 0.162546}, {"close": 0.2660275, "timestamp": "12:11:00", "volume": 13.6603745}, {"close": 0.2659964, "timestamp": "12:10:00", "volume": 0.075171}, {"close": 0.2660395, "timestamp": "12:09:00", "volume": 0.9344969}, {"close": 0.2655214, "timestamp": "12:08:00", "volume": 12.5212161}, {"close": 0.265662, "timestamp": "12:07:00", "volume": 0.4711141}, {"close": 0.2655214, "timestamp": "12:06:00", "volume": 35.5763887}, {"close": 0.2656039, "timestamp": "12:05:00", "volume": 57.5110262}, {"close": 0.265532, "timestamp": "12:04:00", "volume": 264.3881066}, {"close": 0.2657682, "timestamp": "12:03:00", "volume": 0.0756954}, {"close": 0.26615, "timestamp": "12:02:00", "volume": 796.6244152}, {"close": 0.2656, "timestamp": "12:01:00", "volume": 8.4491672}, {"close": 0.2653533, "timestamp": "12:00:00", "volume": 11854.4587687}, {"close": 0.2661392, "timestamp": "11:59:00", "volume": 0.0055433}, {"close": 0.2657277, "timestamp": "11:58:00", "volume": 60.7035676}, {"close": 0.2658869, "timestamp": "11:57:00", "volume": 215.4328488}, {"close": 0.265327, "timestamp": "11:56:00", "volume": 4.5972913}, {"close": 0.2656886, "timestamp": "11:55:00", "volume": 14.4052709}, {"close": 0.2658978, "timestamp": "11:54:00", "volume": 16.1979675}, {"close": 0.2656325, "timestamp": "11:53:00", "volume": 1.4312524}, {"close": 0.2656325, "timestamp": "11:52:00", "volume": 165.2390825}, {"close": 0.2655875, "timestamp": "11:51:00", "volume": 843.9466745}, {"close": 0.2656525, "timestamp": "11:50:00", "volume": 3.9093127}, {"close": 0.265612, "timestamp": "11:49:00", "volume": 537.9988505}, {"close": 0.2658693, "timestamp": "11:48:00", "volume": 591.9173694}, {"close": 0.2659099, "timestamp": "11:47:00", "volume": 182.1820944}, {"close": 0.2658182, "timestamp": "11:46:00", "volume": 0.76869}, {"close": 0.2658102, "timestamp": "11:45:00", "volume": 159.6300807}, {"close": 0.266004, "timestamp": "11:44:00", "volume": 334.4562188}]);
+    setPriceHistory([]);
     setRecentTrades([]);
     setLastTrade(null);
     setBids([]);
@@ -236,26 +236,31 @@ const fetchRecentTrades = useCallback(async () => {
       const counterAsset = getAsset(selectedPair.counter);
       
       // Set up time parameters for full day data
-      const endTime = new Date();
+      const now = new Date();
       const startTime = new Date();
-      startTime.setHours(0, 0, 0, 0); // Start from beginning of the day
-      
-      // 30 minute resolution (1800000 milliseconds)
-      const resolution = 1800000;
+      startTime.setHours(6, 0, 0, 0); // Today 6:00 AM
+      const resolution = 60000; // 1 minute resolution
+      // const resolution = 1800000;
       // Fetch trade aggregations - increased limit to cover full day (48 for 30-min intervals)
       const tradeAggs = await server.tradeAggregation(
         baseAsset,
         counterAsset,
-        1743489836000,
-        1743576296000,
-        60000,
+        startTime.getTime(), // in milliseconds
+        now.getTime(),
+        resolution,
         0
-      ).limit(30).order('desc').call(); // Changed to ascending order for chronological display
+      ).limit(160).order('desc').call(); // Changed to ascending order for chronological display
       
     
       if (tradeAggs.records && tradeAggs.records.length > 0) {
         const formattedData = tradeAggs.records.map(record => ({
-          timestamp: new Date(parseInt(record.timestamp)).toLocaleTimeString(),
+          timestamp: new Date(parseInt(record.timestamp)).toLocaleTimeString('en-GB', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }),
+          
           close: parseFloat(record.close),
           volume: parseFloat(record.base_volume)
         }));
@@ -263,13 +268,13 @@ const fetchRecentTrades = useCallback(async () => {
         setPriceHistory(formattedData);
       } else {
         // If no data is returned, set empty array
-    setPriceHistory([{"close": 0.26615, "timestamp": "12:13:00", "volume": 105.3498099}, {"close": 0.2655214, "timestamp": "12:12:00", "volume": 0.162546}, {"close": 0.2660275, "timestamp": "12:11:00", "volume": 13.6603745}, {"close": 0.2659964, "timestamp": "12:10:00", "volume": 0.075171}, {"close": 0.2660395, "timestamp": "12:09:00", "volume": 0.9344969}, {"close": 0.2655214, "timestamp": "12:08:00", "volume": 12.5212161}, {"close": 0.265662, "timestamp": "12:07:00", "volume": 0.4711141}, {"close": 0.2655214, "timestamp": "12:06:00", "volume": 35.5763887}, {"close": 0.2656039, "timestamp": "12:05:00", "volume": 57.5110262}, {"close": 0.265532, "timestamp": "12:04:00", "volume": 264.3881066}, {"close": 0.2657682, "timestamp": "12:03:00", "volume": 0.0756954}, {"close": 0.26615, "timestamp": "12:02:00", "volume": 796.6244152}, {"close": 0.2656, "timestamp": "12:01:00", "volume": 8.4491672}, {"close": 0.2653533, "timestamp": "12:00:00", "volume": 11854.4587687}, {"close": 0.2661392, "timestamp": "11:59:00", "volume": 0.0055433}, {"close": 0.2657277, "timestamp": "11:58:00", "volume": 60.7035676}, {"close": 0.2658869, "timestamp": "11:57:00", "volume": 215.4328488}, {"close": 0.265327, "timestamp": "11:56:00", "volume": 4.5972913}, {"close": 0.2656886, "timestamp": "11:55:00", "volume": 14.4052709}, {"close": 0.2658978, "timestamp": "11:54:00", "volume": 16.1979675}, {"close": 0.2656325, "timestamp": "11:53:00", "volume": 1.4312524}, {"close": 0.2656325, "timestamp": "11:52:00", "volume": 165.2390825}, {"close": 0.2655875, "timestamp": "11:51:00", "volume": 843.9466745}, {"close": 0.2656525, "timestamp": "11:50:00", "volume": 3.9093127}, {"close": 0.265612, "timestamp": "11:49:00", "volume": 537.9988505}, {"close": 0.2658693, "timestamp": "11:48:00", "volume": 591.9173694}, {"close": 0.2659099, "timestamp": "11:47:00", "volume": 182.1820944}, {"close": 0.2658182, "timestamp": "11:46:00", "volume": 0.76869}, {"close": 0.2658102, "timestamp": "11:45:00", "volume": 159.6300807}, {"close": 0.266004, "timestamp": "11:44:00", "volume": 334.4562188}]);
+    setPriceHistory([]);
 
       }
     } catch (error) {
       console.log('Error fetching trade aggregation:', error);
       // Set empty array on error
-    setPriceHistory([{"close": 0.26615, "timestamp": "12:13:00", "volume": 105.3498099}, {"close": 0.2655214, "timestamp": "12:12:00", "volume": 0.162546}, {"close": 0.2660275, "timestamp": "12:11:00", "volume": 13.6603745}, {"close": 0.2659964, "timestamp": "12:10:00", "volume": 0.075171}, {"close": 0.2660395, "timestamp": "12:09:00", "volume": 0.9344969}, {"close": 0.2655214, "timestamp": "12:08:00", "volume": 12.5212161}, {"close": 0.265662, "timestamp": "12:07:00", "volume": 0.4711141}, {"close": 0.2655214, "timestamp": "12:06:00", "volume": 35.5763887}, {"close": 0.2656039, "timestamp": "12:05:00", "volume": 57.5110262}, {"close": 0.265532, "timestamp": "12:04:00", "volume": 264.3881066}, {"close": 0.2657682, "timestamp": "12:03:00", "volume": 0.0756954}, {"close": 0.26615, "timestamp": "12:02:00", "volume": 796.6244152}, {"close": 0.2656, "timestamp": "12:01:00", "volume": 8.4491672}, {"close": 0.2653533, "timestamp": "12:00:00", "volume": 11854.4587687}, {"close": 0.2661392, "timestamp": "11:59:00", "volume": 0.0055433}, {"close": 0.2657277, "timestamp": "11:58:00", "volume": 60.7035676}, {"close": 0.2658869, "timestamp": "11:57:00", "volume": 215.4328488}, {"close": 0.265327, "timestamp": "11:56:00", "volume": 4.5972913}, {"close": 0.2656886, "timestamp": "11:55:00", "volume": 14.4052709}, {"close": 0.2658978, "timestamp": "11:54:00", "volume": 16.1979675}, {"close": 0.2656325, "timestamp": "11:53:00", "volume": 1.4312524}, {"close": 0.2656325, "timestamp": "11:52:00", "volume": 165.2390825}, {"close": 0.2655875, "timestamp": "11:51:00", "volume": 843.9466745}, {"close": 0.2656525, "timestamp": "11:50:00", "volume": 3.9093127}, {"close": 0.265612, "timestamp": "11:49:00", "volume": 537.9988505}, {"close": 0.2658693, "timestamp": "11:48:00", "volume": 591.9173694}, {"close": 0.2659099, "timestamp": "11:47:00", "volume": 182.1820944}, {"close": 0.2658182, "timestamp": "11:46:00", "volume": 0.76869}, {"close": 0.2658102, "timestamp": "11:45:00", "volume": 159.6300807}, {"close": 0.266004, "timestamp": "11:44:00", "volume": 334.4562188}]);
+    setPriceHistory([]);
 
     }
   }, [selectedPair, getAsset]);
@@ -431,11 +436,11 @@ const connectEventSource = useCallback(() => {
           <View style={styles.chartContainer}>
             <View style={styles.chartHeader}>
               <Text style={styles.chartTitle}>{selectedPair.displayName} Price History</Text>
-              <View style={styles.timeframeContainer}>
+              {/* <View style={styles.timeframeContainer}>
                 <TouchableOpacity style={[styles.timeframeButton, styles.activeTimeframe]}>
                   <Text style={styles.timeframeText}>Live</Text>
                 </TouchableOpacity>
-              </View>
+              </View> */}
             </View>
             
             {priceHistory.length >= 2 ? (
@@ -485,7 +490,7 @@ const connectEventSource = useCallback(() => {
             {points_data===null?null:<View style={styles.legendContainer}>
               <View style={styles.legendItem}>
               <Text style={[styles.legendText,{fontSize:20}]}>$ {points_data}</Text>
-                <Text style={styles.legendText}>{points_data_time}</Text>
+                {/* <Text style={styles.legendText}>{points_data_time}</Text> */}
               </View>
 
             </View>}
