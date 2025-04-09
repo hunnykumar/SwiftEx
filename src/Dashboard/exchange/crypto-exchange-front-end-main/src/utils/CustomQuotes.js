@@ -230,7 +230,7 @@ export const CustomQuotes = ({
     setApproved(false);
     setInputAmount(null)
     setusdtRes(null)
-    setcompletTransaction(true)
+    setcompletTransaction(false)
     setusdtResLoading(null)
     setusdcRes(null)
     setusdcResLoading(null)
@@ -248,7 +248,8 @@ export const CustomQuotes = ({
 
   const fetchUSDTBAL=async(value)=>{
     try {
-      const addresses=state&&state.wallet && state.wallet.address;
+      const walletUSDCAddress = await AsyncStorageLib.getItem("wallet");
+      const addresses=JSON?.parse(walletUSDCAddress)?.address
       const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
       const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
       const usdtAbi = [
@@ -503,7 +504,12 @@ export const CustomQuotes = ({
       if(res.status)
         {
         console.log("---err->",res)
-            if(parseFloat(value)>=parseFloat(state?.EthBalance)){
+        const walletAddress = await AsyncStorageLib.getItem("wallet");
+        const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
+        const EthBalance = await provider.getBalance(JSON.parse(walletAddress).address);
+        const balanceInEth = ethers.utils.formatEther(EthBalance);
+        console.log("---ae",balanceInEth)
+            if(parseFloat(value)>=parseFloat(balanceInEth)||parseFloat(balanceInEth)===0){
               setcompletTransaction(true)
             }
             else{

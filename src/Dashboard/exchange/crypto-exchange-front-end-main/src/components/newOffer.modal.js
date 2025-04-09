@@ -413,6 +413,12 @@ const chooseRenderItem_1 = ({ item }) => (
                 .then((result) => {
                     setbalance(result?.availableBalance);
                     setreserveLoading(false);
+                    if (parseFloat(result?.availableBalance) === 0) {
+                      setassetInfo(true);
+                    }
+                    else{
+                      setassetInfo(false);
+                    }
                 })
                 .catch((error) => {
                     console.log("Error loading account:", error);
@@ -425,6 +431,12 @@ const chooseRenderItem_1 = ({ item }) => (
                 .then((result) => {
                     setbalance(result?.availableBalance);
                     setreserveLoading(false);
+                    if (parseFloat(result?.availableBalance) === 0) {
+                      setassetInfo(true);
+                    }
+                    else{
+                      setassetInfo(false);
+                    }
                 })
                 .catch((error) => {
                     console.log("Error loading account:", error);
@@ -781,16 +793,16 @@ const handleCloseModal = () => {
   setreservedError(false);
 };
 
-  useEffect(() => {
-    const isZeroBalance = Balance === "0.0000000" || parseFloat(Balance) === 0;
-    if (isZeroBalance && !messageShownRef.current) {
-      setassetInfo(true);
-      setinfomessage("Insufficient Balance");
-      setinfotype("warning");
-      setinfoVisible(true);
-      messageShownRef.current = true;
-    }
-  }, [Balance])
+  // useEffect(() => {
+  //   const isZeroBalance = Balance === "0.0000000" || parseFloat(Balance) === 0;
+  //   if (isZeroBalance && !messageShownRef.current) {
+  //     setassetInfo(true);
+  //     setinfomessage("Insufficient Balance");
+  //     setinfotype("warning");
+  //     setinfoVisible(true);
+  //     messageShownRef.current = true;
+  //   }
+  // }, [Balance])
 
   const ActivateModal = () => {
     setACTIVATION_MODAL_PROD(false);
@@ -872,7 +884,10 @@ const handleCloseModal = () => {
 
         <View>
       <ScrollView contentContainerStyle={styles.scrollView}>
-        {assetInfo&&
+  {activeTab===0&&(
+  activeTradeType===1?<AMMSwap/>:
+    <>
+    {assetInfo&&
            <View style={styles.informationContiner}>
            <Text style={styles.amountSugCon.amountSugCardText}>Click 'Import' to add token.</Text>
            <TouchableOpacity style={styles.amountSugCon.amountSugCard} onPress={()=>{proceedToBridgeValidation()}}>
@@ -880,9 +895,6 @@ const handleCloseModal = () => {
            </TouchableOpacity>
          </View>
         }
-  {activeTab===0&&(
-  activeTradeType===1?<AMMSwap/>:
-    <>
           <View style={styles.pariViewCon}>
         <TouchableOpacity style={styles.pairNameCon}>
           <Text style={styles.pairNameText}>{top_value}</Text>
@@ -905,11 +917,11 @@ const handleCloseModal = () => {
      </TouchableOpacity>
      <Text style={[styles.pairHeadingText, { marginTop: 13, }]}>Select Offer</Text>
      <View style={styles.offerSelctionCon}>
-       <TouchableOpacity style={[styles.offerSelctionBtn,{ backgroundColor: btnRoot===0?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("BUY"),setbtnRoot(0),reves_fun(top_value, top_value_0, AssetIssuerPublicKey,AssetIssuerPublicKey1)}}>
-         <Text style={styles.pairSelectionSubCon.pairSelectionName}>Buy</Text>
-       </TouchableOpacity>
-       <TouchableOpacity style={[styles.offerSelctionBtn, { backgroundColor: btnRoot===1?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("SELL"),setbtnRoot(1),reves_fun(top_value, top_value_0, AssetIssuerPublicKey,AssetIssuerPublicKey1)}}>
+       <TouchableOpacity style={[styles.offerSelctionBtn, { backgroundColor: btnRoot===0?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("SELL"),setbtnRoot(0),reves_fun(top_value, top_value_0, AssetIssuerPublicKey,AssetIssuerPublicKey1)}}>
          <Text style={styles.pairSelectionSubCon.pairSelectionName}>Sell</Text>
+       </TouchableOpacity>
+       <TouchableOpacity style={[styles.offerSelctionBtn,{ backgroundColor: btnRoot===1?"#2164C1":"#1F2937" }]} onPress={()=>{setRoute("BUY"),setbtnRoot(1),reves_fun(top_value, top_value_0, AssetIssuerPublicKey,AssetIssuerPublicKey1)}}>
+         <Text style={styles.pairSelectionSubCon.pairSelectionName}>Buy</Text>
        </TouchableOpacity>
        <Modal
      animationType="slide"
@@ -1049,7 +1061,7 @@ const handleCloseModal = () => {
              color="green"
              disabled={Loading||Balance==="0.0000000"||parseFloat(Balance)===0}
              >
-             <Text style={styles.textColor}>{Loading === true ? <ActivityIndicator color={"white"} /> :"Create Offer"}</Text>
+             <Text style={styles.textColor}>{Loading === true ? <ActivityIndicator color={"white"} /> :assetInfo?"Insufficient funds":"Create Offer"}</Text>
            </TouchableOpacity>
          
        {loading ? (
@@ -1631,15 +1643,12 @@ searchInput: {
     }
   },
   informationContiner: {
-    position:"relative",
-    zIndex:20,
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: "#F9FC691A",
     alignItems: "center",
-    width: "95%",
+    width: "98%",
     height: "8%",
-    top: "4.4%",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#F7CC49",

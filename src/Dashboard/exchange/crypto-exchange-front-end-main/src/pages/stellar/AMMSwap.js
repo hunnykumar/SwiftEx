@@ -20,6 +20,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import stellarTokens from "./Tokens.json";
 import { debounce } from 'lodash';
 import { useSelector } from 'react-redux';
+import { GetStellarAvilabelBalance } from '../../../../../../utilities/StellarUtils';
 const StellarSdk = require('stellar-sdk');
 
 const AMMSwap = () => {
@@ -110,8 +111,19 @@ const AMMSwap = () => {
       if (!assetData) {
         return null;
       } else {
-        console.log("------L:",assetData)
-       return assetData;
+        if(assetCode==="native")
+          {
+            const res=await GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY)
+            if(res?.availableBalance==="Error")
+            {
+              return null
+            }
+            else{
+              return {"balance":res?.availableBalance}
+            }
+        }else{
+          return assetData;
+        }
       }
       
     }
@@ -122,15 +134,13 @@ const AMMSwap = () => {
     const num = parseFloat(value);
     return !isNaN(num) && num !== 0;
   };
-  const handleInputChange = (text) => {
-    const numericText = text.replace(/[^0-9.]/g, '');
+  const handleInputChange = (numericText) => {
     setmessageError(null);
-    if (isValidNumber(numericText)&&numericText!=="null") {
-      setFromAmount(numericText);
+    setFromAmount(numericText);
+    const amount = parseFloat(numericText);
+    const isValidAmount = /^(?:0|[1-9]\d*)(?:\.\d{1,7})?$/.test(numericText);
+    if (numericText && isValidAmount && amount > 0) {
       fetchQuote(fromToken.code,fromToken.issuer,toToken.code,toToken.issuer,numericText);
-    }
-    else {
-      setmessageError("Invalid Amount");
     }
   };
   // Handle input change and calculate the output amount
@@ -270,6 +280,7 @@ const AMMSwap = () => {
 
   // Swap tokens function
   const swapTokens = () => {
+    setmessageError(null);
     const temp = fromToken;
     setFromToken(toToken);
     setToToken(temp);

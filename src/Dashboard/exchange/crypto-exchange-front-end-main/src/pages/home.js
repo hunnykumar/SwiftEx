@@ -844,7 +844,10 @@ useEffect(() => {
                       type={"materialCommunity"}
                       color={"#008C62"}
                     /> */}
-                    <Text style={styles.connectedText}>Connected!</Text>
+                    <Text style={[styles.connectedText]}>USDC: </Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(10), paddingVertical: 0.1, borderRadius: 5 }}>
+                    <Text style={styles.connectedText}>{state?.STELLAR_ADDRESS_STATUS===false?"0.00":state?.assetData?.find(b => b.asset_code === "USDC")?.balance||"0.00"}</Text>
+                      </ScrollView>
                   </View>
                 </View>
                 <View style={{}}>
