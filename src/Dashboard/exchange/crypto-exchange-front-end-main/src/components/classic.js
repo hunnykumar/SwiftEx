@@ -27,6 +27,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { QuoteModalBottomSheet } from '../utils/QuotesComponent';
 import { CustomQuotes } from '../utils/CustomQuotes';
 import Wallet_selection_bottom from '../../../../Wallets/Wallet_selection_bottom';
+import { debounce } from 'lodash';
 const classic = ({ route }) => {
   const Focused=useIsFocused();
   const toast=useToast();
@@ -58,6 +59,9 @@ const classic = ({ route }) => {
   const [onTapFeature,setonTapFeature]=useState(false)
   const [Wallet_modal,setWallet_modal]=useState(false);
   const [fianl_modal_text,setfianl_modal_text]=useState("Transaction Faild")
+  const [messageError,setmessageError]=useState(null);
+  const [resQuotes,setresQuotes]=useState(null);
+  const [getInfo,setgetInfo]=useState(false);
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
@@ -80,6 +84,9 @@ const ActivateModal = () => {
   navigation.goBack()
 };
 useEffect(()=>{
+  setmessageError(null)
+  setresQuotes(null)
+  setgetInfo(false)
   setonTapFeature(false)
   setACTIVATION_MODAL_PROD(false)
   setbalanceLoading(false)
@@ -308,6 +315,82 @@ const getOffersData = async () => {
     setonTapFeature(false)
     navigation.goBack();
   }
+
+  const isValidNumber = (value) => {
+    const num = parseFloat(value);
+    return !isNaN(num) && num !== 0;
+  };
+  const getQuote = useCallback(
+    debounce((value,chaiType) => {
+      setmessageError(null);
+      if (isValidNumber(value)&&value!=="null") {
+        setmessageError(null);
+        setresQuotes(null)
+        setgetInfo(false)
+        if(chaiType==="ETH")
+        {
+          setgetInfo(true);
+          collectQuotes(value,chaiType) 
+        }
+        if(chaiType==="BSC")
+          {
+            setgetInfo(true);
+            collectQuotes(value,chaiType) 
+          }
+      }
+      else {
+        setmessageError("Invalid Amount");
+      }
+    }, 400),
+    []
+  );
+  
+  const handleInputChange = (text,tokenChain) => {
+    setresQuotes(null);
+    const numericText = text.replace(/[^0-9.]/g, '');
+    setamount(numericText)
+    getQuote(numericText,tokenChain==="BNB"?"BSC":"ETH");
+  };
+  
+  const collectQuotes = async (value,typeOfchain) => {
+      const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+      myHeaders.append("Authorization", "Bearer " + await getToken());
+  
+      const raw = JSON.stringify({
+        "amount": value,
+        "chainType":typeOfchain
+      });
+  
+      const requestOptions = {
+        method: "POST",
+        headers: myHeaders,
+        body: raw,
+        redirect: "follow"
+      };
+  
+      fetch(REACT_APP_HOST + "/users/swapInfo", requestOptions)
+        .then((response) => response.json())
+        .then((result) => {
+          console.log("---err->",result)
+          if (result?.status === 200) {
+            setresQuotes(result?.response),
+            setgetInfo(false)
+          }
+          else {
+            setgetInfo(false)
+            setresQuotes(null)
+            console.log("---err->",result)
+            Alert.alert("Info", "An error occurred. Please try again later.")
+          }
+        })
+        .catch((error) => {
+          setgetInfo(false)
+          setresQuotes(null)
+          console.log("--->errorClasic",error)
+        });
+    }
+
   return (
     <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
      <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
@@ -327,92 +410,128 @@ const getOffersData = async () => {
                    tokenAddress={"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"}
                    ACTIVATED={state?.STELLAR_ADDRESS_STATUS}
                  /> */}
+      <ScrollView style={{marginBottom:hp(5)}}>
       <View style={styles.modalHeader}>
-            <Text style={styles.textModal}>Import USDC on Trade Wallet</Text>
+            <Text style={styles.headingText}>Import USDC on Trade Wallet</Text>
           </View>
-
-          <View style={{ marginTop: hp(1.2),paddingHorizontal:wp(4),alignSelf:"flex-start" }}>
-
-            <View style={{ width: wp(40), alignSelf: "center" }}>
-              <View style={{flexDirection:"row",justifyContent:"space-between",width: wp(90)}}>
-              <Text style={[styles.textModal, { fontSize: 18 }]}>Select chain</Text>
-              <TouchableOpacity onPress={()=>{setWallet_modal(true)}}>
-              <Text style={[styles.textModal, { fontSize: 18,color:"rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)" }]}>Change</Text>
-              </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity style={[styles.modalOpen, { width: wp(90) }]} onPress={() => { setChooseModalVisible(true); setIdIndex(1); }}>
-                {chooseSelectedItemId === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemId === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemId === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} />}
-                <Text style={{color:"#fff",fontSize:19,marginLeft:wp(1.3)}}>{chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId}</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={{ width: wp(40), alignSelf: "center" }}>
-              <Text style={[styles.textModal, { fontSize: 18 }]}>Choose asset</Text>
-              <TouchableOpacity style={[styles.modalOpen, { width: wp(90) }]} onPress={() => { setchooseModalVisible_choose(true); setIdIndex(3); }}>
-                {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} />}
-               <View>
-               <Text style={{color:"#fff",fontSize:19,marginLeft:wp(1.3)}}>{chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho}</Text>
-                <View style={{flexDirection:"row",alignItems:"center"}}>
-                <Text style={{ color: "#fff", fontSize: 10, marginLeft: wp(1.3) }}>
-                {chooseSelectedItemIdCho === null
-                  ? "0x7e9fbbf33c595430848e767E162e4b0FF6b8205b"
-                  : chooseSelectedItemIdCho === "USDT"
-                    ? "0x7e9fbbf33c595430848e767E162e4b0FF6b8205b"
-                    : "Arriving soon"}
-              </Text>
-              {chooseSelectedItemIdCho === "USDT"||chooseSelectedItemIdCho === null?<TouchableOpacity onPress={()=>{copyToClipboard("0x7e9fbbf33c595430848e767E162e4b0FF6b8205b")}} style={{ marginLeft: 5 }}>
-              <Icon
-                          name={"content-copy"}
-                          type={"materialCommunity"}
-                          color={"rgba(129, 108, 255, 0.97)"}
-                          size={24}
-                        />
-              </TouchableOpacity>:<></>}
-
+          <View style={{ marginTop: hp(0),alignSelf:"center" }}>
+              <TouchableOpacity style={styles.modalOpen} onPress={() => { setChooseModalVisible(true); setIdIndex(1); }}>
+               <View style={{flexDirection:"row"}}>
+               {chooseSelectedItemId === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemId === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemId === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} />}
+                <View>
+                <Text style={styles.networkSubHeading}>Network</Text>
+                <Text style={styles.networkHeading}>{chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId}</Text>
                 </View>
                </View>
+              <Icon name={"chevron-right"} type={"materialCommunity"} color={"#fff"} size={30}/>
+            </TouchableOpacity>
+
+              <TouchableOpacity style={styles.modalOpen} onPress={() => { setchooseModalVisible_choose(true); setIdIndex(3); }}>
+               <View style={{flexDirection:"row"}}>
+                {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} />}
+               <View>
+               <Text style={styles.networkSubHeading}>Assets</Text>
+               <Text style={styles.networkHeading}>{chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho}</Text>
+               </View>
+               </View>
+               <Icon name={"chevron-right"} type={"materialCommunity"} color={"#fff"} size={30}/>
               </TouchableOpacity>
+          </View>
+
+          <View style={[styles.modalOpen,{paddingVertical: hp(0.5),}]}>
+            <View>
+            <Text style={styles.subInputText}>Amount</Text>
+            <TextInput maxLength={10} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" style={[ {width: wp(40),fontSize:18,color:"#fff",marginTop:hp(-0.9)}]} onChangeText={(value) => { handleInputChange(value,chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId) }} returnKeyType="done"/>
+            </View>
+            <TouchableOpacity style={styles.maxCon} onPress={()=>{setamount(parseFloat(WALLETBALANCE)===0?null:WALLETBALANCE)}}>
+            <Text style={styles.maxBtn}>MAX</Text>
+            </TouchableOpacity>    
+          </View>
+
+          <View style={[styles.modalOpen,{paddingVertical: hp(1.5),}]}>
+            <Text style={[styles.subInputText,{ marginTop:hp(0)}]}>Address</Text>
+            <View style={{width:"50%"}}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
+                <Text style={{fontSize:17,color:"gray" }}>{WALLETADDRESS}</Text>
+              </ScrollView>
             </View>
           </View>
 
-          <View style={{ width: wp(90),borderRadius:10, alignSelf: "flex-start",marginTop:hp(4),borderWidth: 1.9,borderColor: "rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",height: hp(8.6),backgroundColor: '#2F7DFF33',alignItems:"flex-start",justifyContent:"center",marginLeft:wp(4),paddingHorizontal:wp(1) }}>
-              <View style={{flexDirection:"row",alignItems:"center",width:wp(85)}}>
-              <Text style={{fontSize:16,textAlign:"center",color:"#fff",fontSize:19}}>Address: </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%",borderRadius:10}}>
-                <Text style={{fontSize:17,color:"gray" }}>{WALLETADDRESS}</Text>
+          <View style={[styles.modalOpen,{paddingVertical: hp(1.5),marginTop:hp(0.5)}]}>
+            <Text style={[styles.subInputText,{ marginTop:hp(0)}]}>Balance</Text>
+            <View style={{width:"15%"}}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
+            {balanceLoading?<ActivityIndicator color={"green"}/>:<Text style={{color:"gray",fontSize:17 }}>{WALLETBALANCE}</Text>}
               </ScrollView>
-              </View>
-              <View style={{flexDirection:"row",alignItems:"center",width:wp(30)}}>
-              <Text style={{fontSize:19,textAlign:"center",color:"#fff"}}>Balance: </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
-                {balanceLoading?<ActivityIndicator color={"green"}/>:<Text style={{color:"gray",fontSize:17 }}>{WALLETBALANCE}</Text>}
-              </ScrollView>
-              </View>
-          </View>
-          <View style={{ flexDirection: "row", justifyContent: "space-between" ,marginTop:hp(2),paddingHorizontal:wp(4)}}>
-            <View style={{ width: wp(40), alignSelf: "center" }}>
-            <Text style={[styles.textModal, { fontSize: 18 }]}>Amount</Text>
-              <TextInput maxLength={2} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" style={[styles.modalOpen, { padding:10, width: wp(40),fontSize:18,color:"#fff" }]} onChangeText={(value) => { setamount(value) }} returnKeyType="done"/>
-            </View>
-            <View style={{ width: wp(40), alignSelf: "center" }}>
-              <Text style={[styles.textModal, { fontSize: 18 }]}>Receive</Text>
-              <View style={[styles.modalOpen, { backgroundColor: "#33373DCC", width: wp(40) }]} onPress={() => { setchooseModalVisible_choose(true); setIdIndex(3); }}>
-                {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} />}
-                <View>
-                <Text style={{color:"gray",fontSize:19,marginLeft:2}}>{chooseSelectedItemIdCho === null ? "USDC" : chooseSelectedItemIdCho === "USDC" ? chooseSelectedItemId === "Matic" || chooseSelectedItemIdCho === "Matic" ? "apUSDC" : "USDC" : chooseSelectedItemIdCho === "BNB" ? "BNB" : chooseSelectedItemIdCho === "Matic" ? "apMATIC" : "USDC"}</Text>
-                {chooseSelectedItemIdCho === null||chooseSelectedItemIdCho ==="USDC"?<Text style={{color:"gray",fontSize:10}}>centre.io</Text>:chooseSelectedItemIdCho ==="USDT"?<Text style={{color:"gray",fontSize:10}}>centre.io</Text>:<></>}
-                </View>
-              </View>
             </View>
           </View>
+
+      <View style={styles.modalOpen}>
+        <View style={{ flexDirection: "row" }}>
+         {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} />}
+          <View>
+            <Text style={styles.networkSubHeading}>Receive</Text>
+            <View style={{flexDirection:"row",alignItems:"center"}}>
+            <Text style={styles.networkHeading}>{chooseSelectedItemIdCho === null ? "USDC" : chooseSelectedItemIdCho === "USDC" ? chooseSelectedItemId === "Matic" || chooseSelectedItemIdCho === "Matic" ? "apUSDC" : "USDC" : chooseSelectedItemIdCho === "BNB" ? "BNB" : chooseSelectedItemIdCho === "Matic" ? "apMATIC" : "USDC"}</Text>
+            <Text style={{color:"gray",fontSize:13}}> (centre.io)</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      {getInfo && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#0066cc" />
+                <Text style={styles.loadingText}>Getting best quote...</Text>
+              </View>
+            )}
+      {resQuotes !== null && <View style={styles.modalQoutesCon}>
+      <Text style={styles.quoteTitle}>Quote Details</Text>
+        <View style={[styles.quoteDetailsContainer]}>
+          <View style={styles.quoteRow}>
+            <Text style={styles.quoteLabel}>Provider</Text>
+            <Text style={styles.quoteValue}>Allbridge</Text>
+          </View>
+
+          <View style={styles.quoteRow}>
+            <Text style={styles.quoteLabel}>Rate</Text>
+            <Text style={styles.quoteValue}>
+              1 USDT = {resQuotes.conversionRate} USDC
+            </Text>
+          </View>
+
+          <View style={styles.quoteRow}>
+            <Text style={styles.quoteLabel}>Slippage</Text>
+            <Text style={styles.quoteValue}>
+              {resQuotes.slippageTolerance}%
+            </Text>
+          </View>
+
+          <View style={styles.quoteRow}>
+            <Text style={styles.quoteLabel}>Minimum Received</Text>
+            <View style={{ width: wp(25), flexDirection: 'row' }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <Text style={styles.quoteValue}>{resQuotes.minimumAmountOut}</Text>
+              </ScrollView>
+              <Text style={styles.quoteValue}>USDC</Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.quoteTextCon}>
+          <Text style={styles.quoteText}>≈</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <Text style={styles.quoteText}>{resQuotes.minimumAmountOut}</Text>
+          </ScrollView>
+          <Text style={styles.quoteText}>USDC</Text>
+        </View>
+      </View>}
 
 
             <TouchableOpacity
               // disabled={chooseSelectedItemIdCho === null||chooseSelectedItemId === null} 
-              style={[styles.nextButton, { backgroundColor: !amount||balanceLoading?"gray":'#2F7DFF',height:hp(6),marginTop:hp(5) }]}
-            disabled={!amount||fianl_modal_loading||balanceLoading} onPress={() => { Keyboard.dismiss(),manage_swap() }}
+              style={[styles.nextButton, { backgroundColor: !amount||balanceLoading||getInfo?"gray":'#2F7DFF' }]}
+            disabled={!amount||fianl_modal_loading||balanceLoading||getInfo} onPress={() => { Keyboard.dismiss(),manage_swap() }}
             >
-              {fianl_modal_loading?<ActivityIndicator color={"white"}/>:<Text style={styles.nextButtonText}>Confirm Transaction</Text>}
+              {fianl_modal_loading||getInfo?<ActivityIndicator color={"white"}/>:<Text style={styles.nextButtonText}>Confirm Transaction</Text>}
             </TouchableOpacity>
       <Modal
         animationType="fade"
@@ -693,6 +812,7 @@ const getOffersData = async () => {
             </View>
           </TouchableWithoutFeedback>
         </Modal>
+      </ScrollView>
     </View>
   );
 };
@@ -751,33 +871,59 @@ const styles = StyleSheet.create({
     marginTop: 1,
     paddingLeft:wp(5)
   },
-  textModal: {
+  headingText: {
     marginTop: 10,
     color: "#fff",
     fontSize: 19,
   },
+  subInputText: {
+    marginTop:hp(1),
+    color: "#94A3B8",
+    fontSize: 16,
+  },
+  maxBtn: {
+    color: "#FFF",
+    fontSize: 16,
+  },
+  maxCon:{
+    backgroundColor:"#2F7DFF",
+    borderRadius:10,
+    padding:8,
+    paddingHorizontal:wp(5),
+  },
   modalOpen: {
-    width: '90%',
-    height: hp(8),
+    width: '93%',
+    flexDirection:"row",
+    justifyContent:"space-between",
     alignItems: "center",
+    backgroundColor:"#0D2041",
+    marginTop: hp(1.5),
     borderRadius: 10,
-    backgroundColor:"#33373DCC",
-    // paddingLeft: 10,
-    marginTop: 10,
-    flexDirection: "row",
-    borderWidth: 1.9,
-    borderColor: "rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
-    borderRadius: 19,
-    paddingLeft:10,
+    alignSelf:"center",
+    paddingVertical:hp(1.8),
+    paddingHorizontal:wp(3.6)
+  },
+  modalQoutesCon: {
+    width: '93%',
+    flexDirection:"column",
+    justifyContent:"space-between",
+    backgroundColor:"#0D2041",
+    marginTop: hp(1.8),
+    borderRadius: 10,
+    alignSelf:"center",
+    paddingVertical:hp(1.8),
+    paddingHorizontal:wp(3.6)
   },
   nextButton: {
-    width: wp(90),
-    borderRadius: 10,
+    width: wp(93),
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 10,
     marginTop: 20,
-    alignSelf: "center"
+    alignSelf: "center",
+    height:hp(6.4),
+    marginTop:hp(1.6)
   },
   nextButtonText: {
     color: '#fff',
@@ -876,12 +1022,10 @@ const styles = StyleSheet.create({
   logoImg_TOP: {
     height: hp("8"),
     width: wp("12"),
-    marginLeft: wp(22),
   },
   logoImg_TOP_1: {
     height: 39,
     width: 39,
-    marginLeft: wp(1),
     marginRight: 3
   },
   text_TOP: {
@@ -1002,6 +1146,62 @@ const styles = StyleSheet.create({
       fontSize:19,
       fontWeight:"400",
       color:"#fff"
-  }
+  },
+  networkHeading:{
+    color:"#fff",
+    fontSize:16,
+    fontWeight:"500",
+    marginLeft:wp(1.3),
+    marginTop:hp(-0.1)
+  },
+  networkSubHeading:{
+    color:"#94A3B8",
+    fontSize:13,
+    marginLeft:wp(1.3)
+  },
+  quoteTextCon: {
+    flexDirection: "row",
+    padding: 9,
+    backgroundColor: "#10B981",
+    borderRadius: 8,
+  },
+  quoteText: {
+    fontSize: 24,
+    color: '#fff',
+    borderRadius: 8,
+  },
+  quoteDetailsContainer: {
+    paddingHorizontal: 1,
+    borderRadius: 8,
+  },
+  quoteTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#fff',
+  },
+  quoteRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  quoteLabel: {
+    fontSize: 14,
+    color: 'silver',
+  },
+  quoteValue: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  loadingText: {
+    marginTop: 8,
+    color: 'silver',
+  },
 });
 export default classic;

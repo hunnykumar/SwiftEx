@@ -21,6 +21,8 @@ import stellarTokens from "./Tokens.json";
 import { debounce } from 'lodash';
 import { useSelector } from 'react-redux';
 import { GetStellarAvilabelBalance } from '../../../../../../utilities/StellarUtils';
+import { AMMSWAPTESTNET } from './AMMSwapTestNetUtil';
+import { useNavigation } from '@react-navigation/native';
 const StellarSdk = require('stellar-sdk');
 
 const AMMSwap = () => {
@@ -47,19 +49,21 @@ const AMMSwap = () => {
     icon: "https://stellar.myfilebase.com/ipfs/QmUjsGiNcUFTbiKoMZyBtgkSwfndBXSbRKFpGrYKvHC1fX",
     decimals: 7
   },);
-  
+  const navigation=useNavigation();
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [fromBal, setFromBal] = useState(0.00);
   const [toBal, setToBal] = useState(0.00);
   const [exchangeRes, setexchangeRes] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [tokenBurn, settokenBurn] = useState(false);
   const [tokenModalVisible, setTokenModalVisible] = useState(false);
   const [tokenTypeSelection, settokenTypeSelection] = useState(0);
   const [messageError,setmessageError]=useState(null);
   const [showReverse,setshowReverse]=useState(false);
   
   useEffect(()=>{
+    settokenBurn(false)
     setshowReverse(false)
     setFromAmount('');
     setToAmount('');
@@ -334,12 +338,32 @@ const AMMSwap = () => {
       </View>
     </TouchableOpacity>
   );
+
+  const handleSwap=async()=>{
+    settokenBurn(true)
+    const respo=await AMMSWAPTESTNET(state?.STELLAR_SECRET_KEY,fromAmount)
+    if(respo.status===true)
+    {
+      setmessageError("Transaction successful!")
+      console.log("--Success--,",respo.tx)
+      settokenBurn(false)
+      setTimeout(()=>{
+        navigation.navigate("Transactions",{txType:"STR"});
+      },2000)
+    }
+    else{
+      settokenBurn(false)
+      console.log("--Error--",respo.error)
+      setmessageError("Transaction Faild.")
+    }
+  }
   
   return (
     <View style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
+        <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : null}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        style={{ flex: 1, backgroundColor: "#011434" }}
       >
         <ScrollView contentContainerStyle={styles.scrollView}>
           {/* <View style={styles.header}>
@@ -379,7 +403,7 @@ const AMMSwap = () => {
             
             {messageError===null?<TouchableOpacity style={styles.maxButton} onPress={()=>{setFromAmount(fromBal)}}>
               <Text style={styles.maxButtonText}>MAX</Text>
-            </TouchableOpacity>:<Text style={[styles.maxButtonText,{color:"red"}]}>{messageError}</Text>}
+            </TouchableOpacity>:<Text style={[styles.maxButtonText,{color:messageError==="Transaction successful!"?"green":"red"}]}>{messageError}</Text>}
           </View>
           
           {/* Swap Button */}
@@ -454,9 +478,9 @@ const AMMSwap = () => {
               (!fromAmount || parseFloat(fromAmount) <= 0||parseFloat(fromBal)===0||parseFloat(fromAmount)>=parseFloat(fromBal)) && styles.disabledButton,
             ]}
             disabled={!fromAmount || parseFloat(fromAmount) <= 0 || isLoading||parseFloat(fromBal)===0||parseFloat(fromAmount)>=parseFloat(fromBal)}
-            // onPress={()=>{}}
+            onPress={()=>{handleSwap()}}
           >
-              {isLoading ? (
+              {isLoading||tokenBurn ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
                 <Text style={styles.swapActionButtonText}>{parseFloat(fromBal)===0||parseFloat(fromAmount)>=parseFloat(fromBal)?"Insufficient balance":"Swap Tokens"}</Text>

@@ -952,7 +952,7 @@ useEffect(() => {
 
     { api_data_loading?<Charts_Loadings/>:
               <Chart
-              style={{ width: 370, height: 230 }}
+              style={{ width: 370, height: 190 }}
               data={chartData}
               padding={{ left: 10, bottom: 30, right: 20, top: 30 }}
               xDomain={{ 
@@ -1001,7 +1001,7 @@ useEffect(() => {
     alignSelf: "center",
     borderRadius: hp(1.6),
     marginBottom: hp(1),
-    marginTop:hp(1.4)}}
+    marginTop:hp(0.5)}}
     onPress={()=>{setopen_chart_api(true)}}
     >
               <Text style={{fontSize: 19,color: "white",textAlign:"center",fontWeight:"500"}}>Trade between {chart_api[chart_index].name==="USDC"?chart_api[chart_index].name+"  ":chart_api[chart_index].name}vs  {chart_api[chart_index].name_0}</Text>
