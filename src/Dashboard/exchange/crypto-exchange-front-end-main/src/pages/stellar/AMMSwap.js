@@ -190,7 +190,7 @@ const AMMSwap = () => {
     if (isSourceXLM) {
       query.push(`source_asset_type=native`);
     } else {
-      query.push(`source_asset_type=credit_alphanum4`);
+      query.push(`source_asset_type=credit_alphanum12`);
       query.push(`source_asset_code=${encodeURIComponent(sourceAssetCode)}`);
       query.push(`source_asset_issuer=${encodeURIComponent(sourceAssetIssuer)}`);
     }
