@@ -1,4 +1,4 @@
-package com.test_app
+package com.app.swiftEx.app
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -11,7 +11,7 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
 import com.google.firebase.FirebaseApp // Import FirebaseApp
-import com.test_app.ethwallet.EthereumWalletPackage
+import com.app.swiftEx.app.ethwallet.EthereumWalletPackage
 import java.security.Security
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 

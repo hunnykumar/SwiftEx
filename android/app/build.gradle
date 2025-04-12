@@ -78,10 +78,10 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.test_app"
+    namespace "com.app.swiftEx.app"
     defaultConfig {
         missingDimensionStrategy 'react-native-camera', 'general'
-        applicationId "com.test_app"
+        applicationId "com.app.swiftEx.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
