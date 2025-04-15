@@ -32,6 +32,7 @@ import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import Snackbar from 'react-native-snackbar';
 import { getCUSTOMSwapQuote } from './QuotesUtil';
 import { onSwapETHtoUSDC } from './OneTapPayExecution';
+import { swap_prepare } from '../../../../../../All_bridge';
 const StellarSdk = require('stellar-sdk');
 export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
 
@@ -628,26 +629,46 @@ export const CustomQuotes = ({
     }
     // setApproved(true)
   }
+  const errorExtractor = (resp) => {
+    try {
+      const errorString = resp.res.toString();
+      const fundMatchResult = errorString.match(/have\s*(\d+)\s*want\s*(\d+)/);
+      if (fundMatchResult) {
+        const [, haveFunds, wantFunds] = fundMatchResult;
+        const fundsAnalysis = {
+          haveFunds: haveFunds,
+          wantFunds: wantFunds
+        }; 
+        return fundsAnalysis;
+      }
+      return 'Error';
+    } catch (error) {
+      return 'Error';
+    }
+  };
    const sendEthToContract = async (amount) => {
       try {
         keysUpdate()
         handleStepUpdate("USDT→USDC","pending")
-        const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
-        const wallet = new ethers.Wallet(state?.wallet?.privateKey, provider);
-        const usdtAddress = OneTapUSDCAddress.Address;  
-        const usdtAbi = [
-            "function transfer(address to, uint256 value) public returns (bool)"
-        ];
-        const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
-        const valueInUSDT = ethers.utils.parseUnits(amount, 6);
-        const tx = await usdtContract.transfer(OneTapContractAddress.Address, valueInUSDT);
-        console.log("Transaction Sent", `Tx Hash: ${tx.hash}`);
-        await tx.wait();
-        setisDone(false)
-        handleStepUpdate("USDT→USDC","done")
-        setTimeout(()=>{
-          handleStepUpdate("USDC→Wallet","done")
-        },2000);
+        const ressult_swap = await swap_prepare(state.wallet.privateKey, state.wallet.address, state.STELLAR_PUBLICK_KEY, amount, "USDT", "USDC", "Ethereum")
+           console.log("last ui res ---->", ressult_swap)
+           if (ressult_swap.status_task) {
+             setisDone(false)
+             handleStepUpdate("USDT→USDC", "done")
+             setTimeout(() => {
+               handleStepUpdate("USDC→Wallet", "done")
+             }, 2000);
+           }
+           else {
+             const res=errorExtractor(ressult_swap);
+             if(res!=="Error")
+             {
+               Alert.alert("info",`Insufficient funds you have ${res.haveFunds} want ${res.wantFunds}`);
+             }
+             setisDone(false)
+             handleStepUpdate("USDT→USDC","error")
+             handleStepUpdate("USDC→Wallet","error")
+           }
         // setApproved(true)
     } catch (error) {
         console.log("Transaction Failed", error);
