@@ -341,7 +341,7 @@ const AMMSwap = () => {
 
   const handleSwap=async()=>{
     settokenBurn(true)
-    const respo=await AMMSWAPTESTNET(state?.STELLAR_SECRET_KEY,fromAmount)
+    const respo=await AMMSWAPTESTNET(fromToken.code,fromToken.issuer,toToken.code,toToken.issuer,state?.STELLAR_SECRET_KEY,fromAmount)
     if(respo.status===true)
     {
       setmessageError("Transaction successful!")

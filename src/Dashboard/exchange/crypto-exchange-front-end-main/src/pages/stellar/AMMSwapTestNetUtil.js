@@ -1,13 +1,12 @@
 const StellarSdk = require('stellar-sdk');
 const { STELLAR_URL } = require('../../../../../constants');
 const server = new StellarSdk.Server(STELLAR_URL.URL);
-StellarSdk.Network.useTestNetwork();
+StellarSdk.Network.usePublicNetwork();
 
-async function AMMSWAPTESTNET(sourceSecret,destAmount) {
-    console.log("--",sourceSecret,destAmount)
-  const usdcIssuer = "";
+async function AMMSWAPTESTNET(fromTokenCode,fromTokenIssuer,toTokenCode,toTokenIssuer,sourceSecret,destAmount) {
+    console.log("--",fromTokenCode,fromTokenIssuer,toTokenCode,toTokenIssuer,sourceSecret,destAmount)
 
-  if (!sourceSecret || !usdcIssuer) {
+  if (!sourceSecret) {
     return {
       status: false,
       tx: '',
@@ -19,12 +18,17 @@ async function AMMSWAPTESTNET(sourceSecret,destAmount) {
     const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecret);
     const sourcePublicKey = sourceKeypair.publicKey();
     const destinationPublicKey = sourcePublicKey;
+    const assetSend = fromTokenCode === 'XLM'
+      ? StellarSdk.Asset.native()
+      : new StellarSdk.Asset(fromTokenCode, fromTokenIssuer);
 
-    const usdc = new StellarSdk.Asset('USDC', usdcIssuer);
+    const assetDest = toTokenCode === 'XLM'
+      ? StellarSdk.Asset.native()
+      : new StellarSdk.Asset(toTokenCode, toTokenIssuer);
 
     const account = await server.loadAccount(sourcePublicKey);
     const pathsResult = await server
-      .paths(sourcePublicKey, destinationPublicKey, usdc, destAmount)
+      .paths(sourcePublicKey, destinationPublicKey, assetDest, destAmount)
       .call();
 
     if (pathsResult.records.length === 0) {
@@ -35,14 +39,14 @@ async function AMMSWAPTESTNET(sourceSecret,destAmount) {
 
     const tx = new StellarSdk.TransactionBuilder(account, {
       fee: StellarSdk.BASE_FEE,
-      networkPassphrase: StellarSdk.Networks.TESTNET,
+      networkPassphrase: StellarSdk.Networks.PUBLIC,
     })
       .addOperation(
         StellarSdk.Operation.pathPayment({
-          sendAsset: StellarSdk.Asset.native(),
+          sendAsset: assetSend,
           sendMax: bestPath.source_amount,
           destination: destinationPublicKey,
-          destAsset: usdc,
+          destAsset: assetDest,
           destAmount: destAmount,
           path: bestPath.path,
         })
