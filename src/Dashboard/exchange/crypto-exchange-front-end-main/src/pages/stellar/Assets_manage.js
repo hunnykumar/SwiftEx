@@ -47,7 +47,7 @@ const Assets_manage = ({route}) => {
             //     const parsedData = JSON.parse(storedData);
             //     const matchedData = parsedData.filter(item => item.Ether_address === state.wallet.address);
             //     const publicKey = matchedData[0].publicKey;
-                StellarSdk.Network.useTestNetwork();
+                StellarSdk.Network.usePublicNetwork();
                 const server = new StellarSdk.Server(STELLAR_URL.URL);
                 server.loadAccount(state.STELLAR_PUBLICK_KEY)
                     .then(account => {
@@ -74,12 +74,12 @@ const Assets_manage = ({route}) => {
     }
 
     const AVL_ASSETS = [
-        { name: 'USDC', domain: "USDC (center.io)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",issuerAddress:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" },
-        { name: 'BTC', domain: "BTC (ultracapital.xyz)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",issuerAddress:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" },
-        { name: 'ETH', domain: "ETH (ultracapital.xyz)",img:ethereum,issuerAddress:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" },
-        { name: 'EURC', domain: "EURC (circle.com)",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420",issuerAddress:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" },
-        { name: 'yUSDC', domain: "yUSDC (ultracapital.xyz)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",issuerAddress:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" },
-        { name: 'yXLM', domain: "yXLM (ultracapital.xyz)",img:stellar,issuerAddress:"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" },
+        { name: 'USDC', domain: "USDC (center.io)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",issuerAddress:"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN" },
+        { name: 'BTC', domain: "BTC (ultracapital.xyz)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",issuerAddress:"GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM" },
+        { name: 'ETH', domain: "ETH (ultracapital.xyz)",img:ethereum,issuerAddress:"GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" },
+        { name: 'EURC', domain: "EURC (circle.com)",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420",issuerAddress:"GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2" },
+        { name: 'yUSDC', domain: "yUSDC (ultracapital.xyz)",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",issuerAddress:"GDGTVWSM4MGS4T7Z6W4RPWOCHE2I6RDFCIFZGS3DOA63LWQTRNZNTTFF" },
+        { name: 'yXLM', domain: "yXLM (ultracapital.xyz)",img:stellar,issuerAddress:"GARDNV3Q7YGT4AKSDF25LT32YSCCW4EV22Y2TV3I2PU2MMXJTEDL5T55" },
         // { name: 'Tanzania Shiling', domain: "TZS (connect.clickpesa.com)",img:CLICKPESA,issuerAddress:"" },
     ];
 
@@ -90,7 +90,7 @@ const Assets_manage = ({route}) => {
         try {
             console.log(":++++ Entered into trusting ++++:")
             const server = new StellarSdk.Server(STELLAR_URL.URL);
-            StellarSdk.Network.useTestNetwork();
+            StellarSdk.Network.usePublicNetwork();
             const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
             const transaction = new StellarSdk.TransactionBuilder(account, {
                 fee: StellarSdk.BASE_FEE,

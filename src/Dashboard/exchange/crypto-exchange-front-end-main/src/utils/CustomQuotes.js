@@ -251,7 +251,7 @@ export const CustomQuotes = ({
       const walletUSDCAddress = await AsyncStorageLib.getItem("wallet");
       const addresses=JSON?.parse(walletUSDCAddress)?.address
       const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
-      const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
+      const usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
       const usdtAbi = [
         "function balanceOf(address owner) view returns (uint256)"
       ];
@@ -295,7 +295,7 @@ export const CustomQuotes = ({
     try {
         console.log(":++++ Entered into trusting ++++:")
         const server = new StellarSdk.Server(STELLAR_URL.URL);
-        StellarSdk.Network.useTestNetwork();
+        StellarSdk.Network.usePublicNetwork();
         const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
         const transaction = new StellarSdk.TransactionBuilder(account, {
             fee: StellarSdk.BASE_FEE,
@@ -760,7 +760,7 @@ export const CustomQuotes = ({
       if (data.message === "Funded successfully") {
          const keypair = StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY);
         const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(data?.resXdr, "base64");
-        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.TESTNET);
+        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.PUBLIC);
         tx.sign(keypair);
         const server = new StellarSdk.Server(STELLAR_URL.URL);
         const result = await server.submitTransaction(tx);

@@ -23,7 +23,7 @@ import ErrorComponet from "../../../../../../utilities/ErrorComponet";
 import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../../utilities/StellarUtils";
 import WalletActivationComponent from "../../utils/WalletActivationComponent";
 const StellarSdk = require('stellar-sdk');
-StellarSdk.Network.useTestNetwork();
+StellarSdk.Network.usePublicNetwork();
 
 const send_recive = ({route}) => {
     const {bala,asset_name,assetIssuer}=route.params;
@@ -130,7 +130,7 @@ const send_recive = ({route}) => {
       // Create the transaction
       const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
         fee: await server.fetchBaseFee(),
-        networkPassphrase: StellarSdk.Networks.TESTNET,
+        networkPassphrase: StellarSdk.Networks.PUBLIC,
       })
         .addOperation(
           StellarSdk.Operation.payment({

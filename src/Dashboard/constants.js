@@ -45,17 +45,17 @@ export const faucets ={
 export const jwtSecret = "0xC02aaA3MunziAppTestMode0xbb4CdB9";
 
 export const RPC = {
-  BSCRPC: "https://bsc-testnet.bnbchain.org",
+  BSCRPC: "https://bsc-dataseed.binance.org",
   BSCRPC2:
     // "https://bsc.getblock.io/a011daa0-3099-4f55-b22c-c3a3d55898d0/testnet/", //OLD
     // "https://bsc-testnet.blockpi.network/v1/rpc/public",
-    'https://bsc-testnet.bnbchain.org',
+    'https://bsc-dataseed.binance.org',
   MATICRPC:
     "https://polygon-mumbai.g.alchemy.com/v2/WUJnVsFyDvgwlbSdNrpr-lMg0-NKaNLH",
   // ETHRPC:"https://eth-goerli.g.alchemy.com/v2/E1L1Ovo8ZG9-8UjFrNY39wcjPSa0uYLG",  //OLD
     // ETHRPC2:"https://eth-goerli.g.alchemy.com/v2/kXUtx7JDweb570vdSTAU3yFOR_cPiL9L",  //OLD
-    ETHRPC:"https://eth-sepolia.g.alchemy.com/v2/k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo",
-    ETHRPC2:"https://eth-sepolia.g.alchemy.com/v2/k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo",
+    ETHRPC:"https://eth-mainnet.g.alchemy.com/v2/k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo",
+    ETHRPC2:"https://eth-mainnet.g.alchemy.com/v2/k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo",
   XRPRPC:"https://s.altnet.rippletest.net:51234"
 };
 
@@ -68,12 +68,12 @@ export const WSS_TEST = {
 };
 
 export const STELLAR_URL={
-  // URL:"https://horizon.stellar.org",//LiveEnv
-  // EXPERT_URL:"https://stellar.expert/explorer/public",//LiveEnv
-  // USERTYPE:"PROD",//LiveEnv
-  URL:"https://horizon-testnet.stellar.org",//TestEnv
-  EXPERT_URL:"https://stellar.expert/explorer/testnet",//TestEnv
+  URL:"https://horizon.stellar.org",//LiveEnv
+  EXPERT_URL:"https://stellar.expert/explorer/public",//LiveEnv
   USERTYPE:"PROD",//LiveEnv
+  // URL:"https://horizon-testnet.stellar.org",//TestEnv
+  // EXPERT_URL:"https://stellar.expert/explorer/testnet",//TestEnv
+  // USERTYPE:"DEV",//DevEnv
 
 }
 

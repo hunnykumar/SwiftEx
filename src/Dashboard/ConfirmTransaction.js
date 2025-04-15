@@ -72,7 +72,7 @@ const ConfirmTransaction = (props) => {
       console.log("________________________________________________")
       const settings = {
         apiKey: EthereumSecret.apiKey,
-        network: Network.ETH_SEPOLIA,
+        network: Network.ETH_MAINNET,
       }
       const alchemy = new Alchemy(settings);
       let txx = await alchemy.core.sendTransaction(rawTransaction)
