@@ -48,7 +48,8 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
-    
+    // this ApplicationVerification fist validate app than execute next
+    ApplicationVerification.run(applicationContext)
     // Initialize Firebase
     FirebaseApp.initializeApp(this)  // Add this line to initialize Firebase
     
