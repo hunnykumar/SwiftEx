@@ -29,14 +29,7 @@ import { main, swapUSDCtoWETH } from './SwapExecution';
 import Snackbar from 'react-native-snackbar';
 import { swapETHtoUSDC } from './MutiStepSwap';
 import { SaveTransaction } from '../utilities/utilities';
-
-const FACTORY_ABI = require('./abi/factory.json');
-const QUOTER_ABI = require('./abi/quoter.json');
-const POOL_ABI = require('./abi/pool.json');
-
-const POOL_FACTORY_CONTRACT_ADDRESS = '0x0227628f3F023bb0B980b67D528571c95c6DaC1c'
-const QUOTER_CONTRACT_ADDRESS = '0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3'
-const RPC_URL = 'https://eth-sepolia.g.alchemy.com/v2/k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo'
+import { PPOST, proxyRequest } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
 
 // Token List
 const TOKENS = [
@@ -87,58 +80,15 @@ const EthSwap = () => {
   const [SwapExecution,setSwapExecution]=useState(false);
 
 
-  const provider = new ethers.providers.JsonRpcProvider(RPC_URL,{chainId:11155111});
-  const factoryContract = new ethers.Contract(POOL_FACTORY_CONTRACT_ADDRESS, FACTORY_ABI, provider);
-  const quoterContract = new ethers.Contract(QUOTER_CONTRACT_ADDRESS, QUOTER_ABI, provider);
-
   const getSwapQuote = async (tokenIn, tokenOut, amountIn) => {
-    try {
-      const poolAddress = await factoryContract.getPool(
-        tokenIn.address,
-        tokenOut.address,
-        3000
-      );
-
-      if (!poolAddress) {
-        throw new Error("Pool not found for token pair");
-      }
-
-      const poolContract = new ethers.Contract(poolAddress, POOL_ABI, provider);
-      const fee = await poolContract.fee();
-
-      const formattedAmountIn = ethers.utils.parseUnits(
-        amountIn.toString(),
-        tokenIn.decimals
-      );
-
-      const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle({
-        tokenIn: tokenIn.address,
-        tokenOut: tokenOut.address,
-        fee: fee,
-        recipient: ethers.constants.AddressZero,
-        deadline: Math.floor(Date.now() / 1000) + 600,
-        amountIn: formattedAmountIn,
-        sqrtPriceLimitX96: 0
-      });
-
-      const formattedAmountOut = ethers.utils.formatUnits(
-        quotedAmountOut[0],
-        tokenOut.decimals
-      );
-
-      const pricePerToken = (parseFloat(formattedAmountOut) / parseFloat(amountIn)).toFixed(6);
-
-      return {
-        inputAmount: amountIn,
-        inputToken: tokenIn.symbol,
-        outputAmount: formattedAmountOut,
-        outputToken: tokenOut.symbol,
-        pricePerToken: pricePerToken,
-        fee: fee.toString(),
-        poolAddress: poolAddress
-      };
-    } catch (error) {
-      throw new Error(`Failed to get swap quote: ${error.message}`);
+    const { res, err } = await proxyRequest("/getSwapQuote", PPOST, { tokenIn: tokenIn, tokenOut: tokenOut, amountIn: amountIn });
+    if (err?.status === 500) {
+      setErroVisible(true);
+      setQuoteInfo(null);
+      setLoading(false);
+    }
+    else {
+      return res.swapInfo;
     }
   };
 
@@ -315,21 +265,9 @@ const EthSwap = () => {
     setSwapExecution(true);
     if (SWAPTYPE === "USDC") {
       try {
-        const result = await swapUSDCtoWETH(amount, PRIVATE_KEY);
+        const result = await swapUSDCtoWETH(PRIVATE_KEY, amount, "usdcToWeth",quoteInfo.fee);
 
         if (result.success) {
-          // Success UI update
-          console.log('Swap successful!');
-          console.log('Amount received:', result.data.outputAmount);
-          console.log('Transaction:', result.data.transactionHash);
-          await SaveTransaction(
-            "Swap",
-            result.data.transactionHash,
-            await state.user,
-            "Eth",
-            'Multi-coin',
-            "Eth"
-          );
           setSwapExecution(false);
           Snackbar.show({
             text: "Swap Success",
@@ -363,23 +301,9 @@ const EthSwap = () => {
     if(SWAPTYPE==="WETH")
     {
       try {
-        const result = await swapETHtoUSDC( amount,PRIVATE_KEY);
+        const result = await swapUSDCtoWETH(PRIVATE_KEY, amount, "ethToUsdc",quoteInfo.fee);
         
         if (result.success) {
-            // Success case
-            console.log('Swap successful!');
-            console.log('Input:', result.data.inputAmount);
-            console.log('Output:', result.data.outputAmount);
-            console.log('Transaction links:', result.data.transactions);
-
-            await SaveTransaction(
-              "Swap",
-              result.data.transactions.swapHash,
-              await state.user,
-              "Eth",
-              'Multi-coin',
-              "Eth"
-            );
             setSwapExecution(false);
             Snackbar.show({
               text: "Swap Success",

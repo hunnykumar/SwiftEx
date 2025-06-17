@@ -5,6 +5,8 @@
 // const POOL_ABI = require('./abi/pool.json');
 // const TOKEN_IN_ABI = require('./abi/weth.json');
 
+import { PPOST, proxyRequest } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
+
 // // Deployment Addresses
 // const POOL_FACTORY_CONTRACT_ADDRESS = '0x0227628f3F023bb0B980b67D528571c95c6DaC1c'
 // const QUOTER_CONTRACT_ADDRESS = '0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3'
@@ -167,96 +169,105 @@ class SwapResult {
     }
 }
 
-async function swapUSDCtoWETH(amount, privateKey) {
-    // Initialize provider
-    const provider = new ethers.providers.JsonRpcProvider('https://eth-sepolia.g.alchemy.com/v2/k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo');
-    const signer = new ethers.Wallet(privateKey, provider);
 
-    try {
-        // Setup contracts
-        const usdcContract = new ethers.Contract(ADDRESSES.USDC, USDC_ABI, signer);
-        const factoryContract = new ethers.Contract(ADDRESSES.POOL_FACTORY, FACTORY_ABI, provider);
-        const quoterContract = new ethers.Contract(ADDRESSES.QUOTER, QUOTER_ABI, provider);
+const WETH_ABI = [
+    "function deposit() external payable",
+    "function withdraw(uint amount) external",
+    "function balanceOf(address account) external view returns (uint256)",
+    "function approve(address spender, uint256 amount) external returns (bool)"
+];
 
-        // Convert amount to proper decimals
-        const amountIn = ethers.utils.parseUnits(amount.toString(), 6); // USDC has 6 decimals
-
-        // Check USDC balance
-        const balance = await usdcContract.balanceOf(signer.address);
-        if (balance.lt(amountIn)) {
+    
+    export async function swapUSDCtoWETH( privateKey, amount, type ,fees) {
+        const wallet = new ethers.Wallet(privateKey);
+        const address = await wallet.getAddress();
+    
+        const isEthToUsdc = type === 'ethToUsdc';
+        const isUsdcToWeth = type === 'usdcToWeth';
+    
+        const ethAmount = ethers.utils.parseEther(amount.toString());
+        const usdcAmount = ethers.utils.parseUnits(amount.toString(), 6);
+    
+        // Interface setup
+        const wethIface = new ethers.utils.Interface(WETH_ABI);
+        const usdcIface = new ethers.utils.Interface(USDC_ABI);
+        const swapIface = new ethers.utils.Interface(SWAP_ROUTER_ABI);
+    
+        // Construct parameters
+        const params = {
+            tokenIn: isEthToUsdc ? ADDRESSES.WETH : ADDRESSES.USDC,
+            tokenOut: isEthToUsdc ? ADDRESSES.USDC : ADDRESSES.WETH,
+            fee: fees,
+            recipient: address,
+            deadline: Math.floor(Date.now() / 1000) + 600,
+            amountIn: isEthToUsdc ? ethAmount : usdcAmount,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
+        };
+    
+        // Encode
+        const swapData = swapIface.encodeFunctionData("exactInputSingle", [params]);
+    
+        const payload = {
+            publicKey: address,
+            type,
+            swapData,
+            value: isEthToUsdc ? ethAmount : undefined
+        };
+    
+        if (isEthToUsdc) {
+            payload.depositData = wethIface.encodeFunctionData("deposit");
+            payload.approveData = wethIface.encodeFunctionData("approve", [ADDRESSES.SWAP_ROUTER, ethAmount]);
+        } else if (isUsdcToWeth) {
+            payload.approveData = usdcIface.encodeFunctionData("approve", [ADDRESSES.SWAP_ROUTER, usdcAmount]);
+        }
+    
+        // Send to backend
+          const respo = await proxyRequest("/swapPrepare", PPOST,  payload);
+          if(respo.err?.status===500)
+            {
+                return new SwapResult(
+                    false,
+                    'Swap failed',
+                    null,
+                    {
+                        message: "swap Faild",
+                        code: false
+                    }
+                );
+            }
+            
+            const signedTxs = await Promise.all(
+                respo.res.swapInfo.map(tx => wallet.signTransaction(tx))
+            );
+            console.log(signedTxs)
+    
+        const { res, err } = await proxyRequest("/swapExecute", PPOST,  {signedTxs:signedTxs});
+        if(err?.status===500)
+        {
             return new SwapResult(
                 false,
-                'Insufficient USDC balance',
+                'Swap failed',
+                null,
                 {
-                    requiredAmount: amount,
-                    currentBalance: ethers.utils.formatUnits(balance, 6)
+                    message: "swap Faild",
+                    code: false
                 }
             );
         }
-
-        // Approve USDC
-        const approveTx = await usdcContract.approve(ADDRESSES.SWAP_ROUTER, amountIn);
-        await approveTx.wait();
-
-        // Get pool info
-        const poolAddress = await factoryContract.getPool(ADDRESSES.USDC, ADDRESSES.WETH, 3000);
-        if (!poolAddress || poolAddress === ethers.constants.AddressZero) {
-            return new SwapResult(false, 'Liquidity pool not found');
-        }
-
-        const poolContract = new ethers.Contract(poolAddress, POOL_ABI, provider);
-        const fee = await poolContract.fee();
-
-        // Get quote
-        const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle({
-            tokenIn: ADDRESSES.USDC,
-            tokenOut: ADDRESSES.WETH,
-            fee: fee,
-            recipient: signer.address,
-            deadline: Math.floor(Date.now() / 1000) + 600,
-            amountIn: amountIn,
-            sqrtPriceLimitX96: 0
-        });
-
-        // Execute swap
-        const swapRouter = new ethers.Contract(ADDRESSES.SWAP_ROUTER, SWAP_ROUTER_ABI, signer);
-        const swapParams = {
-            tokenIn: ADDRESSES.USDC,
-            tokenOut: ADDRESSES.WETH,
-            fee: fee,
-            recipient: signer.address,
-            deadline: Math.floor(Date.now() / 1000) + 600,
-            amountIn: amountIn,
-            amountOutMinimum: quotedAmountOut[0],
-            sqrtPriceLimitX96: 0
-        };
-
-        const swapTx = await swapRouter.exactInputSingle(swapParams);
-        const receipt = await swapTx.wait();
-
-        return new SwapResult(
-            true,
-            'Swap completed successfully',
+        if(res?.swapInfo[0]?.status===1)
             {
-                inputAmount: amount + ' USDC',
-                outputAmount: ethers.utils.formatEther(quotedAmountOut[0]) + ' WETH',
-                transactionHash: receipt.transactionHash,
-                explorerLink: `https://sepolia.etherscan.io/tx/${receipt.transactionHash}`
-            }
-        );
+                return new SwapResult(
+                    true,
+                    'Swap completed successfully',
+                    {                  
+                        explorerLink: `https://sepolia.etherscan.io/tx/${res?.swapInfo[0]?.transactionHash}`
+                    }
+                );
+            }    
 
-    } catch (error) {
-        return new SwapResult(
-            false,
-            'Swap failed',
-            null,
-            {
-                message: error.message,
-                code: error.code
-            }
-        );
+        
     }
-}
 
 // // WETH to USDC swap function
 // async function swapWETHtoUSDC(amount, privateKey) {
