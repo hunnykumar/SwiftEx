@@ -1,0 +1,24 @@
+[
+    {
+        "country": "US",
+        "currency": "USD",
+        "payWayCode": "10001",
+        "payWayName": "USD",
+        "fixedFee": 0.400000,
+        "feeRate": 0.039900,
+        "payMin": 2.000000,
+        "payMax": 5000.000000,
+        "countryName": "United States"
+    },
+    {
+        "country": "IN",
+        "currency": "INR",
+        "payWayCode": "10001",
+        "payWayName": "INR",
+        "fixedFee": 33.240000,
+        "feeRate": 0.039900,
+        "payMin": 800.000000,
+        "payMax": 420000.000000,
+        "countryName": "India"
+    }
+]

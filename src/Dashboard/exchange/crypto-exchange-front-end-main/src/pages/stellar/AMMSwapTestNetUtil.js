@@ -5,7 +5,7 @@ StellarSdk.Network.useTestNetwork();
 
 async function AMMSWAPTESTNET(sourceSecret,destAmount) {
     console.log("--",sourceSecret,destAmount)
-  const usdcIssuer = "";
+  const usdcIssuer = "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
 
   if (!sourceSecret || !usdcIssuer) {
     return {
