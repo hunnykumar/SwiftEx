@@ -34,6 +34,7 @@ import { CommonActions } from "@react-navigation/native";
 import { useToast } from "native-base";
 import { alert, ShowToast } from "../reusables/Toasts";
 import { getAllBalances } from "../../utilities/web3utilities";
+import { PPOST, proxyRequest } from "../exchange/crypto-exchange-front-end-main/src/api";
 
 const TransactionPinModal = ({
   pinViewVisible,
@@ -139,30 +140,16 @@ const TransactionPinModal = ({
           const token = await state.token;
   
           if (type === "Eth") {
-            let txx = await provider.core
-              .sendTransaction(rawTransaction)
-              .catch((e) => {
-                console.log(e);
-                setLoading(false);
-                Alert.alert("Error","Insufficient funds...");
-              });
-            const tx = txx.wait();
-            console.log("Sent transaction", await tx);
+
+            const { res, err } = await proxyRequest("/executeTransaction", PPOST, {signedTx:rawTransaction,"CHAIN":"ETH"});
+            if (err) {
+              console.log(err);
+              setLoading(false);
+              Alert.alert("Error", err.message||"Something went wrong");
+            }
   
-            if (txx.hash) {
+            if (res.txHash.hash) {
               try {
-                const type = "Send";
-                const chainType = "Eth";
-                const saveTransaction = await SaveTransaction(
-                  type,
-                  txx.hash,
-                  emailid,
-                  token,
-                  walletType,
-                  chainType
-                );
-  
-                console.log(saveTransaction);
                 ShowToast(toast, "Transaction Successful");
   
                 setLoading(false);
@@ -221,29 +208,20 @@ const TransactionPinModal = ({
               }
             }
           } else if (type === "BSC") {
-            const txx = await provider
-              .sendTransaction(rawTransaction)
-              .catch((e) => {
-                Alert.alert("Error","Insufficient funds...");
-                return alert(e);
-              }); //SendTransaction(signer, token)
-            if (txx.hash) {
+            const { res, err } = await proxyRequest("/executeTransaction", PPOST, {signedTx:rawTransaction,"CHAIN":"BSC"});
+            if(err)
+            {
+              setDisable(false);
+              setPinViewVisible(false);
+              setLoader(false);
+              setLoading(false);
+              console.log(err);
+              alert("error","Something went wrong...")
+            }
+      
+         if (res.txHash.hash) {
               try {
-                const type = "Send";
-                const chainType = "BSC";
-  
-                const saveTransaction = await SaveTransaction(
-                  type,
-                  txx.hash,
-                  emailid,
-                  token,
-                  walletType,
-                  chainType
-                );
-  
-                console.log(saveTransaction);
                 ShowToast(toast, "Transaction Successful");
-  
                 setLoading(false);
                 setLoader(false);
                 setDisable(false);

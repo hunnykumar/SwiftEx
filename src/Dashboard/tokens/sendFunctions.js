@@ -9,6 +9,7 @@ import { RPC } from "../constants";
 import "react-native-get-random-values";
 import "@ethersproject/shims";
 import { alert } from "../reusables/Toasts";
+import { PPOST, proxyRequest } from "../exchange/crypto-exchange-front-end-main/src/api";
 var ethers = require("ethers");
 
 const xrpl = require("xrpl");
@@ -20,25 +21,15 @@ const sendEth = async (
   balance,
   setLoading
 ) => {
-  let alchemyProvider;
 
-  const settings = {
-    apiKey: EthereumSecret.apiKey,
-    network: Network.ETH_SEPOLIA,
-  };
-
-  alchemyProvider = new Alchemy(settings);
   const walletPrivateKey = new ethers.Wallet(privateKey);
+  const { res, err } = await proxyRequest("/preInfo", PPOST, {"walletAdd":walletPrivateKey.address,"CHAIN":"ETH"});
+   if(err)
+   {
+    alert("error","Something went wrong...")
+   }
 
-  const nonce = await alchemyProvider.core.getTransactionCount(
-    walletPrivateKey.address,
-    "latest"
-  );
-  const maxFee = await alchemyProvider.core.getFeeData(
-    walletPrivateKey.address
-  );
-  console.log(maxFee);
-  let fee = ethers.utils.formatEther(maxFee.maxFeePerGas)
+  let fee = ethers.utils.formatEther(res.gasFeeData.maxFeePerGas)
 
   if(Number(amount)===Number(balance)){
     console.log(fee)
@@ -51,24 +42,22 @@ const sendEth = async (
     to: addressTo,
     value: utils.parseEther(amount),
     gasLimit: 21000,
-    maxPriorityFeePerGas: maxFee.maxPriorityFeePerGas,
-    maxFeePerGas: maxFee.maxFeePerGas,
-    nonce: nonce,
+    maxPriorityFeePerGas: res.gasFeeData.maxPriorityFeePerGas,
+    maxFeePerGas: res.gasFeeData.maxFeePerGas,
+    nonce: res.nonce,
     type: 2,
     chainId: 11155111,
   };
-  console.log(transaction);
 
   let rawTransaction = await walletPrivateKey.signTransaction(transaction);
   setLoading(false);
   const info = {
     type: "Eth",
-    fee: maxFee.maxPriorityFeePerGas,
+    fee: ethers.BigNumber.from(res.gasFeeData.maxPriorityFeePerGas),
     rawTransaction: rawTransaction,
     addressTo: addressTo,
     addressFrom: addressFrom,
     amount: amount,
-    provider: alchemyProvider,
   };
   return info;
 };
@@ -81,16 +70,14 @@ const sendBNB = async (
   balance,
   setLoading
 ) => {
-  let provider = new ethers.providers.JsonRpcProvider(RPC.BSCRPC2);
   //console.log(provider)
-  console.log(addressFrom, addressTo, privateKey);
-  const walletPrivateKey = new ethers.Wallet(privateKey, provider);
-  const nonce = await provider.getTransactionCount(addressFrom); //getNonce(addressFrom)
-  console.log(nonce);
-  
-  const gasPrice = await provider.getGasPrice(addressFrom);
-  console.log("hi", gasPrice);
-  let fee = ethers.utils.formatEther(gasPrice)
+  const walletPrivateKey = new ethers.Wallet(privateKey);
+  const { res, err } = await proxyRequest("/preInfo", PPOST, {"walletAdd":walletPrivateKey.address,"CHAIN":"BSC"});
+  if(err)
+  {
+   alert("error","Something went wrong...")
+  }  
+  let fee = ethers.utils.formatEther(res.gasFeeData.gasPrice)
 
   if(Number(amount)===Number(balance)){
    let Amount=Number(amount)-(Number(fee)*22000).toFixed(6)
@@ -99,8 +86,8 @@ const sendBNB = async (
   console.log(amount)
   let transaction = {
     gasLimit: 21000,
-    gasPrice: gasPrice, //await provider.getGasPrice(addressFrom),
-    nonce: nonce, //provider.getTransactionCount(addressFrom),
+    gasPrice: ethers.BigNumber.from(res.gasFeeData.gasPrice), //await provider.getGasPrice(addressFrom),
+    nonce: res.nonce, //provider.getTransactionCount(addressFrom),
     to: addressTo,
     data: "0x",
     value: ethers.utils.parseEther(amount),
@@ -111,12 +98,11 @@ const sendBNB = async (
 
   const info = {
     type: "BSC",
-    fee: gasPrice,
+    fee: ethers.BigNumber.from(res.gasFeeData.gasPrice),
     rawTransaction: signer,
     addressTo: addressTo,
     addressFrom: addressFrom,
-    amount: amount,
-    provider: provider,
+    amount: amount
   };
   setLoading(false);
 
@@ -246,15 +232,11 @@ const SendCrypto = async (
   Token,
   navigation
 ) => {
-  let provider;
 
   // const walletType = await AsyncStorage.getItem('walletType')
   try{
 
     console.log(walletType);
-    if (walletType == "BSC") {
-      provider = new ethers.providers.JsonRpcProvider(RPC.BSCRPC);
-    }
     setLoading(true);
     
     const privateKey = decrypt ? decrypt : alert("no wallets connected");
@@ -367,7 +349,6 @@ const SendCrypto = async (
                   balance,
                   setLoading
                   ).then((response) => {
-                    console.log(response);
         let info = response;
         const txCost = info.fee.toString();
         let fee = ethers.utils.formatEther(txCost)

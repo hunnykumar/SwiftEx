@@ -310,14 +310,14 @@ const Home2 = ({ navigation }) => {
   
     fetchBalances();
 
-    const timeoutId = setTimeout(() => {
-      const addressToMonitor = store.getState().wallet.address;
-      console.log('><<<<', addressToMonitor);
-      listion(addressToMonitor);
-    }, 6000);
-    return () => {
-      clearTimeout(timeoutId);
-    };
+    // const timeoutId = setTimeout(() => {
+    //   const addressToMonitor = store.getState().wallet.address;
+    //   console.log('><<<<', addressToMonitor);
+    //   listion(addressToMonitor);
+    // }, 6000);
+    // return () => {
+    //   clearTimeout(timeoutId);
+    // };
   }, []); 
   
   // useEffect(() => {

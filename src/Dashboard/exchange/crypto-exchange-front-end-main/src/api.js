@@ -1,6 +1,6 @@
 import axios from 'axios'
 import AsyncStorageLib from '@react-native-async-storage/async-storage'
-import { REACT_APP_HOST, REACT_APP_GOOGLE_VPID_KEY, REACT_APP_LOCAL_TOKEN, REACT_APP_FCM_TOKEN_KEY} from './ExchangeConstants'
+import { REACT_APP_HOST, REACT_APP_GOOGLE_VPID_KEY, REACT_APP_LOCAL_TOKEN, REACT_APP_FCM_TOKEN_KEY, REACT_PROXY_HOST} from './ExchangeConstants'
 import DeviceInfo from 'react-native-device-info'
 const SERVER_URL = REACT_APP_HOST
 const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN
@@ -210,4 +210,43 @@ export const createGuestUser=async()=>{
   } catch (error) {
     console.log("--Guest Auth Creation Faild--",error)
   }
+}
+
+
+// Authorized Requests
+export const proxyRequest = async (url, request, body = {}) => {
+  try {
+    const opts = {
+      url,
+      body: body,
+      headers: {
+        authorization:"Bearer "+await getToken(),
+      },
+    }
+
+    const res = await request(opts)
+    return { res }
+  } catch (error) {
+    console.log('proxyError: \n', JSON.stringify(error))
+    const err = {
+      message: JSON.stringify(error.response.data.error)||JSON.stringify(error.response.data.message),
+      status: error.response.status,
+    }
+    return { err }
+  }
+}
+
+export async function PGET(opts) {
+  const URL = REACT_PROXY_HOST + opts.url
+  const header = opts.headers ? opts.headers : HEADERS
+  const res = await axios.get(URL, { headers: header })
+  return res.data
+}
+
+export async function PPOST(opts) {
+  const URL = REACT_PROXY_HOST + opts.url
+  const header = opts.headers ? opts.headers : HEADERS
+  const body = opts.body
+  const res = await axios.post(URL, body, { headers: header })
+  return res.data
 }
