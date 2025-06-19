@@ -18,7 +18,7 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import { getETHtoTokenPrice } from '../../../../tokens/swapFunctions';
 import { USDT } from './assetAddress';
 import { REACT_APP_HOST } from '../ExchangeConstants';
-import { authRequest, GET, getToken, POST } from '../api';
+import { authRequest, GET, getToken, POST, PPOST, proxyRequest } from '../api';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../../../../../icon';
 import { ethers } from 'ethers';
@@ -250,17 +250,11 @@ export const CustomQuotes = ({
     try {
       const walletUSDCAddress = await AsyncStorageLib.getItem("wallet");
       const addresses=JSON?.parse(walletUSDCAddress)?.address
-      const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
       const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
-      const usdtAbi = [
-        "function balanceOf(address owner) view returns (uint256)"
-      ];
-
-      const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, provider);
-
-      const balance = await usdtContract.balanceOf(addresses);
-      console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`); 
-      if(parseFloat(value)>=parseFloat(ethers.utils.formatUnits(balance, 6))||parseFloat(ethers.utils.formatUnits(balance, 6))===0){
+       const {res,err} = await proxyRequest("/fetchTokenInfo", PPOST, {address:usdtAddress,walletAdd:addresses});
+      const balance =res.tokenInfo[0].balance;
+      console.log(`USDT Balance of ${addresses}: ${balance} USDT`); 
+      if(parseFloat(value)>=parseFloat(balance)||parseFloat(balance)===0){
         setcompletTransaction(true)
       }
       else{
@@ -505,9 +499,8 @@ export const CustomQuotes = ({
         {
         console.log("---err->",res)
         const walletAddress = await AsyncStorageLib.getItem("wallet");
-        const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
-        const EthBalance = await provider.getBalance(JSON.parse(walletAddress).address);
-        const balanceInEth = ethers.utils.formatEther(EthBalance);
+        const resProxy = await proxyRequest("/fetchWalletBalnces", PPOST, {walletAdd:JSON.parse(walletAddress)?.address,CHAIN:"ETH"});
+        const balanceInEth = resProxy?.res?.balance;
         console.log("---ae",balanceInEth)
             if(parseFloat(value)>=parseFloat(balanceInEth)||parseFloat(balanceInEth)===0){
               setcompletTransaction(true)
@@ -612,7 +605,7 @@ export const CustomQuotes = ({
     if (token !== "USDT") {
       setisDone(true)
       handleStepUpdate("WETH→USDT","pending")
-      const res = await onSwapETHtoUSDC(inputAmount, state?.wallet?.privateKey, RPC.ETHRPC2)
+      const res = await onSwapETHtoUSDC(inputAmount, state?.wallet?.privateKey, usdtRes?.fee)
       if (res.status === true) {
       handleStepUpdate("WETH→USDT","done")
         console.log("--onSwapETHtoUSDC-->", res)
@@ -632,23 +625,35 @@ export const CustomQuotes = ({
       try {
         keysUpdate()
         handleStepUpdate("USDT→USDC","pending")
-        const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
-        const wallet = new ethers.Wallet(state?.wallet?.privateKey, provider);
+
+        const wallet = new ethers.Wallet(state?.wallet?.privateKey);
         const usdtAddress = OneTapUSDCAddress.Address;  
         const usdtAbi = [
             "function transfer(address to, uint256 value) public returns (bool)"
         ];
         const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
-        const valueInUSDT = ethers.utils.parseUnits(amount, 6);
-        const tx = await usdtContract.transfer(OneTapContractAddress.Address, valueInUSDT);
-        console.log("Transaction Sent", `Tx Hash: ${tx.hash}`);
-        await tx.wait();
-        setisDone(false)
-        handleStepUpdate("USDT→USDC","done")
-        setTimeout(()=>{
-          handleStepUpdate("USDC→Wallet","done")
-        },2000);
+       
+        const formattedAmount = ethers.utils.parseUnits(amount, 6);
+        const unsigned = await usdtContract.populateTransaction.transfer(usdtAddress, formattedAmount);
+        // Send transaction
+        const {res,err} = await proxyRequest("/tokenSendPrepare", PPOST, { CHAIN:"ETH",unsignedTx:unsigned,address:wallet.address });
+        const upgradedTx = {
+          ...res.fullTx,
+          gasLimit: ethers.BigNumber.from(res.fullTx.gasLimit),
+          gasPrice: ethers.BigNumber.from(res.fullTx.gasPrice),
+          value: res.fullTx.value ? ethers.BigNumber.from(res.fullTx.value) : ethers.BigNumber.from(0),
+        };
+        const signedTx = await wallet.signTransaction(upgradedTx);
+        const respoExe = await proxyRequest("/executeTransaction", PPOST, {signedTx:signedTx,"CHAIN":"ETH"});
+        if(respoExe?.res?.txHash)
+        {
+          setisDone(false)
+          handleStepUpdate("USDT→USDC","done")
+          setTimeout(()=>{
+            handleStepUpdate("USDC→Wallet","done")
+          },2000);
         // setApproved(true)
+        }
     } catch (error) {
         console.log("Transaction Failed", error);
         setisDone(false)

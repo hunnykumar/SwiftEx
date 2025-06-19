@@ -1,36 +1,7 @@
-// const WALLET_ADDRESS = '0xd4787fFaa142c62280732afF7899B3AB03Ea0eAA';
-// const TOKEN_CONTRACT_ADDRESSES = [
-  // '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
-  // '0x7e9fbbf33c595430848e767E162e4b0FF6b8205b',
-  // '0xB36543006D92705547C803d12BB27667D8D6DA23',
-  // '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14'
-  // ];
-  
-  // const state = useSelector((state) => state);
-  // const WALLET_ADDRESS = state.wallet.address; 
-  // const DEFAULT_TOKENS = [
-    // {
-    //   symbol: "USDT",
-    //   img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
-    //   address: "0x7e9fbbf33c595430848e767E162e4b0FF6b8205b" 
-    // },
-    // {
-    //   symbol: "UNI",
-    //   img_url: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
-    //   address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
-    // },
-    // {
-    //   symbol: "ETH",
-    //   img_url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png", 
-    //   address: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
-    // }
-  // ];
-
   import React, { useState, useEffect, useCallback } from 'react';
   import { View, Text, Button, TextInput, StyleSheet, FlatList, Image, Alert, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
   import AsyncStorage from '@react-native-async-storage/async-storage';
   import { ethers } from 'ethers';
-  import { RPC } from './constants';
   import { useSelector } from 'react-redux';
   import { Paste } from '../utilities/utilities';
   import {
@@ -42,21 +13,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Dropdown from './exchange/crypto-exchange-front-end-main/src/components/Dropdown';
 import IconWithCircle, { CustomIconWithCircle } from '../Screens/iconwithCircle';
-import RecieveAddress from './Modals/ReceiveAddress';
 import TokenQrCode from './Modals/TokensQrCode';
-
-  const ERC20_ABI = [
-    "function name() view returns (string)",
-    "function symbol() view returns (string)",
-    "function decimals() view returns (uint8)",
-    "function balanceOf(address owner) view returns (uint256)"
-  ];
-
-  const ERC20_BNB_ABI = [
-    "function balanceOf(address) view returns (uint256)",
-    "function name() view returns (string)",
-    "function decimals() view returns (uint8)"
-  ];
+import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';
   
   const Token_Import = () => {
     const navigation=useNavigation();
@@ -70,11 +28,7 @@ import TokenQrCode from './Modals/TokensQrCode';
     const [QrValue,setQrValue]=useState("");
     const [QrName,setQrName]=useState("");
 
-    
     const WALLET_ADDRESS = state.wallet.address; 
-    const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
-    const providerBNB = new ethers.providers.JsonRpcProvider(RPC.BSCRPC2);
-
   
     const STORAGE_KEY = `tokens_${WALLET_ADDRESS}`;
     const STORAGE_BNB_KEY = `tokens_BNB${WALLET_ADDRESS}`;
@@ -115,23 +69,13 @@ import TokenQrCode from './Modals/TokensQrCode';
   
   
     // Fetch token details
-    const fetchTokenInfo = async (address, img_url = '', symbol = '') => {
+    const fetchTokenInfo = async (address) => {
+      
       try {
-        const tokenContract = new ethers.Contract(address, ERC20_ABI, provider);
-        const [name, fetchedSymbol, decimals, balance] = await Promise.all([
-          tokenContract.name(),
-          tokenContract.symbol(),
-          tokenContract.decimals(),
-          tokenContract.balanceOf(WALLET_ADDRESS)
-        ]);
-        const formattedBalance = ethers.utils.formatUnits(balance, decimals);
-        return { 
-          name, 
-          symbol: fetchedSymbol || symbol, 
-          balance: formattedBalance, 
-          address, 
-          img_url: img_url
-        };
+        if(address&&WALLET_ADDRESS){
+          const {res,err} = await proxyRequest("/fetchTokenInfo", PPOST, {address:address,walletAdd:WALLET_ADDRESS});
+          return res.tokenInfo[0];
+        }
       } catch (error) {
         console.error(`Error fetching token info for ${address}:`, error);
         throw new Error('Invalid token address or failed to fetch data');
@@ -139,23 +83,14 @@ import TokenQrCode from './Modals/TokensQrCode';
     };
 
     // Fetch BNB token details
-    const fetchBNBTokenInfo = async (address, img_url = '', symbol = '') => {
+    const fetchBNBTokenInfo = async (address) => {
       try {
-        const tokenContract = new ethers.Contract(address, ERC20_BNB_ABI, providerBNB);  
-        const [name, decimals, balance] = await Promise.all([
-          tokenContract.name(),
-          tokenContract.decimals(),
-          tokenContract.balanceOf(WALLET_ADDRESS)
-        ]);
-        const formattedBalance = ethers.utils.formatUnits(balance, decimals);
-        return { 
-          name,  
-          balance: formattedBalance, 
-          address, 
-          img_url: img_url
-        };
+        if(address&&WALLET_ADDRESS){
+          const {res,err} = await proxyRequest("/fetchBscTokenInfo", PPOST, {address:address,walletAdd:WALLET_ADDRESS});
+          return res.tokenInfo[0];
+        }
       } catch (error) {
-        console.error(`Error fetching token info for ${address}:`, error);
+        console.log(`Error fetching token info for ${address}:`, error);
         throw new Error('Invalid token address or failed to fetch data');
       }
     };
@@ -305,6 +240,7 @@ import TokenQrCode from './Modals/TokensQrCode';
         setIsLoading(false);
       } catch (error) {
         Alert.alert('Error', 'Please check the token address.');
+        console.log("-op",error)
         setNewTokenAddress('');
         setIsLoading(false);
       } finally {

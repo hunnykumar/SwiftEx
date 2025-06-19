@@ -624,9 +624,9 @@ const renderTokens = ({ item }) => {
   {/* Coin Image */}
   <View style={[styles.coinImgCon, { backgroundColor: "#181F2C" }]}>
     
-     {item.img_url ?
+     {item?.img_url ?
                             <Image 
-                            source={item?.symbol?.toUpperCase() === "XLM" ? item.img_url : { uri: item.img_url }} 
+                            source={item?.symbol?.toUpperCase() === "XLM" ? item?.img_url : { uri: item?.img_url }} 
                             style={item?.symbol?.toUpperCase() === "XLM" ? { width: 49, height: 49 } : { width: 39, height: 39 }} 
                           /> :
                             <LinearGradient
@@ -642,14 +642,14 @@ const renderTokens = ({ item }) => {
   {/* Coin Info - Adjusted with marginLeft */}
   <View style={[styles.coinInfoCon, { marginLeft: 10 }]}>
     <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "black" : "#FFFFFF" }]}>
-      {item?.symbol?.toUpperCase()} <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "gray" : "gray",fontSize:10 }]}>({item.network})</Text>
+      {item?.symbol?.toUpperCase()} <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "gray" : "gray",fontSize:10 }]}>({item?.network})</Text>
     </Text>
     <Text style={styles.coinInfoCon.coinBalText}>
-      {parseFloat(item.balance).toFixed(1)} {item?.symbol?.toUpperCase()}
+      {parseFloat(item?.balance)?.toFixed(1)} {item?.symbol?.toUpperCase()}
     </Text>
     <View style={styles.coinInfoCon.coinSubCon}>
       <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "black" : "#FFFFFF" }]}>
-        $ {item.price}
+        $ {item?.price}
       </Text>
     </View>
   </View>
@@ -664,13 +664,13 @@ const renderTokens = ({ item }) => {
     {/* Right: Action Buttons */}
     <View style={{ alignItems: "center", paddingRight: 5 }}>
       <TouchableOpacity 
-        disabled={item.network==="BSC"||item.network==="ETH"&&item?.symbol?.toUpperCase()!=="USDT"} 
+        disabled={item?.network==="BSC"||item?.network==="ETH"&&item?.symbol?.toUpperCase()!=="USDT"} 
         style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
         onPress={() => {
           // state?.STELLAR_ADDRESS_STATUS === false 
             // ? navigation.navigate("exchange") :
             //  navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbol?.toUpperCase() });
-            setTokenChain(item.network)
+            setTokenChain(item?.network)
             setTokenName(item?.symbol?.toUpperCase())
             setTokenAddress(item?.address)
             setCustomImport(true)

@@ -1,31 +1,13 @@
-const { ethers } = require('ethers');
-const { RPC } = require('../Dashboard/constants');
 const TokenList = require('../Dashboard/tokens/tokenList.json');
 const PancakeList =require ('../Dashboard/tokens/pancakeSwap/PancakeList.json');
+const { proxyRequest, PPOST } = require('../Dashboard/exchange/crypto-exchange-front-end-main/src/api');
 const AsyncStorage = require('@react-native-async-storage/async-storage').default;
 
 async function fetchAllTokensData(WALLET_ADDRESS) {
-  const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC2);
-  const providerBNB = new ethers.providers.JsonRpcProvider(RPC.BSCRPC2);
-  
   // Storage keys
   const STORAGE_KEY = `tokens_${WALLET_ADDRESS}`;
   const STORAGE_BNB_KEY = `tokens_BNB${WALLET_ADDRESS}`;
 
-  // ABIs
-  const ERC20_ABI = [
-    "function name() view returns (string)",
-    "function symbol() view returns (string)",
-    "function decimals() view returns (uint8)",
-    "function balanceOf(address owner) view returns (uint256)"
-  ];
-
-  const ERC20_BNB_ABI = [
-    "function balanceOf(address) view returns (uint256)",
-    "function symbol() view returns (string)",
-    "function name() view returns (string)",
-    "function decimals() view returns (uint8)"
-  ];
 
   // Function to fetch token price from CryptoCompare API
   const fetchTokenPrice = async (symbol) => {
@@ -80,25 +62,22 @@ async function fetchAllTokensData(WALLET_ADDRESS) {
       const imageData = TokenList.find(token => 
         token.address.toLowerCase() === address.toLowerCase()
       );
-      const tokenContract = new ethers.Contract(address, ERC20_ABI, provider);
-      const [name, fetchedSymbol, decimals, balance] = await Promise.all([
-        tokenContract.name(),
-        tokenContract.symbol(),
-        tokenContract.decimals(),
-        tokenContract.balanceOf(WALLET_ADDRESS)
-      ]);
-      const formattedBalance = ethers.utils.formatUnits(balance, decimals);
-      const tokenSymbol = fetchedSymbol || symbol;
-      const price = await fetchTokenPrice(tokenSymbol);
-      return { 
-        name, 
-        symbol: tokenSymbol, 
-        balance: formattedBalance, 
-        address,
-        network: "ETH",
-        img_url: imageData?.logoURI||'',
-        price: price
-      };
+      if (address && WALLET_ADDRESS) {
+        const { res, err } = await proxyRequest("/fetchTokenInfo", PPOST, { address: address, walletAdd: WALLET_ADDRESS });
+        const respoData=res.tokenInfo[0];
+        const price = await fetchTokenPrice(respoData?.symbol);
+        return { 
+          name:respoData?.name, 
+          symbol: respoData?.symbol, 
+          balance: respoData?.balance, 
+          address: respoData?.address,
+          network: "ETH",
+          img_url: imageData?.logoURI||'',
+          price: price,
+          decimals:respoData?.decimals
+        };
+      }
+
     } catch (error) {
       console.error(`Error fetching token info for ${address}:`, error);
       const price = await fetchTokenPrice(symbol);
@@ -121,29 +100,24 @@ async function fetchAllTokensData(WALLET_ADDRESS) {
   // Fetch BNB token info
   const fetchBNBTokenInfo = async (address, img_url = '', symbol = '') => {
     try {
-      const imageData = PancakeList.find(token => 
-        token.address.toLowerCase() === address.toLowerCase()
-      );
-      const tokenContract = new ethers.Contract(address, ERC20_BNB_ABI, providerBNB);  
-      const [name,fetchedSymbol, decimals, balance] = await Promise.all([
-        tokenContract.name(),
-        tokenContract.symbol(),
-        tokenContract.decimals(),
-        tokenContract.balanceOf(WALLET_ADDRESS)
-      ]);
-      const formattedBalance = ethers.utils.formatUnits(balance, decimals);
-      const tokenSymbol = fetchedSymbol || symbol;
-      const price = await fetchTokenPrice(tokenSymbol);
-      
-      return { 
-        name,
-        symbol: tokenSymbol,
-        balance: formattedBalance, 
-        address,
-        network: "BSC",
-        img_url:  imageData?.logoURI||'',
-        price: price
-      };
+      if (address && WALLET_ADDRESS) {
+        const { res, err } = await proxyRequest("/fetchBscTokenInfo", PPOST, { address: address, walletAdd: WALLET_ADDRESS });
+        const data=res.tokenInfo[0];
+        const imageData = PancakeList.find(token => 
+          token.address.toLowerCase() === address.toLowerCase()
+        );
+        const price = await fetchTokenPrice(data?.symbol);
+        return {
+          name:data?.name,
+          symbol: data?.symbol,
+          balance: data?.balance,
+          address:data?.address,
+          network: "BSC",
+          img_url: imageData?.logoURI || '',
+          price: price,
+          decimals:data?.decimals
+        };
+      }
     } catch (error) {
       console.error(`Error fetching token info for ${address}:`, error);
       const imageData = PancakeList.find(token => 

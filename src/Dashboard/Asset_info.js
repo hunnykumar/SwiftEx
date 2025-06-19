@@ -289,7 +289,7 @@ const Asset_info = ({ route }) => {
         }
         if(asset_type?.symbol?.toUpperCase())
         {
-            navigation.navigate("TokenSend",{tokenAddress:asset_type?.address,tokenType:asset_type?.network==="ETH"?"Ethereum":"Binance"})
+            navigation.navigate("TokenSend",{tokenAddress:asset_type?.address,tokenType:asset_type?.network==="ETH"?"Ethereum":"Binance",tokenDecimals:asset_type?.decimals})
         }
       }
       const handle_asset_request=async()=>{

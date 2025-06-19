@@ -7,6 +7,7 @@ import { saveFile, encryptFile } from "../../../utilities/utilities";
 import { urls, RPC, WSS } from "../../../Dashboard/constants";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { NativeModules, Platform } from 'react-native';
+import { PPOST, proxyRequest } from '../../../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
 const StellarSdk = require('stellar-sdk');
 const { EthereumWallet } = NativeModules;
 
@@ -160,17 +161,14 @@ const getBalance = async (address) => {
   console.log(address);
   try {
     if (address) {
-      const provider = new ethers.providers.JsonRpcProvider(RPC.BSCRPC);
-      const balancee = await provider.getBalance(address);
-      const balanceInEth = ethers.utils.formatEther(balancee);
-      console.log(balanceInEth);
+      const { res, err } = await proxyRequest("/fetchWalletBalnces", PPOST, { walletAdd:address,CHAIN:"BSC" });
       // AsyncStorage.setItem('balance', balance);
 
-      AsyncStorage.setItem("balance", balanceInEth);
+      AsyncStorage.setItem("balance", res.balance);
       return {
         status: "success",
         message: "Balance fetched",
-        walletBalance: balanceInEth,
+        walletBalance: res.balance,
       };
     } else {
       return {
@@ -238,17 +236,15 @@ const getBalance = async (address) => {
 const getEthBalance = async (address) => {
   try {
     if (address) {
-      const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
-      const EthBalance = await provider.getBalance(address);
-      const balanceInEth = ethers.utils.formatEther(EthBalance);
+      const { res, err } = await proxyRequest("/fetchWalletBalnces", PPOST, { walletAdd:address,CHAIN:"ETH" });
 
-      console.log(balanceInEth);
-      AsyncStorage.setItem("EthBalance", balanceInEth);
+      console.log(res.balance);
+      AsyncStorage.setItem("EthBalance", res.balance);
 
       return {
         status: "success",
         message: "Eth Balance fetched",
-        EthBalance: balanceInEth,
+        EthBalance: res.balance,
       };
     } else {
       return {

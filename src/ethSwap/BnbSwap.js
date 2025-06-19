@@ -14,27 +14,8 @@ import { ethers } from 'ethers';
 import { useNavigation } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/Ionicons";
 import { useSelector } from 'react-redux';
-import { RPC } from '../Dashboard/constants';
 import { Wallet_screen_header } from '../Dashboard/reusables/ExchangeHeader';
-
-
-// Contract addresses for BSC Testnet
-const ROUTER_ADDRESS = "0xD99D1c33F9fC3444f8101754aBC46c52416550D1";
-const WBNB_ADDRESS = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
-const USDT_ADDRESS = "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd";
-
-// Simplified ABIs
-const ROUTER_ABI = [
-  "function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)",
-  "function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts)"
-];
-
-const ERC20_ABI = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function approve(address spender, uint256 amount) returns (bool)",
-  "function allowance(address owner, address spender) view returns (uint256)"
-];
-
+import { PPOST, proxyRequest } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
 
 const TOKENS = [
   {
@@ -65,8 +46,6 @@ const BnbSwap = () => {
   const [loading, setLoading] = useState(false);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
-  const [provider, setProvider] = useState(null);
-  const [signer, setSigner] = useState(null);
   const [userAddress, setUserAddress] = useState('');
   const [showQuoteDetails, setShowQuoteDetails] = useState(true);
   const [fromToken, setFromToken] = useState(TOKENS[0]);
@@ -76,20 +55,12 @@ const BnbSwap = () => {
 // Initialize provider and get balances
 const initializeWallet = async () => {
   try {
-    const provider = new ethers.providers.JsonRpcProvider(
-      RPC.BSCRPC2
-    );
-    setProvider(provider);
-    
-    // In a real app, you'd implement wallet connection here
-    // This is just for demonstration
     const testPrivateKey = state?.wallet?.privateKey; // PRIVATE-KEY
-    const wallet = new ethers.Wallet(testPrivateKey, provider);
-    setSigner(wallet);
+    const wallet = new ethers.Wallet(testPrivateKey);
     setUserAddress(wallet.address);
     setWalletConnected(true);
     
-    await updateBalances(wallet.address, provider);
+    await updateBalances(wallet.address);
   } catch (error) {
     Alert.alert('Error', 'Failed to initialize wallet');
     console.log(error);
@@ -97,16 +68,14 @@ const initializeWallet = async () => {
 };
 
 // Update BNB and USDT balances
-const updateBalances = async (address, provider) => {
+const updateBalances = async (address) => {
   try {
-    // Get BNB balance
-    const bnbBalance = await provider.getBalance(address);
-    setBnbBalance(ethers.utils.formatEther(bnbBalance));
-
-    // Get USDT balance
-    const usdtContract = new ethers.Contract(toToken.address, ERC20_ABI, provider);
-    const usdtBalance = await usdtContract.balanceOf(address);
-    setUsdtBalance(ethers.utils.formatUnits(usdtBalance, 18));
+    const {res,err} = await proxyRequest("/bscSwapBalance", PPOST, {address:address,toToken:toToken.address});
+    if (err?.status === 500) {
+      Alert.alert("Balance fetch","somthing went wrong...")
+    }
+    setBnbBalance(res?.response?.walletBalance);
+    setUsdtBalance(res?.response?.usdtContract);
   } catch (error) {
     console.error('Balance update error:', error);
   }
@@ -118,19 +87,17 @@ const getQuote = async (inputAmount) => {
   
   setQuoteLoading(true);
   try {
-    const router = new ethers.Contract(ROUTER_ADDRESS, ROUTER_ABI, provider);
-    const amountIn = ethers.utils.parseEther(inputAmount);
-    
-    const amounts = await router.getAmountsOut(
-      amountIn,
-      [fromToken.address, toToken.address]
-    );
-    
-    setEstimatedUsdt(ethers.utils.formatUnits(amounts[1], 18));
+    const {res,err} = await proxyRequest("/getBscSwapQuote", PPOST, {tokenIn:fromToken,tokenOut:toToken,amountIn:inputAmount});
+    if (err?.status === 500) {
+      setEstimatedUsdt('0');
+      setQuoteLoading(false);
+    }
+    setEstimatedUsdt(res?.swapInfo);
   } catch (error) {
     console.error('Quote error:', error);
     setEstimatedUsdt('0');
-  } finally {
+    setQuoteLoading(false);
+  }finally {
     setQuoteLoading(false);
   }
 };
@@ -144,34 +111,25 @@ const executeSwap = async () => {
 
   setLoading(true);
   try {
-    const router = new ethers.Contract(ROUTER_ADDRESS, ROUTER_ABI, signer);
     
-    // Calculate minimum output amount (with 5% slippage)
-    const amountIn = ethers.utils.parseEther(bnbAmount);
-    const amounts = await router.getAmountsOut(
-      amountIn,
-      [fromToken.address, toToken.address]
-    );
-    const minOut = amounts[1].mul(95).div(100); // 5% slippage
-    
-    // Execute swap
-    const deadline = Math.floor(Date.now() / 1000) + 300; // 5 minutes
-    const tx = await router.swapExactETHForTokens(
-      minOut,
-      [fromToken.address, toToken.address],
-      userAddress,
-      deadline,
-      {
-        value: amountIn,
-        gasLimit: 300000
-      }
-    );
-    
-    await tx.wait();
-    Alert.alert('Success', 'Swap completed successfully!');
+    const {res,err} = await proxyRequest("/bscSwapPrepare", PPOST, {publicKey:userAddress,amountIn:bnbAmount,tokenIn:fromToken,tokenOut:toToken});
+    if (err?.status === 500) {
+      Alert.alert('Error', 'Swap failed');
+    }
+    const wallet = new ethers.Wallet(state?.wallet?.privateKey);
+    const signedTxs = await wallet.signTransaction(res.swapInfo);
+    const respo = await proxyRequest("/bscSwapExecute", PPOST, {signedTxs});
+    if (respo?.err?.status === 500) {
+      Alert.alert('Error', 'Swap failed');
+    }
+    console.log("respo",respo?.res?.swapInfo)
+    if(respo?.res?.swapInfo)
+    {
+      Alert.alert('Success', 'Swap completed successfully!');
+    }
     
     // Update balances
-    await updateBalances(userAddress, provider);
+    await updateBalances(userAddress);
   } catch (error) {
     Alert.alert('Error', 'Swap failed: ' + error.message);
     console.error(error);

@@ -31,7 +31,7 @@ import Icon from "../../../../../icon";
 import { alert, ShowErrotoast, Showsuccesstoast } from "../../../../reusables/Toasts";
 import { isAddress } from "ethers/lib/utils";
 import { ethers } from "ethers";
-import { RPC } from "../../../../constants";
+import { PPOST, proxyRequest } from "../api";
 const TokenSend = ({ route }) => {
   const toast = useToast();
   const FOCUSED = useIsFocused()
@@ -49,49 +49,36 @@ const TokenSend = ({ route }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [lastScannedData, setLastScannedData] = useState(null);
   const [ErroVisible, setErroVisible] = useState(false);
-  const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
-  const providerBNB = new ethers.providers.JsonRpcProvider(RPC.BSCRPC2);
-  const ERC20_ABI = [
-    "function name() view returns (string)",
-    "function symbol() view returns (string)",
-    "function decimals() view returns (uint8)",
-    "function balanceOf(address owner) view returns (uint256)"
-  ];
-
-  const ERC20_BNB_ABI = [
-    "function balanceOf(address) view returns (uint256)",
-    "function name() view returns (string)",
-    "function decimals() view returns (uint8)"
-  ];
-
-  const BNBERC20ABI = [
-    "function balanceOf(address) view returns (uint256)",
-    "function decimals() view returns (uint8)",
-    "function transfer(address to, uint256 amount) returns (bool)"
-  ];
-  const ETHTokenERC20ABI = [
-    "function balanceOf(address) view returns (uint256)",
-    "function decimals() view returns (uint8)",
-    "function transfer(address to, uint256 amount) returns (bool)"
-  ];
 
 
 
-  const sendBNBToken = async (tokenAddress) => {
+
+
+  const sendBNBToken = async (tokenAddress,tokenDecimals) => {
     try {
       // Load wallet with private key
-      const wallet = new ethers.Wallet(state?.wallet?.privateKey, providerBNB);
+      const wallet = new ethers.Wallet(state?.wallet?.privateKey);
       // Load ERC-20 contract
       const tokenContract = new ethers.Contract(tokenAddress, BNBERC20ABI, wallet);
       // Fetch token decimals
-      const decimals = await tokenContract.decimals();
+      const decimals = tokenDecimals;
       // Convert amount to correct format
       const formattedAmount = ethers.utils.parseUnits(amount, decimals);
+      const unsigned = await tokenContract.populateTransaction.transfer(address, formattedAmount);
       // Send transaction
-      const tx = await tokenContract.transfer(address, formattedAmount);
-      await tx.wait();
-      alert("success", `Transaction successful!\nTx Hash: ${tx.hash}`);
-      console.log("---",tx.hash)
+      const {res,err} = await proxyRequest("/tokenSendPrepare", PPOST, { CHAIN:"BSC",unsignedTx:unsigned,address:wallet.address });
+      const upgradedTx = {
+        ...res.fullTx,
+        gasLimit: ethers.BigNumber.from(res.fullTx.gasLimit),
+        gasPrice: ethers.BigNumber.from(res.fullTx.gasPrice),
+        value: res.fullTx.value ? ethers.BigNumber.from(res.fullTx.value) : ethers.BigNumber.from(0),
+      };
+      const signedTx = await wallet.signTransaction(upgradedTx);
+      const respoExe = await proxyRequest("/executeTransaction", PPOST, {signedTx:signedTx,"CHAIN":"BSC"});
+      if(respoExe?.res?.txHash)
+      {
+        alert("success", `Transaction successful!`);
+      }
     } catch (error) {
       console.log("Transaction Error:", error);
       alert("error", "Transaction failed. Check logs.");
@@ -103,16 +90,31 @@ const TokenSend = ({ route }) => {
     }
   };
   // send Ether tokens
-  const sendEthTokens = async (tokenAddress) => {
+  const sendEthTokens = async (tokenAddress,tokenDecimals) => {
     try {
-      const wallet = new ethers.Wallet(state?.wallet?.privateKey, provider);
-      const tokenContract = new ethers.Contract(tokenAddress, ETHTokenERC20ABI, wallet);
-      const decimals = await tokenContract.decimals();
-      const formattedAmount = ethers.utils.parseUnits(amount, decimals);
-      const tx = await tokenContract.transfer(address, formattedAmount);
-      await tx.wait();
-      Alert.alert("Success", `Transaction sent!\nTx Hash: ${tx.hash}`);
-      console.log(`Transaction sent!\nTx Hash: ${tx.hash}`)
+        // Load wallet with private key
+        const wallet = new ethers.Wallet(state?.wallet?.privateKey);
+        // Load ERC-20 contract
+        const tokenContract = new ethers.Contract(tokenAddress, BNBERC20ABI, wallet);
+        // Fetch token decimals
+        const decimals = tokenDecimals;
+        // Convert amount to correct format
+        const formattedAmount = ethers.utils.parseUnits(amount, decimals);
+        const unsigned = await tokenContract.populateTransaction.transfer(address, formattedAmount);
+        // Send transaction
+        const {res,err} = await proxyRequest("/tokenSendPrepare", PPOST, { CHAIN:"ETH",unsignedTx:unsigned,address:wallet.address });
+        const upgradedTx = {
+          ...res.fullTx,
+          gasLimit: ethers.BigNumber.from(res.fullTx.gasLimit),
+          gasPrice: ethers.BigNumber.from(res.fullTx.gasPrice),
+          value: res.fullTx.value ? ethers.BigNumber.from(res.fullTx.value) : ethers.BigNumber.from(0),
+        };
+        const signedTx = await wallet.signTransaction(upgradedTx);
+        const respoExe = await proxyRequest("/executeTransaction", PPOST, {signedTx:signedTx,"CHAIN":"ETH"});
+        if(respoExe?.res?.txHash)
+        {
+          alert("success", `Transaction successful!`);
+        }
     } catch (error) {
       console.error("Transaction Error:", error);
       Alert.alert("Error", "Transaction failed. Check logs.");
@@ -217,20 +219,10 @@ const TokenSend = ({ route }) => {
   // Fetch token details
   const fetchTokenInfo = async (address) => {
     try {
-      const tokenContract = new ethers.Contract(address, ERC20_ABI, provider);
-      const [name, fetchedSymbol, decimals, balance] = await Promise.all([
-        tokenContract.name(),
-        tokenContract.symbol(),
-        tokenContract.decimals(),
-        tokenContract.balanceOf(state?.wallet?.address)
-      ]);
-      const formattedBalance = ethers.utils.formatUnits(balance, decimals);
-      return {
-        name,
-        symbol: fetchedSymbol || symbol,
-        balance: formattedBalance,
-        address
-      };
+      if (address && state?.wallet?.address) {
+        const { res, err } = await proxyRequest("/fetchTokenInfo", PPOST, { address: address, walletAdd: state?.wallet?.address });
+        return res.tokenInfo[0];
+      }
     } catch (error) {
       console.error(`Error fetching token info for ${address}:`, error);
       throw new Error('Invalid token address or failed to fetch data');
@@ -240,18 +232,10 @@ const TokenSend = ({ route }) => {
   // Fetch BNB token details
   const fetchBNBTokenInfo = async (address) => {
     try {
-      const tokenContract = new ethers.Contract(address, ERC20_BNB_ABI, providerBNB);
-      const [name, decimals, balance] = await Promise.all([
-        tokenContract.name(),
-        tokenContract.decimals(),
-        tokenContract.balanceOf(state?.wallet?.address)
-      ]);
-      const formattedBalance = ethers.utils.formatUnits(balance, decimals);
-      return {
-        name,
-        balance: formattedBalance,
-        address
-      };
+      if (address && state?.wallet?.address) {
+        const { res, err } = await proxyRequest("/fetchBscTokenInfo", PPOST, { address: address, walletAdd: state?.wallet?.address });
+        return res.tokenInfo[0];
+      }
     } catch (error) {
       console.error(`Error fetching token info for ${address}:`, error);
       throw new Error('Invalid token address or failed to fetch data');
@@ -397,10 +381,10 @@ const TokenSend = ({ route }) => {
                   Showsuccesstoast(toast, "Valid token address");
                   // sendToken(walletPublickKey, address, amount) --TO DO
                   if (route?.params?.tokenType === "Binance") {
-                    sendBNBToken(route?.params?.tokenAddress)
+                    sendBNBToken(route?.params?.tokenAddress,route?.params?.tokenDecimals)
                   }
                   if (route?.params?.tokenType === "Ethereum") {
-                    sendEthTokens(route?.params?.tokenAddress)
+                    sendEthTokens(route?.params?.tokenAddress,route?.params?.tokenDecimals)
                   }
                 } else {
                   console.log('Invalid token address');
