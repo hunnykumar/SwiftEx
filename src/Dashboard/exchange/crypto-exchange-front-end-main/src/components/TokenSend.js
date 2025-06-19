@@ -56,6 +56,9 @@ const TokenSend = ({ route }) => {
 
   const sendBNBToken = async (tokenAddress,tokenDecimals) => {
     try {
+      const BNBERC20ABI = [
+        "function transfer(address to, uint256 value) public returns (bool)"
+      ];
       // Load wallet with private key
       const wallet = new ethers.Wallet(state?.wallet?.privateKey);
       // Load ERC-20 contract
@@ -92,10 +95,13 @@ const TokenSend = ({ route }) => {
   // send Ether tokens
   const sendEthTokens = async (tokenAddress,tokenDecimals) => {
     try {
+      const usdtAbi = [
+        "function transfer(address to, uint256 value) public returns (bool)"
+      ];
         // Load wallet with private key
         const wallet = new ethers.Wallet(state?.wallet?.privateKey);
         // Load ERC-20 contract
-        const tokenContract = new ethers.Contract(tokenAddress, BNBERC20ABI, wallet);
+        const tokenContract = new ethers.Contract(tokenAddress, usdtAbi, wallet);
         // Fetch token decimals
         const decimals = tokenDecimals;
         // Convert amount to correct format

@@ -16,7 +16,7 @@ import darkBlue from '../../../../../../assets/darkBlue.png'
 import steller_img from '../../../../../../assets/Stellar_(XLM).png'
 import bnbimage from "../../../../../../assets/bnb-icon2_2x.png";
 import WalletActivationComponent from '../utils/WalletActivationComponent';
-import { GET, authRequest, getToken } from '../api';
+import { GET, PPOST, authRequest, getToken, proxyRequest } from '../api';
 import { ShowErrotoast, alert } from '../../../../reusables/Toasts';
 import { toInt } from 'validator';
 import { SignTransaction, swap_prepare } from '../../../../../../All_bridge';
@@ -117,22 +117,15 @@ useEffect(()=>{
         {
             setACTIVATION_MODAL_PROD(true)
         }
-      const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
+
       const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
-      const usdtAbi = [
-        "function balanceOf(address owner) view returns (uint256)"
-      ];
-
-      const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, provider);
-
-      const balance = await usdtContract.balanceOf(addresses);
-      console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`);
-
-      setWALLETBALANCE(ethers.utils.formatUnits(balance, 6));
-      // if(parseFloat(ethers.utils.formatUnits(balance, 6))===0||state.STELLAR_ADDRESS_STATUS===false)
-      //   {
-      //     // setonTapFeature(true)
-      //   }
+      if (usdtAddress && addresses) {
+        const { res, err } = await proxyRequest("/fetchTokenInfo", PPOST, { address: usdtAddress, walletAdd: addresses });        
+        const balance = res.tokenInfo[0]?.balance;
+        console.log(`USDT Balance of ${addresses}: ${balance} USDT`);
+        
+        setWALLETBALANCE(balance);
+      }
       setbalanceLoading(false)
       BridgeUSDCValidation()
     } catch (error) {
@@ -258,27 +251,39 @@ const getOffersData = async () => {
   const sendEthToContract = async () => {
     try {
       keysUpdate()
-      const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
-      const wallet = new ethers.Wallet(state?.wallet?.privateKey, provider);
-      const usdtAddress = OneTapUSDCAddress.Address;  
       const usdtAbi = [
-          "function transfer(address to, uint256 value) public returns (bool)"
+        "function transfer(address to, uint256 value) public returns (bool)"
       ];
-      const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
-      const valueInUSDT = ethers.utils.parseUnits(amount, 6);
-      const tx = await usdtContract.transfer(OneTapContractAddress.Address, valueInUSDT);
-      console.log("Transaction Sent", `Tx Hash: ${tx.hash}`);
-  
+      // Load wallet with private key
+      const wallet = new ethers.Wallet(state?.wallet?.privateKey);
+      const usdtAddress = OneTapUSDCAddress.Address;
+      // Load ERC-20 contract
+      const tokenContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
+      // Convert amount to correct format
+      const formattedAmount = ethers.utils.parseUnits(amount, 6);
+      const unsigned = await tokenContract.populateTransaction.transfer(usdtAddress, formattedAmount);
+      // Send transaction
+      const { res, err } = await proxyRequest("/tokenSendPrepare", PPOST, { CHAIN: "ETH", unsignedTx: unsigned, address: wallet.address });
+      const upgradedTx = {
+        ...res.fullTx,
+        gasLimit: ethers.BigNumber.from(res.fullTx.gasLimit),
+        gasPrice: ethers.BigNumber.from(res.fullTx.gasPrice),
+        value: res.fullTx.value ? ethers.BigNumber.from(res.fullTx.value) : ethers.BigNumber.from(0),
+      };
+      const signedTx = await wallet.signTransaction(upgradedTx);
+      const respoExe = await proxyRequest("/executeTransaction", PPOST, { signedTx: signedTx, "CHAIN": "ETH" });
+      if (respoExe?.res?.txHash) {
+        console.log("Transaction Sent", `Tx Hash: ${respoExe?.res?.txHash}`);
       setfianl_modal_text("Transaction Successful");
-      await tx.wait();
-      setfianl_modal_loading(false);
-      setfianl_modal_error(true);
-  } catch (error) {
+        setfianl_modal_loading(false);
+        setfianl_modal_error(true);
+      }
+    } catch (error) {
       setfianl_modal_text("Transaction Failed");
       console.log("Transaction Failed", error);
       setfianl_modal_loading(false);
       setfianl_modal_error(true);
-  }
+    }
   
   };
   const manage_swap = async () => {
