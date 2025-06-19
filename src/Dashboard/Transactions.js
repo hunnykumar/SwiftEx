@@ -10,14 +10,15 @@ import {
   useColorScheme as _useColorScheme,
   Appearance,
   SafeAreaView,
-  RefreshControl
+  RefreshControl,
+  ScrollView
 } from 'react-native';
-import { Alchemy, Network } from 'alchemy-sdk';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSelector } from 'react-redux';
 import { TransactionForStellar, Wallet_screen_header } from './reusables/ExchangeHeader';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import StellarTransactionHistory from './exchange/crypto-exchange-front-end-main/src/pages/StellarTransactionHistory';
+import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';
 
 const ThemeContext = React.createContext();
 
@@ -75,11 +76,6 @@ const ThemeProvider = ({ children }) => {
 };
 
 const useTheme = () => useContext(ThemeContext);
-const settings = {
-  apiKey: 'k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo',
-  network: Network.ETH_SEPOLIA,
-};
-const alchemy = new Alchemy(settings);
 
 const formatNumber = (value, decimals = 4) => {
   if (!value) return '0';
@@ -115,25 +111,13 @@ const TransactionHistory = () => {
   const fetchAllTransactions = async () => {
     try {
       setLoading(true);
-      const sentTxns = await alchemy.core.getAssetTransfers({
-        fromAddress: walletAddress,
-        category: ['external', 'erc20', 'erc721', 'erc1155'],
-        order: 'desc',
-        maxCount: 300,
-      });
-
-      const receivedTxns = await alchemy.core.getAssetTransfers({
-        toAddress: walletAddress,
-        category: ['external', 'erc20', 'erc721', 'erc1155'],
-        order: 'desc',
-        maxCount: 300,
-      });
-
-      const allTxns = [...sentTxns.transfers, ...receivedTxns.transfers].sort(
-        (a, b) => new Date(b.metadata?.blockTimestamp || 0) - new Date(a.metadata?.blockTimestamp || 0)
-      );
-
-      setTransactions(allTxns);
+       const {res,err} = await proxyRequest("/etherTransactionHistory", PPOST, {walletAddress:walletAddress});
+      if (err?.status === 500) {
+        console.error('Error fetching transactions:', err);
+        setLoading(false);
+        setRefreshing(false);
+      }      
+      setTransactions(res?.result);
       setLoading(false);
       setRefreshing(false);
     } catch (error) {
@@ -221,10 +205,14 @@ const TransactionHistory = () => {
               <Text style={[styles.assetName, { color: colors.textPrimary }]}>
                 {item.asset || 'ETH'}
               </Text>
+             <View style={{alignSelf:"flex-end",width:"20%"}}>
+             <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
               <Text style={[styles.amountText, { color: statusColor }]}>
                 {txType === 'Send' ? '-' : '+'}
-                {formatNumber(item.value || 0)}
+                {formatNumber(item.value || 0,item?.rawContract?.decimal)}
               </Text>
+              </ScrollView>
+             </View>
             </View>
           </View>
         </TouchableOpacity>
