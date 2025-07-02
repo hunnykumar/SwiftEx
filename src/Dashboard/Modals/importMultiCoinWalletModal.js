@@ -7,6 +7,7 @@ import {
   TextInput,
   ActivityIndicator,
   TouchableOpacity,
+  NativeModules,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -28,6 +29,7 @@ import { alert } from "../reusables/Toasts";
 import { Paste } from "../../utilities/utilities";
 import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../../icon";
+const { EthereumWallet } = NativeModules;
 
 const xrpl = require("xrpl");
 
@@ -245,29 +247,21 @@ const ImportMultiCoinWalletModal = ({
                   );
                 }
                 // const xrpWalletFromM = xrpl.Wallet.fromMnemonic(trimmedPhrase); // UNCOMMENT
-                const entropy = ethers.utils.mnemonicToEntropy(trimmedPhrase);
-                console.log(
-                  "\t===> seed Created from mnemonic",
-                  entropy.split("x")[1]
-                );
-                // const xrpWallet = xrpl.Wallet.fromEntropy( // UNCOMMENT
-                //   entropy.split("x")[1] // UNCOMMENT
-                // ); // This is suggested because we will get seeds also // UNCOMMENT
-                // console.log(xrpWallet); // Produces different addresses // UNCOMMENT
-
-                const accountFromMnemonic =
-                  ethers.Wallet.fromMnemonic(trimmedPhrase);
-                const Keys = accountFromMnemonic._signingKey();
-                const privateKey = Keys.privateKey;
+                const accountFromMnemonic = await EthereumWallet.recoverMultiChainWallet(trimmedPhrase);
                 const wallet = {
-                  address: accountFromMnemonic.address,
-                  privateKey: privateKey,
+                  address: accountFromMnemonic.ethereum.address,
+                  privateKey: accountFromMnemonic.ethereum.privateKey,
                   xrp: {
                     // address: xrpWallet.classicAddress, // UNCOMMENT
                     // privateKey: xrpWallet.seed, // UNCOMMENT
                     address: "000000000",
                     privateKey: "000000000",
                   },
+                  stellarWallet: {
+                    publicKey: accountFromMnemonic.stellar.publicKey,
+                    secretKey: accountFromMnemonic.stellar.secretKey
+                  },
+
                 };
                 /* const response = saveUserDetails(accountFromMnemonic.address).then(async (response)=>{
                 if(response===400){
@@ -285,12 +279,6 @@ const ImportMultiCoinWalletModal = ({
 
 
               })*/
-                const accounts = {
-                  address: wallet.address,
-                  privateKey: wallet.privateKey,
-                  name: accountName,
-                  wallets: [],
-                };
                 let wallets = [];
                 const data = await AsyncStorageLib.getItem(`${user}-wallets`)
                   .then((response) => {
@@ -318,6 +306,10 @@ const ImportMultiCoinWalletModal = ({
                       // privateKey: xrpWallet.seed,  // UNCOMMENT
                       address: "000000000",
                       privateKey: "000000000",
+                    },
+                    stellarWallet: {
+                      publicKey: wallet.stellarWallet.publicKey,
+                      secretKey: wallet.stellarWallet.secretKey
                     },
                     walletType: "Multi-coin",
                     wallets: wallets,
