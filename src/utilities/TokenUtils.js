@@ -204,9 +204,29 @@ async function fetchAllTokensData(WALLET_ADDRESS) {
 
     // Wait for all tokens to be fetched
     const allTokens = await Promise.all(fetchPromises);
-
-    // Sort all tokens alphabetically by name
-    const sortedTokens = allTokens.sort((a, b) => a.name.localeCompare(b.name));
+    // Sort all tokens with non-zero balance at the top
+    const sortedTokens = allTokens.sort((a, b) => {
+      // Convert balances to numbers
+      const balanceA = parseFloat(a.balance || 0);
+      const balanceB = parseFloat(b.balance || 0);
+      
+      // First sort by whether balance is > 0
+      if (balanceA > 0 && balanceB === 0) {
+        return -1; // a comes first
+      }
+      if (balanceA === 0 && balanceB > 0) {
+        return 1; // b comes first
+      }
+      
+      // If both have positive balances or both have zero balance,
+      // then sort by balance amount (higher first)
+      if (balanceA !== balanceB) {
+        return balanceB - balanceA;
+      }
+      
+      // If balances are equal, sort by name
+      return a.name.localeCompare(b.name);
+    });
 
     // Return a single result object with all tokens in one array
     const result = {

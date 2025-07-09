@@ -8,9 +8,20 @@ import {
   Dimensions,
   Platform,
   useColorScheme,
-  BackHandler
+  BackHandler,
+  ActivityIndicator
 } from 'react-native';
+import DeviceInfo from 'react-native-device-info';
 import Ionicons from "react-native-vector-icons/Ionicons";
+import useFirebaseCloudMessaging from '../../../../notifications/firebaseNotifications';
+import { authRequest, GET, getToken, POST } from '../api';
+import AsyncStorageLib from "@react-native-async-storage/async-storage";
+import { useDispatch, useSelector } from 'react-redux';
+import { RAPID_STELLAR, SET_ASSET_DATA } from '../../../../../components/Redux/actions/type';
+import { REACT_APP_HOST } from '../ExchangeConstants';
+import Snackbar from 'react-native-snackbar';
+import { STELLAR_URL } from '../../../../constants';
+const StellarSdk = require('stellar-sdk');
 
 const { height } = Dimensions.get('window');
 
@@ -22,6 +33,11 @@ const WalletActivationComponent = ({
   navigation = null,
   shouldNavigateBack = false
 }) => {
+    const dispatch_ = useDispatch()
+    const state = useSelector((state) => state);
+  
+  const [Wallet_activation,setWallet_activation]=useState(false)
+  const { FCM_getToken } = useFirebaseCloudMessaging();
   const isDarkMode = appTheme;
   
   // Use refs to avoid re-creating animation instances
@@ -118,6 +134,152 @@ const WalletActivationComponent = ({
 
   if (!showSheet) return null;
 
+
+  const syncDevice = async () => {
+    const token = await FCM_getToken();
+    console.log(token);
+    console.log("hi----->>>ttokenb", token);
+    const device_info = {
+      'deviceBrand': await DeviceInfo.getBrand(),
+      'deviceModel': await DeviceInfo.getModel(),
+      'systemVersion': await DeviceInfo.getSystemVersion(),
+      "deviceUniqueID": await DeviceInfo.getUniqueIdSync(),
+      "deviceIP": await DeviceInfo.getIpAddressSync(),
+      "deviceType": await DeviceInfo.getDeviceType(),
+      "deviceMacAddress": await DeviceInfo.getMacAddress()
+    }
+    try {
+      const { res } = await authRequest(
+        `/users/getInSynced/${token}`,
+        GET
+      );
+      if (res.isInSynced) {
+        const { err } = await authRequest("/users/syncDevice", POST, {
+          fcmRegToken: token,
+          deviceInfo:device_info
+        });
+        if (err){
+          return { status: false };
+        } 
+        return { status: true };
+      }
+
+      return { status: true }; 
+    } catch (err) {
+      console.log(err)
+      return { status: false };
+    }
+  };
+ 
+  const active_account = async () => {
+    console.log("<<<<<<<clicked");
+    try {  
+      // Retrieve token and stored email in parallel
+      const [token, storedEmail] = await Promise.all([
+        getToken(),
+        AsyncStorageLib.getItem('user_email')
+      ]);
+  
+      console.log("Token:", token);
+  
+      const postData = {
+        email: storedEmail,
+        publicKey: state?.STELLAR_PUBLICK_KEY,
+        wallletPublicKey:state?.ETH_KEY
+      };
+  
+      // Update public key by email
+      const response = await fetch(`${REACT_APP_HOST}/users/updatePublicKeyByEmail`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(postData),
+      });
+      
+      const data = await response.json();
+      console.log("--->>>>", data);
+  
+      if (data.message === "Funded successfully") {
+        const keypair = StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY);
+        const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(data?.resXdr, "base64");
+        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.PUBLIC);
+        tx.sign(keypair);
+        const server = new StellarSdk.Server(STELLAR_URL.URL);
+        const result = await server.submitTransaction(tx);
+        if (result?.successful === true) {
+          server.loadAccount(state.STELLAR_PUBLICK_KEY)
+        .then(account => {
+            console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);
+            account.balances.forEach(balance => {
+              dispatch_({
+                type: SET_ASSET_DATA,
+                payload: account.balances,
+              })
+               dispatch_({
+                type: RAPID_STELLAR,
+                payload: {
+                  ETH_KEY: state.ETH_KEY,
+                  STELLAR_PUBLICK_KEY: state.STELLAR_PUBLICK_KEY,
+                  STELLAR_SECRET_KEY: state.STELLAR_SECRET_KEY,
+                  STELLAR_ADDRESS_STATUS: true
+                },
+              });
+              Snackbar.show({
+                text: 'Wallet Activated',
+                duration: Snackbar.LENGTH_SHORT,
+                backgroundColor:'green',
+            });
+            setWallet_activation(false);
+            onActivate()
+            });
+        })
+        .catch(error => {
+            console.log('Error loading account:', error);
+            setLoading(false)
+            Snackbar.show({
+                text: "USDT failed to be added",
+                duration: Snackbar.LENGTH_SHORT,
+                backgroundColor:'red',
+            });
+            setWallet_activation(false);
+            handleClose()
+        });
+        }
+        else {
+          console.log("Error: Funding account failed.");
+          setWallet_activation(false);
+          handleClose()
+        }
+
+        // setWallet_activation(false);
+        // handleClose()
+      } else if (data.message === "Error funding account") {
+        console.log("Error: Funding account failed.");
+        setWallet_activation(false);
+        handleClose()
+      }
+  
+    } catch (error) {
+      console.error('Network or fetch error:', error);
+      setWallet_activation(false);
+      handleClose()
+    }
+  };
+
+
+  const ActivationHandle=async()=>{
+    setWallet_activation(true)
+   const res=await syncDevice()
+   if(res.status)
+   {
+    await active_account()
+   }else{
+    setWallet_activation(false)
+   }
+  }
+
   return (
     <View style={[styles.container, StyleSheet.absoluteFill]}>
       <TouchableOpacity 
@@ -141,24 +303,25 @@ const WalletActivationComponent = ({
           </View>
           
           <Text style={[styles.title, { color: theme.text }]}>
-          Activate Your Wallet
+          Activate and Trust USDT
           </Text>
           
           <Text style={[styles.description, { color: theme.secondaryText }]}>
-          Your Stellar wallet isn’t activated yet.
-          Activate it now to start using all the features seamlessly!
+          Your Stellar wallet isn’t activated yet. Activate it now to automatically trust USDC and start using all features seamlessly!
           </Text>
           
           <TouchableOpacity 
-            style={styles.activateButton}
-            onPress={onActivate}
+            style={[styles.activateButton,{backgroundColor:Wallet_activation?"gray":"#4F8EF7"}]}
+            onPress={()=>{ActivationHandle()}}
+            disabled={Wallet_activation}
           >
-            <Text style={styles.buttonText}>Claim 5 XLM Now!</Text>
+            {Wallet_activation?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={styles.buttonText}>Claim 5 XLM Now!</Text>}
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.cancelButton}
             onPress={handleClose}
+            disabled={Wallet_activation}
           >
             <Text style={[styles.cancelText, { color: theme.secondaryText }]}>
               Remind Me Later

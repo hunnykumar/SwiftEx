@@ -388,7 +388,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
   useEffect(()=>{
     if(state.STELLAR_ADDRESS_STATUS===false&&STELLAR_URL.USERTYPE!=="PROD")
     {
-      active_account()
+      // active_account()
     }
     getAccountDetails();
     getData_new_Kyc()
@@ -822,14 +822,14 @@ useEffect(() => {
               <View style={[styles.linearContainer,{backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)"}]}>
               <SELECT_WALLET_EXC
         visible={VISIBLE_SELECT}
-        setVisible={setVISIBLE_SELECT}
-        setModalVisible={setVISIBLE_SELECT}
+        setVisible={()=>{setVISIBLE_SELECT(false)}}
+        setModalVisible={()=>{setVISIBLE_SELECT(false)}}
       />
             {state.wallet ? (
               <View>
                 <View style={styles.iconwithTextContainer}>
                   <TouchableOpacity style={[styles.walletContainer,{ borderColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",borderBottomColor:"#4CA6EA",borderWidth:1}]} onPress={()=>{navigation.navigate("MyWallet")}}>
-                    <Text style={styles.myWallet}>My Wallet </Text>
+                    <Text style={styles.myWallet}>Linked Wallet </Text>
                     <Icon
                       name={"wallet"}
                       type={"materialCommunity"}
@@ -844,42 +844,21 @@ useEffect(() => {
                       type={"materialCommunity"}
                       color={"#008C62"}
                     /> */}
-                    <Text style={styles.connectedText}>Connected!</Text>
+                    <Text style={[styles.connectedText]}>USDC: </Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(10), paddingVertical: 0.1, borderRadius: 5 }}>
+                    <Text style={styles.connectedText}>{state?.STELLAR_ADDRESS_STATUS===false?"0.00":state?.assetData?.find(b => b.asset_code === "USDC")?.balance||"0.00"}</Text>
+                      </ScrollView>
                   </View>
                 </View>
                 <View style={{}}>
-                <View style={{marginVertical:hp(1),borderBottomColor:"gray",borderColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",borderWidth:2}}>
-                    <Text style={styles.textColor}>Ethereum Address </Text>
-                    <View style={{ flexDirection: "row" }}>
-                    {loading&&!steller_key?<View style={{width: wp(70)}}>
-                           <Exchange_single_loading/>
-                        </View>:
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 2.2, borderRadius: 5 }}>
-                        <Text style={[styles.textColor, styles.width_scrroll]}>{state.wallet.address}</Text>
-                      </ScrollView>
-                      }
-                      <TouchableOpacity onPress={() => { copyToClipboard(state.wallet.address) }}>
-                        <Icon
-                          name={"content-copy"}
-                          type={"materialCommunity"}
-                          color={"rgba(129, 108, 255, 0.97)"}
-                          size={24}
-                          style={{ marginTop: 0.3, marginLeft: 2.9 }}
-                        />
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => { navigation.navigate("AllWallets") }}>
-                        <Text style={{ color: "#4CA6EA", marginLeft: wp(1), marginTop: hp(0.5), paddingHorizontal: (1.5) }}>Manage</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View> 
 
-                  <View style={{marginVertical:hp(1),borderBottomColor:"gray",borderColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",borderWidth:2}}>
+                  <View style={{marginVertical:hp(0.5)}}>
                     <Text style={styles.textColor}>Stellar Public Key</Text>
                     <View style={{flexDirection:"row"}}>
                     {loading&&!steller_key?<View style={{width: wp(70)}}>
                            <Exchange_single_loading/>
                         </View>:
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 2.9, borderRadius: 5 }}>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 1, borderRadius: 5 }}>
                         <Text style={[styles.textColor, styles.width_scrroll]}>{steller_key}</Text>
                       </ScrollView>}
                       <TouchableOpacity onPress={() => { copyToClipboard(steller_key) }}>
@@ -923,56 +902,48 @@ useEffect(() => {
       </View>
 
 <View style={{backgroundColor:"#011434"}}>
-{profile && (
-          <View>
-              {profile.isVerified===true ? (
-                <View style={{flexDirection:"row",justifyContent:"center"}}>
-                  <TouchableOpacity 
-                    style={[styles.PresssableBtn,{width: wp(93),marginLeft:3,height:hp(8)}]}
-                    onPress={() => {
-                     // setOpen(true)
-                        Offer_condition(Offer_active)
-                    }}
-                  >
-                    <Text style={{ color: "#fff",fontSize:19,fontWeight:"bold",marginTop:hp(0.5) }}>Trade</Text>
-                  </TouchableOpacity>
-                  
-                  {/* <NewOfferModal
-                    user={profile}
-                    open={open}
-                    onCrossPress={()=>{setOpen(false)}}
-                    setOpen={setOpen}
-                    getOffersData={getOffersData}
-                  /> */}
-                </View>
-              ) : (
-               <View style={{flexDirection:"row",justifyContent:"center",marginVertical:5}}>
-                <Text style={styles.kycText}>FETCHING UPDATES {profile.isVerified===false?kyc():""}</Text>
-                <ActivityIndicator color={"green"}/>
-               </View>
-              )}
-            </View>
-          // </View>
-        )}
+          {profile && (
+            profile.isVerified === true ? (
+              <View style={{ backgroundColor: "#011434", flexDirection: "row", justifyContent: "center", alignSelf: "center", width: "93%" }}>
+                <TouchableOpacity
+                  style={styles.PresssableBtn}
+                  onPress={() => {
+                    navigation.navigate("classic", { Asset_type: "ETH" })
+                  }}
+                >
+                   <Icon name={"wallet"} type={"material"} color={"#fff"} size={30}/>
+                  <Text style={styles.PresssableBtnText}>Import USDC</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.PresssableBtn}
+                  onPress={() => {
+                    Offer_condition(Offer_active)
+                  }}
+                >
+                   <Icon name={"moving"} type={"material"} color={"#fff"} size={30} />
+                  <Text style={styles.PresssableBtnText}>Trade</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.PresssableBtn}
+                  onPress={() => {
+                    navigation.navigate("Assets_manage");
+                  }}
+                >
+                   <Icon name={"wallet"} type={"material"} color={"#fff"} size={30}/>
+                  <Text style={styles.PresssableBtnText}>Assets</Text>
+                </TouchableOpacity>
+
+              </View>
+            ) : (
+              <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 5 }}>
+                <Text style={styles.kycText}>FETCHING UPDATES {profile.isVerified === false ? kyc() : ""}</Text>
+                <ActivityIndicator color={"green"} />
+              </View>
+            )
+          )}
 </View>
-        <View style={{ backgroundColor: "#011434",flexDirection:"row",justifyContent:"center" }}>
-          <TouchableOpacity
-            style={[styles.PresssableBtn,{flexDirection:"row",justifyContent:"center",marginTop:1,width: wp(45),height:hp(8),marginLeft:3,paddingHorizontal:wp(0)}]}
-            onPress={() => {
-              navigation.navigate("classic",{Asset_type:"ETH"})
-            }}
-          >
-            <Text style={{ color: "#fff", fontSize: 17, fontWeight: "bold",textAlign:"center"}}>Bridge Tokens</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-                    style={[styles.PresssableBtn,{height:hp(8),width: wp(45),marginLeft:10,marginTop:1,justifyContent:"center"}]}
-                    onPress={() => {
-                      navigation.navigate("Assets_manage");
-                    }}
-                  >
-            <Text style={{ color: "#fff", fontSize: 17, fontWeight: "bold",textAlign:"center"}}>Assets</Text>
-                  </TouchableOpacity>
-        </View>
+        
         <View style={{ justifyContent: 'center', alignItems: 'flex-start', backgroundColor: "#011434", paddingVertical: 1,paddingLeft:wp(5) }}>
           <Text style={{ color: "#fff", fontSize: 19,fontWeight:"600" }}>${points_data || 0.00}</Text>
           <Text style={{ color: "#fff", fontSize: 14 }}>{points_data_time || 0.00}</Text>
@@ -981,7 +952,7 @@ useEffect(() => {
 
     { api_data_loading?<Charts_Loadings/>:
               <Chart
-              style={{ width: 370, height: 230 }}
+              style={{ width: 370, height: 190 }}
               data={chartData}
               padding={{ left: 10, bottom: 30, right: 20, top: 30 }}
               xDomain={{ 
@@ -1030,7 +1001,7 @@ useEffect(() => {
     alignSelf: "center",
     borderRadius: hp(1.6),
     marginBottom: hp(1),
-    marginTop:hp(1.4)}}
+    marginTop:hp(0.5)}}
     onPress={()=>{setopen_chart_api(true)}}
     >
               <Text style={{fontSize: 19,color: "white",textAlign:"center",fontWeight:"500"}}>Trade between {chart_api[chart_index].name==="USDC"?chart_api[chart_index].name+"  ":chart_api[chart_index].name}vs  {chart_api[chart_index].name_0}</Text>
@@ -1070,10 +1041,12 @@ const styles = StyleSheet.create({
   },
   linearContainer: {
     width: wp(94),
-    padding: hp(2),
-    paddingVertical: hp(3),
+    padding: hp(1),
+    marginTop:"1%",
+    // paddingVertical: hp(2),
     borderRadius: hp(2),
-    // marginTop: hp(3),
+    borderColor:"#FFFFFF33",
+    borderWidth:1
   },
   textColor: {
     color: "#fff",
@@ -1093,7 +1066,7 @@ const styles = StyleSheet.create({
   },
   myWallet: {
     fontWeight: "bold",
-    fontSize:20,
+    fontSize:16,
     color:"#fff"
   },
   width_scrroll:{
@@ -1129,16 +1102,21 @@ const styles = StyleSheet.create({
   },
   PresssableBtn: {
     backgroundColor: "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
-    padding: hp(2),
-    width: wp(93.6),
-    borderColor:"rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
-    borderWidth:1.3,
+    borderColor:"#FFFFFF33",
+    borderWidth:1,
     alignSelf: "center",
-    paddingHorizontal: wp(3),
-    borderRadius: hp(2.5),
-    marginBottom: hp(1),
-    alignItems: "center",
-    marginTop:hp(1.4)
+    borderRadius: hp(2),
+    marginVertical:hp(1.4),
+    alignItems:"center",
+    width: "32%",
+    marginHorizontal:wp(1),
+    padding:6,
+    paddingVertical:10
+  },
+  PresssableBtnText:{
+    color:"#fff",
+    fontSize:15,
+    fontWeight:"600"
   },
   addofferText: {
     flexDirection: "row",
@@ -1230,7 +1208,7 @@ const styles = StyleSheet.create({
     // alignItems: 'center',
     // justifyContent: 'center',
     // backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
-    margin:10,
+    // margin:10,
     borderRadius:10
   },
   card: {

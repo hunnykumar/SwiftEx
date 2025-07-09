@@ -172,7 +172,7 @@ const send_recive = ({route}) => {
           chainType
         );
         console.log(saveTransaction);
-        navigation.navigate("Transactions");
+        navigation.navigate("Transactions",{txType:"STR"});
       } catch (e) {
         console.log(e);
       }
@@ -264,6 +264,10 @@ const send_recive = ({route}) => {
         }
     }, [FOCUSED])
 
+    useEffect(()=>{
+      get_data()
+    },[ACTIVATION_MODAL_PROD])
+
   // Reset lastScannedData when modal is closed
   useEffect(() => {
     if (!isModalVisible) {
@@ -286,7 +290,7 @@ const send_recive = ({route}) => {
          <WalletActivationComponent 
          isVisible={ACTIVATION_MODAL_PROD}
          onClose={() => {ActivateModal}}
-         onActivate={ActivateModal}
+         onActivate={()=>{setACTIVATION_MODAL_PROD(false)}}
          navigation={navigation}
          appTheme={true}
          shouldNavigateBack={true}

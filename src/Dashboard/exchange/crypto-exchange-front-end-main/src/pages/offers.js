@@ -312,23 +312,8 @@ export const OfferView = () => {
  <Exchange_screen_header title="Offers" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
       <View style={{ height: hp(100), backgroundColor: "#011434",paddingBottom:hp(15) }}>
          {/* enableComponent Buttons */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tabButton, enableComponent === 0 && styles.activeTab]}
-          onPress={() => setenableComponent(0)}
-        >
-          <Text style={styles.tabText}>Active Offers</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabButton, enableComponent === 1 && styles.activeTab]}
-          onPress={() => setenableComponent(1)}
-        >
-          <Text style={styles.tabText}>OrderBook</Text>
-        </TouchableOpacity>
-      </View>
-      {/* enableComponent render */}
-      {enableComponent === 0 ?<Offers_manages/>:<CustomOrderBook/>}
+     <Offers_manages/>
+     {/* <CustomOrderBook/> */}
       
       </View>
     </>

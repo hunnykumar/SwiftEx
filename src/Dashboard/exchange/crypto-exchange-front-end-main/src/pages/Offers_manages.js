@@ -267,39 +267,39 @@ const Offers_manages = () => {
   const renderItem = ({ item,index }) => (
     <View style={styles.offerItem}>
       <View style={styles.offer_id_con}>
-        <Text style={styles.offerText}>Offer ID: {item.id}</Text>
+        <Text style={[styles.offerText,{color:"#94A3B8"}]}>Offer ID: {item.id}</Text>
         <View style={styles.active_text}>
           <Text style={[styles.offerText, { color: "#2DAA20" }]}>Active</Text>
         </View>
       </View>
       <View style={styles.container_sub}>
-      <Text style={styles.offerText}>Asset Selling</Text>
+      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Asset Selling :</Text>
       <Text style={styles.offerText}>{item?.selling?.asset_type==="native"?"XLM":item.selling?.asset_code}</Text>
       </View>
       <View style={styles.container_sub}>
-      <Text style={styles.offerText}>Asset Buying</Text>
+      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Asset Buying :</Text>
       <Text style={styles.offerText}>{item?.buying?.asset_type==="native"?"XLM":item.buying?.asset_code}</Text>
       </View>
       <View style={styles.container_sub}>
-      <Text style={styles.offerText}>Amount</Text>
+      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Amount :</Text>
       <Text style={styles.offerText}>{Number(item.amount).toFixed(5)}</Text>
       </View>
       <View style={styles.container_sub}>
-      <Text style={styles.offerText}>Price</Text>
+      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Price :</Text>
       <Text style={styles.offerText}>{Number(item.price).toFixed(5)}</Text>
       </View>
       <View style={styles.buttonContainer}>
       {loading_edi&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
-        <TouchableOpacity style={{alignContent:"center",justifyContent:"center",width:50,height:35}} disabled={loading_del} onPress={() => handleEdit(item,index)}><Text style={{color:"blue",fontSize:15}}>Edit</Text></TouchableOpacity> }
+        <TouchableOpacity style={[styles.buttonView,{backgroundColor:"#2164C1",marginRight:10}]} disabled={loading_del} onPress={() => handleEdit(item,index)}><Text style={{color:"#fff",fontSize:15}}>Edit</Text></TouchableOpacity> }
         {loading_del&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
-        <TouchableOpacity style={{alignContent:"center",justifyContent:"center",width:50,height:35}} disabled={loading_edi} onPress={() => handleDelete(item.id,index)}><Text style={{color:"blue",fontSize:15}}>Delete</Text></TouchableOpacity>}
+        <TouchableOpacity style={[styles.buttonView,{backgroundColor:"rgba(254, 32, 36, 0.16)"}]} disabled={loading_edi} onPress={() => handleDelete(item.id,index)}><Text style={{color:"rgb(254, 32, 36)",fontSize:15}}>Delete</Text></TouchableOpacity>}
       </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      {/* <Text style={styles.title}>Active Offers</Text> */}
+      <Text style={styles.title}>Active Offers</Text>
     
       {loading ? (
         <ActivityIndicator color={"gray"} size={"large"}/>
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
     color:"black"
   },
   offerItem: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(13, 30, 59, 0.8)',
     borderRadius: 15,
     marginBottom: 15,
     shadowColor: '#000',
@@ -404,7 +404,8 @@ const styles = StyleSheet.create({
   },
   offerText: {
     fontSize: 16,
-    color: '#000000CC',
+    color: '#FFFFFF',
+    fontWeight:"500"
   },
   offerList: {
     marginTop: 10,
@@ -434,10 +435,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 10,
-    backgroundColor:"#4B84ED1A",
+    borderTopColor:"#fff",
+    borderWidth:0.5,
+    borderLeftColor:'rgba(13, 30, 59, 0.8)',
+    borderRightColor:'rgba(13, 30, 59, 0.8)',
+    borderBottomColor:'rgba(13, 30, 59, 0.8)',
     borderBottomLeftRadius:15,
     borderBottomRightRadius:15,
-    paddingHorizontal:10
+    paddingHorizontal:10,
+    paddingVertical:9
+  },
+  buttonView:{
+    alignContent:"center",
+    justifyContent:"center",
+    alignItems:"center",
+    width:80,
+    height:30,
+    borderRadius:10
   },
   error_cont:{
     justifyContent:"center",
@@ -452,14 +466,14 @@ const styles = StyleSheet.create({
   container_sub:{
     justifyContent:"space-between",
     flexDirection:"row",
-    marginBottom:10,
+    marginBottom:5,
     paddingHorizontal: 15,
   },
   offer_id_con:{
     justifyContent:"space-between",
     flexDirection:"row",
     paddingVertical:21,
-    paddingBottom:20,
+    paddingBottom:10,
     paddingHorizontal: 15,
   },
   active_text:{

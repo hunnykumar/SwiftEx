@@ -58,8 +58,12 @@ const getTransactionType = (operation) => {
           return 'Buy Offer';
       case 'create_account':
           return 'Create Account';
-      case 'pathPaymentStrictSend':
-          return `Path Payment (Send ${operation.source_asset_code || 'XLM'})`;
+      case 'invoke_host_function':
+          return 'Chain Bridge';    
+      case 'path_payment_strict_send':
+          return `${operation.source_asset_code || 'XLM'}`;
+      case 'path_payment_strict_receive':
+          return `${operation.destination_asset_code || 'XLM'}`;
       case 'setOptions':
           return 'Settings Update';
       default:
@@ -81,8 +85,11 @@ const getTransactionIcon = (type) => {
       return 'trending-down';
     case 'manageBuyOffer':
       return 'trending-up';
-    case 'pathPaymentStrictSend':
+      case 'path_payment_strict_send':
+      case 'path_payment_strict_receive':
       return 'routes';
+    case 'invoke_host_function':
+      return 'bridge';  
     case 'setOptions':
       return 'cog';
     default:
@@ -96,6 +103,7 @@ const TabBar = ({ selectedTab, onTabPress, isDarkMode }) => {
     { key: 'all', title: 'All', icon: 'bank-transfer' },
     { key: 'sent', title: 'Sent', icon: 'arrow-top-right' },
     { key: 'received', title: 'Received', icon: 'arrow-bottom-left' },
+    { key: 'path', title: 'Swaps', icon: 'routes' },
   ];
 
   return (
@@ -134,11 +142,11 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode }) => {
   const navigation=useNavigation();
   const colors = getThemeColors(isDarkMode);
   const operation = item.operations.records[0];
-
+console.log(operation)
  
   const isReceived = 
     operation?.to === userPublicKey ||
-    operation.type === 'create_account'||operation.type === 'change_trust';
+    operation.type === 'create_account'||operation.type === 'change_trust'||operation.type==='invoke_host_function';
 
  
   const transactionType =
@@ -157,8 +165,24 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode }) => {
     amountText = operation.amount;
   } else if (operation.type === 'create_account') {
     amountText = operation.starting_balance;
+  }  else if (operation.type === 'invoke_host_function') {
+    const resBal= operation.asset_balance_changes?.find(resObj => resObj.to === userPublicKey && resObj.type === 'transfer') || null;
+    amountText = resBal?resBal.amount:'0'
   } else if (operation.type === 'manage_sell_offer' || operation.type === 'manage_buy_offer') {
     amountText = operation.amount;
+  }
+  const isPathPayment = operation.type === 'path_payment_strict_send' || operation.type === 'path_payment_strict_receive';
+
+  let assetFrom = '';
+  let assetTo = '';
+  let amountFrom = '';
+  let amountTo = '';
+
+  if (isPathPayment) {
+    assetFrom = operation.source_asset_code || (operation.source_asset_type === 'native' ? 'XLM' : operation.source_asset_type);
+    assetTo = operation.asset_code || (operation.asset_type === 'native' ? 'XLM' : operation.asset_type);
+    amountFrom = operation.source_amount;
+    amountTo = operation.amount;
   }
 
   return (
@@ -191,7 +215,13 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode }) => {
             </Text>
           </View>
         </View>
-        
+        {isPathPayment ? <View style={styles.transactionDetails}>
+          <Text style={[styles.type, { color: colors.primaryText }]}>{isPathPayment ? `${assetFrom} to ${assetTo}` : transactionType}</Text>
+          <View>
+            <Text style={[styles.amount, { color: colors.sent }]}>-{amountFrom}</Text>
+            <Text style={[styles.amount, { color: colors.received }]}>+{amountTo}</Text>
+          </View>
+        </View> :
         <View style={styles.transactionDetails}>
           <Text style={[styles.type, { color: colors.primaryText }]}>
             {transactionType}
@@ -202,7 +232,7 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode }) => {
           ]}>
             {isReceived||operation.type === 'manage_sell_offer'||operation.type === 'manage_buy_offer' ? '' : '-'}{amountText}
           </Text>
-        </View>
+        </View>}
 
         {/* Memo (if exists) */}
         {item.memo && item.memo !== 'No memo' && (
@@ -244,7 +274,11 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
                 } else if (firstOp.type === 'create_account') {
                     amount = firstOp.starting_balance;
                     isReceived = true; 
-                } else if (['change_trust', 'change_trust', 'create_account'].includes(firstOp.type)) {
+                } else if (firstOp.type === 'invoke_host_function') {
+                    const resBal= firstOp.asset_balance_changes?.find(resObj => resObj.to === publicKey && resObj.type === 'transfer') || null;
+                    amount = resBal?resBal.amount:'0'
+                    isReceived = true; 
+                } else if (['change_trust', 'change_trust', 'create_account','invoke_host_function'].includes(firstOp.type)) {
                     isReceived = true;
                 } else if (firstOp.type === 'manage_sell_offer' || firstOp.type === 'manage_buy_offer') {
                    isReceived = false;
@@ -296,11 +330,38 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
               isDarkMode={isDarkMode}
           />
 
-<FlatList
-    data={transactions.filter(tx => {
-        if (selectedTab === 'all') return true;
-        return selectedTab === 'received' ? tx.isReceived : !tx.isReceived;
-    })}
+      <FlatList
+        data={transactions.filter(tx => {
+          const opType = tx.operations.records[0].type;
+
+          if (selectedTab === 'all') return true;
+
+          if (selectedTab === 'sent') {
+            return (
+              !tx.isReceived &&
+              opType !== 'path_payment_strict_send' &&
+              opType !== 'path_payment_strict_receive'
+            );
+          }
+
+          if (selectedTab === 'received') {
+            return (
+              tx.isReceived &&
+              opType !== 'path_payment_strict_send' &&
+              opType !== 'path_payment_strict_receive'
+            );
+          }
+
+          if (selectedTab === 'path') {
+            return (
+              opType === 'path_payment_strict_send' ||
+              opType === 'path_payment_strict_receive'
+            );
+          }
+
+          return true;
+        })}
+  
     renderItem={({ item }) => (
         <TransactionCard
             item={item}

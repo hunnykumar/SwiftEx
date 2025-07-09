@@ -81,6 +81,7 @@ import BnbSwap from "../ethSwap/BnbSwap";
 import KycComponent from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/KycComponent";
 import TokenSend from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/TokenSend";
 import StellarTransactionViewer from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/StellarTransactionViewer";
+import TxDetails from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/txDetails";
 
 const Stack = createNativeStackNavigator();
 
@@ -601,6 +602,11 @@ const AuthStack = () => (
        <Stack.Screen
         name="TokenSend"
         component={TokenSend}
+        options={{headerShown:false}}
+      />
+      <Stack.Screen
+        name="TxDetails"
+        component={TxDetails}
         options={{headerShown:false}}
       />
     </Stack.Navigator>

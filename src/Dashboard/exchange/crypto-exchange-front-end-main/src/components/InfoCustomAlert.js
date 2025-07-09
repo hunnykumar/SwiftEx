@@ -1,13 +1,17 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Icon from "../../../../../icon";
 
-const InfoCustomAlert = ({heading,subHeading,btnText,onclose}) => {
+const InfoCustomAlert = ({heading,subHeading,btnText,onclose,onskip,loading}) => {
     return (
         <View style={styles.main}>
             <View style={styles.modalContiner}>
+                <TouchableOpacity style={styles.closeBtn} onPress={onskip}>
+                    <Icon name={"close-circle-outline"} type={"materialCommunity"} size={30} color={"#fff"}/>
+                </TouchableOpacity>
                 <Text style={styles.modalContinerHeading}>{heading}</Text>
                     <Text style={styles.modalContinerHeading.modalContinerSubHeading}>{subHeading}</Text>
-                    <TouchableOpacity style={styles.submitBtn} onPress={onclose}>
-                    <Text style={styles.modalContinerHeading.modalContinerSubHeading}>{btnText}</Text>
+                    <TouchableOpacity style={styles.submitBtn} onPress={onclose} disabled={loading}>
+                    {loading?<ActivityIndicator size={"small"} color={"#fff"}/>:<Text style={styles.btnStyle}>{btnText}</Text>}
                     </TouchableOpacity>
             </View>
         </View>
@@ -53,6 +57,20 @@ const styles = StyleSheet.create({
         width: 321,
         height: 48,
         borderRadius: 80,
-        backgroundColor:"#2164C1"
+        backgroundColor:"#2164C1",
+        justifyContent:"center"
+    },
+    closeBtn:{
+        alignSelf:"flex-end",
+        zIndex:10,
+        position:"absolute",
+        marginTop:-10,
+        paddingRight:10
+    },
+    btnStyle:{
+        textAlign:"center",
+        fontSize:16,
+        color:"#fff",
+        fontWeight:"600"
     }
 })

@@ -18,7 +18,7 @@ import { useNavigation } from "@react-navigation/native";
 import { getNonce } from "../../utilities/utilities";
 import { Network, Alchemy } from "alchemy-sdk";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
-import { EthereumSecret, PolygonSecret } from "../constants";
+import { EthereumSecret, PolygonSecret, RPC } from "../constants";
 import ChooseTokens from "../tokens/ChooseTokens";
 import "react-native-get-random-values";
 import "@ethersproject/shims";
@@ -59,7 +59,7 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
     console.log(walletType);
     if (JSON.parse(walletType) == "BSC") {
       provider = new ethers.providers.JsonRpcProvider(
-        "https://data-seed-prebsc-1-s1.binance.org:8545"
+        RPC.BSCRPC
       );
     }
     const emailid = await state.user;
@@ -179,7 +179,7 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
       }
     } else if (JSON.parse(walletType) == "BSC") {
       provider = new ethers.providers.JsonRpcProvider(
-        "https://data-seed-prebsc-1-s1.binance.org:8545"
+        RPC.BSCRPC
       );
 
       const walletPrivateKey = new ethers.Wallet(privateKey);

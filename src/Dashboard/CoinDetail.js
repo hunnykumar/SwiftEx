@@ -50,7 +50,7 @@ export const CoinDetails = (props) => {
   const [Data, setData] = useState();
   const [chartData, setchartData] = useState([]);
   const [timeFrame, setTimeFrame] = useState("30m");
-  const [pressed, setPressed] = useState();
+  const [pressed, setPressed] = useState(0);
   const [lineColor, setlineColor] = useState();
   const [points_data,setpoints_data]=useState();
   const [points_data_time,setpoints_data_time]=useState();
@@ -471,13 +471,29 @@ const transformedData = resp.map(item => ({
     </View>}
     </View>
     <View style={styles.btnView}>
+    <TouchableOpacity
+          style={
+            pressed == "0"
+              ? {
+                ...styles.tabBtns,
+                backgroundColor: "#2164C1",
+              }
+              : styles.tabBtns
+          }
+          onPress={() => {
+            setPressed("0");
+            setTimeData(["10m", "20m", "30m", "40m", "50m", "60m"]);
+            setTimeFrame("1m");
+          }}
+        >
+          <Text style={{ color: pressed == "0" ? "#fff" : "grey",fontWeight:"bold" }}>1m</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={
             pressed == "1"
               ? {
                 ...styles.tabBtns,
-                borderColor: "#4CA6EA",
-                backgroundColor: "#4CA6EA",
+                backgroundColor: "#2164C1",
               }
               : styles.tabBtns
           }
@@ -488,7 +504,7 @@ const transformedData = resp.map(item => ({
             setTimeFrame("1h");
           }}
         >
-          <Text style={{ color: pressed == "1" ? "#fff" : "grey" }}>1h</Text>
+          <Text style={{ color: pressed == "1" ? "#fff" : "grey",fontWeight:"bold" }}>1h</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -496,8 +512,7 @@ const transformedData = resp.map(item => ({
             pressed == "2"
               ? {
                 ...styles.tabBtns,
-                borderColor: "#4CA6EA",
-                backgroundColor: "#4CA6EA",
+                backgroundColor: "#2164C1",
               }
               : styles.tabBtns
           }
@@ -509,7 +524,7 @@ const transformedData = resp.map(item => ({
             setTimeFrame("12h");
           }}
         >
-          <Text style={{ color: pressed == "2" ? "#fff" : "grey" }}>12h</Text>
+          <Text style={{ color: pressed == "2" ? "#fff" : "grey",fontWeight:"bold" }}>12h</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -517,8 +532,7 @@ const transformedData = resp.map(item => ({
             pressed == "3"
               ? {
                 ...styles.tabBtns,
-                borderColor: "#4CA6EA",
-                backgroundColor: "#4CA6EA",
+                backgroundColor: "#2164C1",
               }
               : styles.tabBtns
           }
@@ -530,7 +544,7 @@ const transformedData = resp.map(item => ({
             setTimeFrame("1d");
           }}
         >
-          <Text style={{ color: pressed == "3" ? "#fff" : "grey" }}>3d</Text>
+          <Text style={{ color: pressed == "3" ? "#fff" : "grey",fontWeight:"bold" }}>3d</Text>
         </TouchableOpacity>
       </View>
       {/* <AreaChart
@@ -548,59 +562,66 @@ const transformedData = resp.map(item => ({
       >
         <Grid />
       </AreaChart> */}
-      <View style={{height:hp(40)}}>
-      <ScrollView style={{paddingBottom:hp(10)}}>
-      <View style={[styles.market_data, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black" }]}>
-        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 17,paddingBottom:hp(1.6) }}>{props?.route?.params?.data?.name} Price (24H) </Text>
-
-
+      <View style={{height:hp(40),marginTop:8}}>
+      <ScrollView style={{paddingBottom:hp(10),backgroundColor: state.THEME.THEME === false ? "#F4F4F4" : "black" }}>
+      <View style={[styles.market_data,{borderColor:state.THEME.THEME === false ? "#F4F4F4" : "black",borderTopColor:state.THEME.THEME === false ? "#F4F4F4" : "black"}]}>
+        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 17,paddingBottom:hp(1.6),fontWeight:"600" }}>{props?.route?.params?.data?.name} Price (24H) </Text>
+        <View style={{flexDirection:"row"}}>
         <View style={[styles.iconText]}>
-          <Text style={{ color: "gray"}}>Price USD</Text>
-          <View style={styles.arrowText}>
+          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Price USD</Text>
             <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.current_price}</Text>
+          <View style={styles.arrowText}>
           </View>
         </View>
 
         <View style={[styles.iconText]}>
-          <Text style={{ color: "gray"}}>24H high </Text>
+          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>24H high </Text>
           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.high_24h}
           <Icon name="arrow-up-right" type={"feather"} size={20} color={state.THEME.THEME===false?"black":"#fff"} /></Text>
         </View>
-        <View style={[styles.iconText]}>
-          <Text style={{ color: "gray"}}>24H low </Text>
-          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.low_24h}
-          <Icon name="arrow-down-left" type={"feather"} size={20} color={state.THEME.THEME===false?"black":"#fff"} /></Text>
-        </View>
-        <View style={[styles.iconText]}>
-          <Text style={{ color: "gray"}}>Price change 24H </Text>
-          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff"}]}>{props?.route?.params?.data?.price_change_percentage_24h}%</Text>
         </View>
 
+        <View style={{flexDirection:"row"}}>
+          <View style={[styles.iconText]}>
+           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>24H low </Text>
+           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.low_24h}
+           <Icon name="arrow-down-left" type={"feather"} size={20} color={state.THEME.THEME===false?"black":"#fff"} /></Text>
+          </View>
+          <View style={[styles.iconText]}>
+           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Price change 24H </Text>
+           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff",color:Number.isSafeInteger(props?.route?.params?.data?.price_change_percentage_24h)?"green":"red"}]}>{props?.route?.params?.data?.price_change_percentage_24h}%</Text>
+          </View>
+        </View>
+        <View style={[styles.iconText]}>
+          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>All Time High </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.ath}</Text>
+        </View>
+       
       </View>
 
-      <View style={[styles.market_data, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black" ,marginTop:hp(1),marginBottom:hp(2)}]}>
-        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 17,paddingBottom:hp(1.6) }}>Market stats</Text>
-        <View style={[styles.iconText]}>
-          <Text style={{ color: "gray"}}>Market Cap Rank </Text>
+      <View style={[styles.market_data, { marginTop:hp(1),marginBottom:hp(2),borderColor:state.THEME.THEME === false ? "#F4F4F4" : "black"}]}>
+        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 17,paddingBottom:hp(1.6),fontWeight:"600" }}>Market stats</Text>
+        
+        <View style={{flexDirection:"row"}}>
+         <View style={[styles.iconText]}>
+          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Market Cap Rank </Text>
           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>{props?.route?.params?.data?.market_cap_rank}</Text>
-        </View>
-      <View style={[styles.iconText]}>
-          <Text style={{ color: "gray"}}>Market Cap </Text>
+         </View>
+         <View style={[styles.iconText]}>
+          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Market Cap </Text>
           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}> ${props?.route?.params?.data?.market_cap}</Text>
-        </View>
-        <View style={[styles.iconText]}>
-          <Text style={{ color: "gray"}}>Volume </Text>
-          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.total_volume}</Text>
-        </View>
-        <View style={[styles.iconText]}>
-          <Text style={{ color: "gray"}}>Total Supply </Text>
-          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.total_supply}</Text>
+          </View>
         </View>
 
- 
-        <View style={[styles.iconText]}>
-          <Text style={{ color: "gray"}}>All Time High </Text>
-          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.ath}</Text>
+        <View style={{flexDirection:"row"}}>
+          <View style={[styles.iconText]}>
+           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Volume </Text>
+           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.total_volume}</Text>
+          </View>
+          <View style={[styles.iconText]}>
+           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Total Supply </Text>
+           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.total_supply}</Text>
+          </View>
         </View>
 
         </View>
@@ -626,10 +647,8 @@ const styles = StyleSheet.create({
     marginTop: hp(5),
   },
   iconText: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     alignSelf: "flex-start",
-    width: wp(80),
+    width: wp(50),
     marginVertical:hp(0.6)
   },
   arrowText: {
@@ -646,7 +665,7 @@ const styles = StyleSheet.create({
   tabBtns: {
     borderColor: "gray",
     paddingVertical: hp(1),
-    width: wp(23),
+    width: wp(18),
     alignItems: "center",
     borderRadius: hp(2),
   },
@@ -656,22 +675,18 @@ const styles = StyleSheet.create({
     alignContent: "center",
     alignItems: "center",
     alignSelf: "center",
-    width: wp(85),
-    backgroundColor: "#dadadada",
-    borderRadius: hp(2),
-    marginTop: hp(2),
-    // paddingVertical: hp(0.6),
+    width: wp(90),
+    marginTop: hp(-2),
     justifyContent: "space-between",
   },
-  heading: { color: "black", fontSize: 14, fontWeight: "700" },
+  heading: { color: "black", fontSize: 14, fontWeight: "600" },
   market_data: {
-    marginTop: hp(4),
-    paddingHorizontal: wp(3),
+    marginTop: hp(1),
+    paddingHorizontal: wp(1),
     paddingVertical:hp(1),
-    borderRadius: 19,
-    borderColor: "gray",
-    borderWidth: 0.8,
-    width: wp(90),
+    borderTopColor: "#75747433",
+    borderWidth: 1.8,
+    width: wp(95),
     alignSelf: "center"
   }
 });

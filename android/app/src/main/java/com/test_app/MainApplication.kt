@@ -1,4 +1,4 @@
-package com.test_app
+package com.app.swiftEx.app
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -11,7 +11,7 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
 import com.google.firebase.FirebaseApp // Import FirebaseApp
-import com.test_app.ethwallet.EthereumWalletPackage
+import com.app.swiftEx.app.ethwallet.EthereumWalletPackage
 import java.security.Security
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 
@@ -32,6 +32,7 @@ class MainApplication : Application(), ReactApplication {
               // Packages that cannot be autolinked yet can be added manually here, for example:
               // add(MyReactNativePackage())
               add(EthereumWalletPackage())
+              add(PlayIntegrityPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
@@ -47,7 +48,8 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
-    
+    // this ApplicationVerification fist validate app than execute next
+    ApplicationVerification.run(applicationContext)
     // Initialize Firebase
     FirebaseApp.initializeApp(this)  // Add this line to initialize Firebase
     

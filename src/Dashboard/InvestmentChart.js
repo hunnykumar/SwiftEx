@@ -516,10 +516,10 @@ function InvestmentChart(setCurrentWallet) {
    get_new_all_bal()
  },[])
   const [chainnData,setchainnData] =useState([
-    { id: 1,symbole:"ETH", name: "Ethereum", avl: ethBalance ? ethBalance +" ETH": 0.00+" ETH", dollaravl: ethPrice?"$ "+ethPrice:"$ 0.00", status: "+1.8%", statusColor: "#40BF6A", img: "https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png", bgColor: "#181F2C", viewColor: "rgba(45, 170, 32, 0.15)" },
-    { id: 2,symbole:"XLM", name: "XLM", avl: xmlBalance ? xmlBalance+" XLM" : 0.00 +" XLM", dollaravl: "$ "+current_xlm?"$ "+current_xlm:"$ 0.00", status: "+1.8%", statusColor: "#BF404D", img: stellar, bgColor: "#FF971A26", viewColor: "#AA202226" },
-    { id: 3,symbole:"BNB", name: "Binance", avl: bnbBalance?bnbBalance+" BNB":0.00+" BNB", dollaravl: "$ "+bnbPrice >= 0 ? "$ "+bnbPrice : "$ "+300, status: "+1.8%", statusColor: "#40BF6A", img: "https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1696501970", bgColor: "rgba(243, 186, 47, 0.3)rgba(243, 47, 153, 0.3)", viewColor: "rgba(45, 170, 32, 0.15)" },
-    { id: 4,symbole:"BTC", name: "Bitcoin", avl: "0 BTC", dollaravl: "$ 0.00", status: "+1.8%", statusColor: "#40BF6A", img: "https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png", bgColor: "#FF971A26", viewColor: "rgba(45, 170, 32, 0.15)" },
+    { id: 1,symbole:"ETH",subSymbole:"ETH",tokenName:"WETH",address:"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", name: "Ethereum", avl: ethBalance ? ethBalance +" ETH": 0.00+" ETH", dollaravl: ethPrice?"$ "+ethPrice:"$ 0.00", status: "+1.8%", statusColor: "#40BF6A", img: "https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png", bgColor: "#181F2C", viewColor: "rgba(45, 170, 32, 0.15)" },
+    { id: 2,symbole:"XLM",subSymbole:"XLM",tokenName:"XLM",address:"", name: "XLM", avl: xmlBalance ? xmlBalance+" XLM" : 0.00 +" XLM", dollaravl: "$ "+current_xlm?"$ "+current_xlm:"$ 0.00", status: "+1.8%", statusColor: "#BF404D", img: stellar, bgColor: "#FF971A26", viewColor: "#AA202226" },
+    { id: 3,symbole:"BNB",subSymbole:"BSC",tokenName:"WBNB",address:"0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", name: "Binance", avl: bnbBalance?bnbBalance+" BNB":0.00+" BNB", dollaravl: "$ "+bnbPrice >= 0 ? "$ "+bnbPrice : "$ "+300, status: "+1.8%", statusColor: "#40BF6A", img: "https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1696501970", bgColor: "rgba(243, 186, 47, 0.3)rgba(243, 47, 153, 0.3)", viewColor: "rgba(45, 170, 32, 0.15)" },
+    { id: 4,symbole:"BTC",subSymbole:"BTC",tokenName:"",address:"", name: "Bitcoin", avl: "0 BTC", dollaravl: "$ 0.00", status: "+1.8%", statusColor: "#40BF6A", img: "https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png", bgColor: "#FF971A26", viewColor: "rgba(45, 170, 32, 0.15)" },
   ]);
  const renderCoins = ({ item }) => {
   return (
@@ -574,12 +574,21 @@ function InvestmentChart(setCurrentWallet) {
     {/* Right: Action Buttons */}
     {item?.id!==4?<View style={{ alignItems: "center", paddingRight: 5 }}>
       <TouchableOpacity 
-        disabled={item.id === 4} 
+        disabled={item.id === 4||item.id === 3} 
         style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
         onPress={() => {
           state?.STELLAR_ADDRESS_STATUS === false 
             // ? navigation.navigate("exchange") :
-             navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbole });
+            if(item?.id===2)
+            {
+              navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbole });
+            }
+            else{
+              setTokenChain(item?.subSymbole?.toUpperCase())
+              setTokenName(item?.tokenName?.toUpperCase())
+              setTokenAddress(item?.address)
+              setCustomImport(true)
+            }
         }}
       >
         <Text style={styles.actionRowBtnText}>Trade</Text>
@@ -655,7 +664,7 @@ const renderTokens = ({ item }) => {
     {/* Right: Action Buttons */}
     <View style={{ alignItems: "center", paddingRight: 5 }}>
       <TouchableOpacity 
-        disabled={item.id === 4} 
+        disabled={item.network==="BSC"||item.network==="ETH"&&item?.symbol?.toUpperCase()!=="USDT"} 
         style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
         onPress={() => {
           // state?.STELLAR_ADDRESS_STATUS === false 
@@ -671,7 +680,7 @@ const renderTokens = ({ item }) => {
       </TouchableOpacity>
   
       <TouchableOpacity 
-        disabled={item.id === 4} 
+        // disabled={item.id === 4} 
         style={styles.actionBuyBtn} 
         onPress={() => navigation.navigate("payout")}
       >
