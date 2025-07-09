@@ -12,7 +12,9 @@
       android:roundIcon="@mipmap/ic_launcher_round"
       android:allowBackup="false"
       android:theme="@style/AppTheme"
-      android:supportsRtl="true">
+      android:supportsRtl="true"
+      android:usesCleartextTraffic="true"
+      >
      
       <activity
         android:name=".MainActivity"
@@ -27,5 +29,10 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+
+      <activity android:name=".ApplicationValidationFailUI"
+      android:theme="@style/Theme.AppCompat.Light.Dialog">
+      </activity>
+      
     </application>
 </manifest>
