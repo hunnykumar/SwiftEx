@@ -166,8 +166,8 @@ const KycComponent = ({ route }) => {
 
   const handleChange = (text) => {
     const payAmount=text.replace(/[^0-9.]/g, '')
-    setamountSend(payAmount);
-    if(!payAmount||payAmount==="0")
+    
+    if(!payAmount||payAmount==="0"||parseFloat(payAmount)===0)
     {
       setamountSend("");
       setoperationError("Invalid amount");
@@ -370,25 +370,10 @@ const KycComponent = ({ route }) => {
               </TouchableOpacity>
             </View>
 
-            {/* First Amount Container */}
-            <View style={[styles.amountInfoCon, { width:"100%" }]}>
-              <View style={styles.amountInfoHeader}>
-                <Text style={styles.amountInfoText}>You Send</Text>
-                <Text style={styles.amountInfoText}>Min:{operationType==="BUY"?selectedfiat?.payMin||0.0:selectedCrypto?.minPurchaseAmount||0.0}</Text>
-              </View>
-              <View style={styles.amountInputCon}>
-                <View style={[styles.amountSubCon, { width: getContainerWidth() * 0.4 }]}>
-                  <TextInput 
-                    placeholder="Amount" 
-                    placeholderTextColor="gray"
-                    value={amountSend}
-                    style={styles.amountInput}
-                    onChangeText={(text)=>{handleChange(text)}}
-                    returnKeyType="done"
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-                {operationType==="BUY"? <View style={styles.amountFlagCon}>
+            {/* fiat and crypto selection */}
+
+              <View style={styles.typeSelection}>
+              {operationType==="BUY"? <View style={styles.amountFlagCon}>
                   <View style={styles.currencySelector}>
                     <View style={styles.downBoxCon}>
                       <Icon name="currency-usd" type="materialCommunity" color="#fff" size={30} />
@@ -412,27 +397,7 @@ const KycComponent = ({ route }) => {
                     <Icon name="chevron-down" type="materialCommunity" color="#fff" size={28} />
                   </TouchableOpacity>
                 </View>}
-              </View>
-              {operationError!==null&&<Text style={styles.errorText}>{operationError}</Text>}
-            </View>
 
-
-            {/* Second Amount Container */}
-            <View style={[styles.amountInfoCon, { width: "100%", marginTop: 20 }]}>
-              <View style={styles.amountInfoHeader}>
-                <Text style={styles.amountInfoText}>You Receive</Text>
-                <Text style={styles.amountInfoText}>Min:{operationType==="SELL"?selectedfiat?.payMin||0.0:selectedCrypto?.minPurchaseAmount||0.0}</Text>
-              </View>
-              <View style={styles.amountInputCon}>
-                <View style={[styles.amountSubCon, { width: getContainerWidth() * 0.4 }]}>
-                  <TextInput
-                   editable={false}
-                    placeholder="0.0" 
-                    placeholderTextColor="gray"
-                    value={operationType==="BUY"?QoutesRes?.cryptoQuantity:QoutesRes?.fiatQuantity}
-                    style={styles.amountInput}
-                  />
-                </View>
                 {operationType==="SELL"? <View style={styles.amountFlagCon}>
                   <View style={styles.currencySelector}>
                     <View style={styles.downBoxCon}>
@@ -458,6 +423,51 @@ const KycComponent = ({ route }) => {
                     <Icon name="chevron-down" type="materialCommunity" color="#fff" size={28} />
                   </TouchableOpacity>
                 </View>}
+              </View>
+
+            {/* First Amount Container */}
+            <View style={styles.amountInfoCon}>
+              <View style={styles.amountInfoHeader}>
+                <Text style={styles.amountInfoText}>You Send</Text>
+                <Text style={styles.amountInfoText}>Min:{operationType==="BUY"?selectedfiat?.payMin||0.0:selectedCrypto?.minPurchaseAmount||0.0}</Text>
+              </View>
+              <View style={styles.amountInputCon}>
+                <View style={[styles.amountSubCon, { width: getContainerWidth() * 0.4 }]}>
+                  <TextInput 
+                    placeholder="Amount" 
+                    placeholderTextColor="gray"
+                    value={amountSend}
+                    style={styles.amountInput}
+                    onChangeText={(text)=>{setamountSend(text)}}
+                    returnKeyType="done"
+                    keyboardType="decimal-pad"
+                    onSubmitEditing={()=>{
+                      handleChange(amountSend)
+                    }}
+                  />
+                </View>
+              </View>
+            </View>
+              {operationError!==null&&<Text style={styles.errorText}>{operationError}</Text>}
+
+
+            {/* Second Amount Container */}
+            <View style={styles.amountInfoCon}>
+              <View style={styles.amountInfoHeader}>
+                <Text style={styles.amountInfoText}>You Receive</Text>
+                <Text style={styles.amountInfoText}>Min:{operationType==="SELL"?selectedfiat?.payMin||0.0:selectedCrypto?.minPurchaseAmount||0.0}</Text>
+              </View>
+              <View style={styles.amountInputCon}>
+                <View style={[styles.amountSubCon, { width: getContainerWidth() * 0.4, borderBottomColor:"gray" }]}>
+                  <TextInput
+                   editable={false}
+                    placeholder="0.0" 
+                    placeholderTextColor="gray"
+                    value={operationType==="BUY"?QoutesRes?.cryptoQuantity:QoutesRes?.fiatQuantity}
+                    style={[styles.amountInput,{color:"gray"}]}
+                  />
+                </View>
+                
               </View>
             </View>
 
@@ -496,7 +506,7 @@ const KycComponent = ({ route }) => {
                 </View>}
 
             {/* Payment Methods */}
-            <View style={[styles.paymentSection, { width: "100%" }]}>
+            {operationType==="BUY"&&<View style={[styles.paymentSection, { width: "100%" }]}>
               <Text style={[styles.sectionTitle,{marginLeft:"2%"}]}>Pay via</Text>
               <View style={styles.paymentOptions}>
                 <TouchableOpacity style={[styles.paymentMethod,{borderColor:payWayaCode==="10001"?"green":"rgba(255, 255, 255, 0.25)",borderWidth:payWayaCode==="10001"?1:0.5}]} onPress={()=>{setPayWayaCode("10001")}}>
@@ -512,7 +522,7 @@ const KycComponent = ({ route }) => {
                   <Text style={styles.paymentText}>G-Pay</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </View>}
 
             {/* Buy Button */}
             <TouchableOpacity 
@@ -564,8 +574,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingBottom: 20,
   },
+  typeSelection: {
+    marginVertical: 6,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#1F2937",
+    alignItems: "center",
+    height: 58,
+    width:"100%",
+    alignSelf: "center",
+    borderRadius: 16,
+    paddingHorizontal: 1.5,
+  },
   pariViewCon: {
-    marginVertical: 20,
+    marginTop: 20,
+    marginBottom:6,
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: "#1F2937",
@@ -589,11 +612,16 @@ const styles = StyleSheet.create({
   amountInfoCon: {
     backgroundColor: "#1F2937",
     borderRadius: 16,
-    padding: 15,
+    paddingHorizontal: 10,
+    paddingVertical:5,
     alignSelf: "center",
+    flexDirection:"row",
+    justifyContent:"space-between",
+    width: "100%", 
+    marginVertical:6
   },
   amountInfoHeader: {
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "space-between",
     marginBottom: 10,
   },
@@ -621,7 +649,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginLeft: 10,
+    marginLeft: 5,
   },
   currencySelector: {
     flexDirection: "row",

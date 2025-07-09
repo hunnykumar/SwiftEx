@@ -56,14 +56,17 @@ const TOKENS = [
     address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
     balance: '1000',
     logoUri:'https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png'
+  }
+];
+
+const chianSupports=[
+  {
+    chianSymbol: 'Ethereum',
+    chianLogo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
   },
   {
-    symbol: 'WBNB',
-    name: 'BNB Coin',
-    decimals: 6,
-    address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
-    balance: '1000',
-    logoUri:'https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png'
+    chianSymbol: 'Binance',
+    chianLogo:'https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png'
   }
 ];
 
@@ -85,6 +88,8 @@ const EthSwap = () => {
   const [btnMessage,setbtnMessage]=useState("Swap");
   const [btnDisable,setbtnDisable]=useState(false);
   const [SwapExecution,setSwapExecution]=useState(false);
+  const [SelectedChain,setSelectedChain]=useState("Ethereum");
+  const [ChianSelection,setChianSelection]=useState(false);
 
 
   const provider = new ethers.providers.JsonRpcProvider(RPC_URL,{chainId:11155111});
@@ -168,6 +173,8 @@ const EthSwap = () => {
 
   useEffect(()=>{
     console.log("---",state)
+    setSelectedChain("Ethereum");
+    setChianSelection(false);
     setallblnLoading(true);
     const fetchBalance=async()=>{
      try{
@@ -219,8 +226,12 @@ const EthSwap = () => {
     >
       <View style={styles.modalContainer}>
         <View style={[styles.modalContent,{backgroundColor:state?.THEME?.THEME===false?"#fff":"#171616"}]}>
-          <Text style={[styles.modalTitle,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>Select Token</Text>
-          <FlatList
+          <Text style={[styles.modalTitle,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>Select {ChianSelection?"Chain":"Token"}</Text>
+          {!ChianSelection&&<TouchableOpacity style={styles.chainSelectionCon} onPress={()=>{setChianSelection(true)}}>
+            <Text style={[styles.chainSelectText,{color:state?.THEME?.THEME===false?"black":"#fff",}]}>{SelectedChain}</Text>
+            <Icon name={"arrow-down"} size={16} color={state?.THEME?.THEME===false?"black":"#fff"}/>
+          </TouchableOpacity>}
+          {!ChianSelection?<FlatList
             data={TOKENS}
             keyExtractor={(item) => item.symbol}
             renderItem={({ item }) => (
@@ -229,10 +240,6 @@ const EthSwap = () => {
                 onPress={() => {
                   if (selectingFor === 'from') {
                     setFromToken(item);
-                    if(item.symbol==="WBNB")
-                    {
-                      navigation.navigate("BnbSwap");
-                    }
                   } else {
                     setToToken(item);
                   }
@@ -249,6 +256,31 @@ const EthSwap = () => {
               </TouchableOpacity>
             )}
           />
+          :<FlatList
+            data={chianSupports}
+            keyExtractor={(item) => item.chianSymbol}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.tokenListItem}
+                onPress={() => {
+                    if (item.chianSymbol === "Binance") {
+                      setSelectedChain(item.chianSymbol);
+                      setShowTokenList(false);
+                      navigation.navigate("BnbSwap");
+                    }
+                    setSelectedChain(item.chianSymbol);
+                    setChianSelection(false)
+                }}
+              >
+                <View style={styles.tokenContainer}>
+                  <Image source={{ uri: item.chianLogo }} style={styles.logoImage} />
+                  <View style={styles.tokenDetaisContainer}>
+                    <Text style={[styles.tokenListSymbol, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>{item.chianSymbol}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+          />}
           <TouchableOpacity
             style={[styles.closeButton,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}
             onPress={() => setShowTokenList(false)}
@@ -702,6 +734,19 @@ const styles = StyleSheet.create({
   swapButtonConText:{
     fontSize:18,
     color:"#fff",
+    fontWeight:"400"
+  },
+  chainSelectionCon:{
+    flexDirection:"row",
+    backgroundColor:"gray",
+    width:"30%",
+    borderRadius:20,
+    padding:5,
+    justifyContent:"center",
+    alignItems:"center"
+  },
+  chainSelectText:{
+    fontSize:14,
     fontWeight:"400"
   }
 });
