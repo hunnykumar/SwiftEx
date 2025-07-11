@@ -35,8 +35,26 @@ async function AMMSWAPTESTNET(fromTokenCode,fromTokenIssuer,toTokenCode,toTokenI
       throw new Error('No path found from XLM to USDC.');
     }
 
-    const bestPath = pathsResult.records[0];
+    const readyPath = pathsResult.records.filter(tempData => !(
+      tempData.source_asset_code === tempData.destination_asset_code &&
+      tempData.source_asset_issuer === tempData.destination_asset_issuer
+    ));
 
+    const bestPath = readyPath[0].path.map(p => {
+      if (p.asset_type === 'native') {
+        return StellarSdk.Asset.native();
+      } else {
+        return new StellarSdk.Asset(p.asset_code, p.asset_issuer);
+      }
+    });
+    
+    console.log("bestPath: ",bestPath)
+
+    const sendMaxAmt = (parseFloat(readyPath[0].source_amount) * 1.05).toFixed(7);
+
+    console.log("sendMax value:", sendMaxAmt);
+    console.log("Type:", typeof sendMaxAmt);
+    console.log("isNaN:", isNaN(Number(sendMaxAmt)));
     const tx = new StellarSdk.TransactionBuilder(account, {
       fee: StellarSdk.BASE_FEE,
       networkPassphrase: StellarSdk.Networks.PUBLIC,
@@ -44,11 +62,11 @@ async function AMMSWAPTESTNET(fromTokenCode,fromTokenIssuer,toTokenCode,toTokenI
       .addOperation(
         StellarSdk.Operation.pathPayment({
           sendAsset: assetSend,
-          sendMax: bestPath.source_amount,
+          sendMax: sendMaxAmt,
           destination: destinationPublicKey,
           destAsset: assetDest,
           destAmount: destAmount,
-          path: bestPath.path,
+          path: bestPath,
         })
       )
       .setTimeout(60)
@@ -62,7 +80,7 @@ async function AMMSWAPTESTNET(fromTokenCode,fromTokenIssuer,toTokenCode,toTokenI
       tx: result.hash,
     };
   } catch (err) {
-    console.error('Something went wrong submitting the transaction.');
+    console.error('Something went wrong submitting the transaction.',err);
   
     if (err.response && err.response.data && err.response.data.extras) {
       console.error('Result Codes:', err.response.data.extras.result_codes);
