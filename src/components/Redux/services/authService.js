@@ -424,14 +424,18 @@ const Generate_Wallet2 = async () => {
   // let account1 = node.derivePath("m/44'/60'/0'/0/0");
   const result = await EthereumWallet.createWallet();
   const Wallet = {
-    address: result.address,
-    privateKey: result.privateKey,
+    address: result.ethereum.address,
+    privateKey: result.ethereum.privateKey,
     mnemonic: result.mnemonic,
     xrp:{
       // address:xrpWallet.classicAddress, // UNCOMMENT
       // privateKey:xrpWallet.seed // UNCOMMENT
       address: "000000000",
       privateKey: "000000000",
+    },
+    stellarWallet: {
+        publicKey: result.stellar.publicKey,
+        secretKey: result.stellar.secretKey
     },
     walletType: "Multi-coin",
   };
@@ -663,9 +667,8 @@ async function AddToAllWallets(wallets, user) {
         },
       });
          const Ether_address= wallets[0].address;
-        const pair = StellarSdk.Keypair.random();
-        const publicKey = pair.publicKey();
-        const secretKey = pair.secret();
+        const publicKey = wallets[0].stellarWallet.publicKey;
+        const secretKey = wallets[0].stellarWallet.secretKey;
         console.log('G-Public Key:-', publicKey);
         console.log('G-Secret Key:-', secretKey);
       

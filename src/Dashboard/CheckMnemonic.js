@@ -438,10 +438,7 @@ const CheckMnemonic = (props) => {
   console.log("||||||||||||||||||||||||||||||||||||||||||||||",props.route.params.wallet.addres)
   const wallet_Men = props.route.params.wallet.mnemonic.split(' ');
 
-  const genrate_keypair = (ether_add) => {
-    const pair = StellarSdk.Keypair.random();
-    const publicKey = pair.publicKey();
-    const secretKey = pair.secret();
+  const genrate_keypair = (ether_add,publicKey,secretKey) => {
     console.log('G-Public Key:-', publicKey);
     console.log('G-Secret Key:-', secretKey);
     storeData(publicKey, secretKey,ether_add);
@@ -611,6 +608,10 @@ const CheckMnemonic = (props) => {
                     address: props.route.params.wallet.xrp.address,
                     privateKey: props.route.params.wallet.xrp.privateKey,
                   },
+                  stellarWallet: {
+                    publicKey: props.route.params.wallet.stellarWallet.publicKey,
+                    secretKey: props.route.params.wallet.stellarWallet.secretKey
+                  },
                   wallets: [],
                 };
                 let wallets = [];
@@ -624,6 +625,10 @@ const CheckMnemonic = (props) => {
                     xrp: {
                       address: props.route.params.wallet.xrp.address,
                       privateKey: props.route.params.wallet.xrp.privateKey,
+                    },
+                    stellarWallet: {
+                      publicKey: props.route.params.wallet.stellarWallet.publicKey,
+                      secretKey: props.route.params.wallet.stellarWallet.secretKey
                     },
                     walletType: "Multi-coin",
                   },
@@ -676,7 +681,7 @@ const CheckMnemonic = (props) => {
                 dispatch(setWalletType("Multi-coin"));
                 dispatch(setToken(token));
                 // add NEW ACCOUNT DATA FOR NEW STELLAR ACCOUNT
-                genrate_keypair(props.route.params.wallet.address)
+                genrate_keypair(props.route.params.wallet.address,props.route.params.wallet.stellarWallet.publicKey,props.route.params.wallet.stellarWallet.secretKey)
                 console.log("navigating to home screen");
                 props.navigation.navigate("HomeScreen");
                 alert("success", "Mnemonic validated successfully!");
