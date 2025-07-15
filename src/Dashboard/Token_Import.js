@@ -90,24 +90,9 @@ import Icon from '../icon';
     });
   
     const [tokenListed, settokenListed] = useState([]);
-    const tokensList=[{
+    const tokensList=[
+    {
       id: 1,
-      symbol: "WETH",
-      network: "ETH",
-      imgUrl: "https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png",
-      address: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
-      status: false
-    },
-    {
-      id: 2,
-      symbol: "PYUSD",
-      network: "ETH",
-      imgUrl: "https://coin-images.coingecko.com/coins/images/31212/large/PYUSD_Logo_%282%29.png?1696530039",
-      address: "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9",
-      status: false
-    },
-    {
-      id: 3,
       symbol: "USDT",
       network: "ETH",
       imgUrl: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
@@ -115,7 +100,7 @@ import Icon from '../icon';
       status: true
     },
     {
-      id: 4,
+      id: 2,
       symbol: "USDC",
       network: "ETH",
       imgUrl: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png",
@@ -123,7 +108,7 @@ import Icon from '../icon';
       status: true
     },
     {
-      id: 5,
+      id: 3,
       symbol: "UNI",
       network: "ETH",
       imgUrl: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
@@ -131,7 +116,7 @@ import Icon from '../icon';
       status: true
     },
     {
-      id: 6,
+      id: 4,
       symbol: "USDT",
       network: "BNB",
       imgUrl: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",

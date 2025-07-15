@@ -291,6 +291,10 @@ const CheckNewWalletMnemonic = ({
                             address: Wallet.xrp.address,
                             privateKey: Wallet.xrp.privateKey,
                           },
+                          stellarWallet: {
+                            publicKey: Wallet.stellarWallet.publicKey,
+                            secretKey: Wallet.stellarWallet.secretKey
+                          },
                           wallets: wallets,
                         },
                       ];
