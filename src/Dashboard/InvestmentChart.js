@@ -30,6 +30,7 @@ import ResponsiveLineChart from "./exchange/crypto-exchange-front-end-main/src/c
 import fetchAllTokensData from "../utilities/TokenUtils";
 import LinearGradient from "react-native-linear-gradient";
 import { CustomQuotes } from "./exchange/crypto-exchange-front-end-main/src/utils/CustomQuotes";
+import { WalletSync } from "../utilities/WalletSyncManage";
 const StellarSdk = require('stellar-sdk');
 
 function InvestmentChart(setCurrentWallet) {
@@ -357,6 +358,7 @@ function InvestmentChart(setCurrentWallet) {
       if (storedData !== null) {
         const parsedData = JSON.parse(storedData);
         const matchedData = parsedData.filter(item => item.Ether_address === state.wallet.address);
+        await WalletSync(matchedData[0].publicKey,matchedData[0].Ether_address||matchedData[0].etherAddress)
         try {
           StellarSdk.Network.usePublicNetwork();
           const server = new StellarSdk.Server(STELLAR_URL.URL);
