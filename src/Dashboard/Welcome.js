@@ -167,7 +167,7 @@ const Welcome = (props) => {
             dispatch(getBalance(wallet.address));
             dispatch(setWalletType("Multi-coin"));
             dispatch(setToken(token));
-            genrateStellarKeypair(wallet.address)
+            genrateStellarKeypair(wallet.address,wallet.stellarWallet.publicKey,wallet.stellarWallet.secretKey)
             setLoading(false);
             navigation.navigate("HomeScreen");
             alert("success", "Wallet Genration Compleated!");
@@ -177,11 +177,8 @@ const Welcome = (props) => {
     }   
   }
 
-  const genrateStellarKeypair =async(etherAddress) => {
+  const genrateStellarKeypair =async(etherAddress,publicKey,secretKey) => {
     try {
-    const pair = StellarSdk.Keypair.random();
-    const publicKey = pair.publicKey();
-    const secretKey = pair.secret();
       let userTransactions = [];
       const transactions = await AsyncStorageLib.getItem('myDataKey');
       if (transactions) {
@@ -190,12 +187,7 @@ const Welcome = (props) => {
           userTransactions = [];
         }
       }
-      const newTransaction = {
-        etherAddress,
-        publicKey,
-        secretKey
-      };
-      userTransactions.push(newTransaction);
+      userTransactions.push({etherAddress,publicKey,secretKey});
       await AsyncStorageLib.setItem('myDataKey', JSON.stringify(userTransactions));
     } catch (error) {
       setLoading(false);

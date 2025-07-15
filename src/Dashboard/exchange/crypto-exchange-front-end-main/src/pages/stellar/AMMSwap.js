@@ -23,6 +23,7 @@ import { useSelector } from 'react-redux';
 import { GetStellarAvilabelBalance } from '../../../../../../utilities/StellarUtils';
 import { AMMSWAPTESTNET } from './AMMSwapTestNetUtil';
 import { useNavigation } from '@react-navigation/native';
+import { STELLAR_URL } from '../../../../../constants';
 const StellarSdk = require('stellar-sdk');
 
 const AMMSwap = () => {
@@ -183,14 +184,14 @@ const AMMSwap = () => {
       destinationAssetCode,
       destinationAssetIssuer,
       sourceAmount)
-    const baseUrl = "https://horizon.stellar.org/paths/strict-send";
+    const baseUrl = STELLAR_URL.URL+"/paths/strict-send";
     const isSourceXLM = sourceAssetCode === "XLM";
     const isDestinationXLM = destinationAssetCode === "XLM";
     const query = [];
     if (isSourceXLM) {
       query.push(`source_asset_type=native`);
     } else {
-      query.push(`source_asset_type=credit_alphanum12`);
+      query.push(`source_asset_type=credit_alphanum4`);
       query.push(`source_asset_code=${encodeURIComponent(sourceAssetCode)}`);
       query.push(`source_asset_issuer=${encodeURIComponent(sourceAssetIssuer)}`);
     }
@@ -341,7 +342,7 @@ const AMMSwap = () => {
 
   const handleSwap=async()=>{
     settokenBurn(true)
-    const respo=await AMMSWAPTESTNET(fromToken.code,fromToken.issuer,toToken.code,toToken.issuer,state?.STELLAR_SECRET_KEY,fromAmount)
+    const respo=await AMMSWAPTESTNET(fromToken.code,fromToken.issuer,toToken.code,toToken.issuer,state?.STELLAR_SECRET_KEY,toAmount)
     if(respo.status===true)
     {
       setmessageError("Transaction successful!")
