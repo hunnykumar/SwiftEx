@@ -11,14 +11,12 @@ export async function WalletSync(stellarPublicKey, multiChainPublicKey) {
                 publicKey: stellarPublicKey,
                 wallletPublicKey: multiChainPublicKey
             });
-            if(res)
-            {
-                console.log("---currentWalletSync>>>>", res);
-                alert("success","Your device is synced....");
+            if (res.success) {
+                alert("success", "Your device is synced....");
             }
         }
-        else{
-         alert("error","Unable to sync device....");
+        else {
+            alert("error", "Unable to sync device....");
         }
     } catch (error) {
         console.log("---currentWalletSync>Error>>>", error)
@@ -27,34 +25,31 @@ export async function WalletSync(stellarPublicKey, multiChainPublicKey) {
 
 
 const deviceSync = async () => {
-    const token = await messaging().getToken();
-    console.log("device sync started.....");
-    const device_info = {
-        'deviceBrand': await DeviceInfo.getBrand(),
-        'deviceModel': await DeviceInfo.getModel(),
-        'systemVersion': await DeviceInfo.getSystemVersion(),
-        "deviceUniqueID": await DeviceInfo.getUniqueIdSync(),
-        "deviceIP": await DeviceInfo.getIpAddressSync(),
-        "deviceType": await DeviceInfo.getDeviceType(),
-        "deviceMacAddress": await DeviceInfo.getMacAddress()
-    }
     try {
-        const { res } = await authRequest(`/users/getInSynced/${token}`, GET);
-        if (res.isInSynced) {
-            const { err } = await authRequest("/users/syncDevice", POST, { fcmRegToken: token, deviceInfo: device_info });
-            if (err) {
-                return {
-                    status: false,
-                    res: err.message
-                };
-            }
-            else {
-                return {
-                    status: true,
-                    res: "Your device is synced"
-                };
-            }
+        const token = await messaging().getToken();
+        const device_info = {
+            'deviceBrand': await DeviceInfo.getBrand(),
+            'deviceModel': await DeviceInfo.getModel(),
+            'systemVersion': await DeviceInfo.getSystemVersion(),
+            "deviceUniqueID": await DeviceInfo.getUniqueIdSync(),
+            "deviceIP": await DeviceInfo.getIpAddressSync(),
+            "deviceType": await DeviceInfo.getDeviceType(),
+            "deviceMacAddress": await DeviceInfo.getMacAddress()
         }
+        const { err } = await authRequest("/users/syncDevice", POST, { fcmRegToken: token, deviceInfo: device_info });
+        if (err) {
+            return {
+                status: false,
+                res: err.message
+            };
+        }
+        else {
+            return {
+                status: true,
+                res: "Your device is synced"
+            };
+        }
+
     } catch (err) {
         console.log("error while sync device: ", err)
         return {

@@ -38,7 +38,7 @@ const BackupWallet = ({ open, close }) => {
   return (
     <Modal transparent animationType="slide" visible={open} onRequestClose={close}>
       <View style={styles.container}>
-        <View style={[styles.subContainer,{backgroundColor:state.THEME.THEME===false?"#fff":"#18181C",height:backupStatus?"30%":"35%"}]}>
+          <View style={[styles.subContainer,{backgroundColor:state.THEME.THEME===false?"#fff":"#18181C",height:"37%"}]}>
             <Ionicons name="close-circle-outline" size={35} color={state.THEME.THEME===false?"#080a0a":"#fff"} style={{alignSelf:"flex-end"}} onPress={()=>{ setbackupLoading(false),setbackupStatus(false),close()}} disabled={backupLoading}/>
             <Ionicons name={backupStatus?"cloud-done-sharp":"shield-half-sharp"} size={89} color={"#4F8EF7"} style={{alignSelf:"center",marginVertical:"5%"}}/>
             <Text style={[styles.subHeading,{color:state.THEME.THEME===false?"#080a0a":"#fff"}]}>Back up your secret phrase to keep your keys safe and secure. Never share your keys with anyone.</Text>
@@ -57,6 +57,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end'
   },
   subContainer:{
+    bottom:0,
     borderTopLeftRadius:30,
     borderTopRightRadius:30,
     padding:10,
