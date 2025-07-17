@@ -71,7 +71,7 @@ const KycComponent = ({ route }) => {
   const visibleClose = async() => {
     if (infoBtnAction) {
       setVisibleAlert(false);
-      navigation.navigate("exchangeLogin")
+      navigation.navigate("exchangeLogin",{diractPath:"rampScreen"})
     }
     if (infoBtnAction===false) {
       await proccedKyc()
@@ -162,33 +162,31 @@ const KycComponent = ({ route }) => {
   };
 
   // wait and get Qoutes
-  const waitAndQoutesFetch = useCallback(debounce(fetchQoutes, 1000), []);
-
-  const handleChange = (text) => {
-    const payAmount=text.replace(/[^0-9.]/g, '')
-    
-    if(!payAmount||payAmount==="0"||parseFloat(payAmount)===0)
-    {
+  const waitAndQoutesFetch = useCallback(debounce((valpayAmount,valoperationType,valselectedCrypto,valselectedfiat) => {
+    if (!valpayAmount || valpayAmount === "0" || parseFloat(valpayAmount) === 0) {
       setamountSend("");
       setoperationError("Invalid amount");
-      if(selectedCrypto===null||selectedfiat===null)
-        {
-          setamountSend("");
-          setoperationError("fiat & crypto both selection requird.");
-        }
-    }
-    else{
-      if(selectedCrypto===null||selectedfiat===null)
-      {
+      if (valselectedCrypto === null || valselectedfiat === null) {
         setamountSend("");
         setoperationError("fiat & crypto both selection requird.");
-      }else{
+      }
+    }
+    else {
+      if (valselectedCrypto === null || valselectedfiat === null) {
+        setamountSend("");
+        setoperationError("fiat & crypto both selection requird.");
+      } else {
         setQoutesRes(null);
         setqoutesLoading(true);
         setoperationError(null);
-        waitAndQoutesFetch(payAmount,operationType,selectedCrypto,selectedfiat)
+        fetchQoutes(valpayAmount,valoperationType,valselectedCrypto,valselectedfiat)
       }
     }
+  }, 500), []);
+
+  const handleChange = (text) => {
+    const payAmount=text.replace(/[^0-9.]/g, '')
+    waitAndQoutesFetch(payAmount,operationType,selectedCrypto,selectedfiat)
   };
   
   const checkUserKyc=async()=>{
@@ -429,7 +427,7 @@ const KycComponent = ({ route }) => {
             <View style={styles.amountInfoCon}>
               <View style={styles.amountInfoHeader}>
                 <Text style={styles.amountInfoText}>You Send</Text>
-                <Text style={styles.amountInfoText}>Min:{operationType==="BUY"?selectedfiat?.payMin||0.0:selectedCrypto?.minPurchaseAmount||0.0}</Text>
+                <Text style={styles.amountInfoText}>Min:{operationType==="BUY"?selectedCrypto?.minPurchaseAmount||0.0:selectedCrypto?.minSellAmount||0.0}</Text>
               </View>
               <View style={styles.amountInputCon}>
                 <View style={[styles.amountSubCon, { width: getContainerWidth() * 0.4 }]}>
@@ -438,12 +436,9 @@ const KycComponent = ({ route }) => {
                     placeholderTextColor="gray"
                     value={amountSend}
                     style={styles.amountInput}
-                    onChangeText={(text)=>{setamountSend(text)}}
+                    onChangeText={(text)=>{setamountSend(text),handleChange(text)}}
                     returnKeyType="done"
                     keyboardType="decimal-pad"
-                    onSubmitEditing={()=>{
-                      handleChange(amountSend)
-                    }}
                   />
                 </View>
               </View>
@@ -453,9 +448,8 @@ const KycComponent = ({ route }) => {
 
             {/* Second Amount Container */}
             <View style={styles.amountInfoCon}>
-              <View style={styles.amountInfoHeader}>
+              <View style={{justifyContent:"center",marginVertical:14}}>
                 <Text style={styles.amountInfoText}>You Receive</Text>
-                <Text style={styles.amountInfoText}>Min:{operationType==="SELL"?selectedfiat?.payMin||0.0:selectedCrypto?.minPurchaseAmount||0.0}</Text>
               </View>
               <View style={styles.amountInputCon}>
                 <View style={[styles.amountSubCon, { width: getContainerWidth() * 0.4, borderBottomColor:"gray" }]}>
@@ -489,7 +483,8 @@ const KycComponent = ({ route }) => {
                   <View style={styles.infoCon}>
                   <View style={styles.infoRow}>
                   <Icon name="circle-small" type="materialCommunity" color="#fff" size={30} />
-                  <Text style={styles.infoText}>Your Order : {operationType==="BUY"?QoutesRes?.cryptoQuantity:QoutesRes?.fiatQuantity||0.0} {QoutesRes?.crypto||"USDT"} for {amountSend} {QoutesRes?.fiat||"USD"}</Text>
+                  {operationType==="BUY"?<Text style={styles.infoText}>Your Order : {amountSend} {QoutesRes?.fiat||"USD"} for {operationType==="BUY"?QoutesRes?.cryptoQuantity:QoutesRes?.fiatQuantity||0.0} {QoutesRes?.crypto|| selectedCrypto?.crypto}</Text>:
+                  <Text style={styles.infoText}>Your Order : {QoutesRes?.fiatQuantity||0.0} {QoutesRes?.fiat||"USD"} for {amountSend} {selectedCrypto?.crypto}</Text>}
                 </View>
                 <View style={styles.infoRow}>
                   <Icon name="circle-small" type="materialCommunity" color="#fff" size={30} />
@@ -497,11 +492,11 @@ const KycComponent = ({ route }) => {
                 </View>
                 <View style={styles.infoRow}>
                   <Icon name="circle-small" type="materialCommunity" color="#fff" size={30} />
-                  <Text style={styles.infoText}>Estimation rate : 1 {QoutesRes?.crypto||"USDT"} = {QoutesRes?.cryptoPrice||0.0} {QoutesRes?.fiat||"USD"}</Text>
+                  <Text style={styles.infoText}>Estimation rate : 1 {QoutesRes?.crypto||selectedCrypto?.crypto} = {QoutesRes?.cryptoPrice||0.0} {QoutesRes?.fiat||"USD"}</Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Icon name="circle-small" type="materialCommunity" color="#fff" size={30} />
-                  <Text style={styles.infoText}>Network fee : {QoutesRes?.networkFee||0.0} {QoutesRes?.crypto||"USDT"}</Text>
+                  <Text style={styles.infoText}>Network fee : {QoutesRes?.networkFee||0.0} {QoutesRes?.crypto||selectedCrypto?.crypto}</Text>
                 </View>
                 </View>}
 

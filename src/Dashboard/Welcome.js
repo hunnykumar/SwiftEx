@@ -62,6 +62,7 @@ const Welcome = (props) => {
     try {
       const response=await dispatch(Generate_Wallet2())
         if (response) {
+          console.log("respoms:",response)
           if (response.status === "success") {
             const wallet = {
               wallet: response.wallet,
@@ -87,6 +88,7 @@ const Welcome = (props) => {
 
   const dispatChingData=async(wallet)=>{
     try {
+      console.log("respoms wallet:",wallet)
       const pin = await AsyncStorageLib.getItem("pin");
             const body = {
               accountName: "Main",
@@ -103,6 +105,10 @@ const Welcome = (props) => {
                 address: wallet.xrp.address,
                 privateKey: wallet.xrp.privateKey,
               },
+              stellarWallet: {
+                publicKey: wallet.stellarWallet.publicKey,
+                secretKey: wallet.stellarWallet.secretKey
+              },
               wallets: [],
             };
             let wallets = [];
@@ -117,6 +123,10 @@ const Welcome = (props) => {
                   address: wallet.xrp.address,
                   privateKey: wallet.xrp.privateKey,
                 },
+                stellarWallet: {
+                  publicKey: wallet.stellarWallet.publicKey,
+                  secretKey: wallet.stellarWallet.secretKey
+                },
                 walletType: "Multi-coin",
               },
             ];
@@ -126,7 +136,7 @@ const Welcome = (props) => {
               JSON.stringify(allWallets[0])
             );
             AsyncStorageLib.setItem(
-              `Main-wallets`,
+              `${"Main"}-wallets`,
               JSON.stringify(allWallets)
             );
             AsyncStorageLib.setItem(
@@ -138,7 +148,7 @@ const Welcome = (props) => {
               "Main"
             );
             AsyncStorageLib.setItem(
-              `Main-token`,
+              `${"Main"}-token`,
               token
             );
   
