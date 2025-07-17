@@ -8,7 +8,7 @@
         "maxPurchaseAmount": 1900.00,
         "address": "0xed04915c23f00a313a544955524eb7dbd823143d",
         "icon": "https://static.alchemypay.org/alchemypay/crypto-images/ACH.png",
-        "minSellAmount": null,
+        "minSellAmount": 0.01,
         "maxSellAmount": null
     },
     {
@@ -776,7 +776,7 @@
         "maxPurchaseAmount": 1900.00,
         "address": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
         "icon": "https://static.alchemypay.org/alchemypay/crypto-images/USDC.png",
-        "minSellAmount": null,
+        "minSellAmount": 20,
         "maxSellAmount": null
     },
     {
@@ -848,7 +848,7 @@
         "maxPurchaseAmount": 1900.00,
         "address": null,
         "icon": "https://static.alchemypay.org/alchemypay/crypto-images/USDC.png",
-        "minSellAmount": null,
+        "minSellAmount": 20.20,
         "maxSellAmount": null
     },
     {

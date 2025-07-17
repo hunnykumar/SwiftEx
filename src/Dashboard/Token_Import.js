@@ -496,7 +496,7 @@ import Icon from '../icon';
       right: 10,
       borderColor: "#2164C1",
       borderWidth: 1,
-      marginTop:"99%"
+      bottom:"54%"
     },
     list: {
       marginTop: 1,
