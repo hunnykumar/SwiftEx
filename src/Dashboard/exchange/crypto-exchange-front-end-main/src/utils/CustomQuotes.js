@@ -251,8 +251,8 @@ export const CustomQuotes = ({
       const walletUSDCAddress = await AsyncStorageLib.getItem("wallet");
       const addresses=JSON?.parse(walletUSDCAddress)?.address
       const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
-       const {res,err} = await proxyRequest("/fetchTokenInfo", PPOST, {address:usdtAddress,walletAdd:addresses});
-      const balance =res.tokenInfo[0].balance;
+       const {res,err} = await proxyRequest("/v1/eth/token/info", PPOST, {addresses:usdtAddress,walletAddress:addresses});
+      const balance =res?.[0]?.balance;
       console.log(`USDT Balance of ${addresses}: ${balance} USDT`); 
       if(parseFloat(value)>=parseFloat(balance)||parseFloat(balance)===0){
         setcompletTransaction(true)
@@ -644,7 +644,7 @@ export const CustomQuotes = ({
           value: res.fullTx.value ? ethers.BigNumber.from(res.fullTx.value) : ethers.BigNumber.from(0),
         };
         const signedTx = await wallet.signTransaction(upgradedTx);
-        const respoExe = await proxyRequest("/executeTransaction", PPOST, {signedTx:signedTx,"CHAIN":"ETH"});
+        const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});
         if(respoExe?.res?.txHash)
         {
           setisDone(false)

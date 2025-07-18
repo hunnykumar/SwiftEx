@@ -73,8 +73,8 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
       
       try {
         if(address&&WALLET_ADDRESS){
-          const {res,err} = await proxyRequest("/fetchTokenInfo", PPOST, {address:address,walletAdd:WALLET_ADDRESS});
-          return res.tokenInfo[0];
+          const {res,err} = await proxyRequest("/v1/eth/token/info", PPOST, {addresses:address,walletAddress:WALLET_ADDRESS});
+          return res?.[0];
         }
       } catch (error) {
         console.error(`Error fetching token info for ${address}:`, error);
@@ -86,8 +86,8 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
     const fetchBNBTokenInfo = async (address) => {
       try {
         if(address&&WALLET_ADDRESS){
-          const {res,err} = await proxyRequest("/fetchBscTokenInfo", PPOST, {address:address,walletAdd:WALLET_ADDRESS});
-          return res.tokenInfo[0];
+          const {res,err} = await proxyRequest("/v1/bsc/token/info", PPOST, {addresses:address,walletAddress:WALLET_ADDRESS});
+          return res?.[0];
         }
       } catch (error) {
         console.log(`Error fetching token info for ${address}:`, error);

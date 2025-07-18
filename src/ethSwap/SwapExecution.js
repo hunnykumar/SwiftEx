@@ -182,8 +182,8 @@ const WETH_ABI = [
         const wallet = new ethers.Wallet(privateKey);
         const address = await wallet.getAddress();
     
-        const isEthToUsdc = type === 'ethToUsdc';
-        const isUsdcToWeth = type === 'usdcToWeth';
+        const isEthToUsdc = type === 'EthToUsdc';
+        const isUsdcToWeth = type === 'UsdcToWeth';
     
         const ethAmount = ethers.utils.parseEther(amount.toString());
         const usdcAmount = ethers.utils.parseUnits(amount.toString(), 6);
@@ -209,10 +209,10 @@ const WETH_ABI = [
         const swapData = swapIface.encodeFunctionData("exactInputSingle", [params]);
     
         const payload = {
-            publicKey: address,
-            type,
+            address: address,
+            swapType:type,
             swapData,
-            value: isEthToUsdc ? ethAmount : undefined
+            value: isEthToUsdc ? ethers.utils.formatEther(ethAmount) : ethers.utils.formatEther(usdcAmount)
         };
     
         if (isEthToUsdc) {
@@ -223,7 +223,8 @@ const WETH_ABI = [
         }
     
         // Send to backend
-          const respo = await proxyRequest("/swapPrepare", PPOST,  payload);
+          const respo = await proxyRequest("/v1/eth/swap-transaction/prepare", PPOST,  payload);
+          console.log("swap-pre---",respo)
           if(respo.err?.status===500)
             {
                 return new SwapResult(
@@ -238,11 +239,12 @@ const WETH_ABI = [
             }
             
             const signedTxs = await Promise.all(
-                respo.res.swapInfo.map(tx => wallet.signTransaction(tx))
+                respo.res.map(tx => wallet.signTransaction(tx))
             );
             console.log(signedTxs)
     
-        const { res, err } = await proxyRequest("/swapExecute", PPOST,  {signedTxs:signedTxs});
+        const { res, err } = await proxyRequest("/v1/eth/swap-transaction/execute", PPOST,  {txs:signedTxs});
+        console.log("swap-exe---",res,err)
         if(err?.status===500)
         {
             return new SwapResult(
@@ -255,13 +257,13 @@ const WETH_ABI = [
                 }
             );
         }
-        if(res?.swapInfo[0]?.status===1)
+        if(res?.[0]?.status===1)
             {
                 return new SwapResult(
                     true,
                     'Swap completed successfully',
                     {                  
-                        explorerLink: `https://sepolia.etherscan.io/tx/${res?.swapInfo[0]?.transactionHash}`
+                        explorerLink: `https://sepolia.etherscan.io/tx/${res?.[0]?.transactionHash}`
                     }
                 );
             }    

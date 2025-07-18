@@ -141,14 +141,14 @@ const TransactionPinModal = ({
   
           if (type === "Eth") {
 
-            const { res, err } = await proxyRequest("/executeTransaction", PPOST, {signedTx:rawTransaction,"CHAIN":"ETH"});
+            const { res, err } = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:rawTransaction});
             if (err) {
               console.log(err);
               setLoading(false);
               Alert.alert("Error", err.message||"Something went wrong");
             }
   
-            if (res.txHash.hash) {
+            if (res.txHash) {
               try {
                 ShowToast(toast, "Transaction Successful");
   
@@ -208,7 +208,7 @@ const TransactionPinModal = ({
               }
             }
           } else if (type === "BSC") {
-            const { res, err } = await proxyRequest("/executeTransaction", PPOST, {signedTx:rawTransaction,"CHAIN":"BSC"});
+            const { res, err } = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {signedTx:rawTransaction});
             if(err)
             {
               setDisable(false);
@@ -219,7 +219,7 @@ const TransactionPinModal = ({
               alert("error","Something went wrong...")
             }
       
-         if (res.txHash.hash) {
+         if (res.txHash) {
               try {
                 ShowToast(toast, "Transaction Successful");
                 setLoading(false);

@@ -77,7 +77,7 @@ const TokenSend = ({ route }) => {
         value: res.fullTx.value ? ethers.BigNumber.from(res.fullTx.value) : ethers.BigNumber.from(0),
       };
       const signedTx = await wallet.signTransaction(upgradedTx);
-      const respoExe = await proxyRequest("/executeTransaction", PPOST, {signedTx:signedTx,"CHAIN":"BSC"});
+      const respoExe = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {signedTx:signedTx});
       if(respoExe?.res?.txHash)
       {
         alert("success", `Transaction successful!`);
@@ -116,7 +116,7 @@ const TokenSend = ({ route }) => {
           value: res.fullTx.value ? ethers.BigNumber.from(res.fullTx.value) : ethers.BigNumber.from(0),
         };
         const signedTx = await wallet.signTransaction(upgradedTx);
-        const respoExe = await proxyRequest("/executeTransaction", PPOST, {signedTx:signedTx,"CHAIN":"ETH"});
+        const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});
         if(respoExe?.res?.txHash)
         {
           alert("success", `Transaction successful!`);
@@ -226,8 +226,8 @@ const TokenSend = ({ route }) => {
   const fetchTokenInfo = async (address) => {
     try {
       if (address && state?.wallet?.address) {
-        const { res, err } = await proxyRequest("/fetchTokenInfo", PPOST, { address: address, walletAdd: state?.wallet?.address });
-        return res.tokenInfo[0];
+        const { res, err } = await proxyRequest("/v1/eth/token/info", PPOST, { addresses: address, walletAddress: state?.wallet?.address });
+        return res?.[0];
       }
     } catch (error) {
       console.error(`Error fetching token info for ${address}:`, error);
@@ -239,8 +239,8 @@ const TokenSend = ({ route }) => {
   const fetchBNBTokenInfo = async (address) => {
     try {
       if (address && state?.wallet?.address) {
-        const { res, err } = await proxyRequest("/fetchBscTokenInfo", PPOST, { address: address, walletAdd: state?.wallet?.address });
-        return res.tokenInfo[0];
+        const { res, err } = await proxyRequest("/v1/bsc/token/info", PPOST, { address: address, walletAddress: state?.wallet?.address });
+        return res?.[0];
       }
     } catch (error) {
       console.error(`Error fetching token info for ${address}:`, error);

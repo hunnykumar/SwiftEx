@@ -72,7 +72,7 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
         
     
         // Send to backend
-          const respo = await proxyRequest("/swapPrepare", PPOST,  payload);
+          const respo = await proxyRequest("/v1/eth/swap-transaction/prepare", PPOST,  payload);
           if(respo.err?.status===500)
                       {
                         return {
@@ -83,13 +83,14 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
                       }
                       
                       const signedTxs = await Promise.all(
-                          respo.res.swapInfo.map(tx => wallet.signTransaction(tx))
+                        respo.res.map(tx => wallet.signTransaction(tx))
                       );
                       console.log(signedTxs)
                     const QuotedAmountOutRes = await proxyRequest("/getQuotedAmountOut", PPOST,  {tokenInAddress:ADDRESSES.WETH, tokenOutAddress:ADDRESSES.USDT, fee:fees, walletAddress:address, amountIn:amountIn});
                       console.log("----QuotedAmountOutRes",QuotedAmountOutRes.res);
               
-                  const { res, err } = await proxyRequest("/swapExecute", PPOST,  {signedTxs:signedTxs});
+                  const { res, err } = await proxyRequest("/v1/eth/swap-transaction/execute", PPOST,  {txs:signedTxs});
+                  console.log("swap-exe---",res,err)
                   if(err?.status===500)
                   {
                     return {
@@ -98,7 +99,7 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
                         details: "faild to swap"
                     };
                   }
-                  if(res?.swapInfo[0]?.status===1)
+                  if(res?.[0]?.status===1)
                     console.log("=====000",res)
                       {
                           return {
@@ -107,8 +108,8 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
                             inputAmount: `${amount} ETH`,
                             outputAmount: `${ethers.utils.formatUnits(QuotedAmountOutRes?.res?.result?.[0], 6)}`,
                             transactions: {
-                                approve: `https://sepolia.etherscan.io/tx/${res?.swapInfo[0].transactionHash}`,
-                                swap: `https://sepolia.etherscan.io/tx/${res?.swapInfo[1].transactionHash}`,
+                                approve: `https://sepolia.etherscan.io/tx/${res?.[0].transactionHash}`,
+                                swap: `https://sepolia.etherscan.io/tx/${res?.[1].transactionHash}`,
                             }
                         };
                       }    

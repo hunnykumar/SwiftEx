@@ -63,8 +63,8 @@ async function fetchAllTokensData(WALLET_ADDRESS) {
         token.address.toLowerCase() === address.toLowerCase()
       );
       if (address && WALLET_ADDRESS) {
-        const { res, err } = await proxyRequest("/fetchTokenInfo", PPOST, { address: address, walletAdd: WALLET_ADDRESS });
-        const respoData=res.tokenInfo[0];
+        const { res, err } = await proxyRequest("/v1/eth/token/info", PPOST, { addresses: address, walletAddress: WALLET_ADDRESS });
+        const respoData=res?.[0];
         const price = await fetchTokenPrice(respoData?.symbol);
         return { 
           name:respoData?.name, 
@@ -101,8 +101,8 @@ async function fetchAllTokensData(WALLET_ADDRESS) {
   const fetchBNBTokenInfo = async (address, img_url = '', symbol = '') => {
     try {
       if (address && WALLET_ADDRESS) {
-        const { res, err } = await proxyRequest("/fetchBscTokenInfo", PPOST, { address: address, walletAdd: WALLET_ADDRESS });
-        const data=res.tokenInfo[0];
+        const { res, err } = await proxyRequest("/v1/bsc/token/info", PPOST, { addresses: address, walletAddress: WALLET_ADDRESS });
+        const data=res?.[0];
         const imageData = PancakeList.find(token => 
           token.address.toLowerCase() === address.toLowerCase()
         );

@@ -18,7 +18,7 @@ import { useSelector } from 'react-redux';
 import { TransactionForStellar, Wallet_screen_header } from './reusables/ExchangeHeader';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import StellarTransactionHistory from './exchange/crypto-exchange-front-end-main/src/pages/StellarTransactionHistory';
-import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';
+import { PGET, PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';
 
 const ThemeContext = React.createContext();
 
@@ -111,13 +111,13 @@ const TransactionHistory = () => {
   const fetchAllTransactions = async () => {
     try {
       setLoading(true);
-       const {res,err} = await proxyRequest("/etherTransactionHistory", PPOST, {walletAddress:walletAddress});
+       const {res,err} = await proxyRequest("/v1/transaction-history/"+walletAddress, PGET);
       if (err?.status === 500) {
         console.error('Error fetching transactions:', err);
         setLoading(false);
         setRefreshing(false);
       }      
-      setTransactions(res?.result);
+      setTransactions(res);
       setLoading(false);
       setRefreshing(false);
     } catch (error) {

@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/Ionicons";
 import { useSelector } from 'react-redux';
 import { Wallet_screen_header } from '../Dashboard/reusables/ExchangeHeader';
-import { PPOST, proxyRequest } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
+import { PGET, PPOST, proxyRequest } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
 
 const TOKENS = [
   {
@@ -70,12 +70,12 @@ const initializeWallet = async () => {
 // Update BNB and USDT balances
 const updateBalances = async (address) => {
   try {
-    const {res,err} = await proxyRequest("/bscSwapBalance", PPOST, {address:address,toToken:toToken.address});
+    const {res,err} = await proxyRequest(`/v1/bsc/${address}/token/${toToken.address}/balance`, PGET);
     if (err?.status === 500) {
       Alert.alert("Balance fetch","somthing went wrong...")
     }
-    setBnbBalance(res?.response?.walletBalance);
-    setUsdtBalance(res?.response?.usdtContract);
+    setBnbBalance(res?.walletBalance);
+    setUsdtBalance(res?.tokenBalance);
   } catch (error) {
     console.error('Balance update error:', error);
   }
@@ -87,12 +87,14 @@ const getQuote = async (inputAmount) => {
   
   setQuoteLoading(true);
   try {
-    const {res,err} = await proxyRequest("/getBscSwapQuote", PPOST, {tokenIn:fromToken,tokenOut:toToken,amountIn:inputAmount});
+    const {res,err} = await proxyRequest("/v1/bsc/swap-quote", PPOST, {tokenIn:fromToken,tokenOut:toToken,amount:inputAmount}
+    );
+    console.log(res)
     if (err?.status === 500) {
       setEstimatedUsdt('0');
       setQuoteLoading(false);
     }
-    setEstimatedUsdt(res?.swapInfo);
+    setEstimatedUsdt(res);
   } catch (error) {
     console.error('Quote error:', error);
     setEstimatedUsdt('0');
@@ -112,18 +114,19 @@ const executeSwap = async () => {
   setLoading(true);
   try {
     
-    const {res,err} = await proxyRequest("/bscSwapPrepare", PPOST, {publicKey:userAddress,amountIn:bnbAmount,tokenIn:fromToken,tokenOut:toToken});
+    const {res,err} = await proxyRequest("/v1/bsc/swap-transaction/prepare", PPOST, {address:userAddress,bnbAmount:bnbAmount,tokenIn:fromToken,tokenOut:toToken});
+    console.log(res)
     if (err?.status === 500) {
       Alert.alert('Error', 'Swap failed');
     }
     const wallet = new ethers.Wallet(state?.wallet?.privateKey);
-    const signedTxs = await wallet.signTransaction(res.swapInfo);
-    const respo = await proxyRequest("/bscSwapExecute", PPOST, {signedTxs});
+    const signedTxs = await wallet.signTransaction(res);
+    const respo = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {signedTx:signedTxs});
     if (respo?.err?.status === 500) {
       Alert.alert('Error', 'Swap failed');
     }
     console.log("respo",respo?.res?.swapInfo)
-    if(respo?.res?.swapInfo)
+    if(respo?.res?.txHash)
     {
       Alert.alert('Success', 'Swap completed successfully!');
     }

@@ -120,8 +120,8 @@ useEffect(()=>{
 
       const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
       if (usdtAddress && addresses) {
-        const { res, err } = await proxyRequest("/fetchTokenInfo", PPOST, { address: usdtAddress, walletAdd: addresses });        
-        const balance = res.tokenInfo[0]?.balance;
+        const { res, err } = await proxyRequest("/v1/eth/token/info", PPOST, { addresses: usdtAddress, walletAddress: addresses });     
+        const balance = res?.[0]?.balance;
         console.log(`USDT Balance of ${addresses}: ${balance} USDT`);
         
         setWALLETBALANCE(balance);
@@ -271,7 +271,7 @@ const getOffersData = async () => {
         value: res.fullTx.value ? ethers.BigNumber.from(res.fullTx.value) : ethers.BigNumber.from(0),
       };
       const signedTx = await wallet.signTransaction(upgradedTx);
-      const respoExe = await proxyRequest("/executeTransaction", PPOST, { signedTx: signedTx, "CHAIN": "ETH" });
+      const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});
       if (respoExe?.res?.txHash) {
         console.log("Transaction Sent", `Tx Hash: ${respoExe?.res?.txHash}`);
       setfianl_modal_text("Transaction Successful");

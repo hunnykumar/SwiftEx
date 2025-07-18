@@ -7,7 +7,7 @@ import { saveFile, encryptFile } from "../../../utilities/utilities";
 import { urls, RPC, WSS } from "../../../Dashboard/constants";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { NativeModules, Platform } from 'react-native';
-import { PPOST, proxyRequest } from '../../../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
+import { PGET, PPOST, proxyRequest } from '../../../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
 const StellarSdk = require('stellar-sdk');
 const { EthereumWallet } = NativeModules;
 
@@ -161,14 +161,14 @@ const getBalance = async (address) => {
   console.log(address);
   try {
     if (address) {
-      const { res, err } = await proxyRequest("/fetchWalletBalnces", PPOST, { walletAdd:address,CHAIN:"BSC" });
+      const { res, err } = await proxyRequest(`/v1/bsc/${address}/balance`, PGET);
       // AsyncStorage.setItem('balance', balance);
 
-      AsyncStorage.setItem("balance", res.balance);
+      AsyncStorage.setItem("balance", res);
       return {
         status: "success",
         message: "Balance fetched",
-        walletBalance: res.balance,
+        walletBalance: res,
       };
     } else {
       return {

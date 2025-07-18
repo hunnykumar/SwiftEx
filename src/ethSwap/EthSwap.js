@@ -81,14 +81,15 @@ const EthSwap = () => {
 
 
   const getSwapQuote = async (tokenIn, tokenOut, amountIn) => {
-    const { res, err } = await proxyRequest("/getSwapQuote", PPOST, { tokenIn: tokenIn, tokenOut: tokenOut, amountIn: amountIn });
+    const { res, err } = await proxyRequest("/v1/eth/swap-quote", PPOST, { tokenIn: tokenIn, tokenOut: tokenOut, amount: amountIn });
+    console.log(res, err)
     if (err?.status === 500) {
       setErroVisible(true);
       setQuoteInfo(null);
       setLoading(false);
     }
     else {
-      return res.swapInfo;
+      return res;
     }
   };
 
@@ -265,7 +266,7 @@ const EthSwap = () => {
     setSwapExecution(true);
     if (SWAPTYPE === "USDC") {
       try {
-        const result = await swapUSDCtoWETH(PRIVATE_KEY, amount, "usdcToWeth",quoteInfo.fee);
+        const result = await swapUSDCtoWETH(PRIVATE_KEY, amount, "UsdcToWeth",quoteInfo.fee);
 
         if (result.success) {
           setSwapExecution(false);
@@ -301,7 +302,7 @@ const EthSwap = () => {
     if(SWAPTYPE==="WETH")
     {
       try {
-        const result = await swapUSDCtoWETH(PRIVATE_KEY, amount, "ethToUsdc",quoteInfo.fee);
+        const result = await swapUSDCtoWETH(PRIVATE_KEY, amount, "EthToUsdc",quoteInfo.fee);
         
         if (result.success) {
             setSwapExecution(false);
