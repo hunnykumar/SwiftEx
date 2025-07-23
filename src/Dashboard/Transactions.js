@@ -111,7 +111,7 @@ const TransactionHistory = () => {
   const fetchAllTransactions = async () => {
     try {
       setLoading(true);
-       const {res,err} = await proxyRequest("/v1/transaction-history/"+walletAddress, PGET);
+       const {res,err} = await proxyRequest(`/v1/transaction-history/${walletAddress}/eth`, PGET);
       if (err?.status === 500) {
         console.error('Error fetching transactions:', err);
         setLoading(false);

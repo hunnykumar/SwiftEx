@@ -236,7 +236,7 @@ const getBalance = async (address) => {
 const getEthBalance = async (address) => {
   try {
     if (address) {
-      const { res, err } = await proxyRequest("/fetchWalletBalnces", PPOST, { walletAdd:address,CHAIN:"ETH" });
+      const { res, err } = await proxyRequest(`/v1/eth/${address}/balance`, PGET);
 
       console.log(res.balance);
       AsyncStorage.setItem("EthBalance", res.balance);

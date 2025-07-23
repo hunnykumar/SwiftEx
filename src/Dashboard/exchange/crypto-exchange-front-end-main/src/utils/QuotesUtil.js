@@ -18,13 +18,13 @@ const getCUSTOMSwapQuote = async (tokenIn,amountIn, tokenName,tokenOut="0xaA8E23
         }];
 
 
- const { res, err } = await proxyRequest("/getSwapQuote", PPOST, { tokenIn: tokens[0], tokenOut: tokens[1], amountIn: amountIn });
+ const { res, err } = await proxyRequest("/v1/eth/swap-quote", PPOST, { tokenIn: tokens[0], tokenOut: tokens[1], amount: amountIn });
     if (err?.status === 500) {
         console.error(`Failed to get swap quote: ${err}`);
         return { status: false, error: err };
     }
     else {
-      const formattedAmountOut = res.swapInfo.outputAmount; // Assuming USDT has 6 decimals
+      const formattedAmountOut = res.outputAmount; // Assuming USDT has 6 decimals
 
       const conversionRate = (parseFloat(formattedAmountOut) / parseFloat(amountIn)).toFixed(6);
       const slippageTolerance = 0.005; // Example 0.5% slippage tolerance
@@ -37,7 +37,7 @@ const getCUSTOMSwapQuote = async (tokenIn,amountIn, tokenName,tokenOut="0xaA8E23
           inputAmount: amountIn,
           inputToken: tokenIn,
           outputAmount: parseFloat(formattedAmountOut),
-          fee:res?.swapInfo?.fee,
+          fee:res?.fee,
           status: true
       };
     }

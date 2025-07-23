@@ -18,7 +18,7 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import { getETHtoTokenPrice } from '../../../../tokens/swapFunctions';
 import { USDT } from './assetAddress';
 import { REACT_APP_HOST } from '../ExchangeConstants';
-import { authRequest, GET, getToken, POST, PPOST, proxyRequest } from '../api';
+import { authRequest, GET, getToken, PGET, POST, PPOST, proxyRequest } from '../api';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../../../../../icon';
 import { ethers } from 'ethers';
@@ -499,7 +499,7 @@ export const CustomQuotes = ({
         {
         console.log("---err->",res)
         const walletAddress = await AsyncStorageLib.getItem("wallet");
-        const resProxy = await proxyRequest("/fetchWalletBalnces", PPOST, {walletAdd:JSON.parse(walletAddress)?.address,CHAIN:"ETH"});
+        const resProxy = await proxyRequest(`/v1/eth/${walletAddress}/balance`, PGET);
         const balanceInEth = resProxy?.res?.balance;
         console.log("---ae",balanceInEth)
             if(parseFloat(value)>=parseFloat(balanceInEth)||parseFloat(balanceInEth)===0){
@@ -636,12 +636,12 @@ export const CustomQuotes = ({
         const formattedAmount = ethers.utils.parseUnits(amount, 6);
         const unsigned = await usdtContract.populateTransaction.transfer(usdtAddress, formattedAmount);
         // Send transaction
-        const {res,err} = await proxyRequest("/tokenSendPrepare", PPOST, { CHAIN:"ETH",unsignedTx:unsigned,address:wallet.address });
+        const {res,err} = await proxyRequest("/v1/eth/transaction/prepare", PPOST, { unsignedTx:unsigned,walletAddress:wallet.address });
         const upgradedTx = {
-          ...res.fullTx,
-          gasLimit: ethers.BigNumber.from(res.fullTx.gasLimit),
-          gasPrice: ethers.BigNumber.from(res.fullTx.gasPrice),
-          value: res.fullTx.value ? ethers.BigNumber.from(res.fullTx.value) : ethers.BigNumber.from(0),
+          ...res,
+          gasLimit: ethers.BigNumber.from(res.gasLimit),
+          gasPrice: ethers.BigNumber.from(res.gasPrice),
+          value: res.value ? ethers.BigNumber.from(res.value) : ethers.BigNumber.from(0),
         };
         const signedTx = await wallet.signTransaction(upgradedTx);
         const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});

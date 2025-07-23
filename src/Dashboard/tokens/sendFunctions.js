@@ -9,7 +9,7 @@ import { RPC } from "../constants";
 import "react-native-get-random-values";
 import "@ethersproject/shims";
 import { alert } from "../reusables/Toasts";
-import { PPOST, proxyRequest } from "../exchange/crypto-exchange-front-end-main/src/api";
+import { PGET, PPOST, proxyRequest } from "../exchange/crypto-exchange-front-end-main/src/api";
 var ethers = require("ethers");
 
 const xrpl = require("xrpl");
@@ -23,7 +23,7 @@ const sendEth = async (
 ) => {
 
   const walletPrivateKey = new ethers.Wallet(privateKey);
-  const { res, err } = await proxyRequest("/preInfo", PPOST, {"walletAdd":walletPrivateKey.address,"CHAIN":"ETH"});
+  const { res, err } = await proxyRequest(`/v1/eth/wallet-address/${walletPrivateKey.address}/info`, PGET);
    if(err)
    {
     alert("error","Something went wrong...")
@@ -44,7 +44,7 @@ const sendEth = async (
     gasLimit: 21000,
     maxPriorityFeePerGas: res.gasFeeData.maxPriorityFeePerGas,
     maxFeePerGas: res.gasFeeData.maxFeePerGas,
-    nonce: res.nonce,
+    nonce: res.transactionCount,
     type: 2,
     chainId: 11155111,
   };
@@ -72,7 +72,7 @@ const sendBNB = async (
 ) => {
   //console.log(provider)
   const walletPrivateKey = new ethers.Wallet(privateKey);
-  const { res, err } = await proxyRequest("/preInfo", PPOST, {"walletAdd":walletPrivateKey.address,"CHAIN":"BSC"});
+  const { res, err } = await proxyRequest(`/v1/bsc/wallet-address/${walletPrivateKey.address}/info`, PGET);
   if(err)
   {
    alert("error","Something went wrong...")
@@ -87,7 +87,7 @@ const sendBNB = async (
   let transaction = {
     gasLimit: 21000,
     gasPrice: ethers.BigNumber.from(res.gasFeeData.gasPrice), //await provider.getGasPrice(addressFrom),
-    nonce: res.nonce, //provider.getTransactionCount(addressFrom),
+    nonce: res.transactionCount, //provider.getTransactionCount(addressFrom),
     to: addressTo,
     data: "0x",
     value: ethers.utils.parseEther(amount),

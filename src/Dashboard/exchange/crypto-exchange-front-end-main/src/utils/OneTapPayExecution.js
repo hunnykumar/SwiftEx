@@ -3,7 +3,7 @@ const QUOTER_ABI = require('../../../../../ethSwap/abi/quoter.json');
 const SWAP_ROUTER_ABI = require('../../../../../ethSwap/abi/swaprouter.json');
 const POOL_ABI = require('../../../../../ethSwap/abi/pool.json');
 const { ethers } = require('ethers');
-const { proxyRequest, PPOST } = require('../api');
+const { proxyRequest, PPOST, PGET } = require('../api');
 
 const WETH_ABI = [
     "function deposit() external payable",
@@ -26,7 +26,7 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
     try {
         const wallet = new ethers.Wallet(privateKey);
         const address = await wallet.getAddress();
-        const resProxy = await proxyRequest("/fetchWalletBalnces", PPOST, {walletAdd:address,CHAIN:"ETH"});
+        const resProxy = await proxyRequest(`/v1/eth/${address}/balance`, PGET);
         const ethBalance = ethers.utils.parseEther(resProxy?.res?.balance);
         const amountIn = ethers.utils.parseEther(amount);
         if (ethBalance.lt(amountIn)) {
@@ -62,7 +62,7 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
     
         const payload = {
             publicKey: address,
-            type:"ethToUsdc",
+            type:"EthToUsdc",
             swapData,
             value: ethAmount
         };
@@ -86,7 +86,18 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
                         respo.res.map(tx => wallet.signTransaction(tx))
                       );
                       console.log(signedTxs)
-                    const QuotedAmountOutRes = await proxyRequest("/getQuotedAmountOut", PPOST,  {tokenInAddress:ADDRESSES.WETH, tokenOutAddress:ADDRESSES.USDT, fee:fees, walletAddress:address, amountIn:amountIn});
+        const QuotedAmountOutRes = await proxyRequest("/v1/eth/swap-quote", PPOST, {
+            tokenIn: {
+                "symbol": "WETH",
+                "decimals": 18,
+                "address": "0xfff9976782d46cc05630d1f6ebab18b2324d6b14"
+            },
+            tokenOut: {
+                "symbol": "USDT",
+                "decimals": 6,
+                "address": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0"
+            }, amount: amountIn
+        });
                       console.log("----QuotedAmountOutRes",QuotedAmountOutRes.res);
               
                   const { res, err } = await proxyRequest("/v1/eth/swap-transaction/execute", PPOST,  {txs:signedTxs});
@@ -106,7 +117,7 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
                             status: true,
                             message: "Swap completed successfully",
                             inputAmount: `${amount} ETH`,
-                            outputAmount: `${ethers.utils.formatUnits(QuotedAmountOutRes?.res?.result?.[0], 6)}`,
+                            outputAmount: `${ethers.utils.formatUnits(QuotedAmountOutRes?.res?.outputAmount, 6)}`,
                             transactions: {
                                 approve: `https://sepolia.etherscan.io/tx/${res?.[0].transactionHash}`,
                                 swap: `https://sepolia.etherscan.io/tx/${res?.[1].transactionHash}`,
