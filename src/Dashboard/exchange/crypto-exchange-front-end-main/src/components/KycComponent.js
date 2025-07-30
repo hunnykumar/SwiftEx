@@ -469,7 +469,7 @@ const KycComponent = ({ route }) => {
             <View style={styles.walletAddress}>
             <Text style={styles.sectionTitle}>Wallet Address:</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft:10}}>
-                <Text style={styles.addressText}>{state?.ETH_KEY}</Text>
+                <Text style={styles.addressText}>{state&&state.wallet && state.wallet.address}</Text>
                 </ScrollView>
             </View>
 
