@@ -436,7 +436,7 @@ import tokensList from "../Dashboard/tokens/TokenListForImport.json"
     },
     fab: {
       position: 'absolute',
-      right: 10,
+      left: 15,
       borderColor: "#2164C1",
       borderWidth: 1,
       bottom:"54%"

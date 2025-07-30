@@ -130,7 +130,7 @@ const Welcome = (props) => {
                 walletType: "Multi-coin",
               },
             ];
-  
+
             AsyncStorageLib.setItem(
               "wallet",
               JSON.stringify(allWallets[0])
@@ -151,7 +151,7 @@ const Welcome = (props) => {
               `${"Main"}-token`,
               token
             );
-  
+
             dispatch(setUser("Main"));
             dispatch(
               setCurrentWallet(
@@ -209,23 +209,27 @@ const Welcome = (props) => {
   return (
     <View style={styles.container}>
       <CustomImageSlider images={images} />
-      
+
       <Animated.View style={[styles.buttonContainer, { opacity: fadeAnim }]}>
-        {Loading?null:<TouchableOpacity
+        {/* {Loading?null:<TouchableOpacity
           style={styles.createView}
           onPress={() => props.navigation.navigate("GenerateWallet")}
           disabled={Loading}
         >
           <Text style={styles.btnText}>CREATE A NEW WALLET</Text>
-        </TouchableOpacity>}
+        </TouchableOpacity>} */}
 
-        {Loading?null:<TouchableOpacity onPress={() => props.navigation.navigate("Import")} disabled={Loading}>
+        <TouchableOpacity style={styles.createView} onPress={() => {setLoading(true),defaultWalletGenration()}} disabled={Loading}>
+          {Loading?<ActivityIndicator color={"green"} size={"large"}/>:<Text style={styles.btnText}>CREATE A NEW WALLET</Text>}
+        </TouchableOpacity>
+
+        {Loading?null:<TouchableOpacity style={styles.importWalletView} onPress={() => props.navigation.navigate("Import")} disabled={Loading}>
           <Text style={styles.importText}>Import Wallet</Text>
         </TouchableOpacity>}
 
-        <TouchableOpacity onPress={() => {setLoading(true),defaultWalletGenration()}} disabled={Loading}>
-          {Loading?<ActivityIndicator color={"green"} size={"large"}/>:<Text style={styles.importText}>Use default wallet</Text>}
-        </TouchableOpacity>
+
+
+
       </Animated.View>
     </View>
   );
@@ -252,7 +256,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#000C66",
     justifyContent: "center",
     alignSelf: "center",
-    marginBottom: hp(2),
+    marginBottom: hp(1),
+  },
+  importWalletView: {
+    width: wp(70),
+    borderRadius: 8,
+    paddingVertical: hp(0.8),
+    backgroundColor: "rgba(232, 238, 239, 0.5)",
+    justifyContent: "center",
+    alignSelf: "center",
+    marginBottom: hp(1),
+    borderColor:"white",
+    borderWidth:0.5
   },
   btnText: {
     color: "#fff",
@@ -261,8 +276,8 @@ const styles = StyleSheet.create({
   importText: {
     textAlign: "center",
     fontSize: 15,
-    fontWeight: "200",
-    color: "white",
+    fontWeight: "500",
+    color: "black",
   },
 });
 
