@@ -107,8 +107,15 @@ const FOCUSED=useIsFocused();
     setLoading(false);
     setEmail("");
     setlogin_Passcode("");
-    navigation.navigate("exchange");
-    Showsuccesstoast(toast,"Success");
+    if(props?.route?.params?.diractPath==="rampScreen")
+    {
+      navigation.navigate("KycComponent");
+      Showsuccesstoast(toast,"Success");
+    }
+    else{
+      navigation.navigate("exchange");
+      Showsuccesstoast(toast,"Success");
+    }
   } catch (error) {
     console.log("----===",error)
   }

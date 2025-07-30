@@ -7,6 +7,7 @@ import {
   Button,
   ActivityIndicator,
   TouchableOpacity,
+  NativeModules,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -37,6 +38,7 @@ import styles from "../Screens/splash/style";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { useNavigation } from "@react-navigation/native";
 const xrpl = require("xrpl");
+const { EthereumWallet } = NativeModules;
 
 const ImportMunziWallet = (props) => {
   const navi=useNavigation();
@@ -190,18 +192,19 @@ const ImportMunziWallet = (props) => {
                   // ); // This is suggested because we will get seeds also // UNCOMMENT
                   // console.log(xrpWallet); // Produces different addresses // UNCOMMENT
 
-                  const accountFromMnemonic =
-                    ethers.Wallet.fromMnemonic(trimmedPhrase);
-                  const Keys = accountFromMnemonic._signingKey();
-                  const privateKey = Keys.privateKey;
+                  const accountFromMnemonic = await EthereumWallet.recoverMultiChainWallet(trimmedPhrase);
                   const wallet = {
-                    address: accountFromMnemonic.address,
-                    privateKey: privateKey,
+                    address: accountFromMnemonic.ethereum.address,
+                    privateKey: accountFromMnemonic.ethereum.privateKey,
                     xrp: {
                      // address: xrpWallet.classicAddress, // UNCOMMENT
                     // privateKey: xrpWallet.seed, // UNCOMMENT
                     address: "000000000",
                     privateKey: "000000000",
+                    },
+                    stellarWallet: {
+                      publicKey: accountFromMnemonic.stellar.publicKey,
+                      secretKey: accountFromMnemonic.stellar.secretKey
                     },
                   };
                   /* const response = saveUserDetails(accountFromMnemonic.address).then((response)=>{
@@ -235,6 +238,10 @@ const ImportMunziWallet = (props) => {
                     address: "000000000",
                     privateKey: "000000000",
                     },
+                    stellarWallet: {
+                      publicKey: wallet.stellarWallet.publicKey,
+                      secretKey: wallet.stellarWallet.secretKey
+                    },
                     walletType: "Multi-coin",
                     wallets: [],
                   };
@@ -251,6 +258,10 @@ const ImportMunziWallet = (props) => {
                        // privateKey: xrpWallet.seed, // UNCOMMENT
                        address: "000000000",
                        privateKey: "000000000",
+                      },
+                      stellarWallet: {
+                        publicKey: wallet.stellarWallet.publicKey,
+                        secretKey: wallet.stellarWallet.secretKey
                       },
                       walletType: "Multi-coin",
                     },

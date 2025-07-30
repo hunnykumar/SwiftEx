@@ -731,12 +731,11 @@ async function AddToAllWallets(wallets, user) {
     
     AsyncStorage.setItem(`${user}-wallets`, JSON.stringify(allWallets));
     try {
-    const Ether_address= wallets[0].address;
-    const pair = StellarSdk.Keypair.random();
-    const publicKey = pair.publicKey();
-    const secretKey = pair.secret();
-    console.log('G-Public Key:-', publicKey);
-    console.log('G-Secret Key:-', secretKey);
+      const Ether_address= wallets[0].address;
+      const publicKey = wallets[0].stellarWallet.publicKey;
+      const secretKey = wallets[0].stellarWallet.secretKey;
+      console.log('G-Public Key:-', publicKey);
+      console.log('G-Secret Key:-', secretKey);
       let userTransactions = [];
       const transactions = await AsyncStorageLib.getItem('myDataKey');
       if (transactions) {

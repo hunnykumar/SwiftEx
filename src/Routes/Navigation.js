@@ -82,11 +82,15 @@ import KycComponent from "../Dashboard/exchange/crypto-exchange-front-end-main/s
 import TokenSend from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/TokenSend";
 import StellarTransactionViewer from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/StellarTransactionViewer";
 import TxDetails from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/txDetails";
+import FloatingScreen from "../../FloatingComponet/FloatingScreen";
 
 const Stack = createNativeStackNavigator();
 
-const AuthStack = () => (
-  <NavigationContainer
+const AuthStack = () => {
+  const [webUri, setWebUri] = useState(null);
+  return(
+    <>
+    <NavigationContainer
     // theme={{ colors: { background: "#000C66" } }}
     theme={{ colors: { background: "black" } }}
     ref={navigationRef}
@@ -606,12 +610,20 @@ const AuthStack = () => (
       />
       <Stack.Screen
         name="TxDetails"
-        component={TxDetails}
         options={{headerShown:false}}
-      />
+        >
+        {(props) => <TxDetails {...props} showWebView={(uri) => setWebUri(uri)} />}
+        </Stack.Screen>
     </Stack.Navigator>
   </NavigationContainer>
-);
+      <FloatingScreen
+        uri={webUri}
+        visible={!!webUri}
+        onClose={() => setWebUri(null)}
+      />
+  </>
+  )
+};
 const NavigationProvider = () => {
   let statee = useSelector((state) => state);
   const [extended, setExtended] = useState(false);

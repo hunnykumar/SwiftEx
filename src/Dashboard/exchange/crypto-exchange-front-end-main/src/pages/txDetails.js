@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
 
-const TxDetails = ({ route }) => {
+const TxDetails = ({ route,showWebView }) => {
     const navigation = useNavigation();
     const { userKycUrl } = route.params || {};
     const [loading, setLoading] = useState(true);
@@ -15,13 +15,15 @@ const TxDetails = ({ route }) => {
             Alert.alert("Error", "invalid url");
             setLoading(false);
         }
+        showWebView(userKycUrl)
+        navigation.goBack();
     }, [userKycUrl]);
 
 
     return (
         <View style={styles.container}>
-            <Exchange_screen_header title="Info" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
-            <WebView
+            {/* <Exchange_screen_header title="Info" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} /> */}
+            {/* <WebView
                 source={{ uri: userKycUrl }}
                 style={styles.webview}
                 onLoad={() => setLoading(false)}
@@ -35,7 +37,7 @@ const TxDetails = ({ route }) => {
                     <ActivityIndicator size="large" color="green" />
                     <Text style={styles.loadingText}>Preparing Details...</Text>
                 </View>
-            )}
+            )} */}
         </View>
     );
 };

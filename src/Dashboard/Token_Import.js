@@ -15,6 +15,9 @@ import Dropdown from './exchange/crypto-exchange-front-end-main/src/components/D
 import IconWithCircle, { CustomIconWithCircle } from '../Screens/iconwithCircle';
 import TokenQrCode from './Modals/TokensQrCode';
 import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';
+import { FAB } from 'react-native-paper';
+import Icon from '../icon';
+
   
   const Token_Import = () => {
     const navigation=useNavigation();
@@ -23,11 +26,14 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [newTokenAddress, setNewTokenAddress] = useState('');
-    const [showTokenList, setShowTokenList] = useState(false); // Toggle state for token list view
+    const [showTokenList, setShowTokenList] = useState(true); // Toggle state for token list view
     const [QrVisible,setQrVisible]=useState(false);
     const [QrValue,setQrValue]=useState("");
     const [QrName,setQrName]=useState("");
+    const [loadingForImport, setLoadingForImport] = useState(null);
+    const [checkTokenStatus, setcheckTokenStatus] = useState(false);
 
+    
     const WALLET_ADDRESS = state.wallet.address; 
   
     const STORAGE_KEY = `tokens_${WALLET_ADDRESS}`;
@@ -39,35 +45,40 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
       image: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png'
     });
   
-    // Default tokens array
-    const DEFAULT_TOKENS = [
-      {
-          symbol: "USDT",
-          img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
-          address: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0" 
-        },
-        {
-          symbol: "UNI",
-          img_url: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
-          address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
-        },
-        {
-          symbol: "USDC",
-          img_url: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png", 
-          address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
-        }
-    ];
-    
-    // Default BNB Tokens
-    const DEFAULT_BNB_TOKENS = [
-      {
-          symbol: "USDT",
-          img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png", 
-          address: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
-        }
-    ]
-  
-  
+    const [tokenListed, settokenListed] = useState([]);
+    const tokensList=[
+    {
+      id: 1,
+      symbol: "USDT",
+      network: "ETH",
+      imgUrl: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
+      address: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0",
+      status: true
+    },
+    {
+      id: 2,
+      symbol: "USDC",
+      network: "ETH",
+      imgUrl: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png",
+      address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      status: true
+    },
+    {
+      id: 3,
+      symbol: "UNI",
+      network: "ETH",
+      imgUrl: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
+      address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+      status: true
+    },
+    {
+      id: 4,
+      symbol: "USDT",
+      network: "BNB",
+      imgUrl: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
+      address: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
+      status: true
+    },];
     // Fetch token details
     const fetchTokenInfo = async (address) => {
       
@@ -160,18 +171,21 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
     const handleAddToken = async () => {
       if (!newTokenAddress) {
         setNewTokenAddress('');
+        setLoadingForImport(null);
         Alert.alert('Error', 'Please enter a token contract address.');
         return;
       }
   
       if (!ethers.utils.isAddress(newTokenAddress)) {
         setNewTokenAddress('');
+        setLoadingForImport(null);
         Alert.alert('Error', 'Invalid Ethereum address.');
         return;
       }
   
       if (tokenInfoList.some((token) => token.address === newTokenAddress)) {
         setNewTokenAddress('');
+        setLoadingForImport(null);
         Alert.alert('Error', 'Token already added.');
         return;
       }
@@ -190,14 +204,18 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedAddresses));
   
         setNewTokenAddress('');
+        setLoadingForImport(null);
+        await checkAddedList();
         Alert.alert("Info","Token Adding completed.")
         setIsLoading(false);
       } catch (error) {
         Alert.alert('Error', 'Please check the token address.');
         console.log("-----",error)
+        setLoadingForImport(null);
         setNewTokenAddress('');
         setIsLoading(false);
       } finally {
+        setLoadingForImport(null);
         setIsLoading(false);
       }
     };
@@ -206,18 +224,21 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
     const handleAddBNBToken = async () => {
       if (!newTokenAddress||newTokenAddress.length !== 42) {
         setNewTokenAddress('');
+        setLoadingForImport(null);
         Alert.alert('Error', 'Please enter a valid token contract address.');
         return;
       }
   
       if (!ethers.utils.isAddress(newTokenAddress)) {
         setNewTokenAddress('');
+        setLoadingForImport(null);
         Alert.alert('Error', 'Invalid Binance address.');
         return;
       }
   
       if (tokenInfoList.some((token) => token.address === newTokenAddress)) {
         setNewTokenAddress('');
+        setLoadingForImport(null);
         Alert.alert('Error', 'Token already added.');
         return;
       }
@@ -236,14 +257,17 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
         await AsyncStorage.setItem(STORAGE_BNB_KEY, JSON.stringify(updatedAddresses));
   
         setNewTokenAddress('');
+        await checkAddedList();
         Alert.alert("Info","Token Adding completed.")
+        setLoadingForImport(null);
         setIsLoading(false);
       } catch (error) {
         Alert.alert('Error', 'Please check the token address.');
-        console.log("-op",error)
+        setLoadingForImport(null);
         setNewTokenAddress('');
         setIsLoading(false);
       } finally {
+        setLoadingForImport(null);
         setIsLoading(false);
       }
     };
@@ -275,76 +299,73 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
     }, [WALLET_ADDRESS,selectedToken]);
     useFocusEffect(
       useCallback(() => {
-        setShowTokenList(false);
+        setcheckTokenStatus(true);
+        checkAddedList();
+        setLoadingForImport(null);
+         setShowTokenList(true);
         setNewTokenAddress("");
-        return () => setShowTokenList(false);
+        return () => setShowTokenList(true);
       }, [])
     );
   
+    const handleERCImport=async(address,network)=>{
+      if(network==="ETH")
+      {
+       await handleAddToken(address)
+      }else{
+       await handleAddBNBToken(address)
+      }
+    }
+
+    const checkAddedList = async () => {
+      try {
+        // Storage keys
+        const storedEthToken = await AsyncStorage.getItem(STORAGE_KEY);
+        const storedBnbToken = await AsyncStorage.getItem(STORAGE_BNB_KEY);
+        const ethTokens = storedEthToken ? JSON.parse(storedEthToken) : [];
+        const bnbTokens = storedBnbToken ? JSON.parse(storedBnbToken) : [];
+        const margeTokens = [...ethTokens, ...bnbTokens];
+
+        const updatedTokenListed = tokensList.map(item => {
+          const findedValue = margeTokens.includes(item.address);
+          return {
+            ...item,
+            status: findedValue ? true : item.status
+          };
+        })
+        settokenListed(updatedTokenListed);
+        setcheckTokenStatus(false);
+      } catch (e) {
+        Alert.alert("info","Unable to get tokens Info...");
+        console.log("Error reading Wallets tokens from storage:", e);
+      }
+    }
+
     return (
       <View style={[styles.container,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
         {showTokenList ? (
           <>
-            {/* Token List View */}
-            {isLoading ? (
-              <Wallet_market_loading/>
-            ) : (
-              <View style={{height:"32%"}}>
-              <FlatList
-                data={tokenInfoList}
-                keyExtractor={(item) => item.address}
-                renderItem={({ item }) => (
-                  <View style={[styles.tokenCard, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black",alignContent:"center",justifyContent:"space-between" }]}>
-                    <View style={{ flexDirection: "row", alignItems: 'center' }}>
-                      {item.img_url ?
-                        <Image
-                          source={{ uri: item.img_url }}
-                          style={styles.tokenImage}
-                        /> :
-                        <LinearGradient
-                          colors={['#3b82f6', '#8b5cf6']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 0 }}
-                          style={[styles.tokenImage, { borderRadius: 30, justifyContent: "center", alignItems: "center" }]}
-                        >
-                          <Text style={[styles.tokenName, { color: "#fff", fontSize: 28 }]}>{item?.name?.charAt(0)}</Text>
-                        </LinearGradient>}
-                      <View>
-                        <Text style={[styles.tokenName, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>{item?.name} {item?.symbol && "(" + item?.symbol + ")"}</Text>
-                        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff" }}>Balance: {Number(item?.balance).toFixed(4)}</Text>
-                      </View>
-                    </View>
-                    <View style={{ flexDirection: "row", alignItems: 'center' }}>
-                      <CustomIconWithCircle
-                        name={"paper-plane-outline"}
-                        type={"ionicon"}
-                        onPress={() => navigation.navigate("TokenSend",{tokenAddress:item?.address,tokenType:selectedToken})}
-                        bgColor={state.THEME.THEME===false?"#F4F4F4":"#23262F99"}
-                        width={43}
-                        height={43}
-                        iconColor={"#2164C1"}
-                      />
-                      <CustomIconWithCircle
-                        name={"qr-code-outline"}
-                        type={"ionicon"}
-                        onPress={() => {setQrValue(state?.wallet?.address),setQrName(item?.name),setQrVisible(true)}}
-                        bgColor={state.THEME.THEME===false?"#F4F4F4":"#23262F99"}
-                        width={43}
-                        height={43}
-                        iconColor={"#2164C1"}
-                      />
-                    </View>
+            <FlatList
+              data={checkTokenStatus?[]:tokenListed}
+              keyExtractor={(item) => item.id}
+              style={styles.list}
+              refreshing={checkTokenStatus}
+              onRefresh={()=>{
+                checkAddedList();
+              }}
+              ListEmptyComponent={<Text style={[styles.gettingInfo,{color: state.THEME.THEME ? "#fff" : "black"}]}>Wait Collecting token details...</Text>}
+              renderItem={({ item }) => (
+                <TouchableOpacity disabled={item.status || loadingForImport !== null} style={[styles.itemContainer, { backgroundColor: state.THEME.THEME ? "#23262F99" : "#ebe8e8" }]} onPress={() => { setLoadingForImport(item.id), handleERCImport(item.address, item.network) }}>
+                  <Image source={{ uri: item.imgUrl }} style={styles.image} />
+                  <View style={styles.textContainer}>
+                    <Text style={[styles.name, { color: state.THEME.THEME ? "#fff" : "black" }]}>{item.symbol}</Text>
+                    <Text style={styles.subname}>{item.network}</Text>
                   </View>
-                )}
-                refreshControl={
-                  <RefreshControl tintColor={"#4CA6EA"} refreshing={refreshing} onRefresh={handleRefresh} />
-                }
-              />
-              </View>
-            )}
-            <TouchableOpacity style={[styles.backButton]} onPress={() => { setShowTokenList(false) }}>
-              <Text style={[styles.text, {color: state.THEME.THEME === false ? "black" : "#fff" }]}>Back</Text>
-            </TouchableOpacity>
+                  {loadingForImport === item.id && <ActivityIndicator color={"green"} size={"small"} />}
+                  {item.status && <Icon name={"check-decagram"} type={"materialCommunity"} size={26} color={"green"} style={{ paddingHorizontal: "3%" }} />}
+                </TouchableOpacity>
+              )}
+            />
           </>
         ) : (
           <>
@@ -368,7 +389,7 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
         </TouchableOpacity>
             </View>
               <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
-                <TouchableOpacity disabled={!newTokenAddress} style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: !newTokenAddress ? "gray" : "green" }]} onPress={() => { selectedToken.name==="Ethereum"?handleAddToken():handleAddBNBToken() }}>
+                <TouchableOpacity disabled={!newTokenAddress} style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: !newTokenAddress ? "gray" : "green" }]} onPress={() => { selectedToken.name==="Ethereum"?handleAddToken(newTokenAddress):handleAddBNBToken(newTokenAddress) }}>
                  {isLoading?<ActivityIndicator color='#fff'/>:<Text style={[styles.text, { color: state.THEME.THEME === false ? "#fff" : "#fff" }]}>Add Asset</Text>}
                 </TouchableOpacity>
                 {/* <TouchableOpacity style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: "green" }]} onPress={() => { setShowTokenList(true) }}>
@@ -377,6 +398,12 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
               </View>
           </>
         )}
+        <FAB
+        icon={showTokenList ? 'plus' : 'arrow-right'}
+        style={[styles.fab, { backgroundColor: state.THEME.THEME ? "#23262F99" : "#F4F4F4" }]}
+        onPress={()=>{setShowTokenList(showTokenList?false:true)}}
+        color='#2164C1'
+      />
         <View style={{ width: wp(100), height: hp(1) }}>
           <TokenQrCode
             modalVisible={QrVisible}
@@ -486,6 +513,47 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
         paddingBottom:12
       }
     },
+    fab: {
+      position: 'absolute',
+      left: 15,
+      borderColor: "#2164C1",
+      borderWidth: 1,
+      bottom:"54%"
+    },
+    list: {
+      marginTop: 1,
+      marginHorizontal: 10,
+    },
+    itemContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+      paddingLeft:14,
+      marginBottom: 8,
+      borderRadius: 8,
+    },
+    image: {
+      width: 50,
+      height: 50,
+      marginRight: 12,
+      borderRadius: 25,
+    },
+    textContainer: {
+      flex: 1,
+    },
+    name: {
+      fontWeight: 'bold',
+      fontSize: 16,
+    },
+    subname: {
+      color: 'gray',
+    },
+    gettingInfo:{
+     fontSize:19,
+     textAlign:"center",
+     fontWeight:"600",
+     marginTop:"53%"
+    }
   });
   
   export default Token_Import;
