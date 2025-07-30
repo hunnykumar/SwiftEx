@@ -12,6 +12,7 @@ import StellarSdk from 'stellar-sdk';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { STELLAR_URL } from '../../../../constants';
 import { useNavigation } from '@react-navigation/native';
+import { authRequest, POST } from '../api';
 
 const server = new StellarSdk.Server(STELLAR_URL.URL);
 
@@ -64,6 +65,10 @@ const getTransactionType = (operation) => {
           return `${operation.destination_asset_code || 'XLM'}`;
       case 'setOptions':
           return 'Settings Update';
+      case 'buyCry':
+          return `Buy ${operation?.cryptoName||""}`;
+      case 'sellCry':
+          return `Sell ${operation?.cryptoName||""}`;
       default:
           return operation.type.replace(/([A-Z])/g, ' $1').trim();
   }
@@ -88,6 +93,10 @@ const getTransactionIcon = (type) => {
       return 'routes';
     case 'setOptions':
       return 'cog';
+    case 'sellCry':
+      return 'bank-transfer-in';
+    case 'buyCry':
+      return 'cash-fast';
     default:
       return 'bank-transfer';
   }
@@ -163,6 +172,8 @@ console.log(operation)
     amountText = operation.starting_balance;
   } else if (operation.type === 'manage_sell_offer' || operation.type === 'manage_buy_offer') {
     amountText = operation.amount;
+  }if (operation.type === 'buyCry'||operation.type === 'sellCry') {
+    amountText = operation.amount;
   }
   const isPathPayment = operation.type === 'path_payment_strict_send' || operation.type === 'path_payment_strict_receive';
 
@@ -184,6 +195,7 @@ console.log(operation)
         styles.transactionCard,
         { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }
       ]}
+      disabled={operation.type === 'sellCry' || operation.type === 'buyCry'}
       onPress={()=>{navigation.navigate('StellarTransactionViewer',{transactionPath: item?.operations?.records[0]?.transaction_hash})}}
     >
       <View style={[styles.iconContainer, { backgroundColor: colors.iconBackground }]}>
@@ -204,7 +216,7 @@ console.log(operation)
             { backgroundColor: item.success ? colors.success : colors.error }
           ]}>
             <Text style={styles.statusText}>
-              {item.success ? 'Success' : 'Failed'}
+              {item.success ? 'Success' : typeof item.success === "string" ? item.success : 'Failed'}
             </Text>
           </View>
         </View>
@@ -223,7 +235,7 @@ console.log(operation)
             styles.amount,
             { color: isReceived ? colors.received : colors.sent }
           ]}>
-            {isReceived||operation.type === 'manage_sell_offer'||operation.type === 'manage_buy_offer' ? '' : '-'}{amountText}
+            {isReceived||operation.type === 'manage_sell_offer'||operation.type === 'manage_buy_offer'||operation.type === 'sellCry' || operation.type === 'buyCry' ? '' : '-'}{amountText}
           </Text>
         </View>}
 
@@ -286,7 +298,38 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
             })
         );
 
-        setTransactions(processedTransactions);
+const { res,err } = await authRequest("/users/alchemyOrders", POST);
+if(res.status&&res.total>0)
+{
+  const processedAlcTrs = await Promise.all(
+    res.records.map(async (trans) => {
+      const tx = trans;
+      const type = trans.orderType==="BUY" ? "buyCry" : "sellCry";
+      const amount = trans.orderType==="BUY"? trans.requsetdPayload.amount: trans.requsetdPayload.cryptoAmount;
+      const operation = {
+        type,
+        amount,
+        cryptoName:trans.orderType==="BUY"? trans.requsetdPayload.cryptoCurrency: trans.requsetdPayload.crypto
+      };
+  
+      return {
+        id: tx.orderId || '',
+        date: formatDate(tx.createdAt),
+        amount:amount,
+        success: trans.status,
+        memo: 'No memo',
+        operations: {
+          records: [operation],
+        },
+        isReceived:false,
+      };
+    })  
+  );
+   setTransactions([]);
+   const  margingBothData=[...processedTransactions,...processedAlcTrs];
+   setTransactions(margingBothData);
+}
+
     } catch (error) {
         console.error('Error fetching transactions:', error);
     } finally {
@@ -329,7 +372,8 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
             return (
               !tx.isReceived &&
               opType !== 'path_payment_strict_send' &&
-              opType !== 'path_payment_strict_receive'
+              opType !== 'path_payment_strict_receive' &&
+              opType !== 'sellCry' && opType !== 'buyCry'
             );
           }
 
@@ -337,7 +381,8 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
             return (
               tx.isReceived &&
               opType !== 'path_payment_strict_send' &&
-              opType !== 'path_payment_strict_receive'
+              opType !== 'path_payment_strict_receive' &&
+              opType !== 'sellCry' && opType !== 'buyCry'
             );
           }
 
