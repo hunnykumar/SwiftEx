@@ -98,7 +98,7 @@ const send_recive = ({route}) => {
             }
             if(asset_name!=="native")
             {
-              GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,asset_name).then((result) => {
+              GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,asset_name,assetIssuer).then((result) => {
                 console.log("-------jhdkjas",result)
                 setresStellarbal(result?.availableBalance)
                 setLoading(false);

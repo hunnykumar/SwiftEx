@@ -846,7 +846,7 @@ useEffect(() => {
                     /> */}
                     <Text style={[styles.connectedText]}>USDC: </Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(10), paddingVertical: 0.1, borderRadius: 5 }}>
-                    <Text style={styles.connectedText}>{state?.STELLAR_ADDRESS_STATUS===false?"0.00":state?.assetData?.find(b => b.asset_code === "USDC")?.balance||"0.00"}</Text>
+                    <Text style={styles.connectedText}>{state?.STELLAR_ADDRESS_STATUS===false?"0.00":state?.assetData?.filter(b => b.asset_code === "USDC").find((b, _, arr) => parseFloat(b.balance) > 0 && (b === arr[0] || parseFloat(arr[0].balance) <= 0))?.balance || "0.00"}</Text>
                       </ScrollView>
                   </View>
                 </View>

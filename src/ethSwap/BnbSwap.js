@@ -74,8 +74,10 @@ const updateBalances = async (address) => {
     if (err?.status === 500) {
       Alert.alert("Balance fetch","somthing went wrong...")
     }
-    setBnbBalance(res?.walletBalance);
-    setUsdtBalance(res?.tokenBalance);
+    const tokenBal=await ethers.utils.formatEther(res?.tokenBalance);
+    const walletBal=await ethers.utils.formatEther(res?.walletBalance);
+    setBnbBalance(walletBal);
+    setUsdtBalance(tokenBal);
   } catch (error) {
     console.error('Balance update error:', error);
   }
@@ -120,7 +122,17 @@ const executeSwap = async () => {
       Alert.alert('Error', 'Swap failed');
     }
     const wallet = new ethers.Wallet(state?.wallet?.privateKey);
-    const signedTxs = await wallet.signTransaction(res);
+    const txObj = {
+      chainId: Number(res.chainId),
+      data: res.data,
+      gasLimit: ethers.BigNumber.from(res.gasLimit.toString()),
+      gasPrice: ethers.BigNumber.from(res.gasPrice.toString()),
+      nonce: Number(res.nonce),
+      to: res.to,
+      value: ethers.BigNumber.from(res.value.toString())
+    }
+    
+    const signedTxs = await wallet.signTransaction(txObj);
     const respo = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {signedTx:signedTxs});
     if (respo?.err?.status === 500) {
       Alert.alert('Error', 'Swap failed');

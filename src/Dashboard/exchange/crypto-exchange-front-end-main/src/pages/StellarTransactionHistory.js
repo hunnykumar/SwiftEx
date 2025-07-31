@@ -329,6 +329,9 @@ if(res.status&&res.total>0)
    const  margingBothData=[...processedTransactions,...processedAlcTrs];
    setTransactions(margingBothData);
 }
+else{
+  setTransactions(processedTransactions);
+}
 
     } catch (error) {
         console.error('Error fetching transactions:', error);

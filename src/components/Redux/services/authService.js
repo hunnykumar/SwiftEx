@@ -163,12 +163,12 @@ const getBalance = async (address) => {
     if (address) {
       const { res, err } = await proxyRequest(`/v1/bsc/${address}/balance`, PGET);
       // AsyncStorage.setItem('balance', balance);
-
-      AsyncStorage.setItem("balance", res);
+      const bscBal=await ethers.utils.formatEther(res);
+      AsyncStorage.setItem("balance", bscBal);
       return {
         status: "success",
         message: "Balance fetched",
-        walletBalance: res,
+        walletBalance: bscBal,
       };
     } else {
       return {
@@ -238,13 +238,13 @@ const getEthBalance = async (address) => {
     if (address) {
       const { res, err } = await proxyRequest(`/v1/eth/${address}/balance`, PGET);
 
-      console.log(res.balance);
-      AsyncStorage.setItem("EthBalance", res.balance);
+      const ethBal=await ethers.utils.formatEther(res);
+      AsyncStorage.setItem("EthBalance", ethBal);
 
       return {
         status: "success",
         message: "Eth Balance fetched",
-        EthBalance: res.balance,
+        EthBalance: ethBal,
       };
     } else {
       return {

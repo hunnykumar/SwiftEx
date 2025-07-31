@@ -16,7 +16,7 @@ import darkBlue from '../../../../../../assets/darkBlue.png'
 import steller_img from '../../../../../../assets/Stellar_(XLM).png'
 import bnbimage from "../../../../../../assets/bnb-icon2_2x.png";
 import WalletActivationComponent from '../utils/WalletActivationComponent';
-import { GET, PPOST, authRequest, getToken, proxyRequest } from '../api';
+import { GET, PGET, PPOST, authRequest, getToken, proxyRequest } from '../api';
 import { ShowErrotoast, alert } from '../../../../reusables/Toasts';
 import { toInt } from 'validator';
 import { SignTransaction, swap_prepare } from '../../../../../../All_bridge';
@@ -263,12 +263,17 @@ const getOffersData = async () => {
       const formattedAmount = ethers.utils.parseUnits(amount, 6);
       const unsigned = await tokenContract.populateTransaction.transfer(usdtAddress, formattedAmount);
       // Send transaction
-      const { res, err } = await proxyRequest("/v1/eth/transaction/prepare", PPOST, { unsignedTx: unsigned, walletAddress: wallet.address });
+      const preInfo = await proxyRequest(`/v1/eth/wallet-address/${wallet.address}/info`, PGET);
+      if (preInfo.err) {
+        alert("error", "Something went wrong...")
+      }
       const upgradedTx = {
-        ...res,
-        gasLimit: ethers.BigNumber.from(res.gasLimit),
-        gasPrice: ethers.BigNumber.from(res.gasPrice),
-        value: res.value ? ethers.BigNumber.from(res.value) : ethers.BigNumber.from(0),
+        ...unsigned,
+        gasLimit: ethers.BigNumber.from(60000),
+        gasPrice: ethers.BigNumber.from(preInfo.res.gasFeeData.gasPrice),
+        nonce: preInfo.res.transactionCount,
+        chainId: 11155111,
+        value: ethers.BigNumber.from(0)
       };
       const signedTx = await wallet.signTransaction(upgradedTx);
       const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});

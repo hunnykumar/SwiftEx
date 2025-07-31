@@ -31,7 +31,7 @@ import Icon from "../../../../../icon";
 import { alert, ShowErrotoast, Showsuccesstoast } from "../../../../reusables/Toasts";
 import { isAddress } from "ethers/lib/utils";
 import { ethers } from "ethers";
-import { PPOST, proxyRequest } from "../api";
+import { PGET, PPOST, proxyRequest } from "../api";
 const TokenSend = ({ route }) => {
   const toast = useToast();
   const FOCUSED = useIsFocused()
@@ -108,19 +108,25 @@ const TokenSend = ({ route }) => {
         const formattedAmount = ethers.utils.parseUnits(amount, decimals);
         const unsigned = await tokenContract.populateTransaction.transfer(address, formattedAmount);
         // Send transaction
-        const {res,err} = await proxyRequest("/v1/eth/transaction/prepare", PPOST, { unsignedTx:unsigned,walletAddress:wallet.address });
-        const upgradedTx = {
-          ...res,
-          gasLimit: ethers.BigNumber.from(res.gasLimit),
-          gasPrice: ethers.BigNumber.from(res.gasPrice),
-          value: res.value ? ethers.BigNumber.from(res.value) : ethers.BigNumber.from(0),
-        };
-        const signedTx = await wallet.signTransaction(upgradedTx);
-        const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});
-        if(respoExe?.res?.txHash)
-        {
-          alert("success", `Transaction successful!`);
-        }
+      const preInfo = await proxyRequest(`/v1/eth/wallet-address/${wallet.address}/info`, PGET);
+      if (preInfo.err) {
+        alert("error", "Something went wrong...")
+      }
+      const upgradedTx = {
+        ...unsigned,
+        gasLimit: ethers.BigNumber.from(60000),
+        gasPrice: ethers.BigNumber.from(preInfo.res.gasFeeData.gasPrice),
+        nonce: preInfo.res.transactionCount,
+        chainId: 11155111,
+        value: ethers.BigNumber.from(0)
+      };
+      const signedTx = await wallet.signTransaction(upgradedTx);
+      console.log("signedTx", upgradedTx)
+      const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, { signedTx: signedTx });
+      console.log("respoExe:00---", respoExe)
+      if (respoExe?.res?.txHash) {
+        alert("success", `Transaction successful!`);
+      }
     } catch (error) {
       console.error("Transaction Error:", error);
       Alert.alert("Error", "Transaction failed. Check logs.");

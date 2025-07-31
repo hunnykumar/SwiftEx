@@ -427,7 +427,7 @@ const chooseRenderItem_1 = ({ item }) => (
         }
 
         if (asset === "USDC"||asset==="ETH"||asset==="BTC") {
-            GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,asset)
+            GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,asset,"GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID")
                 .then((result) => {
                     setbalance(result?.availableBalance);
                     setreserveLoading(false);
@@ -980,7 +980,7 @@ const handleCloseModal = () => {
              placeholderTextColor={"gray"}
              onChangeText={(text) => {
                onChangeamount(text)
-               if (offer_amount > Balance) {
+               if (parseFloat(offer_amount) > parseFloat(Balance)) {
                  setinfoVisible(true),setinfotype("error"),setinfomessage("Inputed Balance not found in account.")
                }
              }}

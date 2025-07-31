@@ -68,7 +68,7 @@ const Offers_manages = () => {
   }, [isFocused]);
 
 
-  const fetchAvilableBalance=async(asset,coinName)=>{
+  const fetchAvilableBalance=async(asset,coinName,assetIssuer)=>{
     if(asset==="native")
     {
       GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
@@ -81,7 +81,7 @@ const Offers_manages = () => {
     }
     if(asset==="credit_alphanum4")
     {
-      GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,coinName).then((result) => {
+      GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,coinName,assetIssuer).then((result) => {
         setstellarAvalibleBalance(result?.availableBalance).toFixed(5)
         setreserveLoading(false)
         }).catch(error => {
@@ -184,7 +184,7 @@ const Offers_manages = () => {
   const handleEdit = (offer,index) => {
     setlastOfferAmount(Number(offer.amount).toFixed(5))
     setreserveLoading(true)
-    fetchAvilableBalance(offer?.selling?.asset_type,offer?.selling?.asset_code)
+    fetchAvilableBalance(offer?.selling?.asset_type,offer?.selling?.asset_code,offer?.selling?.asset_issuer)
     setSelectedIndex(index)
     setSelectedOffer(offer);
     setNewAmount(Number(offer.amount).toFixed(5));

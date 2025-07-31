@@ -4,6 +4,7 @@ const SWAP_ROUTER_ABI = require('../../../../../ethSwap/abi/swaprouter.json');
 const POOL_ABI = require('../../../../../ethSwap/abi/pool.json');
 const { ethers } = require('ethers');
 const { proxyRequest, PPOST, PGET } = require('../api');
+const { toString } = require('lodash');
 
 const WETH_ABI = [
     "function deposit() external payable",
@@ -27,7 +28,7 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
         const wallet = new ethers.Wallet(privateKey);
         const address = await wallet.getAddress();
         const resProxy = await proxyRequest(`/v1/eth/${address}/balance`, PGET);
-        const ethBalance = ethers.utils.parseEther(resProxy?.res?.balance);
+        const ethBalance = ethers.utils.parseEther(resProxy?.res);
         const amountIn = ethers.utils.parseEther(amount);
         if (ethBalance.lt(amountIn)) {
             return {
@@ -61,8 +62,8 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
         const swapData = swapIface.encodeFunctionData("exactInputSingle", [params]);
     
         const payload = {
-            publicKey: address,
-            type:"EthToUsdc",
+            address: address,
+            swapType:"EthToUsdc",
             swapData,
             value: ethAmount
         };
@@ -96,7 +97,7 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
                 "symbol": "USDT",
                 "decimals": 6,
                 "address": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0"
-            }, amount: amountIn
+            }, amount: toString(amountIn)
         });
                       console.log("----QuotedAmountOutRes",QuotedAmountOutRes.res);
               

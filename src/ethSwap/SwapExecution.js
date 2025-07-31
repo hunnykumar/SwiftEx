@@ -239,7 +239,12 @@ const WETH_ABI = [
             }
             
             const signedTxs = await Promise.all(
-                respo.res.map(tx => wallet.signTransaction(tx))
+                respo.res.map(tx => {
+                    if (tx.value) {
+                        tx.value = ethers.utils.parseEther(tx.value.toString()).toString();
+                      }
+                      return wallet.signTransaction(tx);
+                })
             );
             console.log(signedTxs)
     

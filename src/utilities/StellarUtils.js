@@ -84,7 +84,7 @@ export async function GetStellarAvilabelBalance(publicKey) {
 
 
 
-export async function GetStellarUSDCAvilabelBalance(publicKey,coinName) {
+export async function GetStellarUSDCAvilabelBalance(publicKey,coinName,coinIssuer) {
   try {
     // Fetch account data
     const account = await server.loadAccount(publicKey);
@@ -117,7 +117,7 @@ export async function GetStellarUSDCAvilabelBalance(publicKey,coinName) {
     let selectedAsset = null;
 
     account.balances.forEach((balance) => {
-        if (balance.asset_type !== "native" && balance.asset_code === coinName) {
+        if (balance.asset_type !== "native" && balance.asset_code === coinName &&balance.asset_issuer===coinIssuer) {
             const assetKey = `${balance.asset_code}:${balance.asset_issuer}`;
             const totalBalance = parseFloat(balance.balance);
             const inOffers = assetOffersMap.get(assetKey) || 0;
@@ -133,7 +133,7 @@ export async function GetStellarUSDCAvilabelBalance(publicKey,coinName) {
     });
 
     if (!selectedAsset) {
-        return { error: `Token ${coinName} not found in account` };
+        return { error: `Token ${coinName} not found in account`,status:false };
     }
 
     return selectedAsset;

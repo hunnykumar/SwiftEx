@@ -11,7 +11,9 @@ import {
   Appearance,
   SafeAreaView,
   RefreshControl,
-  ScrollView
+  ScrollView,
+  Modal,
+  Image
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSelector } from 'react-redux';
@@ -95,23 +97,67 @@ const TransactionHistory = () => {
   const [refreshing, setRefreshing] = useState(false);
   const state = useSelector((state) => state);
   const walletAddress = state?.wallet?.address;;
+  const [activeChainNetwork, setactiveChainNetwork] = useState('ETH');
+  const [selectChainOpen, setSelectChainOpen] = useState(false);
+  const supportedChains=[
+    { id: 1, name: "Ethereum", imgUrl: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",value:"ETH" },
+    { id: 2, name: "Binance", imgUrl: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png",value:"BSC" },
+    { id: 2, name: "Stellar", imgUrl: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq",value:"STR" },
+  ];
 
   useEffect(()=>{
     setselectedTab(backData?.params?.txType || "ETH");
+    setactiveChainNetwork("ETH");
+    setSelectChainOpen(false);
   },[isFocusedTab])
 
   useEffect(() => {
-    fetchAllTransactions();
+    chainManage();
   }, []);
+
+  useEffect(() => {
+    chainManage();
+  }, [activeChainNetwork]);
 
   useEffect(() => {
     filterTransactions();
   }, [activeTab, transactions]);
 
+  const chainManage=()=>{
+    if (activeChainNetwork === "ETH") {
+      fetchAllTransactions();
+    }
+    if (activeChainNetwork === "BSC") {
+      fetchBNBAllTransactions();
+    }
+    if (activeChainNetwork === "STR") {
+        setselectedTab("STR")
+    }
+  }
+
   const fetchAllTransactions = async () => {
     try {
       setLoading(true);
        const {res,err} = await proxyRequest(`/v1/transaction-history/${walletAddress}/eth`, PGET);
+      if (err?.status === 500) {
+        console.error('Error fetching transactions:', err);
+        setLoading(false);
+        setRefreshing(false);
+      }      
+      setTransactions(res);
+      setLoading(false);
+      setRefreshing(false);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const fetchBNBAllTransactions = async () => {
+    try {
+      setLoading(true);
+       const {res,err} = await proxyRequest(`/v1/transaction-history/${walletAddress}/bsc`, PGET);
       if (err?.status === 500) {
         console.error('Error fetching transactions:', err);
         setLoading(false);
@@ -145,7 +191,7 @@ const TransactionHistory = () => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchAllTransactions();
+    chainManage();
   };
 
   const TabButton = ({ title, isActive }) => (
@@ -178,13 +224,29 @@ const TransactionHistory = () => {
     </View>
   );
 
+  const renderChianList = ({ item }) => (
+    <TouchableOpacity
+      style={styles.chainItem}
+      onPress={() => { setactiveChainNetwork(item.value),setSelectChainOpen(false) }}
+    >
+      <Image
+        source={{ uri: item.imgUrl }}
+        style={styles.chainIcon}
+      />
+      <View style={styles.chainInfo}>
+        <Text style={[styles.chainSymbol,{color:colors.textPrimary}]}>{item.value}</Text>
+        <Text style={[styles.chainName,{color:colors.textSecondary}]}>{item.name}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   const renderItem = ({ item }) => {
     const txType = getTransactionType(item);
     const statusColor = txType === 'Send' ? colors.error : colors.success;
 
     return (
       <TouchableOpacity style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-        <TouchableOpacity style={[styles.card, { backgroundColor: colors.cardBackground }]}  onPress={()=>{navigation.navigate("TxDetail",{transactionPath:"https://sepolia.etherscan.io/tx/"+item.hash})}}>
+        <TouchableOpacity style={[styles.card, { backgroundColor: colors.cardBackground }]}  onPress={()=>{navigation.navigate("TxDetail",{transactionPath:activeChainNetwork==="ETH"?"https://sepolia.etherscan.io/tx/"+item.hash:"https://testnet.bscscan.com/tx/"+item.hash})}}>
           <View style={styles.leftSection}>
             <View style={[styles.iconContainer, { backgroundColor: colors.iconContainer }]}>
               <Text style={{ fontSize: 25, fontWeight: "500", color: '#3b82f6' }}>{item?.asset?.charAt(0)?.toLocaleUpperCase() || "E"}</Text>
@@ -223,6 +285,10 @@ const TransactionHistory = () => {
   const HeaderComponent = () => (
     <>
       <View style={styles.tabContainer}>
+      <TouchableOpacity style={[styles.activeChainButton,{backgroundColor:colors.cardBackground}]} onPress={()=>{setSelectChainOpen(true)}}>
+        <Text style={[styles.activeChainBtnTxt,{color:colors.textPrimary}]}>{activeChainNetwork}</Text>
+        <Icon name="menu-down" size={19} color={colors.textPrimary} />
+      </TouchableOpacity>
         <TabButton title="All" isActive={activeTab === 'All'} />
         <TabButton title="Send" isActive={activeTab === 'Send'} />
         <TabButton title="Receive" isActive={activeTab === 'Receive'} />
@@ -231,9 +297,9 @@ const TransactionHistory = () => {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
 
-      {selectedTab==="ETH"?<>
+      {selectedTab==="ETH"||selectedTab==="BSC"?<>
       <Wallet_screen_header title="Transactions" onLeftIconPress={() => navigation.goBack()} />
       <HeaderComponent />
       {loading && !refreshing ? (
@@ -272,7 +338,23 @@ const TransactionHistory = () => {
       <TransactionForStellar title="Transactions" onLeftIconPress={() => navigation.goBack()} />
       <StellarTransactionHistory publicKey={state.STELLAR_PUBLICK_KEY} isDarkMode={true}/>
       </>}
-    </SafeAreaView>
+      <Modal transparent animationType="slide" visible={selectChainOpen} onRequestClose={() => { setSelectChainOpen(false) }}>
+        <View style={styles.chainSelectionContainer}>
+          <View style={[styles.chainSelectionSubContainer, { backgroundColor: state.THEME.THEME === false ? "#fff" : "#18181C", height: "37%" }]}>
+            <View style={styles.headingCon}>
+              <Text style={[styles.chainHeading,{color:colors.textPrimary}]}>Select Chain</Text>
+              <Icon name="close-circle-outline" size={35} color={state.THEME.THEME === false ? "#080a0a" : "#fff"} style={{ alignSelf: "flex-end" }} onPress={() => { setSelectChainOpen(false) }} />
+            </View>
+            <FlatList
+              data={supportedChains}
+              renderItem={renderChianList}
+              keyExtractor={item => item.id}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
@@ -297,7 +379,7 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     marginBottom: 16,
     justifyContent: 'space-between',
   },
@@ -426,6 +508,69 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginHorizontal: 20,
   },
+  activeChainButton: {
+    flexDirection:"row",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 25,
+    minWidth: 90,
+    justifyContent:"center",
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2
+  },
+  activeChainBtnTxt:{
+    textAlign:"center",
+     fontWeight:"600"
+  },
+  chainSelectionContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    justifyContent: 'flex-end'
+  },
+  chainSelectionSubContainer:{
+    bottom:0,
+    borderTopLeftRadius:30,
+    borderTopRightRadius:30,
+    padding:10,
+  },
+  chainItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    paddingLeft:10
+  },
+  chainIcon: {
+    width: 35,
+    height: 35,
+    borderRadius: 16,
+  },
+  chainInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  chainSymbol: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  chainName: {
+    fontSize: 14,
+  },
+  chainHeading: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginLeft:10,
+  },
+  headingCon:{
+    flexDirection:"row",
+    justifyContent:"space-between",
+    alignItems:"center"
+  }
 });
 
 const Transactions = () => (

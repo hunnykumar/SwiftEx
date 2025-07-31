@@ -20,7 +20,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import stellarTokens from "./Tokens.json";
 import { debounce } from 'lodash';
 import { useSelector } from 'react-redux';
-import { GetStellarAvilabelBalance } from '../../../../../../utilities/StellarUtils';
+import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from '../../../../../../utilities/StellarUtils';
 import { AMMSWAPTESTNET } from './AMMSwapTestNetUtil';
 import { useNavigation } from '@react-navigation/native';
 import { STELLAR_URL } from '../../../../../constants';
@@ -29,6 +29,18 @@ const StellarSdk = require('stellar-sdk');
 const AMMSwap = () => {
   const state=useSelector((state)=>state);
   const [fromToken, setFromToken] = useState({
+    code: "XLM",
+    issuer: null,
+    contract: null,
+    name: "Stellar Lumens",
+    org: "Stellar Network",
+    domain: "stellar.org",
+    icon: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq",
+    decimals: 7,
+    balance: '1,245.32',
+  });
+  
+  const [toToken, setToToken] = useState({
     code: "USDC",
     issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
     contract: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
@@ -39,17 +51,6 @@ const AMMSwap = () => {
     decimals: 7,
     balance: '1,245.32',
   });
-  
-  const [toToken, setToToken] = useState({
-    code: "BTC",
-    issuer: "GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM",
-    contract: "CAO7DDJNGMOYQPRYDY5JVZ5YEK4UQBSMGLAEWRCUOTRMDSBMGWSAATDZ",
-    name: "BTC",
-    org: "Ultra Capital LLC dba Ultra Capital",
-    domain: "ultracapital.xyz",
-    icon: "https://stellar.myfilebase.com/ipfs/QmUjsGiNcUFTbiKoMZyBtgkSwfndBXSbRKFpGrYKvHC1fX",
-    decimals: 7
-  },);
   const navigation=useNavigation();
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
@@ -75,18 +76,18 @@ const AMMSwap = () => {
     setTokenModalVisible(false);
     settokenTypeSelection(0);
     setmessageError(null);
-    handleInitBal(fromToken?.code,toToken?.code)
+    handleInitBal(fromToken?.code,toToken?.code,fromToken?.issuer,toToken?.issuer)
   },[])
 
-  const handleInitBal=async(asset,asset1)=>{
-    const res= await BridgeUSDCValidation(asset==="XLM"?"native":asset);
+  const handleInitBal=async(asset,asset1,assetIssuer,asset1Issuer)=>{
+    const res= await BridgeUSDCValidation(asset==="XLM"?"native":asset,assetIssuer);
     if(res!==null)
     {
       setFromBal(parseFloat(res?.balance).toFixed(4));
     }else{
       setFromBal(0.00);
     }
-    const res1= await BridgeUSDCValidation(asset1==="XLM"?"native":asset1);
+    const res1= await BridgeUSDCValidation(asset1==="XLM"?"native":asset1,asset1Issuer);
     if(res1!==null)
       {
         setToBal(parseFloat(res1?.balance).toFixed(4));
@@ -96,38 +97,33 @@ const AMMSwap = () => {
   }
 
   useEffect(()=>{
-    handleInitBal(fromToken?.code,toToken?.code)
+    handleInitBal(fromToken?.code,toToken?.code,fromToken?.issuer,toToken?.issuer)
   },[fromToken,toToken])
   
 
   function isAssetData(state) {
     return state?.assetData !== undefined && state?.assetData !== null;
 }
-  const BridgeUSDCValidation=async(assetCode)=>{
+  const BridgeUSDCValidation=async(assetCode,assetCodeIssuer)=>{
     const avlRes=isAssetData(state?.assetData);
     if(!avlRes)
     {
-      const ALL_STELLER_BALANCES=state?.assetData;
-      const assetData = ALL_STELLER_BALANCES.find(
-        (balance) =>
-          balance.asset_code === assetCode || balance.asset_type === assetCode
-      );
-      
-      if (!assetData) {
-        return null;
-      } else {
-        if(assetCode==="native")
-          {
-            const res=await GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY)
-            if(res?.availableBalance==="Error")
-            {
-              return null
-            }
-            else{
-              return {"balance":res?.availableBalance}
-            }
-        }else{
-          return assetData;
+      if (assetCode === "native") {
+        const res = await GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY)
+        if (res?.availableBalance === "Error") {
+          return null
+        }
+        else {
+          return { "balance": res?.availableBalance }
+        }
+      } if (assetCode !== "native") {
+        const nonNativeBal = await GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY, assetCode, assetCodeIssuer);
+        if (nonNativeBal.status === false&&nonNativeBal.error) {
+          Alert.alert("Info", nonNativeBal.error);
+          return { "balance": "0.00" }
+        }
+        if (nonNativeBal.availableBalance) {
+          return { "balance": nonNativeBal?.availableBalance }
         }
       }
       

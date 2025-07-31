@@ -32,6 +32,7 @@ import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import Snackbar from 'react-native-snackbar';
 import { getCUSTOMSwapQuote } from './QuotesUtil';
 import { onSwapETHtoUSDC } from './OneTapPayExecution';
+import { alert } from '../../../../reusables/Toasts';
 const StellarSdk = require('stellar-sdk');
 export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
 
@@ -500,7 +501,7 @@ export const CustomQuotes = ({
         console.log("---err->",res)
         const walletAddress = await AsyncStorageLib.getItem("wallet");
         const resProxy = await proxyRequest(`/v1/eth/${walletAddress}/balance`, PGET);
-        const balanceInEth = resProxy?.res?.balance;
+        const balanceInEth = resProxy?.res;
         console.log("---ae",balanceInEth)
             if(parseFloat(value)>=parseFloat(balanceInEth)||parseFloat(balanceInEth)===0){
               setcompletTransaction(true)
@@ -615,7 +616,7 @@ export const CustomQuotes = ({
       handleStepUpdate("WETH→USDT","error")
       handleStepUpdate("USDT→USDC","error")
       handleStepUpdate("USDC→Wallet","error")
-        Alert.alert("Info", res.message)
+        Alert.alert("Info", res.message,[{text:"Okay",onPress:()=>{onClose()}}],{cancelable:false})
         setisDone(false)
       }
     }
@@ -636,12 +637,17 @@ export const CustomQuotes = ({
         const formattedAmount = ethers.utils.parseUnits(amount, 6);
         const unsigned = await usdtContract.populateTransaction.transfer(usdtAddress, formattedAmount);
         // Send transaction
-        const {res,err} = await proxyRequest("/v1/eth/transaction/prepare", PPOST, { unsignedTx:unsigned,walletAddress:wallet.address });
+        const preInfo = await proxyRequest(`/v1/eth/wallet-address/${wallet.address}/info`, PGET);
+        if (preInfo.err) {
+          alert("error", "Something went wrong...")
+        }
         const upgradedTx = {
-          ...res,
-          gasLimit: ethers.BigNumber.from(res.gasLimit),
-          gasPrice: ethers.BigNumber.from(res.gasPrice),
-          value: res.value ? ethers.BigNumber.from(res.value) : ethers.BigNumber.from(0),
+          ...unsigned,
+          gasLimit: ethers.BigNumber.from(60000),
+          gasPrice: ethers.BigNumber.from(preInfo.res.gasFeeData.gasPrice),
+          nonce: preInfo.res.transactionCount,
+          chainId: 11155111,
+          value: ethers.BigNumber.from(0)
         };
         const signedTx = await wallet.signTransaction(upgradedTx);
         const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});

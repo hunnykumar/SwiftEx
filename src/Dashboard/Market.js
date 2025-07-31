@@ -64,7 +64,7 @@ const requestOptions = {
           setUpdatedData(responseJson[0].MarketData)
           setTrades(responseJson[0].MarketData[0].trades)
           setPrice(responseJson[0].MarketData[0].current_price);
-          setPercent(responseJson[0].MarketData[0].price_change_percentage_24h);
+          setPercent(responseJson[0].MarketData[0].priceChangePercentage24h);
           setImageUrl(responseJson[0].MarketData[0].image);
           setLoad_new_data(false)
     })
@@ -161,7 +161,7 @@ const requestOptions = {
           {data.length>0 ? (
             data.map((item,index) => {
               const image = item.image;
-              const color = item.price_change_24h > 0 ? "green" : "red";
+              const color = item.priceChange24h > 0 ? "green" : "red";
               let data = item
               return (
                   <View key={index}>
@@ -183,13 +183,13 @@ const requestOptions = {
                         </View>
                       </View>
                       <View style={Styles.flatContainerPrice}>
-                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>{`$ ${item.current_price ? item.current_price.toFixed(2) : "0"
+                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>{`$ ${item.currentPrice ? item.currentPrice.toFixed(2) : "0"
                         }`}</Text>
                         <View style={{flexDirection:"row",alignItems:"center"}}>
-                          {/* Number.isSafeInteger(item.price_change_percentage_24h) */}
-                          <Icon name={Number.isSafeInteger(item.price_change_percentage_24h)?"menu-down":"menu-down"} type="materialCommunity" size={20} color={Number.isSafeInteger(item.price_change_percentage_24h)?"green":"red"} />
-<Text style={{color:Number.isSafeInteger(item.price_change_percentage_24h)?"green":"red",fontSize:13}}>{`${item.price_change_percentage_24h
-                          ? item.price_change_percentage_24h.toFixed(3)
+                          {/* Number.isSafeInteger(item.priceChangePercentage24h) */}
+                          <Icon name={Number.isSafeInteger(item.priceChangePercentage24h)?"menu-down":"menu-down"} type="materialCommunity" size={20} color={Number.isSafeInteger(item.priceChangePercentage24h)?"green":"red"} />
+<Text style={{color:Number.isSafeInteger(item.priceChangePercentage24h)?"green":"red",fontSize:13}}>{`${item.priceChangePercentage24h
+                          ? item.priceChangePercentage24h.toFixed(3)
                           : "0"
                         }%`}</Text>
                         </View>
