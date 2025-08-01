@@ -263,17 +263,20 @@ const getOffersData = async () => {
       const formattedAmount = ethers.utils.parseUnits(amount, 6);
       const unsigned = await tokenContract.populateTransaction.transfer(usdtAddress, formattedAmount);
       // Send transaction
-      const preInfo = await proxyRequest(`/v1/eth/wallet-address/${wallet.address}/info`, PGET);
-      if (preInfo.err) {
-        alert("error", "Something went wrong...")
+      const preInfo = await proxyRequest("/v1/eth/transaction/prepare", PPOST, { unsignedTx: unsigned, walletAddress: wallet.address });
+      if (preInfo?.err) {
+        setfianl_modal_text("Transaction Failed");
+        console.log("Transaction Failed", preInfo);
+        setfianl_modal_loading(false);
+        setfianl_modal_error(true);
       }
       const upgradedTx = {
         ...unsigned,
-        gasLimit: ethers.BigNumber.from(60000),
-        gasPrice: ethers.BigNumber.from(preInfo.res.gasFeeData.gasPrice),
-        nonce: preInfo.res.transactionCount,
-        chainId: 11155111,
-        value: ethers.BigNumber.from(0)
+        nonce: preInfo.res.nonce,
+        gasLimit: ethers.BigNumber.from(preInfo.res.gasLimit),
+        gasPrice: ethers.BigNumber.from(preInfo.res.gasPrice),
+        value: preInfo.res.value ? ethers.BigNumber.from(preInfo.res.value) : ethers.BigNumber.from(0),
+        chainId: Number(preInfo.res.chainId),
       };
       const signedTx = await wallet.signTransaction(upgradedTx);
       const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});
@@ -283,6 +286,13 @@ const getOffersData = async () => {
         setfianl_modal_loading(false);
         setfianl_modal_error(true);
       }
+      if (respoExe?.err) {
+        setfianl_modal_text("Transaction Failed");
+        console.log("Transaction Failed", respoExe);
+        setfianl_modal_loading(false);
+        setfianl_modal_error(true);
+      }
+
     } catch (error) {
       setfianl_modal_text("Transaction Failed");
       console.log("Transaction Failed", error);

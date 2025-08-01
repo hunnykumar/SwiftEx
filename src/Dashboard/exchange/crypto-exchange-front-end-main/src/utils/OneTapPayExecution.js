@@ -97,7 +97,7 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
                 "symbol": "USDT",
                 "decimals": 6,
                 "address": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0"
-            }, amount: toString(amountIn)
+            }, amount: toString(amount)
         });
                       console.log("----QuotedAmountOutRes",QuotedAmountOutRes.res);
               
@@ -118,7 +118,7 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
                             status: true,
                             message: "Swap completed successfully",
                             inputAmount: `${amount} ETH`,
-                            outputAmount: `${ethers.utils.formatUnits(QuotedAmountOutRes?.res?.outputAmount, 6)}`,
+                            outputAmount: `${QuotedAmountOutRes?.res?.outputAmount}`,
                             transactions: {
                                 approve: `https://sepolia.etherscan.io/tx/${res?.[0].transactionHash}`,
                                 swap: `https://sepolia.etherscan.io/tx/${res?.[1].transactionHash}`,

@@ -499,9 +499,10 @@ export const CustomQuotes = ({
       if(res.status)
         {
         console.log("---err->",res)
-        const walletAddress = await AsyncStorageLib.getItem("wallet");
+        const nonParseData = await AsyncStorageLib.getItem("wallet");
+        const walletAddress=JSON.parse(nonParseData).address;
         const resProxy = await proxyRequest(`/v1/eth/${walletAddress}/balance`, PGET);
-        const balanceInEth = resProxy?.res;
+        const balanceInEth = ethers.utils.formatEther(resProxy?.res);
         console.log("---ae",balanceInEth)
             if(parseFloat(value)>=parseFloat(balanceInEth)||parseFloat(balanceInEth)===0){
               setcompletTransaction(true)
@@ -634,23 +635,53 @@ export const CustomQuotes = ({
         ];
         const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
        
-        const formattedAmount = ethers.utils.parseUnits(amount, 6);
+        const formattedAmount = ethers.utils.parseUnits(amount.toString(), 6);
         const unsigned = await usdtContract.populateTransaction.transfer(usdtAddress, formattedAmount);
         // Send transaction
-        const preInfo = await proxyRequest(`/v1/eth/wallet-address/${wallet.address}/info`, PGET);
+        const preInfo = await proxyRequest("/v1/eth/transaction/prepare", PPOST, {unsignedTx: unsigned,walletAddress: wallet.address});        
         if (preInfo.err) {
-          alert("error", "Something went wrong...")
+          Alert.alert(
+            "Info",
+            "Swap Faild",
+            [
+              {
+                text: "Okay",
+                onPress: ()=>{onClose()}
+              }
+            ],
+            { cancelable: false }
+          );
         }
-        const upgradedTx = {
-          ...unsigned,
-          gasLimit: ethers.BigNumber.from(60000),
-          gasPrice: ethers.BigNumber.from(preInfo.res.gasFeeData.gasPrice),
-          nonce: preInfo.res.transactionCount,
-          chainId: 11155111,
-          value: ethers.BigNumber.from(0)
-        };
+        console.log("Send transaction--- ",preInfo);
+      if (preInfo?.err?.status) {
+        console.log("Transaction Failed", err);
+        setisDone(false)
+        handleStepUpdate("USDT→USDC", "error")
+        handleStepUpdate("USDC→Wallet", "error")
+      }
+      const upgradedTx = {
+        ...unsigned,
+        nonce: preInfo.res.nonce,
+        gasLimit: ethers.BigNumber.from(preInfo.res.gasLimit),
+        gasPrice: ethers.BigNumber.from(preInfo.res.gasPrice),
+        value: preInfo.res.value ? ethers.BigNumber.from(preInfo.res.value) : ethers.BigNumber.from(0),
+        chainId: Number(preInfo.res.chainId),
+      };
         const signedTx = await wallet.signTransaction(upgradedTx);
         const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});
+        if (respoExe.err) {
+          Alert.alert(
+            "Info",
+            "Swap Faild",
+            [
+              {
+                text: "Okay",
+                onPress: ()=>{onClose()}
+              }
+            ],
+            { cancelable: false }
+          );
+        }
         if(respoExe?.res?.txHash)
         {
           setisDone(false)
