@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   NativeModules,
+  Platform,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -37,6 +38,7 @@ import { alert } from "./reusables/Toasts";
 import styles from "../Screens/splash/style";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { useNavigation } from "@react-navigation/native";
+import { recoverMultiChainWallet } from "../utilities/WalletManager";
 const xrpl = require("xrpl");
 const { EthereumWallet } = NativeModules;
 
@@ -192,7 +194,7 @@ const ImportMunziWallet = (props) => {
                   // ); // This is suggested because we will get seeds also // UNCOMMENT
                   // console.log(xrpWallet); // Produces different addresses // UNCOMMENT
 
-                  const accountFromMnemonic = await EthereumWallet.recoverMultiChainWallet(trimmedPhrase);
+                  const accountFromMnemonic = Platform.OS==="android"?await EthereumWallet.recoverMultiChainWallet(trimmedPhrase):await recoverMultiChainWallet(trimmedPhrase);
                   const wallet = {
                     address: accountFromMnemonic.ethereum.address,
                     privateKey: accountFromMnemonic.ethereum.privateKey,

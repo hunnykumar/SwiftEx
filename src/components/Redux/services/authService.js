@@ -8,6 +8,7 @@ import { urls, RPC, WSS } from "../../../Dashboard/constants";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { NativeModules, Platform } from 'react-native';
 import { PGET, PPOST, proxyRequest } from '../../../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
+import { createWallet } from '../../../utilities/WalletManager';
 const StellarSdk = require('stellar-sdk');
 const { EthereumWallet } = NativeModules;
 
@@ -450,26 +451,27 @@ const Generate_Wallet2 = async () => {
 }
 else{
   console.log("starting");
-  const wallet = ethers.Wallet.createRandom();
-  const words = wallet.mnemonic.phrase;
-  // const entropy = ethers.utils.mnemonicToEntropy(words);// UNCOMMENT
-  // const xrpWallet = xrpl.Wallet.fromEntropy(entropy.split("x")[1]);// UNCOMMENT
-
-  let node = ethers.utils.HDNode.fromMnemonic(words);
-  let account1 = node.derivePath("m/44'/60'/0'/0/0");
+  const result = await createWallet();
+  console.log("result--------")
+  console.log("result: ",result)
+  console.log("result--------End")
   const Wallet = {
-    address: account1.address,
-    privateKey: account1.privateKey,
-    mnemonic: account1.mnemonic.phrase,
+    address: result.ethereum.address,
+    privateKey: result.ethereum.privateKey,
+    mnemonic: result.mnemonic,
     xrp:{
       // address:xrpWallet.classicAddress, // UNCOMMENT
       // privateKey:xrpWallet.seed // UNCOMMENT
       address: "000000000",
       privateKey: "000000000",
     },
+    stellarWallet: {
+        publicKey: result.stellar.publicKey,
+        secretKey: result.stellar.secretKey
+    },
     walletType: "Multi-coin",
   };
-  if (wallet) {
+  if (Wallet) {
     // AsyncStorage.setItem("Wallet", JSON.stringify(Wallet));
 
     return {

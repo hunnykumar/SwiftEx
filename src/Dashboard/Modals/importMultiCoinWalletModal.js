@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   NativeModules,
+  Platform,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -29,6 +30,7 @@ import { alert } from "../reusables/Toasts";
 import { Paste } from "../../utilities/utilities";
 import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../../icon";
+import { recoverMultiChainWallet } from "../../utilities/WalletManager";
 const { EthereumWallet } = NativeModules;
 
 const xrpl = require("xrpl");
@@ -247,7 +249,7 @@ const ImportMultiCoinWalletModal = ({
                   );
                 }
                 // const xrpWalletFromM = xrpl.Wallet.fromMnemonic(trimmedPhrase); // UNCOMMENT
-                const accountFromMnemonic = await EthereumWallet.recoverMultiChainWallet(trimmedPhrase);
+                const accountFromMnemonic = Platform.OS==="android"?await EthereumWallet.recoverMultiChainWallet(trimmedPhrase):await recoverMultiChainWallet(trimmedPhrase);
                 const wallet = {
                   address: accountFromMnemonic.ethereum.address,
                   privateKey: accountFromMnemonic.ethereum.privateKey,
