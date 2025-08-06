@@ -134,8 +134,8 @@ export const HomeView = ({ setPressed }) => {
   const Anchor=[
     // {name:"SwiftEx",status:"Verified",image: require('../../../../../../assets/darkBlue.png'),city:"India / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Slovakia / Slovenia / Solomon Islands / South Africa / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Taiwan / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turkey / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"XETH, XUSD",Fiat_Assets:"$ USD, € EUR",Payment_Rails:"Card, Bank Transfer, Local Method" },
     // {name:"MoneyGram",status:"Pending",image: require('../../../../../../assets/MONEY_GRAM.png'),city:"Afghanistan / Albania / Angola / Anguilla / Antigua and Barbuda / Argentina / Armenia / Aruba / Australia / Bahamas / Bahrain / Barbados / Belarus / Belgium / Belize / Benin / Berumda / Bhutan / Bolivia / Bosnia and Herzegovina / Botswana / Brazil / Brunei Darussalam / Bulgaria / Burkina Faso / Burundi / Cambodia / Cameroon / Canada / Cape Verde / Cayman Islands / Central African Republic / Chad / Chile / Colombia / Comoros / Costa Rica / Cote D'Ivoire / Croatia / Curacao / Cyprus / Czech Republic / Democratic Republic of the Congo / Denmark / Djibouti / Dominica / Dominican Republic / Ecuador / El Salvador / Equatorial Guinea / Estonia / Eswatini / Ethiopia / Fiji / Finland / France / French Guiana / Gabon / Gambia / Georgia / Germany / Ghana / Gibraltar / Greece / Grenada / Guadeloupe / Guam / Guatemala / Guinea / Guinea-Bissau / Guyana / Haiti / Honduras / Hong Kong / Hungary / Iceland / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Lithuania / Luxembourg / Macao / Macedonia / Madagascar / Malawi / Malaysia / Maldives / Mali / Malta / Marshall Islands / Martinique / Mauritania / Mauritius / Mayotte / Mexico / Micronesia / Moldova / Mongolia / Montenegro / Montserrat / Mozambique / Myanmar / Namibia / Netherlands / New Zealand / Nicaragua / Niger / Nigeria / Norway / Oman / Palestine / Panama / Paraguay / Peru / Philippines / Poland / Portugal / Puerto Rico / Reunion / Romania / Rwanda / Saint Kitts And Nevis / Saint Lucia / Saint Martin / Saint Vincent And The Grenadines / Samoa / Sao Tome And Principe / Saudi Arabia / Senegal / Serbia / Seychelles / Sierra Leone / Singapore / Sint Maarten / Slovakia / Solomon Islands / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"USDC",Payment_Rails:"Global Rails, Cash" },
-    {name:"Alchemy Pay",status:"Active",image: require('../../../../../../assets/AlcamyPay.jpg'),city:"Afghanistan / Albania / Algeria / Andorra / Angola / Anguilla / Antigua and Barbuda / Argentina / Armenia / Aruba / Australia / Austria / Azerbaijan / Bahamas / Bahrain / Bangladesh / Barbados / Belarus / Belgium / Belize / Benin / Bermuda / Bhutan / Bolivia / Bosnia and Herzegovina / Botswana / Brazil / Brunei Darussalam / Bulgaria / Burkina Faso / Burundi / Cambodia / Cameroon / Canada / Cape Verde / Cayman Islands / Central African Republic / Chad / Chile / China / Colombia / Comoros / Congo - Brazzaville / Congo - Kinshasa / Costa Rica / Cote D'Ivoire / Croatia / Cuba / Curacao / Cyprus / Czech Republic / Democratic Republic of the Congo / Denmark / Djibouti / Dominica / Dominican Republic / Ecuador / El Salvador / Equatorial Guinea / Eritrea / Estonia / Eswatini / Ethiopia / Fiji / Finland / France / French Guiana / Gabon / Gambia / Georgia / Germany / Ghana / Gibraltar / Global / Greece / Greenland / Grenada / Guadeloupe / Guam / Guatemala / Guinea / Guinea-Bissau / Guyana / Haiti / Honduras / Hong Kong / Hungary / Iceland / India / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Lithuania / Luxembourg / Macao / Macedonia / Madagascar / Malawi / Malaysia / Maldives / Mali / Malta / Marshall Islands / Martinique / Mauritania / Mauritius / Mayotte / Mexico / Micronesia / Moldova / Monaco / Mongolia / Montenegro / Montserrat / Mozambique / Myanmar / Namibia / Netherlands / New Zealand / Nicaragua / Niger / Nigeria / Norway / Oman / Pakistan / Palestine / Panama / Papua New Guinea / Paraguay / Peru / Philippines / Poland / Portugal / Puerto Rico / Qatar / Romania / Rwanda / Réunion / Saint Kitts And Nevis / Saint Lucia / Saint Martin / Saint Vincent And The Grenadines / Samoa / Sao Tome And Principe / Saudi Arabia / Senegal / Serbia / Seychelles / Sierra Leone / Singapore / Sint Maarten / Slovakia / Slovenia / Solomon Islands / South Africa / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Taiwan / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turkey / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"XLM",Fiat_Assets:"$ USD",Payment_Rails:"Apple PayBank, TransferCardGoogle, PayLocal, MethodSEPA" },
-    {name:"Mykobo",status:"Active",image: require('../../../../../../assets/MYKOBO.png'),city:"Austria / Belgium / Bulgaria / Croatia / Cyprus / Czech Republic / Denmark / Estonia / Finland / France / Germany / Greece / Hungary / Ireland / Italy / Lithuania / Luxembourg / Malta / Netherlands / Poland / Portugal / Romania / Slovakia / Slovenia / Spain / Sweden",Fiat_Assets:"€ EUR",Crypto_Assets:"EURC",Payment_Rails:"Bank Transfer, SEPA" },
+    {name:"Alchemy Pay",status:"Active",image: require('../../../../../../assets/AlcamyPay.jpg'),city:"Afghanistan / Albania / Algeria / Andorra / Angola / Anguilla / Antigua and Barbuda / Argentina / Armenia / Aruba / Australia / Austria / Azerbaijan / Bahamas / Bahrain / Bangladesh / Barbados / Belarus / Belgium / Belize / Benin / Bermuda / Bhutan / Bolivia / Bosnia and Herzegovina / Botswana / Brazil / Brunei Darussalam / Bulgaria / Burkina Faso / Burundi / Cambodia / Cameroon / Canada / Cape Verde / Cayman Islands / Central African Republic / Chad / Chile / China / Colombia / Comoros / Congo - Brazzaville / Congo - Kinshasa / Costa Rica / Cote D'Ivoire / Croatia / Cuba / Curacao / Cyprus / Czech Republic / Democratic Republic of the Congo / Denmark / Djibouti / Dominica / Dominican Republic / Ecuador / El Salvador / Equatorial Guinea / Eritrea / Estonia / Eswatini / Ethiopia / Fiji / Finland / France / French Guiana / Gabon / Gambia / Georgia / Germany / Ghana / Gibraltar / Global / Greece / Greenland / Grenada / Guadeloupe / Guam / Guatemala / Guinea / Guinea-Bissau / Guyana / Haiti / Honduras / Hong Kong / Hungary / Iceland / India / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Lithuania / Luxembourg / Macao / Macedonia / Madagascar / Malawi / Malaysia / Maldives / Mali / Malta / Marshall Islands / Martinique / Mauritania / Mauritius / Mayotte / Mexico / Micronesia / Moldova / Monaco / Mongolia / Montenegro / Montserrat / Mozambique / Myanmar / Namibia / Netherlands / New Zealand / Nicaragua / Niger / Nigeria / Norway / Oman / Pakistan / Palestine / Panama / Papua New Guinea / Paraguay / Peru / Philippines / Poland / Portugal / Puerto Rico / Qatar / Romania / Rwanda / Réunion / Saint Kitts And Nevis / Saint Lucia / Saint Martin / Saint Vincent And The Grenadines / Samoa / Sao Tome And Principe / Saudi Arabia / Senegal / Serbia / Seychelles / Sierra Leone / Singapore / Sint Maarten / Slovakia / Slovenia / Solomon Islands / South Africa / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Taiwan / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turkey / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"XLM",Fiat_Assets:"$ USD",Payment_Rails:"Apple PayBank, TransferCardGoogle, PayLocal, MethodSEPA",PaymentView:"Apple PayBank" },
+    // {name:"Mykobo",status:"Active",image: require('../../../../../../assets/MYKOBO.png'),city:"Austria / Belgium / Bulgaria / Croatia / Cyprus / Czech Republic / Denmark / Estonia / Finland / France / Germany / Greece / Hungary / Ireland / Italy / Lithuania / Luxembourg / Malta / Netherlands / Poland / Portugal / Romania / Slovakia / Slovenia / Spain / Sweden",Fiat_Assets:"€ EUR",Crypto_Assets:"EURC",Payment_Rails:"Bank Transfer, SEPA" },
     // {name:"Banxa",status:"Pending",image: require('../../../../../../assets/BANXA.png'),city:"Australia / Austria / Brazil / Canada / Hong Kong / India / Indonesia / Mexico / Netherlands / Philippines / South Africa / Switzerland / Turkey / United States",Fiat_Assets:"$ USD",Crypto_Assets:"USDC ,XLM",Payment_Rails:"Card, Apple Pay, Google Pay, ACH, SEPA, Bank Transfer, Local Method"},
     // {name:"Clpx",status:"Pending",image: require('../../../../../../assets/CLPX.png'),city:"Chile",Crypto_Assets:"CLPX" },
     // {name:"Clickpesa",status:"Pending",image: require('../../../../../../assets/CLICKPESA.png'),city:"Kenya / Rwanda / Tanzania",Crypto_Assets:"USDC, XLM, RWF, TZS, KES",Fiat_Assets:"$ USD"},
@@ -667,158 +667,68 @@ useEffect(() => {
     style={{ backgroundColor: "#011434"}}
       contentContainerStyle={{
         // paddingBottom: hp(20),
-        backgroundColor: "#131E3A",
+        backgroundColor: "#011434",
       }}
     >
       
       <View style={styles.container}>
       
-               <View style={styles.container_a}>
-                  {/* <View style={{flexDirection:"row",justifyContent:"space-between",zIndex:20,position:"absolute",width:wp(95),marginTop:80}}> */}
-                 {/* {ShowButtonLeft? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5}} onPress={() => {
-          if (AnchorViewRef.current && contentWidth !== 0) {
-            const backOffset = (AnchorViewRef.current.contentOffset ? AnchorViewRef.current.contentOffset.x : 0) - 3 * contentWidth / Anchor.length;
-            handleScroll(backOffset);
-
-          }}}><Icon name={"left"} type={"antDesign"} size={25} color={"white"} style={{marginRight:5}}/>
-               </TouchableOpacity>:<></>} */}
-
-              {/* {ShowButtonRight? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5,alignSelf:"flex-end"}} onPress={() => {
-          if (AnchorViewRef.current && contentWidth !== 0) {
-            const nextOffset = (AnchorViewRef.current.contentOffset ? AnchorViewRef.current.contentOffset.x : 0) + 3 * contentWidth / Anchor.length;
-            handleScroll(nextOffset);
-          }
-        }}><Icon name={"right"} type={"antDesign"} size={25} color={"white"}/></TouchableOpacity>:<></>} */}
-                  {/* </View> */}
-               <View style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center"}}>
-               <Text style={{textAlign:"left",marginHorizontal:10,marginTop:10,fontWeight: "bold",fontSize:20,color:"#fff"}}>Anchors</Text>
-                <TouchableOpacity style={{flexDirection:"row",justifyContent:"center",alignItems:"center"}} onPress={()=>{navigation.navigate("Home")}}>
-                <Icon
-                      name={"chevron-left"}
-                      type={"materialCommunity"}
-                      color={"#4CA6EA"}
-                      size={24}
-                      style={{marginTop:13}}
-                    />
-                <Text style={{marginLeft:-5,textAlign:"left",marginHorizontal:10,marginTop:10,fontWeight: "300",fontSize:20,color:"#4CA6EA"}}>Wallet</Text>
+      <View style={{backgroundColor:"#011434"}}>
+          {profile && (
+            profile.isVerified === true ? (
+              <View style={styles.quickActionCon}>
+                <View style={[styles.quickActionCon,{flexDirection:"row"}]}>
+                <TouchableOpacity
+                  style={styles.PresssableBtn}
+                  onPress={() => {
+                    navigation.navigate("classic", { Asset_type: "ETH" })
+                  }}
+                >
+                   <Icon name={"wallet"} type={"material"} color={"#fff"} size={30}/>
+                  <Text style={styles.PresssableBtnText}>Import USDC</Text>
                 </TouchableOpacity>
-               </View>
 
-      <ScrollView ref={AnchorViewRef} horizontal style={{paddingVertical:hp(1),padding:3,borderRadius:10,marginHorizontal:wp(0.1),marginLeft:wp(0.1)}} showsHorizontalScrollIndicator={false} onContentSizeChange={(width) => setContentWidth(width)} onScroll={handleScroll_new}>
-              {Anchor.map((list, index) => {
-                return (
-                  <View>
-                    <TouchableOpacity  onPress={()=>{setAnchor_modal(true),setindex_Anchor(index)}} style={[styles.card,{backgroundColor:list.status==="Pending"?"#2b3c57":"#2b3c57"}]} key={index}>
-                      <View style={{ width: "30%", height: "27%", position: "absolute", alignSelf: "flex-end",zIndex:20 }}>
-                        <Icon name={list.status === "Pending" ? "clock-time-two-outline" : "check-circle-outline"} type={"materialCommunity"} color={list.status === "Pending" ? "yellow" : "#35CA1D"} size={24} />
-                      </View>
-                     <View style={styles.image}>
-                     <Image
-                        source={list.image}
-                        style={{width: 70,
-                          height: 65,
-                          borderRadius:list.name==="Mykobo"? 100:10}}
-                      />
-                     </View>
-                      <Text style={styles.name}>{list.name}</Text>
-                      <Text style={[styles.status, { color: list.status === "Pending" ? "yellow" : "#35CA1D" }]}>{list.status}</Text>
-                    </TouchableOpacity>
-                        {kyc_status===false?<TouchableOpacity onPress={()=>{submit_kyc()}}>
-                      {list.name==="SwiftEx"&&<Animated.View style={[styles.frame_1, { borderColor: shiningAnimation }]}>
-               <Text style={{color:'green',fontSize:16,textAlign:"center"}}>Submit KYC</Text>
-                </Animated.View>}
-                    </TouchableOpacity>:<></>}
-                    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={kyc_modal}>
-      <View style={styles.kyc_Container}>
-        <View style={styles.kyc_Content}>
-    <Image source={darkBlue} style={styles.logoImg_kyc} />
-          <Text style={styles.kyc_text}>Document submiting for KYC</Text>
-          <ActivityIndicator size="large" color="green" />
-        </View>
-      </View>
-    </Modal>
-                  </View>
-                )
-              })}
-              <Modal
-                animationType="fade"
-                transparent={true}
-                visible={Wallet_activation}>
-                <View style={styles.kyc_Container}>
-                  <View style={[styles.kyc_Content,{width:wp(90)}]}>
-                    <Image source={darkBlue} style={styles.logoImg_kyc} />
-                    <Text style={styles.kyc_text}>Stellar Wallet Activating and funding.</Text>
-                    <ActivityIndicator size="large" color="green" />
-                  </View>
+                <TouchableOpacity
+                  style={styles.PresssableBtn}
+                  onPress={() => {
+                    navigation.navigate("ExportUSDC", { Asset_type: "ETH" })
+                  }}
+                >
+                   <Icon name={"wallet"} type={"material"} color={"#fff"} size={30}/>
+                  <Text style={styles.PresssableBtnText}>Export USDC</Text>
+                </TouchableOpacity>
                 </View>
-              </Modal>
-      </ScrollView>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={Anchor_modal}
-        // onRequestClose={closeModal}
-      >
-      
-      <View style={{backgroundColor: '#fff',borderRadius: 10,marginHorizontal:10,height:hp(80),marginTop:hp(10)}}>
-          <TouchableOpacity style={{alignSelf:"flex-end",padding:10}} onPress={()=>{setAnchor_modal(false),setindex_Anchor(0)}}>
-          <Icon name={"close"} type={"materialCommunity"} size={30} color={"black"}/>
-          </TouchableOpacity>
-           {Anchor.map((list,index)=>{
-              if(index===index_Anchor)
-              {
-                  return(
-                    <View style={{flex:1}}>
-                     <View style={{flexDirection:"row"}}>
-                     <View style={styles.image}>
-                     <Image
-                        source={list.image}
-                        style={{width: 75,
-                          height: 65,
-                          borderRadius:list.name==="Mykobo"? 30:10,
-                          marginLeft:10}}
-                      />
-                     </View>
-                     <Text style={{fontSize:19,textAlign:"center",marginTop:19,fontWeight:"bold",color:"black"}}>{list.name}</Text>
-                     </View>
-                     <View style={{flexDirection:"row",marginStart:10,marginTop:10,borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
-                       <Icon name={"map-marker"} type={"materialCommunity"} size={30} color={"#212B53"}/>
-                       <ScrollView style={{height:hp(14)}}>
-                        <Text style={{marginStart:10,marginTop:5,color:"black"}}>{list.city}</Text>
-                       </ScrollView>
-                      <View>
-                      </View>
-                     </View>
-                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
-                     <Text style={{marginStart:21,marginTop:5,fontSize:20,color:"black"}}>Crypto Assets</Text>
-                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Crypto_Assets}</Text>
-                     </View>
+                <View style={[styles.quickActionCon,{flexDirection:"row"}]}>
+                <TouchableOpacity
+                  style={styles.PresssableBtn}
+                  onPress={() => {
+                    Offer_condition(Offer_active)
+                  }}
+                >
+                   <Icon name={"moving"} type={"material"} color={"#fff"} size={30} />
+                  <Text style={styles.PresssableBtnText}>Trade</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.PresssableBtn}
+                  onPress={() => {
+                    navigation.navigate("Assets_manage");
+                  }}
+                >
+                   <Icon name={"wallet"} type={"material"} color={"#fff"} size={30}/>
+                  <Text style={styles.PresssableBtnText}>Assets</Text>
+                </TouchableOpacity>
+                </View>
 
-                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
-                     <Text style={{marginStart:26,marginTop:5,fontSize:20,color:"black"}}>Fiat Assets</Text>
-                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Fiat_Assets}</Text>
-                     </View>
-
-                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
-                     <Text style={{marginStart:26,marginTop:5,fontSize:20,color:"black"}}>Payment Rails</Text>
-                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Payment_Rails}</Text>
-                     </View>
-                      
-                     <View style={{margin:10,padding:5,width:"28%"}}>
-                    <Button title="Check Out" color={"#4CA6EA"} onPress={()=>{[setAnchor_modal(false),navigation.navigate("KycComponent",{tabName:"Buy"})]}}/>
-                     </View>
-                    </View>
-                  )
-              }
-           })}
-        </View>
-
-      </Modal>
-    </View>
+              </View>
+            ) : (
+              <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 5 }}>
+                <Text style={styles.kycText}>FETCHING UPDATES {profile.isVerified === false ? kyc() : ""}</Text>
+                <ActivityIndicator color={"green"} />
+              </View>
+            )
+          )}
+</View>
               <View style={[styles.linearContainer,{backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)"}]}>
               <SELECT_WALLET_EXC
         visible={VISIBLE_SELECT}
@@ -901,48 +811,132 @@ useEffect(() => {
         )}
       </View>
 
-<View style={{backgroundColor:"#011434"}}>
-          {profile && (
-            profile.isVerified === true ? (
-              <View style={{ backgroundColor: "#011434", flexDirection: "row", justifyContent: "center", alignSelf: "center", width: "93%" }}>
-                <TouchableOpacity
-                  style={styles.PresssableBtn}
-                  onPress={() => {
-                    navigation.navigate("classic", { Asset_type: "ETH" })
-                  }}
-                >
-                   <Icon name={"wallet"} type={"material"} color={"#fff"} size={30}/>
-                  <Text style={styles.PresssableBtnText}>Import USDC</Text>
-                </TouchableOpacity>
+      <View style={styles.container_a}>
+                  {/* <View style={{flexDirection:"row",justifyContent:"space-between",zIndex:20,position:"absolute",width:wp(95),marginTop:80}}> */}
+                 {/* {ShowButtonLeft? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5}} onPress={() => {
+          if (AnchorViewRef.current && contentWidth !== 0) {
+            const backOffset = (AnchorViewRef.current.contentOffset ? AnchorViewRef.current.contentOffset.x : 0) - 3 * contentWidth / Anchor.length;
+            handleScroll(backOffset);
 
-                <TouchableOpacity
-                  style={styles.PresssableBtn}
-                  onPress={() => {
-                    Offer_condition(Offer_active)
-                  }}
-                >
-                   <Icon name={"moving"} type={"material"} color={"#fff"} size={30} />
-                  <Text style={styles.PresssableBtnText}>Trade</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.PresssableBtn}
-                  onPress={() => {
-                    navigation.navigate("Assets_manage");
-                  }}
-                >
-                   <Icon name={"wallet"} type={"material"} color={"#fff"} size={30}/>
-                  <Text style={styles.PresssableBtnText}>Assets</Text>
-                </TouchableOpacity>
+          }}}><Icon name={"left"} type={"antDesign"} size={25} color={"white"} style={{marginRight:5}}/>
+               </TouchableOpacity>:<></>} */}
 
-              </View>
-            ) : (
-              <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 5 }}>
-                <Text style={styles.kycText}>FETCHING UPDATES {profile.isVerified === false ? kyc() : ""}</Text>
-                <ActivityIndicator color={"green"} />
-              </View>
-            )
-          )}
-</View>
+              {/* {ShowButtonRight? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5,alignSelf:"flex-end"}} onPress={() => {
+          if (AnchorViewRef.current && contentWidth !== 0) {
+            const nextOffset = (AnchorViewRef.current.contentOffset ? AnchorViewRef.current.contentOffset.x : 0) + 3 * contentWidth / Anchor.length;
+            handleScroll(nextOffset);
+          }
+        }}><Icon name={"right"} type={"antDesign"} size={25} color={"white"}/></TouchableOpacity>:<></>} */}
+                  {/* </View> */}
+               <View style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center",marginTop:1}}>
+               <Text style={{textAlign:"left",marginHorizontal:10,fontWeight: "bold",fontSize:20,color:"#fff"}}>Anchors</Text>
+                <TouchableOpacity style={{flexDirection:"row",justifyContent:"center",alignItems:"center"}} onPress={()=>{navigation.navigate("Home")}}>
+                <Icon
+                      name={"chevron-left"}
+                      type={"materialCommunity"}
+                      color={"#4CA6EA"}
+                      size={24}
+                    />
+                <Text style={{marginLeft:-5,textAlign:"left",marginHorizontal:10,fontWeight: "300",fontSize:20,color:"#4CA6EA"}}>Wallet</Text>
+                </TouchableOpacity>
+               </View>
+
+      {/* <ScrollView ref={AnchorViewRef} horizontal style={{paddingVertical:hp(1),padding:3,borderRadius:10,marginHorizontal:wp(0.1),marginLeft:wp(0.1)}} showsHorizontalScrollIndicator={false} onContentSizeChange={(width) => setContentWidth(width)} onScroll={handleScroll_new}> */}
+              {Anchor.map((list, index) => {
+                return (
+                  <TouchableOpacity onPress={() => { setAnchor_modal(true), setindex_Anchor(index) }} style={styles.card} key={index}>
+                    <View style={{flexDirection:"row"}}>
+                      <View style={styles.image}>
+                        <Image source={list.image} style={{ width: 90, height: 66, borderRadius: 10 }} />
+                      </View>
+                      <View style={styles.ancharTextCon}>
+                        <Text style={styles.name}>{list.name}</Text>
+                        <Text style={styles.status}>Crypto: {list.Crypto_Assets}, Fiat: {list.Fiat_Assets} </Text>
+                        <Text style={styles.status}>Payment: {list.PaymentView} </Text>
+                      </View>
+                    </View>
+                    <View style={styles.anchorStatus}>
+                      <Icon name={"check-circle-outline"} type={"materialCommunity"} color={"#35CA1D"} size={24} />
+                    </View>
+                  </TouchableOpacity>
+                )
+              })}
+              <Modal
+                animationType="fade"
+                transparent={true}
+                visible={Wallet_activation}>
+                <View style={styles.kyc_Container}>
+                  <View style={[styles.kyc_Content,{width:wp(90)}]}>
+                    <Image source={darkBlue} style={styles.logoImg_kyc} />
+                    <Text style={styles.kyc_text}>Stellar Wallet Activating and funding.</Text>
+                    <ActivityIndicator size="large" color="green" />
+                  </View>
+                </View>
+              </Modal>
+      {/* </ScrollView> */}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={Anchor_modal}
+        // onRequestClose={closeModal}
+      >
+      
+      <View style={{backgroundColor: '#fff',borderRadius: 10,marginHorizontal:10,height:hp(80),marginTop:hp(10)}}>
+          <TouchableOpacity style={{alignSelf:"flex-end",padding:10}} onPress={()=>{setAnchor_modal(false),setindex_Anchor(0)}}>
+          <Icon name={"close"} type={"materialCommunity"} size={30} color={"black"}/>
+          </TouchableOpacity>
+           {Anchor.map((list,index)=>{
+              if(index===index_Anchor)
+              {
+                  return(
+                    <View style={{flex:1}}>
+                     <View style={{flexDirection:"row"}}>
+                     <View style={styles.image}>
+                     <Image
+                        source={list.image}
+                        style={{width: 75,
+                          height: 65,
+                          borderRadius:list.name==="Mykobo"? 30:10,
+                          marginLeft:10}}
+                      />
+                     </View>
+                     <Text style={{fontSize:19,textAlign:"center",marginTop:19,fontWeight:"bold",color:"black"}}>{list.name}</Text>
+                     </View>
+                     <View style={{flexDirection:"row",marginStart:10,marginTop:10,borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
+                       <Icon name={"map-marker"} type={"materialCommunity"} size={30} color={"#212B53"}/>
+                       <ScrollView style={{height:hp(14)}}>
+                        <Text style={{marginStart:10,marginTop:5,color:"black"}}>{list.city}</Text>
+                       </ScrollView>
+                      <View>
+                      </View>
+                     </View>
+                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
+                     <Text style={{marginStart:21,marginTop:5,fontSize:20,color:"black"}}>Crypto Assets</Text>
+                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Crypto_Assets}</Text>
+                     </View>
+
+                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
+                     <Text style={{marginStart:26,marginTop:5,fontSize:20,color:"black"}}>Fiat Assets</Text>
+                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Fiat_Assets}</Text>
+                     </View>
+
+                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
+                     <Text style={{marginStart:26,marginTop:5,fontSize:20,color:"black"}}>Payment Rails</Text>
+                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Payment_Rails}</Text>
+                     </View>
+                      
+                     <View style={{margin:10,padding:5,width:"28%"}}>
+                    <Button title="Check Out" color={"#4CA6EA"} onPress={()=>{[setAnchor_modal(false),navigation.navigate("KycComponent",{tabName:"Buy"})]}}/>
+                     </View>
+                    </View>
+                  )
+              }
+           })}
+        </View>
+
+      </Modal>
+    </View>
         
         <View style={{ justifyContent: 'center', alignItems: 'flex-start', backgroundColor: "#011434", paddingVertical: 1,paddingLeft:wp(5) }}>
           <Text style={{ color: "#fff", fontSize: 19,fontWeight:"600" }}>${points_data || 0.00}</Text>
@@ -1042,7 +1036,7 @@ const styles = StyleSheet.create({
   linearContainer: {
     width: wp(94),
     padding: hp(1),
-    marginTop:"1%",
+    marginTop:"2%",
     // paddingVertical: hp(2),
     borderRadius: hp(2),
     borderColor:"#FFFFFF33",
@@ -1106,12 +1100,12 @@ const styles = StyleSheet.create({
     borderWidth:1,
     alignSelf: "center",
     borderRadius: hp(2),
-    marginVertical:hp(1.4),
+    marginVertical:hp(0.5),
     alignItems:"center",
-    width: "32%",
+    width: "50%",
     marginHorizontal:wp(1),
     padding:6,
-    paddingVertical:10
+    paddingVertical:6
   },
   PresssableBtnText:{
     color:"#fff",
@@ -1203,21 +1197,19 @@ const styles = StyleSheet.create({
     fontSize:17
   },
   container_a: {
-    flex: 1,
-    width:"94%",
-    // alignItems: 'center',
-    // justifyContent: 'center',
-    // backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
-    // margin:10,
-    borderRadius:10
+    width: wp(99),
+    padding: hp(1),
+    backgroundColor:"#011434"
   },
   card: {
-    marginRight: 10,
-    // borderWidth: 1.9,
-    // borderColor: 'rgba(122, 59, 144, 1)rgba(100, 115, 197, 1)',
+    marginTop:10,
+    marginLeft: 3,
     borderRadius: 10,
-    padding: 8,
-    backgroundColor:"#011434"
+    padding: 10,
+    backgroundColor:"#2b3c57",
+    justifyContent:"space-between",
+    flexDirection:"row",
+    width:"100%"
   },
   image: {
     width: 90,
@@ -1232,7 +1224,7 @@ const styles = StyleSheet.create({
   },
   status: {
     fontSize: 14,
-    color: 'yellow',
+    color: 'gray',
   },
   frame_1: {
     borderWidth: 2,
@@ -1323,5 +1315,19 @@ chooseItemText: {
   color: '#fff',
   marginLeft:wp(-10)
 },
+quickActionCon:{ 
+  backgroundColor:"#011434",
+  flexDirection:"column",
+  justifyContent:"space-between",
+  alignSelf:"center",
+  width: "96%"
+ },
+ ancharTextCon:{
+  paddingVertical:3,
+  marginLeft:10
+ },
+ anchorStatus:{
+  justifyContent:"center",
+ }
   
 });

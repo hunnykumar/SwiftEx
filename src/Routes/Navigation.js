@@ -83,6 +83,7 @@ import TokenSend from "../Dashboard/exchange/crypto-exchange-front-end-main/src/
 import StellarTransactionViewer from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/StellarTransactionViewer";
 import TxDetails from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/txDetails";
 import FloatingScreen from "../../FloatingComponet/FloatingScreen";
+import ExportUSDC from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/ExportUsdc";
 
 const Stack = createNativeStackNavigator();
 
@@ -231,6 +232,14 @@ const AuthStack = () => {
           headerShown: false,
         }}
       />
+
+          <Stack.Screen
+            name="ExportUSDC"
+            component={ExportUSDC}
+            options={{
+              headerShown: false,
+            }}
+          />
 
       {/* <Stack.Screen
         name="ScoringTopTab"
