@@ -339,6 +339,8 @@ if(res.status&&res.total>0)
    setTransactions([]);
    const  margingBothData=[...processedTransactions,...processedAlcTrs];
    setTransactions(margingBothData);
+}else{
+  setTransactions(processedTransactions);
 }
 
     } catch (error) {

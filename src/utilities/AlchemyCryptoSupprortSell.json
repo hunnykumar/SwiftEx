@@ -104,8 +104,8 @@
         "maxPurchaseAmount": 2000.00,
         "address": null,
         "icon": "https://static.alchemypay.org/alchemypay/crypto-images/BTC.png",
-        "minSellAmount": 0.000192676,
-        "maxSellAmount": 0.039489921
+        "minSellAmount": 0.000192698,
+        "maxSellAmount": 0.039496500
     },
     {
         "crypto": "BTC",
@@ -188,8 +188,8 @@
         "maxPurchaseAmount": 2000.00,
         "address": null,
         "icon": "https://static.alchemypay.org/alchemypay/crypto-images/ETH.png",
-        "minSellAmount": 0.006061000,
-        "maxSellAmount": 1.242230886
+        "minSellAmount": 0.006063387,
+        "maxSellAmount": 1.242720477
     },
     {
         "crypto": "ETH",
@@ -308,8 +308,8 @@
         "maxPurchaseAmount": 2000.00,
         "address": null,
         "icon": "https://static.alchemypay.org/alchemypay/crypto-images/SOL.png",
-        "minSellAmount": 0.134056417,
-        "maxSellAmount": 27.475473762
+        "minSellAmount": 0.134105455,
+        "maxSellAmount": 27.485522703
     },
     {
         "crypto": "SOL",
@@ -368,8 +368,8 @@
         "maxPurchaseAmount": 2000.00,
         "address": null,
         "icon": "https://static.alchemypay.org/alchemypay/crypto-images/USDC.png",
-        "minSellAmount": 22.000000000,
-        "maxSellAmount": 4509.000000000
+        "minSellAmount": 21.997800209,
+        "maxSellAmount": 4508.549145081
     },
     {
         "crypto": "USDC",
@@ -392,8 +392,8 @@
         "maxPurchaseAmount": 2000.00,
         "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
         "icon": "https://static.alchemypay.org/alchemypay/crypto-images/USDC.png",
-        "minSellAmount": 22.000000000,
-        "maxSellAmount": 4509.000000000
+        "minSellAmount": 21.997800209,
+        "maxSellAmount": 4508.549145081
     },
     {
         "crypto": "USDC",
@@ -404,8 +404,8 @@
         "maxPurchaseAmount": 2000.00,
         "address": null,
         "icon": "https://static.alchemypay.org/alchemypay/crypto-images/USDC.png",
-        "minSellAmount": 22.000000000,
-        "maxSellAmount": 4509.000000000
+        "minSellAmount": 21.997800209,
+        "maxSellAmount": 4508.549145081
     },
     {
         "crypto": "USDC",
@@ -416,8 +416,8 @@
         "maxPurchaseAmount": 2000.00,
         "address": null,
         "icon": "https://static.alchemypay.org/alchemypay/crypto-images/USDC.png",
-        "minSellAmount": 22.000000000,
-        "maxSellAmount": 4509.000000000
+        "minSellAmount": 21.997800209,
+        "maxSellAmount": 4508.549145081
     },
     {
         "crypto": "USDC",
