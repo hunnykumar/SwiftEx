@@ -184,7 +184,7 @@ const KycComponent = ({ route }) => {
         fetchQoutes(valpayAmount,valoperationType,valselectedCrypto,valselectedfiat)
       }
     }
-  }, 500), []);
+  }, 1000), []);
 
   const handleChange = (text) => {
     const payAmount=text.replace(/[^0-9.]/g, '')
@@ -305,7 +305,7 @@ const KycComponent = ({ route }) => {
   const renderTokenItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.tokenItem} 
-      onPress={() =>{tokenModalType===0?[setSelectedfiat(item),setTokenModalVisible(false)]:[setSelectedCrypto(item),setTokenModalVisible(false)]}}
+      onPress={() =>{tokenModalType===0?[setSelectedfiat(item),setTokenModalVisible(false)]:[setSelectedCrypto(item),setTokenModalVisible(false)],setFindResult("")}}
     >
       <Image
         source={{ uri: item.icon }}
