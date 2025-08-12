@@ -42,6 +42,7 @@ import Icon from "../icon";
 // import IconWithCircle from "../Screens/iconwithCircle";
 import darkBlue from "../../assets/darkBlue.png"
 import Wallet_selection_bottom from "./Wallets/Wallet_selection_bottom";
+import WalletSyncComponent from "../walletSync/WalletSyncComponent";
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -79,6 +80,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
   const [Loading_upper, setLoading_upper] = useState(true);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [balanceVisible, setbalanceVisible] = useState(false);
+  const [walletSyncOpen,setwalletSyncOpen]=useState(false);
   // onPress={() => setModalVisible(true)}
   if (Platform.OS === "android") {
     if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -504,7 +506,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                        }
                   </View>
                 </View>
-                <TouchableOpacity style={[styles.bellCon,{backgroundColor:state.THEME.THEME === false ? "#F4F4F4":"#18181C"}]} onPress={() => alert("Notifications will be added soon")}>
+                <TouchableOpacity style={[styles.bellCon,{backgroundColor:state.THEME.THEME === false ? "#F4F4F4":"#18181C"}]} onPress={() => {setwalletSyncOpen(walletSyncOpen?false:true)}}>
                   <Icon name="notifications-outline" type={"ionicon"} size={26} color={state.THEME.THEME === false ? "#1F2286":"gray"} />
                 </TouchableOpacity>
               </View>
@@ -673,6 +675,20 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                   </TouchableOpacity>
                 </View>
                 <Wallet_selection_bottom onClose={handleClosewalletmodal} />
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={walletSyncOpen}
+          onRequestClose={() => setwalletSyncOpen(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => { setwalletSyncOpen(false) }}>
+            <View style={styles.modalBackground}>
+              <View style={[styles.walletConnectModalView]}>
+                <WalletSyncComponent close={()=>{setwalletSyncOpen(false)}} openModal={()=>{setwalletSyncOpen(true)}}/>
               </View>
             </View>
           </TouchableWithoutFeedback>
@@ -954,6 +970,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     fontWeight: "400"
+  },
+  walletConnectModalView:{
+    width: wp(100),
+    borderRadius: 10,
+    paddingVertical: hp(1.5),
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
   },
 });
 /*

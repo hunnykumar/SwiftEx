@@ -36,7 +36,7 @@ PushNotification.getChannels(function (channel_ids) {
       console.log('LOCAL NOTIFICATION ==>', notification)
       if(notification.userInteraction){
         //Navigation.navigate('exchange')
-        NavigationController('Home')
+        NavigationController('Transactions')
       }
       console.log("Actions",notification.actions)
     },

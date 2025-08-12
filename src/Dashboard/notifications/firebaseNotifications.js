@@ -10,6 +10,7 @@ import AsyncStorageLib from '@react-native-async-storage/async-storage'
 import  Clipboard from "@react-native-clipboard/clipboard";
 import { firebaseNotification } from './firebasePushMessages'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { NavigationController } from '../../utilities/utilities'
 
 
 const copyToClipboard = (text) => {
@@ -132,6 +133,7 @@ const useFirebaseCloudMessaging = (navigation) => {
     // Assume a message-notification contains a "type" property in the data payload of the screen to open
 
     messaging().onNotificationOpenedApp(remoteMessage => {
+       NavigationController('Transactions')
       console.log(
         'Notification caused app to open from background state:',
         remoteMessage.notification

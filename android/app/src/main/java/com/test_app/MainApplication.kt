@@ -32,7 +32,7 @@ class MainApplication : Application(), ReactApplication {
               // Packages that cannot be autolinked yet can be added manually here, for example:
               // add(MyReactNativePackage())
               add(EthereumWalletPackage())
-              add(PlayIntegrityPackage())
+             // add(PlayIntegrityPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
@@ -49,7 +49,7 @@ class MainApplication : Application(), ReactApplication {
   override fun onCreate() {
     super.onCreate()
     // this ApplicationVerification fist validate app than execute next
-    ApplicationVerification.run(applicationContext)
+   // ApplicationVerification.run(applicationContext)
     // Initialize Firebase
     FirebaseApp.initializeApp(this)  // Add this line to initialize Firebase
     

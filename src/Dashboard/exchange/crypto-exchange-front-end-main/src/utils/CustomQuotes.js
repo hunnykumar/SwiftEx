@@ -259,7 +259,7 @@ export const CustomQuotes = ({
       const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, provider);
 
       const balance = await usdtContract.balanceOf(addresses);
-      console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`); 
+      // console.log(`USDT Balance of ${addresses}: ${ethers.utils.formatUnits(balance, 6)} USDT`); 
       if(parseFloat(value)>=parseFloat(ethers.utils.formatUnits(balance, 6))||parseFloat(ethers.utils.formatUnits(balance, 6))===0){
         setcompletTransaction(true)
       }
@@ -503,12 +503,12 @@ export const CustomQuotes = ({
       const res=await getTokenQuoteToUSDT(address,value,token)
       if(res.status)
         {
-        console.log("---err->",res)
+        // console.log("---err->",res)
         const walletAddress = await AsyncStorageLib.getItem("wallet");
         const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
         const EthBalance = await provider.getBalance(JSON.parse(walletAddress).address);
         const balanceInEth = ethers.utils.formatEther(EthBalance);
-        console.log("---ae",balanceInEth)
+        // console.log("---ae",balanceInEth)
             if(parseFloat(value)>=parseFloat(balanceInEth)||parseFloat(balanceInEth)===0){
               setcompletTransaction(true)
             }
@@ -542,7 +542,6 @@ export const CustomQuotes = ({
     fetch(REACT_APP_HOST + "/users/swapInfo", requestOptions)
       .then((response) => response.json())
       .then((result) => {
-        console.log("---err->",result)
         if (result?.status === 200) {
           setusdcRes(result?.response),
             setusdcResLoading(false)
@@ -630,18 +629,18 @@ export const CustomQuotes = ({
   }
    const sendEthToContract = async (amount) => {
       try {
-        keysUpdate()
+        // keysUpdate()
         handleStepUpdate("USDT→USDC","pending")
         const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
         const wallet = new ethers.Wallet(state?.wallet?.privateKey, provider);
-        const usdtAddress = OneTapUSDCAddress.Address;  
+        const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";  
         const usdtAbi = [
             "function transfer(address to, uint256 value) public returns (bool)"
         ];
         const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
         const valueInUSDT = ethers.utils.parseUnits(amount, 6);
         const tx = await usdtContract.transfer(OneTapContractAddress.Address, valueInUSDT);
-        console.log("Transaction Sent", `Tx Hash: ${tx.hash}`);
+        console.log("Transaction Sent", `Tx Hash: ${tx}`);
         await tx.wait();
         setisDone(false)
         handleStepUpdate("USDT→USDC","done")

@@ -2,7 +2,7 @@ import PushNotification from "react-native-push-notification";
 import { useNavigation } from '@react-navigation/native'
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import { Alert } from "react-native";
-import { SaveTransaction } from "../../utilities/utilities";
+import { NavigationController, SaveTransaction } from "../../utilities/utilities";
 //import notifee from '@notifee/react-native';
 
 
@@ -50,7 +50,7 @@ export default function PushNotifications(){
             
             onNotification: function(notification) {
               console.log("NOTIFICATION:", notification);
-              navigation.navigate('exchange')
+              NavigationController('Transactions')
               // process the notification here
           
               // required on iOS only 

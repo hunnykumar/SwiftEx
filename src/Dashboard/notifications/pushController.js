@@ -1,5 +1,6 @@
 import React, {Component} from "react";
 import PushNotification from "react-native-push-notification";
+import { NavigationController } from "../../utilities/utilities";
 //import PushNotificationIOS from '@react-native-community/push-notification-ios';
 //import notifee from '@notifee/react-native';
 
@@ -13,7 +14,7 @@ export default function PushNotifications(){
             // (required) Called when a remote or local notification is opened or received
             onNotification: function(notification) {
               console.log("NOTIFICATION:", notification);
-          
+              NavigationController('Transactions')
               // process the notification here
           
               // required on iOS only 

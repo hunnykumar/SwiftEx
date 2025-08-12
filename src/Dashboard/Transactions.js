@@ -98,7 +98,7 @@ const TransactionHistory = () => {
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const state = useSelector((state) => state);
-  const walletAddress = state?.wallet?.address;;
+  const walletAddress = "0xac50f01218bb9e5dc7cb085c7deda8026e3a8228";
 
   useEffect(()=>{
     setselectedTab(backData?.params?.txType || "ETH");
