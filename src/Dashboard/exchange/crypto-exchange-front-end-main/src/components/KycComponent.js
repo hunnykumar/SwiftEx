@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { 
   ActivityIndicator,
   Alert,
@@ -29,6 +29,10 @@ import { debounce } from "lodash";
 import AlchemyFiatTokens from "../../../../../utilities/AlchemyFiatSupprort.json";
 import AlchemyFiatSellTokens from "../../../../../utilities/AlchemyFiatSellSupprort.json";
 import AlchemyCryptoTokens from "../../../../../utilities/AlchemyCryptoSupprort.json";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import authApi from "../authApi";
+import { REACT_APP_HOST } from "../ExchangeConstants";
+import apiHelper from "../apiHelper";
 
 
 const KycComponent = ({ route }) => {
@@ -52,7 +56,9 @@ const KycComponent = ({ route }) => {
     const [selectedfiat,setSelectedfiat]=useState(null);
     const [selectedCrypto,setSelectedCrypto]=useState(null);
     const [payWayaCode,setPayWayaCode]=useState("10001");
+    const [FindResult, setFindResult] = useState('');
     useEffect(() => {
+      setFindResult('');
       setPayWayaCode("10001")
       setinfoHeading("Oops! You're in Guest Mode");
       setinfoSubHeading("Looks like you're in Guest Mode. Log in to unlock this feature and enjoy the full experience!");
@@ -118,23 +124,25 @@ const KycComponent = ({ route }) => {
     };
 
   const handleUser = async () => {
-    setbtnLoading(true)
-    const { res, err } = await authRequest("/users/:id", GET)
-    const deviceID = await DeviceInfo.getUniqueIdSync()
-    if (err?.message === "Internal server error") {
-      Alert.alert("info", "Somthing went wrong");
-      setbtnLoading(false);
-    }
-    if (res?.email === deviceID) {
-      setinfoHeading("Oops! You're in Guest Mode");
-      setinfoSubHeading("Looks like you're in Guest Mode. Log in to unlock this feature and enjoy the full experience!");
-      setinfoBtnHeading("Login");
-      setinfoBtnAction(true)
-      setVisibleAlert(true)
-      setbtnLoading(false);
-    }else{
-      await checkUserKyc();
-    }
+      try {
+        setbtnLoading(true)
+        const token= await AsyncStorage.getItem("UserAuthID");
+        if(!token){
+          setinfoHeading("Oops! You're in Guest Mode");
+          setinfoSubHeading("Looks like you're in Guest Mode. Log in to unlock this feature and enjoy the full experience!");
+          setinfoBtnHeading("Login");
+          setinfoBtnAction(true)
+          setVisibleAlert(true)
+          setbtnLoading(false);
+        }
+        else{
+          await checkUserKyc();
+        }
+      } catch (error) {
+        console.log("error--",error)
+        Alert.alert("info", "Somthing went wrong");
+        setbtnLoading(false);
+      }
   }
 
   const fetchQoutes =async (amount,actionType,cryptoSelection,fiatSelection) => {
@@ -145,10 +153,11 @@ const KycComponent = ({ route }) => {
       "amount": amount,
       "side": actionType
   }
-    const { res, err } = await authRequest("/users/alchemyQuotes", POST, payload);
-    const respo = JSON.parse(res.res)
-    if(res.status&&respo.success)
-    {
+
+     const result = await apiHelper.post(REACT_APP_HOST + "/v1/alchemy/fetch-quotes", payload);
+     console.log("------result",result)
+     const respo = JSON.parse(result.data.data);   
+     if (result.success&&respo.data!==null) {
       setQoutesRes(respo.data)
       setqoutesLoading(false);
     }
@@ -182,7 +191,7 @@ const KycComponent = ({ route }) => {
         fetchQoutes(valpayAmount,valoperationType,valselectedCrypto,valselectedfiat)
       }
     }
-  }, 500), []);
+  }, 1000), []);
 
   const handleChange = (text) => {
     const payAmount=text.replace(/[^0-9.]/g, '')
@@ -191,22 +200,22 @@ const KycComponent = ({ route }) => {
   
   const checkUserKyc=async()=>{
     try {
-      const { res, err } = await authRequest("/users/alchemyKycStatus", POST);
-      const respo = JSON.parse(res.res)
-      console.log(respo)
-      if (err) {
-        Alert.alert("info", "Somthing went wrong");
-        setbtnLoading(false);
-      }
-      if (!respo.success && respo.code === "2003" && respo.error||res.status && respo?.model?.kycStatus === 0) {
-        setinfoHeading("Oops! Kyc requird");
-        setinfoSubHeading("This feature is currently unavailable as your KYC is incomplete. Please finish the verification process to gain full access.");
-        setinfoBtnHeading("Procced Now");
-        setinfoBtnAction(false)
-        setVisibleAlert(true)
-        setbtnLoading(false);
-      }
-      if (res.status && respo?.model?.kycStatus !== 0) {
+      // const { res, err } = await authRequest("/users/alchemyKycStatus", POST);
+      // const respo = JSON.parse(res.res)
+      // console.log(respo)
+      // if (err) {
+      //   Alert.alert("info", "Somthing went wrong");
+      //   setbtnLoading(false);
+      // }
+      // if (!respo.success && respo.code === "2003" && respo.error||res.status && respo?.model?.kycStatus === 0) {
+      //   setinfoHeading("Oops! Kyc requird");
+      //   setinfoSubHeading("This feature is currently unavailable as your KYC is incomplete. Please finish the verification process to gain full access.");
+      //   setinfoBtnHeading("Procced Now");
+      //   setinfoBtnAction(false)
+      //   setVisibleAlert(true)
+      //   setbtnLoading(false);
+      // }
+      // if (res.status && respo?.model?.kycStatus !== 0) {
         // setinfoHeading("You're all set!");
         // setinfoSubHeading("Your KYC is complete enjoy full access to all features!");
         // setinfoBtnHeading("Got it!");
@@ -219,7 +228,7 @@ const KycComponent = ({ route }) => {
         else{
           await proccedSell()
         }
-      }
+      // }
     } catch (error) {
       console.log("userKycError", error)
       setbtnLoading(false);
@@ -229,56 +238,52 @@ const KycComponent = ({ route }) => {
   const proccedBuy = async () => {
     try {
       const payload = {
-        "side": "BUY",
-        "amount": amountSend,
-        "fiat": selectedfiat?.currency,
-        "crypto": selectedCrypto?.crypto,
-        "depositType": 2,
+        "amount": amountSend.toString(),
+        "fiatCurrency": selectedfiat?.currency,
+        "cryptoCurrency": selectedCrypto?.crypto,
         "address": state?.ETH_KEY,
         "network": selectedCrypto?.network,
         "payWayCode": payWayaCode,
-        "orderType": "4",
-        "memo":"test"
+        "memo": "test1"
       }
-      console.log(payload)
-      const { res, err } = await authRequest("/users/alchemyCreateOrder", POST, payload);
-      const respo = JSON.parse(res.res)
-      console.log(respo.data.payUrl)
-      if(res.status===false)
-      {
+
+      const result = await authApi.post(REACT_APP_HOST + "/v1/alchemy/create-buy-order", payload);
+      console.log(result,"payload",payload)
+      const respo = JSON.parse(result.data.success.data)
+      if (result.success&&respo.data.payUrl) {
         setbtnLoading(false);
-        Alert.alert("Oops!","Somthing went wrong.");
-      }
-      if(res.status&&respo.success)
-      {
+        navigation.navigate("TxDetails", { userKycUrl: respo.data.payUrl })
+      } else {
         setbtnLoading(false);
-        navigation.navigate("TxDetails",{userKycUrl:respo.data.payUrl})
+        Alert.alert("Oops!", "Somthing went wrong.");
       }
     } catch (error) {
       setbtnLoading(false);
       console.log("proccedKyc Error", error)
-      Alert.alert("Oops!","Somthing went wrong.");
+      Alert.alert("Oops!", "Somthing went wrong.");
     }
   }
 
   const proccedSell = async () => {
     try {
       const payload = {
-        "amount": amountSend,
+        "cryptoAmount": amountSend,
         "fiat": selectedfiat?.currency,
         "crypto": selectedCrypto?.crypto,
         "network": selectedCrypto?.network,
+        "country": selectedfiat?.country
       }
-      const { res, err } = await authRequest("/users/alchemySellOrderCreate", POST, payload);
-      if(res.status===false)
+      const result = await authApi.post(REACT_APP_HOST + "/v1/alchemy/create-sell-order", payload);
+      console.log("res--",result.data.success)
+      if(result.success&&result.data.success)
       {
+        setbtnLoading(false);
+        navigation.navigate("TxDetails",{userKycUrl:result.data.success})
+        
+      }
+      else{
         setbtnLoading(false);
         Alert.alert("Oops!","Somthing went wrong.");
-      }
-      if(res.status)
-      {
-        setbtnLoading(false);
-        navigation.navigate("TxDetails",{userKycUrl:res.res})
       }
     } catch (error) {
       setbtnLoading(false);
@@ -302,7 +307,7 @@ const KycComponent = ({ route }) => {
   const renderTokenItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.tokenItem} 
-      onPress={() =>{tokenModalType===0?[setSelectedfiat(item),setTokenModalVisible(false)]:[setSelectedCrypto(item),setTokenModalVisible(false)]}}
+      onPress={() =>{tokenModalType===0?[setSelectedfiat(item),setTokenModalVisible(false)]:[setSelectedCrypto(item),setTokenModalVisible(false)],setFindResult("")}}
     >
       <Image
         source={{ uri: item.icon }}
@@ -318,6 +323,32 @@ const KycComponent = ({ route }) => {
       </View>
     </TouchableOpacity>
   );
+
+  const listManager = useMemo(() => {
+    if (tokenModalType === 0) {
+      return operationType === "BUY" ? AlchemyFiatTokens : AlchemyFiatSellTokens;
+    } else {
+      return AlchemyCryptoTokens;
+    }
+  }, [tokenModalType, operationType]);
+
+  const listManagerData = useMemo(() => {
+    const query = FindResult?.toLowerCase();
+    return listManager.filter(token =>{
+      if (tokenModalType === 0) {
+        return (
+          token.currency?.toLowerCase().includes(query) ||
+          token.country?.toLowerCase().includes(query)
+        );
+      } else {
+        return (
+          token.crypto?.toLowerCase().includes(query) ||
+          token.network?.toLowerCase().includes(query)
+        );
+      }
+    }
+    );
+  }, [FindResult, listManager]);
 
     return (
       <View style={styles.mainCom}>
@@ -469,7 +500,7 @@ const KycComponent = ({ route }) => {
             <View style={styles.walletAddress}>
             <Text style={styles.sectionTitle}>Wallet Address:</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft:10}}>
-                <Text style={styles.addressText}>{state?.ETH_KEY}</Text>
+                <Text style={styles.addressText}>{state&&state.wallet && state.wallet.address}</Text>
                 </ScrollView>
             </View>
 
@@ -544,8 +575,15 @@ const KycComponent = ({ route }) => {
                       <MaterialIcons name="close" size={24} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
+                  <TextInput
+                    placeholder={`Search ${tokenModalType===0?"fiat":"crypto"}...`}
+                    placeholderTextColor={"gray"}
+                    value={FindResult}
+                    onChangeText={setFindResult}
+                    style={styles.searchCon}
+                  />
                   <FlatList
-                    data={tokenModalType===0?operationType==="BUY"?AlchemyFiatTokens:AlchemyFiatSellTokens:AlchemyCryptoTokens}
+                    data={listManagerData}
                     renderItem={renderTokenItem}
                     keyExtractor={item => item.id}
                     showsVerticalScrollIndicator={false}
@@ -809,6 +847,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
   },
+  searchCon:{
+    color:"#fff",
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    borderRadius: 15,
+  }
 });
 
 export default KycComponent;

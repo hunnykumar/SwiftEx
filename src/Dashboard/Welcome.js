@@ -25,6 +25,8 @@ import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { genUsrToken } from "./Auth/jwtHandler";
 import { alert } from "./reusables/Toasts";
 import { useNavigation } from "@react-navigation/native";
+import apiHelper from "./exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 const StellarSdk = require('stellar-sdk');
 const Welcome = (props) => {
   const [Loading,setLoading]=useState(false)
@@ -63,6 +65,18 @@ const Welcome = (props) => {
       const response=await dispatch(Generate_Wallet2())
         if (response) {
           console.log("respoms:",response)
+          const result = await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
+            "multiChainAddress":response.wallet.address,
+            "stellarAddress": response.wallet.stellarWallet.publicKey,
+            "isPrimary": true
+          });
+          
+          if (result.success) {
+             alert("success","wallet synced!");
+          } else {
+            alert("error","unable to sync wallet.");
+            console.log('Error:', result.error, 'Status:', result.status);
+          }
           if (response.status === "success") {
             const wallet = {
               wallet: response.wallet,

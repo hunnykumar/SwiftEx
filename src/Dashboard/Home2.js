@@ -57,6 +57,13 @@ import useFirebaseCloudMessaging from "./notifications/firebaseNotifications";
       playSound: true,
       soundName: 'default',
       vibration: 300,
+      vibrate: true,
+      priority: "high",
+      importance: "high",
+      playSound: true,
+      soundName: "default",
+      allowWhileIdle: true,
+      invokeApp: true 
     });
   };
 function listion(addressToMonitor) {
@@ -80,17 +87,17 @@ function listion(addressToMonitor) {
             });
           })
           .catch((err) => {
-            console.error('Error fetching block:', err);
+            console.log('Error fetching block:', err);
           });
       } catch (e) {
         console.log(e)
       }
     } else {
-      console.error('Error:', error);
+      console.log('Error:', error);
     }
   })
     .on('error', (err) => {
-      console.error('Error:', err);
+      console.log('Error:', err);
     });
 
   async function setDelay(time) {
@@ -304,7 +311,7 @@ const Home2 = ({ navigation }) => {
       try {
         await getAllBalance();
       } catch (e) {
-        console.error(e);
+        console.log(e);
       }
     };
   

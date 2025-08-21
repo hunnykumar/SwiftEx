@@ -137,9 +137,8 @@ const CustomDrawer = ({ isVisible, onClose }) => {
   const handle_logout=async()=>{
     try {
       onClose()
-      const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-      await AsyncStorage.removeItem(LOCAL_TOKEN);
-      createGuestUser()
+      await AsyncStorage.removeItem("UserAuthID");
+      // createGuestUser()
       Alert.alert("You're in Guest Mode.");
       // naviagtion.navigate("Home");
     } catch (error) {

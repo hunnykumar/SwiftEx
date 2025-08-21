@@ -24,6 +24,7 @@ import { useSelector } from "react-redux";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { Wallet_market_loading } from "./reusables/Exchange_loading";
 import monkey from "../../assets/monkey.png"
+import apiHelper from "./exchange/crypto-exchange-front-end-main/src/apiHelper";
 
 
 const Market = (props) => {
@@ -47,35 +48,22 @@ const Market = (props) => {
     setTrades,
     setImageUrl
   ) => {
-    try {
       setLoad_new_data(true)
-const raw = "";
-const requestOptions = {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json",
-  },
-};
-     await fetch(REACT_APP_HOST+"/market-data/getcryptodata", requestOptions)
-      .then((response) => response.json())
-      .then((responseJson) => {
-         setLoading(false);
-         setData(responseJson[0].MarketData);
-          setUpdatedData(responseJson[0].MarketData)
-          setTrades(responseJson[0].MarketData[0].trades)
-          setPrice(responseJson[0].MarketData[0].current_price);
-          setPercent(responseJson[0].MarketData[0].priceChangePercentage24h);
-          setImageUrl(responseJson[0].MarketData[0].image);
-          setLoad_new_data(false)
-    })
-      .catch((error) =>{ 
-       setLoading(false);
-        console.error(error);
+      const result = await apiHelper.get(REACT_APP_HOST+"/v1/market-data");
+      if (result.success) {
+        setLoading(false);
+        setData(result.data.marketData);
+         setUpdatedData(result.data.marketData)
+         setTrades(result.data.marketData[0].trades)
+         setPrice(result.data.marketData[0].currentPrice);
+         setPercent(result.data.marketData[0].priceChangePercentage24h);
+         setImageUrl(result.data.marketData[0].image);
+         setLoad_new_data(false)
+      } else {
+        setLoading(false);
+        console.log(error);
         alert("error", error);
-      });
-    } catch (error) {
-      console.log(error);
-    }
+      }
   };
 
   const onRefresh = () => {

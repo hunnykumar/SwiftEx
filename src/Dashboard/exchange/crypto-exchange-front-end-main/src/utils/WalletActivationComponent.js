@@ -21,6 +21,7 @@ import { RAPID_STELLAR, SET_ASSET_DATA } from '../../../../../components/Redux/a
 import { REACT_APP_HOST } from '../ExchangeConstants';
 import Snackbar from 'react-native-snackbar';
 import { STELLAR_URL } from '../../../../constants';
+import apiHelper from '../apiHelper';
 const StellarSdk = require('stellar-sdk');
 
 const { height } = Dimensions.get('window');
@@ -135,75 +136,15 @@ const WalletActivationComponent = ({
   if (!showSheet) return null;
 
 
-  const syncDevice = async () => {
-    const token = await FCM_getToken();
-    console.log(token);
-    console.log("hi----->>>ttokenb", token);
-    const device_info = {
-      'deviceBrand': await DeviceInfo.getBrand(),
-      'deviceModel': await DeviceInfo.getModel(),
-      'systemVersion': await DeviceInfo.getSystemVersion(),
-      "deviceUniqueID": await DeviceInfo.getUniqueIdSync(),
-      "deviceIP": await DeviceInfo.getIpAddressSync(),
-      "deviceType": await DeviceInfo.getDeviceType(),
-      "deviceMacAddress": await DeviceInfo.getMacAddress()
-    }
-    try {
-      const { res } = await authRequest(
-        `/users/getInSynced/${token}`,
-        GET
-      );
-      if (res.isInSynced) {
-        const { err } = await authRequest("/users/syncDevice", POST, {
-          fcmRegToken: token,
-          deviceInfo:device_info
-        });
-        if (err){
-          return { status: false };
-        } 
-        return { status: true };
-      }
-
-      return { status: true }; 
-    } catch (err) {
-      console.log(err)
-      return { status: false };
-    }
-  };
  
   const active_account = async () => {
     console.log("<<<<<<<clicked");
     try {  
-      // Retrieve token and stored email in parallel
-      const [token, storedEmail] = await Promise.all([
-        getToken(),
-        AsyncStorageLib.getItem('user_email')
-      ]);
-  
-      console.log("Token:", token);
-  
-      const postData = {
-        email: storedEmail,
-        publicKey: state?.STELLAR_PUBLICK_KEY,
-        wallletPublicKey:state?.ETH_KEY
-      };
-  
-      // Update public key by email
-      const response = await fetch(`${REACT_APP_HOST}/users/updatePublicKeyByEmail`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(postData),
-      });
-      
-      const data = await response.json();
-      console.log("--->>>>", data);
-  
-      if (data.message === "Funded successfully") {
+      const resultApi =await apiHelper.patch(REACT_APP_HOST+`/v1/wallet/${state.STELLAR_PUBLICK_KEY}/activate-wallet`);
+      console.log("result---xdr",resultApi)
+      if (resultApi.success) {
         const keypair = StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY);
-        const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(data?.resXdr, "base64");
+        const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(resultApi.data.wallet.xdr, "base64");
         const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.TESTNET);
         tx.sign(keypair);
         const server = new StellarSdk.Server(STELLAR_URL.URL);
@@ -255,14 +196,14 @@ const WalletActivationComponent = ({
 
         // setWallet_activation(false);
         // handleClose()
-      } else if (data.message === "Error funding account") {
-        console.log("Error: Funding account failed.");
+      } else{
+        console.log("Error: Funding account failed.",resultApi);
         setWallet_activation(false);
         handleClose()
       }
   
     } catch (error) {
-      console.error('Network or fetch error:', error);
+      console.log('Network or fetch error:', error);
       setWallet_activation(false);
       handleClose()
     }
@@ -271,13 +212,7 @@ const WalletActivationComponent = ({
 
   const ActivationHandle=async()=>{
     setWallet_activation(true)
-   const res=await syncDevice()
-   if(res.status)
-   {
     await active_account()
-   }else{
-    setWallet_activation(false)
-   }
   }
 
   return (

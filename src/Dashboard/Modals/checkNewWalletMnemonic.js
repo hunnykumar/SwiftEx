@@ -28,6 +28,8 @@ import ModalHeader from "../reusables/ModalHeader";
 import { alert } from "../reusables/Toasts";
 import Icon from "../../icon";
 import Snackbar from "react-native-snackbar";
+import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 const CheckNewWalletMnemonic = ({
   Wallet,
   Visible,
@@ -301,7 +303,7 @@ const CheckNewWalletMnemonic = ({
                       // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
   
                       dispatch(AddToAllWallets(allWallets, user)).then(
-                        (response) => {
+                        async(response) => {
                           if (response) {
                             if (response.status === "Already Exists") {
                               alert(
@@ -311,6 +313,19 @@ const CheckNewWalletMnemonic = ({
                               setLoading(false);
                               return;
                             } else if (response.status === "success") {
+                              const result =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
+                                "multiChainAddress":Wallet.address,
+                                "stellarAddress": Wallet.stellarWallet.publicKey,
+                                "isPrimary": true
+                              });
+                              console.log("result---result",result)
+                              
+                              if (result.success) {
+                                 alert("success","wallet synced!");
+                              } else {
+                                alert("error","unable to sync wallet.");
+                                console.log('Error:', result.error, 'Status:', result.status);
+                              }
                               AsyncStorageLib.setItem("currentWallet",Wallet?.accountName)
                               dispatch(
                                 setCurrentWallet(

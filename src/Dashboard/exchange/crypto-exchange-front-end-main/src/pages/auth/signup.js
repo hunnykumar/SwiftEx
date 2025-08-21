@@ -43,6 +43,8 @@ export const ExchangeRegister = (props) => {
   const [formattedValue, setFormattedValue] = useState("");
   const [email, setEmail] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
+  const [password, setpassword] = useState("");
+  const [rePassword, setrePassword] = useState("");
   const [formContent, setFormContent] = useState({
     firstName: "",
     lastName: "",
@@ -97,7 +99,7 @@ useEffect(()=>{
   
     } catch (error) {
       setLoading(false);
-      console.error('Error during signup:', error);
+      console.log('Error during signup:', error);
       Snackbar.show({
         text: "An unexpected error occurred.",
         duration: Snackbar.LENGTH_SHORT,
@@ -151,6 +153,18 @@ useEffect(()=>{
     setFormContent({ ...formContent, email: input.toLowerCase() })
   };
 
+  const onChangepass = (input, type) => {
+    if (type === 1) {
+      const formattedInput = input.replace(/\s/g, '');
+      setpassword(formattedInput);
+    }
+    if (type === 2) {
+      const formattedInput = input.replace(/\s/g, '');
+      setrePassword(formattedInput);
+    }
+
+  };
+
   return (
     <>
     <Exchange_Login_screen title="" onLeftIconPress={() => navigation.goBack()} />
@@ -193,7 +207,7 @@ useEffect(()=>{
 
 
 
-            <View style={styles.inp}>
+            <View style={[styles.inp,{marginTop:hp(1)}]}>
                 <Text style={styles.text}>Last Name</Text>
               <TextInput
                 id="lastNameInput"
@@ -209,7 +223,7 @@ useEffect(()=>{
               />
             </View>
             
-            <View style={styles.inp}>
+            <View style={[styles.inp,{marginTop:hp(1)}]}>
                 <Text style={styles.text}>
                   Email Address
                 </Text>
@@ -227,28 +241,45 @@ useEffect(()=>{
                 }
               />
             </View>
-            <View style={styles.inp}>
+
+            <View style={[styles.inp,{marginTop:hp(1)}]}>
                 <Text style={styles.text}>
-                  Wallet Address
+                  Password
                 </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.input}>
-              <Text
-                style={{ color: "black",fontSize:18,textAlign:"center",marginTop:hp(1.3)}}
-                >{formContent.walletAddress}
-              </Text>
-                </ScrollView>
+              <TextInput
+                id="passwordInput"
+                testID="passwordInput"
+                placeholderTextColor="gray"
+                style={styles.input}
+                theme={{ colors: { text: "white" } }}
+                value={password}
+                placeholder={"ABC@!123"}
+                onChangeText={(text) => {
+                  onChangepass(text,1)
+                }}
+                autoCapitalize="none"
+                keyboardType="default"
+              />
             </View>
-            <View style={{ flexDirection:"row",alignSelf:"flex-start",marginHorizontal:wp(10),marginTop:hp(3)}}>
-              <Icon name={"information-outline"} type={"materialCommunity"} size={27} color={"gray"} />
-              <Text style={{ color: "gray",fontSize:19,marginLeft:wp(2) }}>First Name should not be empty</Text>
-            </View>
-            <View style={{ flexDirection:"row",alignSelf:"flex-start",marginHorizontal:wp(10),marginTop:hp(1)}}>
-              <Icon name={"information-outline"} type={"materialCommunity"} size={27} color={"gray"} />
-              <Text style={{ color: "gray",fontSize:19,marginLeft:wp(2) }}>Last Name should not be empty</Text>
-            </View>
-            <View style={{ flexDirection:"row",alignSelf:"flex-start",marginHorizontal:wp(10),marginTop:hp(1)}}>
-              <Icon name={"information-outline"} type={"materialCommunity"} size={27} color={"gray"} />
-              <Text style={{ color: "gray",fontSize:19,marginLeft:wp(2) }}>Email  should not be empty</Text>
+
+            <View style={[styles.inp,{marginTop:hp(1),marginBottom:hp(3)}]}>
+                <Text style={styles.text}>
+                 Re-Password
+                </Text>
+              <TextInput
+                id="rePasswordInput"
+                testID="rePasswordInput"
+                placeholderTextColor="gray"
+                style={styles.input}
+                theme={{ colors: { text: "white" } }}
+                value={rePassword}
+                placeholder={"ABC@!123"}
+                onChangeText={(text) => {
+                    onChangepass(text,2)
+                }}
+                autoCapitalize="none"
+                keyboardType="default"
+              />
             </View>
 <TouchableOpacity
 id="createAccountBtn"

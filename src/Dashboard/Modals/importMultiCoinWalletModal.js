@@ -31,6 +31,8 @@ import { Paste } from "../../utilities/utilities";
 import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../../icon";
 import { recoverMultiChainWallet } from "../../utilities/WalletManager";
+import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 const { EthereumWallet } = NativeModules;
 
 const xrpl = require("xrpl");
@@ -317,6 +319,19 @@ const ImportMultiCoinWalletModal = ({
                     wallets: wallets,
                   },
                 ];
+                const resultApi =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
+                  "multiChainAddress":wallet.address,
+                  "stellarAddress": wallet.stellarWallet.publicKey,
+                  "isPrimary": true
+                });
+                console.log("result---result",resultApi)
+                
+                if (resultApi.success) {
+                   alert("success","wallet synced!");
+                } else {
+                  alert("error","unable to sync wallet.");
+                  console.log('Error:', resultApi.error, 'Status:', resultApi.status);
+                }
                 // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
 
                 dispatch(AddToAllWallets(allWallets, user)).then((response) => {

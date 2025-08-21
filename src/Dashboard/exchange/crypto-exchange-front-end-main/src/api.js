@@ -2,6 +2,7 @@ import axios from 'axios'
 import AsyncStorageLib from '@react-native-async-storage/async-storage'
 import { REACT_APP_HOST, REACT_APP_GOOGLE_VPID_KEY, REACT_APP_LOCAL_TOKEN, REACT_APP_FCM_TOKEN_KEY, REACT_PROXY_HOST} from './ExchangeConstants'
 import DeviceInfo from 'react-native-device-info'
+import messaging from '@react-native-firebase/messaging'
 const SERVER_URL = REACT_APP_HOST
 const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN
 let TOKEN =''
@@ -116,7 +117,7 @@ export const Add_pin = async (userData) => {
   fetch(REACT_APP_HOST+"/users/updatePasscode", requestOptions)
     .then((response) => response.text())
     .then((result) => console.log(result))
-    .catch((error) => console.error(error));
+    .catch((error) => console.log(error));
 
  } catch (error) {
       return {error}
@@ -138,7 +139,7 @@ export const authRequest = async (url, request, body = {}) => {
     return { res }
   } catch (error) {
     console.log('AUTHORIZED_REQUEST_ERROR: \n', JSON.stringify(error.response))
-    createGuestUser()
+    // createGuestUser()
     const err = {
       message: error.response.data.message,
       status: error.response.statusText,
@@ -173,19 +174,19 @@ export async function PATCH(opts) {
 
 // Add guest auth
 export const createGuestUser=async()=>{
-  console.log("----createGuestUser----",)
   try {
+  const token = await messaging().getToken();
+  console.log("----createGuestUser----")
     const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
 
-  const raw = JSON.stringify({
-   'deviceBrand': await DeviceInfo.getBrand(),
-    'deviceModel': await DeviceInfo.getModel(),
-    'systemVersion': await DeviceInfo.getSystemVersion(),
-    "deviceUniqueID": await DeviceInfo.getUniqueIdSync(),
-    "deviceIP": await DeviceInfo.getIpAddressSync(),
-    "deviceType": await DeviceInfo.getDeviceType(),
-    "deviceMacAddress": await DeviceInfo.getMacAddress()
+    const raw = JSON.stringify({
+      'brand': await DeviceInfo.getBrand(),
+      'model': await DeviceInfo.getModel(),
+      "uniqueId": await DeviceInfo.getUniqueIdSync(),
+      "type": await DeviceInfo.getDeviceType(),
+      "macAddress": await DeviceInfo.getMacAddress()||"00000",
+      "fcmToken":token
   });
   
   const requestOptions = {
@@ -195,13 +196,13 @@ export const createGuestUser=async()=>{
     redirect: "follow"
   };
   
-  fetch(REACT_APP_HOST+"/users/guestRegister", requestOptions)
+  fetch(REACT_APP_HOST+"/v1/device", requestOptions)
     .then((response) => response.json())
     .then(async(result) => {
       console.log("--Guest auth --",result)
-      if(result?.success===true&&result?.status===200)
+      if(result?.deviceToken)
       {
-        await saveToken(result?.token)
+        await saveToken(result?.deviceToken)
       }
     })
     .catch((error) => {
@@ -216,11 +217,13 @@ export const createGuestUser=async()=>{
 // Authorized Requests
 export const proxyRequest = async (url, request, body = {}) => {
   try {
+    const deviceToken = await getToken();
     const opts = {
       url,
       body: body,
       headers: {
-        authorization:"Bearer "+await getToken(),
+        authorization: `Bearer ${deviceToken}`,
+        "x-auth-device-token": deviceToken,
       },
     }
 

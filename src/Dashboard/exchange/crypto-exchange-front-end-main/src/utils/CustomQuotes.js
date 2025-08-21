@@ -17,7 +17,7 @@ import {
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { getETHtoTokenPrice } from '../../../../tokens/swapFunctions';
 import { USDT } from './assetAddress';
-import { REACT_APP_HOST } from '../ExchangeConstants';
+import { REACT_APP_HOST, REACT_PROXY_HOST } from '../ExchangeConstants';
 import { authRequest, GET, getToken, PGET, POST, PPOST, proxyRequest } from '../api';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../../../../../icon';
@@ -33,6 +33,7 @@ import Snackbar from 'react-native-snackbar';
 import { getCUSTOMSwapQuote } from './QuotesUtil';
 import { onSwapETHtoUSDC } from './OneTapPayExecution';
 import { alert } from '../../../../reusables/Toasts';
+import apiHelper from '../apiHelper';
 const StellarSdk = require('stellar-sdk');
 export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
 
@@ -337,7 +338,7 @@ export const CustomQuotes = ({
                 onClose();
             });
     } catch (error) {
-        console.error(`Error changing trust:`, error);
+        console.log(`Error changing trust:`, error);
         setLoading(false)
         setWallet_activation(false)
         Snackbar.show({
@@ -518,9 +519,11 @@ export const CustomQuotes = ({
   }
 
   const handleUSDC = async (value,typeOfchain) => {
+    const deviceToken = await getToken();
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Authorization", "Bearer " + await getToken());
+    myHeaders.append("Authorization", "Bearer " + deviceToken);
+    myHeaders.append("x-auth-device-token", deviceToken);
 
     const raw = JSON.stringify({
       "amount": value,
@@ -534,22 +537,22 @@ export const CustomQuotes = ({
       redirect: "follow"
     };
 
-    fetch(REACT_APP_HOST + "/users/swapInfo", requestOptions)
+    fetch(REACT_PROXY_HOST+`/v1/bridge/swap-quotes`, requestOptions)
       .then((response) => response.json())
       .then((result) => {
         console.log("---err->",result)
-        if (result?.status === 200) {
-          setusdcRes(result?.response),
+        if (result?.quotes) {
+          setusdcRes(result?.quotes),
             setusdcResLoading(false)
         }
         else {
           setusdcResLoading(false)
           setusdcRes(null)
-          console.log("---err->",result)
+          console.log("--Info-err->",result)
           Alert.alert("Info", "An error occurred. Please try again later.")
         }
       })
-      .catch((error) => console.error(error));
+      .catch((error) => console.log(error));
   }
 
 
@@ -633,7 +636,7 @@ export const CustomQuotes = ({
         const usdtAbi = [
             "function transfer(address to, uint256 value) public returns (bool)"
         ];
-        const usdtContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
+        const usdtContract = new ethers.Contract("0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0", usdtAbi, wallet);
        
         const formattedAmount = ethers.utils.parseUnits(amount.toString(), 6);
         const unsigned = await usdtContract.populateTransaction.transfer(usdtAddress, formattedAmount);
@@ -733,78 +736,20 @@ export const CustomQuotes = ({
     backdropColor: 'rgba(0, 0, 0, 0.7)'
   };
 
-  const syncDevice = async () => {
-    const token = await FCM_getToken();
-    console.log(token);
-    console.log("hi----->>>ttokenb", token);
-    const device_info = {
-      'deviceBrand': await DeviceInfo.getBrand(),
-      'deviceModel': await DeviceInfo.getModel(),
-      'systemVersion': await DeviceInfo.getSystemVersion(),
-      "deviceUniqueID": await DeviceInfo.getUniqueIdSync(),
-      "deviceIP": await DeviceInfo.getIpAddressSync(),
-      "deviceType": await DeviceInfo.getDeviceType(),
-      "deviceMacAddress": await DeviceInfo.getMacAddress()
-    }
-    try {
-      const { res } = await authRequest(
-        `/users/getInSynced/${token}`,
-        GET
-      );
-      if (res.isInSynced) {
-        const { err } = await authRequest("/users/syncDevice", POST, {
-          fcmRegToken: token,
-          deviceInfo:device_info
-        });
-        if (err){
-          return { status: false };
-        } 
-        return { status: true };
-      }
 
-      return { status: true }; 
-    } catch (err) {
-      console.log(err)
-      return { status: false };
-    }
-  };
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
   const active_account = async () => {
     console.log("<<<<<<<clicked");
     try {  
-      // Retrieve token and stored email in parallel
-      const [token, storedEmail] = await Promise.all([
-        getToken(),
-        AsyncStorageLib.getItem('user_email')
-      ]);
-  
-      console.log("Token:", token);
-  
-      const postData = {
-        email: storedEmail,
-        publicKey: state?.STELLAR_PUBLICK_KEY,
-        wallletPublicKey:state?.ETH_KEY
-      };
-  
-      // Update public key by email
-      const response = await fetch(`${REACT_APP_HOST}/users/updatePublicKeyByEmail`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(postData),
-      });
-      
-      const data = await response.json();
-      console.log("--->>>>", data);
-  
-      if (data.message === "Funded successfully") {
+      const resultApi =await apiHelper.patch(REACT_APP_HOST+`/v1/wallet/${state.STELLAR_PUBLICK_KEY}/activate-wallet`);
+      console.log("result---xdr",resultApi)
+      if (resultApi.success) {
          const keypair = StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY);
-        const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(data?.resXdr, "base64");
+     const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(resultApi.data.wallet.xdr, "base64");
         const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.TESTNET);
         tx.sign(keypair);
         const server = new StellarSdk.Server(STELLAR_URL.URL);
+        StellarSdk.Network.useTestNetwork();
         const result = await server.submitTransaction(tx);
         if(result?.successful===true)
         {        
@@ -864,8 +809,8 @@ export const CustomQuotes = ({
     }
 
         // onClose()
-      } else if (data.message === "Error funding account") {
-        console.log("Error: Funding account failed.");
+      } else{
+        console.log("Error: Funding account failed.",resultApi);
         setWallet_activation(false);
         onClose()
         Snackbar.show({
@@ -876,7 +821,7 @@ export const CustomQuotes = ({
       }
   
     } catch (error) {
-      console.error('Network or fetch error:', error);
+      console.log('Network or fetch error:', error);
       setWallet_activation(false);
       Snackbar.show({
         text: 'Activation failed',
@@ -890,13 +835,7 @@ export const CustomQuotes = ({
 
   const ActivationHandle=async()=>{
     setWallet_activation(true)
-   const res=await syncDevice()
-   if(res.status)
-   {
     await active_account()
-   }else{
-    setWallet_activation(false)
-   }
   }
 
   return (
@@ -1401,7 +1340,7 @@ const getTokenQuoteToUSDT=async(tokenAddres, amount, token)=> {
   
       return result;
     } catch (error) {
-      console.error('Error fetching quote:', error);
+      console.log('Error fetching quote:', error);
       const result = {status:false}
       return result;
     }

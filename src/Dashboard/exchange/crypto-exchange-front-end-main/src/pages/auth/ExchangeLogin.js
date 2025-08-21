@@ -33,6 +33,8 @@ import { REACT_APP_HOST } from "../../ExchangeConstants";
 import { useToast } from "native-base";
 import { Exchange_Login_screen } from "../../../../../reusables/ExchangeHeader";
 import Snackbar from "react-native-snackbar";
+import authApi from "../../authApi";
+import apiHelper from "../../apiHelper";
 
 export const ExchangeLogin = (props) => {
   const toast=useToast();
@@ -103,7 +105,7 @@ const FOCUSED=useIsFocused();
 
  const save_token_inlocal=async(token_new)=>{
   try {
-    await saveToken(token_new);
+    await AsyncStorageLib.setItem("UserAuthID", token_new) 
     setLoading(false);
     setEmail("");
     setlogin_Passcode("");
@@ -132,84 +134,21 @@ const FOCUSED=useIsFocused();
       setLoading(false)
      }
      else{
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-  
-      const raw = JSON.stringify({
-        "email": Email.toLowerCase(),
-        "otp": login_Passcode
+      const result = await apiHelper.post(REACT_APP_HOST + "/v1/auth/login", {
+        "username": Email.toLowerCase(),
+        "password": login_Passcode
       });
-  
-      const requestOptions = {
-        method: "POST",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow"
-      };
-  
-      fetch(REACT_APP_HOST+"/auth/login", requestOptions)
-        .then((response) => response.json())
-        .then((result) => {
-          console.log("----",result)
-          if (Array.isArray(result?.message)) {
-            Snackbar.show({
-              text: result?.message[0]==="email must be an email"?"Email must be an email":result?.message[0],
-              duration: Snackbar.LENGTH_SHORT,
-              backgroundColor: 'red',
-            });
-            setEmail("");
-            setlogin_Passcode("");
-            setLoading(false);
-          }
-          if(result.message==="Invalid credintials"&&result.statusCode===400)
-          {
-            setTimeout(()=>{
-              ShowErrotoast(toast,"Invalid credentials");
-            },400)
-            setlogin_Passcode("");
-            setLoading(false);
-          }
-          if(result.message==="Invalid credentials"&&result.statusCode===401)
-          {
-            setTimeout(()=>{
-              ShowErrotoast(toast,"Invalid credentials");
-            },400)
-            setlogin_Passcode("");
-            setLoading(false);
-          }
-          if(result.message==="Please verify your email"&&result.statusCode===400)
-          {
-            setTimeout(()=>{
-              Alert.alert(
-                'Account info',
-                'Account Disabled, Please Verify.',
-                [
-                  {
-                    text: 'Cancel',
-                    style: 'cancel',
-                  },
-                  {
-                    text: 'OK',
-                    onPress: () => {
-                      setactive_forgot(true);
-                    },
-                  },
-                ],
-                { cancelable: false }
-              );
-              ShowErrotoast(toast,"Please verify your email");
-            },400)
-            setlogin_Passcode("");
-            setLoading(false);
-          }
+      console.log("result",result)
+      if (result.success&&result.data.token) {
+        setLoading(false);
+       await save_token_inlocal(result.data.token)
+      }
+      else{
+        alert("error",result?.data?.message||"somthing went wrong..");
+        setLoading(false);
+      }
+    }
 
-          else{
-             save_token_inlocal(result.token)
-          }
-
-      })
-        .catch((error) => {console.log(error)})
-     }
   }
 
   const submitOtp = async () => {
@@ -299,7 +238,7 @@ const FOCUSED=useIsFocused();
             })
             .catch((error) => {
               setLoading(false);
-              console.error(error)
+              console.log(error)
             });
         }
         else {
@@ -423,7 +362,7 @@ const FOCUSED=useIsFocused();
               setLoading(false);
             }
           })
-          .catch((error) => {console.error(error)
+          .catch((error) => {console.log(error)
             setLoading(false);
             setLoading_fog(false);
             setVERFIY_OTP(false);
