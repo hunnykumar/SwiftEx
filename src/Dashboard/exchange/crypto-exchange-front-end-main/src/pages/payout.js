@@ -17,7 +17,7 @@ import { useRef } from "react";
 import { ScrollView } from "native-base";
 import { useEffect } from "react";
 import { WebView } from 'react-native-webview';
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 

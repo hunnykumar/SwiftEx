@@ -1,7 +1,7 @@
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 import axios from 'axios';
 import { STELLAR_URL } from '../Dashboard/constants';
-const server = new StellarSdk.Server(STELLAR_URL.URL);
+const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
 // Function to calculate total reserved and available balance
 export async function GetStellarAvilabelBalance(publicKey) {

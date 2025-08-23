@@ -22,8 +22,8 @@ import Snackbar from "react-native-snackbar";
 import ErrorComponet from "../../../../../../utilities/ErrorComponet";
 import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../../utilities/StellarUtils";
 import WalletActivationComponent from "../../utils/WalletActivationComponent";
-const StellarSdk = require('stellar-sdk');
-StellarSdk.Network.useTestNetwork();
+import * as StellarSdk from '@stellar/stellar-sdk';
+StellarSdk.Networks.TESTNET
 
 const send_recive = ({route}) => {
     const {bala,asset_name,assetIssuer}=route.params;
@@ -122,7 +122,7 @@ const send_recive = ({route}) => {
   async function send_XLM(sourceSecret, destinationPublic, amount) {
     Keyboard.dismiss();
     try {
-    const server = new StellarSdk.Server(STELLAR_URL.URL);
+    const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
       // Load the source account
       const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecret);
       const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());

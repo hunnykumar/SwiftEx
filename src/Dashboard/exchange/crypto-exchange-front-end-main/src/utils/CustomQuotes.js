@@ -34,7 +34,7 @@ import { getCUSTOMSwapQuote } from './QuotesUtil';
 import { onSwapETHtoUSDC } from './OneTapPayExecution';
 import { alert } from '../../../../reusables/Toasts';
 import apiHelper from '../apiHelper';
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
 
   const styles = StyleSheet.create({
@@ -290,8 +290,8 @@ export const CustomQuotes = ({
     setLoading(true)
     try {
         console.log(":++++ Entered into trusting ++++:")
-        const server = new StellarSdk.Server(STELLAR_URL.URL);
-        StellarSdk.Network.useTestNetwork();
+        const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
+        StellarSdk.Networks.TESTNET
         const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
         const transaction = new StellarSdk.TransactionBuilder(account, {
             fee: StellarSdk.BASE_FEE,
@@ -748,8 +748,8 @@ export const CustomQuotes = ({
      const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(resultApi.data.wallet.xdr, "base64");
         const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.TESTNET);
         tx.sign(keypair);
-        const server = new StellarSdk.Server(STELLAR_URL.URL);
-        StellarSdk.Network.useTestNetwork();
+        const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
+        StellarSdk.Networks.TESTNET
         const result = await server.submitTransaction(tx);
         if(result?.successful===true)
         {        

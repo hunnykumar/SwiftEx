@@ -18,7 +18,7 @@ import { REACT_APP_HOST, REACT_APP_LOCAL_TOKEN } from "../ExchangeConstants";
 import { GET, authRequest, getAuth } from "../api";
 import { FlatList } from "native-base";
 const Web3 = require('web3');
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 const alchemyUrl = RPC.ETHRPC;
 const AddFunds_screen = () => {
   const AnchorViewRef = useRef(null);

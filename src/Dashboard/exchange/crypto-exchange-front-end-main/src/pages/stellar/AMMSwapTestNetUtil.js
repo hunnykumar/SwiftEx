@@ -1,7 +1,7 @@
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 const { STELLAR_URL } = require('../../../../../constants');
-const server = new StellarSdk.Server(STELLAR_URL.URL);
-StellarSdk.Network.useTestNetwork();
+const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
+StellarSdk.Networks.TESTNET
 
 async function AMMSWAPTESTNET(fromTokenCode,fromTokenIssuer,toTokenCode,toTokenIssuer,sourceSecret,destAmount) {
     console.log("--",fromTokenCode,fromTokenIssuer,toTokenCode,toTokenIssuer,sourceSecret,destAmount)

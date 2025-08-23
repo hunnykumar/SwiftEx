@@ -40,9 +40,9 @@ import ErrorComponet from "../../utilities/ErrorComponet";
 import { GetStellarAvilabelBalance } from "../../utilities/StellarUtils";
 import StellarAccountReserve from "../exchange/crypto-exchange-front-end-main/src/utils/StellarReserveComponent";
 import WalletActivationComponent from "../exchange/crypto-exchange-front-end-main/src/utils/WalletActivationComponent";
-const StellarSdK = require('stellar-base');
-const StellarSdk = require('stellar-sdk');
-StellarSdk.Network.useTestNetwork();
+// const StellarSdK = require('stellar-base');
+import * as StellarSdk from '@stellar/stellar-sdk';
+StellarSdk.Networks.TESTNET
 const SendXLM = (props) => {
     const toast=useToast();
     const FOCUSED = useIsFocused()
@@ -188,8 +188,8 @@ const SendXLM = (props) => {
     }
 
     const get_stellar = async (steller_key) => {
-      StellarSdk.Network.useTestNetwork();
-      const server = new StellarSdk.Server(STELLAR_URL.URL);
+      StellarSdk.Networks.TESTNET
+      const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
         server.loadAccount(steller_key)
             .then(account => {
                 account.balances.forEach(balance => {
@@ -237,7 +237,7 @@ const SendXLM = (props) => {
         }
         try {
             // Use StellarSdk to verify if it's a valid Stellar address
-            StellarSdK.StrKey.decodeEd25519PublicKey(address);
+            StellarSdk.StrKey.decodeEd25519PublicKey(address);
             return true;
         } catch (e) {
             return false;
@@ -248,8 +248,8 @@ const SendXLM = (props) => {
             Keyboard.dismiss();
             try {
               Showsuccesstoast(toast,"Sending Payment");
-              const server = new StellarSdk.Server(STELLAR_URL.URL);
-              StellarSdk.Network.TESTNET;
+              const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
+              StellarSdk.Networks.TESTNET;
               // Load the source account
               const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecret);
               const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());

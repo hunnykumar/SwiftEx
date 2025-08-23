@@ -9,7 +9,7 @@ import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { NativeModules, Platform } from 'react-native';
 import { PGET, PPOST, proxyRequest } from '../../../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
 import { createWallet } from '../../../utilities/WalletManager';
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 const { EthereumWallet } = NativeModules;
 
 const xrpl = require("xrpl");

@@ -8,13 +8,13 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import StellarSdk from 'stellar-sdk';
+import * as StellarSdk from '@stellar/stellar-sdk';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { STELLAR_URL } from '../../../../constants';
 import { useNavigation } from '@react-navigation/native';
 import { authRequest, POST } from '../api';
 
-const server = new StellarSdk.Server(STELLAR_URL.URL);
+const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
 const getThemeColors = (isDarkMode) => ({
   background: isDarkMode ? '#011434' : '#F5F5F5',
@@ -299,6 +299,9 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
         );
 
 const { res,err } = await authRequest("/users/alchemyOrders", POST);
+if(err){
+  setTransactions(processedTransactions);
+}
 if(res.status&&res.total>0)
 {
   const processedAlcTrs = await Promise.all(
@@ -329,9 +332,7 @@ if(res.status&&res.total>0)
    const  margingBothData=[...processedTransactions,...processedAlcTrs];
    setTransactions(margingBothData);
 }
-else{
-  setTransactions(processedTransactions);
-}
+
 
     } catch (error) {
         console.error('Error fetching transactions:', error);

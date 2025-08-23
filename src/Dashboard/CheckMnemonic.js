@@ -386,7 +386,7 @@ import { alert } from "./reusables/Toasts";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { useNavigation } from "@react-navigation/native";
 import Snackbar from "react-native-snackbar";
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 const storeData = async (publicKey,secretKey,Ether_address) => {
   try {
     let userTransactions = [];

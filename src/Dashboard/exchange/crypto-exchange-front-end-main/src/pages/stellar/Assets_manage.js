@@ -20,7 +20,7 @@ import Snackbar from "react-native-snackbar";
 import { SET_ASSET_DATA } from "../../../../../../components/Redux/actions/type";
 import { STELLAR_URL } from "../../../../../constants";
 import { Exchange_screen_header } from "../../../../../reusables/ExchangeHeader";
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 const Assets_manage = ({route}) => {
     const FOCUSED = useIsFocused();
     const navigation = useNavigation();
@@ -47,8 +47,8 @@ const Assets_manage = ({route}) => {
             //     const parsedData = JSON.parse(storedData);
             //     const matchedData = parsedData.filter(item => item.Ether_address === state.wallet.address);
             //     const publicKey = matchedData[0].publicKey;
-                StellarSdk.Network.useTestNetwork();
-                const server = new StellarSdk.Server(STELLAR_URL.URL);
+                StellarSdk.Networks.TESTNET
+                const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
                 server.loadAccount(state.STELLAR_PUBLICK_KEY)
                     .then(account => {
                         setassets([])
@@ -89,8 +89,8 @@ const Assets_manage = ({route}) => {
         setLoading(domainName)
         try {
             console.log(":++++ Entered into trusting ++++:")
-            const server = new StellarSdk.Server(STELLAR_URL.URL);
-            StellarSdk.Network.useTestNetwork();
+            const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
+            StellarSdk.Networks.TESTNET
             const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
             const transaction = new StellarSdk.TransactionBuilder(account, {
                 fee: StellarSdk.BASE_FEE,

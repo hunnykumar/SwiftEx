@@ -50,10 +50,10 @@ import CustomOrderBook from "../pages/stellar/CustomOrderBook";
 import AMMSwap from "../pages/stellar/AMMSwap";
 import InstentTradeHistory from "../pages/stellar/InstentTradeHistory";
 const Web3 = require('web3');
-const StellarSdk = require('stellar-sdk');
-      StellarSdk.Network.useTestNetwork();
+import * as StellarSdk from '@stellar/stellar-sdk';
+      StellarSdk.Networks.TESTNET
 const alchemyUrl = RPC.ETHRPC;
-const server = new StellarSdk.Server(STELLAR_URL.URL);
+const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 export const NewOfferModal = () => {
   const toast=useToast();
   const dispatch_=useDispatch();
@@ -259,7 +259,7 @@ const chooseRenderItem_1 = ({ item }) => (
         fee: StellarSdk.BASE_FEE,
         networkPassphrase: StellarSdk.Networks.TESTNET
       })
-      const offer = StellarSdk.Operation.manageOffer({
+      const offer = StellarSdk.Operation.manageSellOffer({
         selling: base_asset_sell,
         buying: counter_asset_buy,
         amount: offer_amount, // XETH to sell
@@ -319,7 +319,7 @@ const chooseRenderItem_1 = ({ item }) => (
         fee: StellarSdk.BASE_FEE,
         networkPassphrase: StellarSdk.Networks.TESTNET
       })
-      const offer = StellarSdk.Operation.manageOffer({
+      const offer = StellarSdk.Operation.manageBuyOffer({
         selling: counter_asset_buy,
         buying: base_asset_sell,
         amount: offer_amount,
@@ -728,8 +728,8 @@ const change_Trust_New = async (assetName,domainIssuerPublicKey) => {
   setloading_trust_modal(true)
   try {
       console.log(":++++ Entered into trusting ++++:")
-      const server = new StellarSdk.Server(STELLAR_URL.URL);
-      StellarSdk.Network.useTestNetwork();
+      const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
+      StellarSdk.Networks.TESTNET
       const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
       const transaction = new StellarSdk.TransactionBuilder(account, {
           fee: StellarSdk.BASE_FEE,

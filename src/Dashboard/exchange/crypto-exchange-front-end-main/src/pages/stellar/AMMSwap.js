@@ -24,7 +24,7 @@ import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from '../../
 import { AMMSWAPTESTNET } from './AMMSwapTestNetUtil';
 import { useNavigation } from '@react-navigation/native';
 import { STELLAR_URL } from '../../../../../constants';
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 
 const AMMSwap = () => {
   const state=useSelector((state)=>state);

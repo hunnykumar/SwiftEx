@@ -56,8 +56,8 @@ import { LineChart } from "react-native-gifted-charts";
 import useFirebaseCloudMessaging from "../../../../notifications/firebaseNotifications";
 import DeviceInfo from 'react-native-device-info';
 // import StellarSdk from '@stellar/stellar-sdk';
-const StellarSdk = require('stellar-sdk');
-StellarSdk.Network.useTestNetwork();
+import * as StellarSdk from '@stellar/stellar-sdk';
+StellarSdk.Networks.TESTNET
 
 export const HomeView = ({ setPressed }) => {
   const { FCM_getToken, requestUserPermission } = useFirebaseCloudMessaging();
@@ -257,7 +257,7 @@ export const HomeView = ({ setPressed }) => {
  const changeTrust = async () => {
     try {
       console.log(":++++ Entered into trusting ++++:")
-const server = new StellarSdk.Server(STELLAR_URL.URL);
+const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
         const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
         const transaction = new StellarSdk.TransactionBuilder(account, {
             fee: StellarSdk.BASE_FEE,
@@ -289,7 +289,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
           },
         })
         console.log(`Trustline updated successfully`);
-        StellarSdk.Network.useTestNetwork();
+        StellarSdk.Networks.TESTNET
           server.loadAccount(state.STELLAR_PUBLICK_KEY)
             .then(account => {
               console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);

@@ -22,7 +22,7 @@ import { REACT_APP_HOST } from '../ExchangeConstants';
 import Snackbar from 'react-native-snackbar';
 import { STELLAR_URL } from '../../../../constants';
 import apiHelper from '../apiHelper';
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 
 const { height } = Dimensions.get('window');
 
@@ -147,7 +147,7 @@ const WalletActivationComponent = ({
         const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(resultApi.data.wallet.xdr, "base64");
         const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.TESTNET);
         tx.sign(keypair);
-        const server = new StellarSdk.Server(STELLAR_URL.URL);
+        const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
         const result = await server.submitTransaction(tx);
         if (result?.successful === true) {
           server.loadAccount(state.STELLAR_PUBLICK_KEY)

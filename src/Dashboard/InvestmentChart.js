@@ -30,7 +30,7 @@ import ResponsiveLineChart from "./exchange/crypto-exchange-front-end-main/src/c
 import fetchAllTokensData from "../utilities/TokenUtils";
 import LinearGradient from "react-native-linear-gradient";
 import { CustomQuotes } from "./exchange/crypto-exchange-front-end-main/src/utils/CustomQuotes";
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 
 function InvestmentChart(setCurrentWallet) {
   const navigation=useNavigation()
@@ -358,8 +358,8 @@ function InvestmentChart(setCurrentWallet) {
         const parsedData = JSON.parse(storedData);
         const matchedData = parsedData.filter(item => item.Ether_address === state.wallet.address);
         try {
-          StellarSdk.Network.useTestNetwork();
-          const server = new StellarSdk.Server(STELLAR_URL.URL);
+          StellarSdk.Networks.TESTNET
+          const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
           server.loadAccount(matchedData[0].publicKey)
             .then(account => {
               dispatch({
@@ -407,8 +407,8 @@ function InvestmentChart(setCurrentWallet) {
             get_stellar(publicKey);
             const secretKey_Key = matchedData[0].secretKey;
             setSecretKey(secretKey_Key)
-            StellarSdk.Network.useTestNetwork();
-            const server = new StellarSdk.Server(STELLAR_URL.URL);
+            StellarSdk.Networks.TESTNET
+            const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
             server.loadAccount(matchedData[0].publicKey)
               .then(account => {
                 dispatch({
@@ -469,8 +469,8 @@ function InvestmentChart(setCurrentWallet) {
     try {
       console.log("<><", publicKey)
 
-      StellarSdk.Network.useTestNetwork();
-      const server = new StellarSdk.Server(STELLAR_URL.URL);
+      StellarSdk.Networks.TESTNET
+      const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
       server.loadAccount(publicKey)
         .then(account => {
           console.log('Balances for account:', publicKey);

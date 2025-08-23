@@ -15,7 +15,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { useSelector } from 'react-redux';
-import StellarSdk from 'stellar-sdk';
+import * as StellarSdk from '@stellar/stellar-sdk';
 import Icon from '../../../../../icon';
 import Snackbar from 'react-native-snackbar';
 import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from '../../../../../utilities/StellarUtils';
@@ -51,7 +51,7 @@ const Offers_manages = () => {
   const [lastOfferAmount,setlastOfferAmount]=useState('');
 
 
-  const server = new StellarSdk.Server(STELLAR_URL.URL);
+  const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
   useEffect(() => {
     setLoading(true);
@@ -146,24 +146,36 @@ const Offers_manages = () => {
     );
   };
 
-  const deleteOffer = async (offerId) => {
+  const deleteOffer = async (offer) => {
     console.log("==--------lppp",sellingAssetCode,buyingAssetCode)
     setloading_del(true);
     const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
     try {
       const account = await server.loadAccount(keypair.publicKey());
-
+  
+      const selling =
+        offer.selling.asset_type === "native"
+          ? StellarSdk.Asset.native()
+          : new StellarSdk.Asset(offer.selling.asset_code, offer.selling.asset_issuer);
+  
+      const buying =
+        offer.buying.asset_type === "native"
+          ? StellarSdk.Asset.native()
+          : new StellarSdk.Asset(offer.buying.asset_code, offer.buying.asset_issuer);
+  
+      const op = StellarSdk.Operation.manageSellOffer({
+        offerId: offer.id,
+        selling,
+        buying,
+        amount: "0",
+        price: "1",
+      });
+  
       const transaction = new StellarSdk.TransactionBuilder(account, {
-        fee: StellarSdk.BASE_FEE,
+        fee: await server.fetchBaseFee(),
         networkPassphrase: STELLAR_NETWORK,
       })
-        .addOperation(StellarSdk.Operation.manageOffer({
-          offerId: offerId,
-          selling:sellingAssetCode==="XLM"||sellingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(sellingAssetCode, sellingAssetIssuer), 
-          buying: buyingAssetCode==="XLM"||buyingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(buyingAssetCode, buyingAssetIssuer), 
-          amount: '0', 
-          price: '1', 
-        }))
+        .addOperation(op)
         .setTimeout(30)
         .build();
 
@@ -194,12 +206,6 @@ const Offers_manages = () => {
 
   const updateOffer = async () => {
     Keyboard.dismiss();
-    console.log("++_++_+_____",sellingAssetCode,buyingAssetCode)
-    console.log("data---", {
-      newAmount: BigNumber(newAmount || 0).toString(),
-      lastOfferAmount: BigNumber(lastOfferAmount || 0).toString(),
-      stellarAvalibleBalance: BigNumber(stellarAvalibleBalance || 0).toString()
-    });
   
     const newAmountBN = BigNumber(newAmount || 0);
     const lastOfferAmountBN = BigNumber(lastOfferAmount || 0);
@@ -211,57 +217,66 @@ const Offers_manages = () => {
         duration: Snackbar.LENGTH_SHORT,
         backgroundColor: 'red',
       });
-    } else {
-      if (
-        newAmountBN.isZero() ||
-        BigNumber(newPrice || 0).isZero()
-      ) {
-        Snackbar.show({
-          text: 'Invalid value provided',
-          duration: Snackbar.LENGTH_SHORT,
-          backgroundColor: 'red',
-        });
-        setNewAmount('');
-        setNewPrice('');
-      } else {
-        setloading_edi(true);
-        const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
-        try {
-          const account = await server.loadAccount(keypair.publicKey());
+      return;
+    }
+    if (newAmountBN.isZero() || BigNumber(newPrice || 0).isZero()) {
+      Snackbar.show({
+        text: 'Invalid value provided',
+        duration: Snackbar.LENGTH_SHORT,
+        backgroundColor: 'red',
+      });
+      setNewAmount('');
+      setNewPrice('');
+      return;
+    }
   
-          const transaction = new StellarSdk.TransactionBuilder(account, {
-            fee: StellarSdk.BASE_FEE,
-            networkPassphrase: STELLAR_NETWORK,
+    setloading_edi(true);
+    const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
+  
+    try {
+      const account = await server.loadAccount(keypair.publicKey());
+  
+      const selling =
+        sellingAssetCode === "XLM" || sellingAssetCode === "native"
+          ? StellarSdk.Asset.native()
+          : new StellarSdk.Asset(sellingAssetCode, sellingAssetIssuer);
+  
+      const buying =
+        buyingAssetCode === "XLM" || buyingAssetCode === "native"
+          ? StellarSdk.Asset.native()
+          : new StellarSdk.Asset(buyingAssetCode, buyingAssetIssuer);
+      const transaction = new StellarSdk.TransactionBuilder(account, {
+        fee: await server.fetchBaseFee(),
+        networkPassphrase: STELLAR_NETWORK,
+      })
+        .addOperation(
+          StellarSdk.Operation.manageSellOffer({
+            offerId: selectedOffer.id,
+            selling,
+            buying,
+            amount: newAmountBN.toString(),
+            price: BigNumber(newPrice).toString(),
           })
-            .addOperation(StellarSdk.Operation.manageOffer({
-              offerId: selectedOffer.id,
-              selling: sellingAssetCode === "XLM" || sellingAssetCode === "native" ? new StellarSdk.Asset.native() : 
-                new StellarSdk.Asset( sellingAssetCode, sellingAssetIssuer),
-              buying: buyingAssetCode === "XLM" || buyingAssetCode === "native" ? 
-                new StellarSdk.Asset.native() : 
-                new StellarSdk.Asset( buyingAssetCode, buyingAssetIssuer),
-              amount: newAmountBN.toString(),
-              price: BigNumber(newPrice).toString(),
-            }))
-            .setTimeout(30)
-            .build();
+        )
+        .setTimeout(30)
+        .build();
   
-          transaction.sign(keypair);
+      transaction.sign(keypair);
   
-          const response = await server.submitTransaction(transaction);
-          console.log('Offer updated:', response);
-          setloading_edi(false);
-          fetchOffers();
-          Alert.alert('Success', 'Offer updated successfully.');
-          setModalVisible(false);
-        } catch (error) {
-          setloading_edi(false);
-          console.log("Error updating offer:", error);
-          Alert.alert('Info', 'Failed to update the offer');
-        }
-      }
+      const response = await server.submitTransaction(transaction);
+      console.log('Offer updated:', response);
+  
+      setloading_edi(false);
+      fetchOffers();
+      Alert.alert('Success', 'Offer updated successfully.');
+      setModalVisible(false);
+    } catch (error) {
+      setloading_edi(false);
+      console.log("Error updating offer:", error.response?.data || error);
+      Alert.alert('Info', 'Failed to update the offer');
     }
   };
+  
   
 
   const renderItem = ({ item,index }) => (
@@ -292,7 +307,7 @@ const Offers_manages = () => {
       {loading_edi&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
         <TouchableOpacity style={[styles.buttonView,{backgroundColor:"#2164C1",marginRight:10}]} disabled={loading_del} onPress={() => handleEdit(item,index)}><Text style={{color:"#fff",fontSize:15}}>Edit</Text></TouchableOpacity> }
         {loading_del&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
-        <TouchableOpacity style={[styles.buttonView,{backgroundColor:"rgba(254, 32, 36, 0.16)"}]} disabled={loading_edi} onPress={() => handleDelete(item.id,index)}><Text style={{color:"rgb(254, 32, 36)",fontSize:15}}>Delete</Text></TouchableOpacity>}
+        <TouchableOpacity style={[styles.buttonView,{backgroundColor:"rgba(254, 32, 36, 0.16)"}]} disabled={loading_edi} onPress={() => handleDelete(item,index)}><Text style={{color:"rgb(254, 32, 36)",fontSize:15}}>Delete</Text></TouchableOpacity>}
       </View>
     </View>
   );

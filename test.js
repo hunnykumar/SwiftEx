@@ -34,10 +34,10 @@ import { REACT_APP_HOST } from "../ExchangeConstants";
 import darkBlue from "../../../../../../assets/darkBlue.png";
 import { STELLAR_URL } from "./src/Dashboard/constants";
 const Web3 = require('web3');
-const StellarSdk = require('stellar-sdk');
-StellarSdk.Network.useTestNetwork();
+import * as StellarSdk from '@stellar/stellar-sdk';
+StellarSdk.Networks.TESTNET
 const alchemyUrl = RPC.ETHRPC;
-const server = new StellarSdk.Server(STELLAR_URL.URL);
+const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 export const NewOfferModal = () => {
   const back_data=useRoute();
   const { user, open, setOpen, getOffersData, onCrossPress }=back_data.params;
@@ -269,8 +269,8 @@ const getAccountDetails = async () => {
           setbalance("");
           setshow(true)
           console.log("<><", PublicKey)
-          StellarSdk.Network.useTestNetwork();
-          const server = new StellarSdk.Server(STELLAR_URL.URL);
+          StellarSdk.Networks.TESTNET
+          const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
           server.loadAccount(PublicKey)
             .then(account => {
               console.log('Balances for account:', PublicKey);

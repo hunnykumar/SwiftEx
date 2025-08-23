@@ -2,12 +2,13 @@
  * @format
  */
 import './shim';
-import 'react-native-get-random-values'; // For RandomBytes support
+import 'react-native-get-random-values';
 import { Buffer } from 'buffer';
 global.Buffer = Buffer;
-global.process = require('process'); // Polyfill for process
+global.process = require('process');
+
 import { AppRegistry } from 'react-native';
-import App from './App'; // Ensure this points to the correct file
+import App from './App';
 import { name as appName } from './app.json';
 import PushNotification from "react-native-push-notification";
 import messaging, { firebase } from '@react-native-firebase/messaging';
@@ -23,25 +24,34 @@ const firebaseConfig = {
     appId: "1:121537912071:web:07efa9bed63b89dce3b9a2",
     measurementId: "G-V78H9W46GL"
   }
-  
-  firebase.initializeApp(firebaseConfig)
 
-PushNotification.getChannels(function (channel_ids) {
-    console.log(channel_ids); // ['channel_id_1']
-  });
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+  console.log("Firebase initialized with config");
+}
+async function requestPermission() {
+  const authStatus = await messaging().requestPermission();
+  const enabled =
+    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-  PushNotification.configure({
-    // (required) Called when a remote or local notification is opened or received
-    onNotification: function(notification) {
-      console.log('LOCAL NOTIFICATION ==>', notification)
-      if(notification.userInteraction){
+  if (enabled) {
+    console.log("FCM Permission granted:", authStatus);
+  } else {
+    console.log("FCM Permission denied");
+  }
+}
+
+PushNotification.configure({
+  onNotification: function (notification) {
+    console.log("Notification received:", notification);
+
+    if(notification.userInteraction){
         //Navigation.navigate('exchange')
         NavigationController('Home')
       }
-      console.log("Actions",notification.actions)
-    },
-   onAction:function(notification){
-
+  },
+  onAction: function (notification) {
     console.log("My actions",notification)
     if(notification.action==='Yes'){
       console.log('Yes clicked')
@@ -73,4 +83,5 @@ messaging().onMessage(async (remoteMessage) => {
     firebaseNotification(remoteMessage.notification.title,'SwiftEx',remoteMessage.notification.message,remoteMessage.notification.body,remoteMessage?.notification?.android?.imageUrl,remoteMessage?.data?.transaction)
   });
 
+requestPermission();
 AppRegistry.registerComponent(appName, () => App);

@@ -10,10 +10,10 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { useSelector } from 'react-redux';
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 import axios from 'axios';
 import { STELLAR_URL } from '../../../../constants';
-const server = new StellarSdk.Server(STELLAR_URL.URL);
+const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
 const StellarAccountReserve = ({ 
   isVisible, 

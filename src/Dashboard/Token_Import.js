@@ -11,7 +11,7 @@
 import { Wallet_market_loading } from './reusables/Exchange_loading';
 import LinearGradient from 'react-native-linear-gradient';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import Dropdown from './exchange/crypto-exchange-front-end-main/src/components/Dropdown';
+import Dropdown from './exchange/crypto-exchange-front-end-main/src/components/dropDown';
 import IconWithCircle, { CustomIconWithCircle } from '../Screens/iconwithCircle';
 import TokenQrCode from './Modals/TokensQrCode';
 import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';

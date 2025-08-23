@@ -2,7 +2,7 @@ const bip39 = require('bip39');
 const { mnemonicToSeedSync } = bip39;
 const { HDKey } = require('@scure/bip32');
 const { ethers } = require('ethers');
-const { Keypair } = require('stellar-sdk');
+import { Keypair } from '@stellar/stellar-sdk';
 const { Buffer } = require('buffer');
 
 function deriveEthereumKeys(root) {

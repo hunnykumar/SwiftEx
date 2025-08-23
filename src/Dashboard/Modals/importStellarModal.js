@@ -22,7 +22,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { STELLAR_URL } from "../constants";
 import { RAPID_STELLAR, SET_ASSET_DATA } from "../../components/Redux/actions/type";
 import { getEthBalance } from "../../components/Redux/actions/auth";
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 const ImportStellarModal = ({
   setWalletVisible,
   Visible,
@@ -105,8 +105,8 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
     alert('success', "Account Imported.");
     setWalletVisible(false);
     try {
-      StellarSdk.Network.useTestNetwork();
-      const server = new StellarSdk.Server(STELLAR_URL.URL);
+      StellarSdk.Networks.TESTNET
+      const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
       server.loadAccount(publicKey)
         .then(account => {
           dispatch({
