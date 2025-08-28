@@ -1,6 +1,9 @@
 import axios from 'axios'
 import AsyncStorageLib from '@react-native-async-storage/async-storage'
-import { REACT_APP_HOST, REACT_APP_GOOGLE_VPID_KEY, REACT_APP_LOCAL_TOKEN, REACT_APP_FCM_TOKEN_KEY} from './ExchangeConstants'
+import { REACT_APP_HOST, REACT_APP_GOOGLE_VPID_KEY, REACT_APP_LOCAL_TOKEN, REACT_APP_FCM_TOKEN_KEY, REACT_PROXY_HOST} from './ExchangeConstants'
+import DeviceInfo from 'react-native-device-info'
+import messaging from '@react-native-firebase/messaging'
+import { ethers } from 'ethers'
 const SERVER_URL = REACT_APP_HOST
 const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN
 let TOKEN =''
@@ -115,7 +118,7 @@ export const Add_pin = async (userData) => {
   fetch(REACT_APP_HOST+"/users/updatePasscode", requestOptions)
     .then((response) => response.text())
     .then((result) => console.log(result))
-    .catch((error) => console.error(error));
+    .catch((error) => console.log(error));
 
  } catch (error) {
       return {error}
@@ -137,6 +140,7 @@ export const authRequest = async (url, request, body = {}) => {
     return { res }
   } catch (error) {
     console.log('AUTHORIZED_REQUEST_ERROR: \n', JSON.stringify(error.response))
+    // createGuestUser()
     const err = {
       message: error.response.data.message,
       status: error.response.statusText,
@@ -166,5 +170,128 @@ export async function PATCH(opts) {
   const header = opts.headers ? opts.headers : HEADERS
   const body = opts.body
   const res = await axios.patch(URL, body, { headers: header })
+  return res.data
+}
+
+// Add guest auth
+export const createGuestUser=async()=>{
+  try {
+  const token = await messaging().getToken();
+  console.log("----createGuestUser----")
+    const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+
+    const raw = JSON.stringify({
+      'brand': await DeviceInfo.getBrand(),
+      'model': await DeviceInfo.getModel(),
+      "uniqueId": await DeviceInfo.getUniqueIdSync(),
+      "type": await DeviceInfo.getDeviceType(),
+      "macAddress": await DeviceInfo.getMacAddress()||"00000",
+      "fcmToken":token
+  });
+  
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: raw,
+    redirect: "follow"
+  };
+  
+  fetch(REACT_APP_HOST+"/v1/device", requestOptions)
+    .then((response) => response.json())
+    .then(async(result) => {
+      console.log("--Guest auth --",result)
+      if(result?.deviceToken)
+      {
+        await saveToken(result?.deviceToken)
+      }
+    })
+    .catch((error) => {
+      console.log("--Guest auth Error--",error)
+    });
+  } catch (error) {
+    console.log("--Guest Auth Creation Faild--",error)
+  }
+}
+
+
+// Authorized Requests
+export const proxyRequest = async (url, request, body = {}) => {
+  try {
+    const deviceToken = await getToken();
+    const opts = {
+      url,
+      body: body,
+      headers: {
+        authorization: `Bearer ${deviceToken}`,
+        "x-auth-device-token": deviceToken,
+      },
+    }
+
+    const res = await request(opts)
+    return { res }
+  } catch (error) {
+    console.error('proxyRequest error:', {
+      url,
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+    
+    let message = 'Request failed';
+    let status = 500;
+
+    if (error.response) {
+      status = error.response.status;
+      const data = error.response.data;
+      
+      // Check for specific insufficient funds error pattern
+      if (data?.message && data.message.includes('insufficient funds for gas')) {
+        // Extract the specific insufficient funds message
+        const match = data.message.match(/insufficient funds for gas \* price \+ value: have (\d+) want (\d+)/);
+        if (match) {
+          message = `Insufficient funds for gas * price + value: have ${parseFloat(ethers.utils.formatEther(match[1].toString()))?.toFixed(6)} want ${parseFloat(ethers.utils.formatEther(match[2].toString()))?.toFixed(6)}`;
+        } else {
+          message = 'Insufficient funds for transaction';
+        }
+      } else if (data?.error?.message && data.error.message.includes('insufficient funds')) {
+        // Handle nested error structure
+        message = data.error.message;
+      } else if (data?.message) {
+        message = data.message;
+      } else if (data?.error) {
+        message = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+      } else if (typeof data === 'string') {
+        message = data;
+      } else {
+        message = `HTTP ${status} Error`;
+      }
+    } else if (error.request) {
+      message = 'Network error - please check your connection';
+      status = 0;
+    } else {
+      message = error.message || 'Request setup failed';
+    }
+
+    const err = {
+      message,
+      status,
+    }
+    return { err }
+  }
+}
+
+export async function PGET(opts) {
+  const URL = REACT_PROXY_HOST + opts.url
+  const header = opts.headers ? opts.headers : HEADERS
+  const res = await axios.get(URL, { headers: header })
+  return res.data
+}
+
+export async function PPOST(opts) {
+  const URL = REACT_PROXY_HOST + opts.url
+  const header = opts.headers ? opts.headers : HEADERS
+  const body = opts.body
+  const res = await axios.post(URL, body, { headers: header })
   return res.data
 }

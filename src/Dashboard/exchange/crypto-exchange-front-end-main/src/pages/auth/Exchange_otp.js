@@ -9,6 +9,7 @@ import { REACT_APP_HOST } from "../../ExchangeConstants";
 import { useEffect, useState } from "react";
 import { ShowErrotoast } from "../../../../../reusables/Toasts";
 import Snackbar from "react-native-snackbar";
+import authApi from "../../authApi";
 
 const Exchange_otp = (props) => {
     const navigation = useNavigation();
@@ -37,39 +38,20 @@ const Exchange_otp = (props) => {
                 backgroundColor: 'red',
               });
           }else{
-
-          console.log("--",props.route.params.Email)
-          const myHeaders = new Headers();
-            myHeaders.append("Content-Type", "application/json");
-            myHeaders.append("Authorization", "Bearer "+props.route.params.Email);
-            const raw = JSON.stringify({
-                otp: otp,
+            const result = await authApi.post(REACT_APP_HOST+"/v1/auth/verify-otp",{
+                "email": props.route.params.Email,
+                "otp": otp
             });
-            const requestOptions = {
-                method: "POST",
-                headers: myHeaders,
-                body: raw,
-                redirect: "follow"
-            };
-            fetch(REACT_APP_HOST+"/users/verifyLoginOtp", requestOptions)
-                .then((response) => response.json())
-                .then((result) => {
-                    console.log(result)
-                      if (result.token) {
-                        setLoading(false);
-                        navigation.navigate("Setup_password",{Email:result.token,type:props.route.params.type})
-                        setOtp(null);
-                      } 
-                      else{
-                          setTimeout(()=>{
-                              setLoading(false);
-                              ShowErrotoast(toast,result.message);
-                            },400)
-                            setOtp(null);
-                        }
-                    })
-                    .catch((error) => console.error(error));
-                }
+            if (result.success) {
+                setLoading(false);
+                navigation.navigate("ExchangeDetailsSubmittion");
+                setOtp(null);
+            } else {
+                setLoading(false);
+                ShowErrotoast(toast,result);
+                setOtp(null);
+            }
+          }
         } catch (err) {
             setLoading(false);
             console.log("---",err)
@@ -86,6 +68,8 @@ const Exchange_otp = (props) => {
             <View style={{ justifyContent: "center", alignItems: "center", paddingHorizontal: wp(9) }}>
                 <Text style={{ marginVertical: 15, color: "white", alignSelf: "flex-start",fontSize:19 }}>Verification Code</Text>
                 <TextInput
+                id="verificationCodeInput"
+                testID="verificationCodeInput"
                     placeholderTextColor="gray"
                     style={[styles.input, { color: "black", backgroundColor: "#fff" }]}
                     maxLength={6}
@@ -107,6 +91,8 @@ const Exchange_otp = (props) => {
     </View>
 ) : (
     <TouchableOpacity
+        id="submitOtpBtn"
+        testID="submitOtpBtn"
         disabled={Loading}
         onPress={() => {
             Keyboard.dismiss();

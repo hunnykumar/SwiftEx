@@ -1,36 +1,7 @@
-// const WALLET_ADDRESS = '0xd4787fFaa142c62280732afF7899B3AB03Ea0eAA';
-// const TOKEN_CONTRACT_ADDRESSES = [
-  // '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
-  // '0x7e9fbbf33c595430848e767E162e4b0FF6b8205b',
-  // '0xB36543006D92705547C803d12BB27667D8D6DA23',
-  // '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14'
-  // ];
-  
-  // const state = useSelector((state) => state);
-  // const WALLET_ADDRESS = state.wallet.address; 
-  // const DEFAULT_TOKENS = [
-    // {
-    //   symbol: "USDT",
-    //   img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
-    //   address: "0x7e9fbbf33c595430848e767E162e4b0FF6b8205b" 
-    // },
-    // {
-    //   symbol: "UNI",
-    //   img_url: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
-    //   address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
-    // },
-    // {
-    //   symbol: "ETH",
-    //   img_url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png", 
-    //   address: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
-    // }
-  // ];
-
   import React, { useState, useEffect, useCallback } from 'react';
   import { View, Text, Button, TextInput, StyleSheet, FlatList, Image, Alert, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
   import AsyncStorage from '@react-native-async-storage/async-storage';
   import { ethers } from 'ethers';
-  import { RPC } from './constants';
   import { useSelector } from 'react-redux';
   import { Paste } from '../utilities/utilities';
   import {
@@ -39,67 +10,98 @@
   } from "react-native-responsive-screen";
 import { Wallet_market_loading } from './reusables/Exchange_loading';
 import LinearGradient from 'react-native-linear-gradient';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import Dropdown from './exchange/crypto-exchange-front-end-main/src/components/dropDown';
+import IconWithCircle, { CustomIconWithCircle } from '../Screens/iconwithCircle';
+import TokenQrCode from './Modals/TokensQrCode';
+import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';
+import { FAB } from 'react-native-paper';
+import Icon from '../icon';
 
-  const ERC20_ABI = [
-    "function name() view returns (string)",
-    "function symbol() view returns (string)",
-    "function decimals() view returns (uint8)",
-    "function balanceOf(address owner) view returns (uint256)"
-  ];
   
   const Token_Import = () => {
+    const navigation=useNavigation();
     const state = useSelector((state) => state);
     const [tokenInfoList, setTokenInfoList] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [newTokenAddress, setNewTokenAddress] = useState('');
-    const [showTokenList, setShowTokenList] = useState(false); // Toggle state for token list view
+    const [showTokenList, setShowTokenList] = useState(true); // Toggle state for token list view
+    const [QrVisible,setQrVisible]=useState(false);
+    const [QrValue,setQrValue]=useState("");
+    const [QrName,setQrName]=useState("");
+    const [loadingForImport, setLoadingForImport] = useState(null);
+    const [checkTokenStatus, setcheckTokenStatus] = useState(false);
+
     
     const WALLET_ADDRESS = state.wallet.address; 
-    const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
   
     const STORAGE_KEY = `tokens_${WALLET_ADDRESS}`;
+    const STORAGE_BNB_KEY = `tokens_BNB${WALLET_ADDRESS}`;
+    
+    const [selectedToken, setSelectedToken] = useState({
+      id: 1,
+      name: 'Ethereum',
+      image: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png'
+    });
   
-    // Default tokens array
-    const DEFAULT_TOKENS = [
-      {
-        symbol: "USDT",
-        img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
-        address: "0x7e9fbbf33c595430848e767E162e4b0FF6b8205b" 
-      },
-      {
-        symbol: "UNI",
-        img_url: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
-        address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
-      },
-      {
-        symbol: "ETH",
-        img_url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png", 
-        address: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
-      }
-    ];
-  
+    const [tokenListed, settokenListed] = useState([]);
+    const tokensList=[
+    {
+      id: 1,
+      symbol: "USDT",
+      network: "ETH",
+      imgUrl: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
+      address: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      status: true
+    },
+    {
+      id: 2,
+      symbol: "USDC",
+      network: "ETH",
+      imgUrl: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png",
+      address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      status: true
+    },
+    {
+      id: 3,
+      symbol: "UNI",
+      network: "ETH",
+      imgUrl: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
+      address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+      status: true
+    },
+    {
+      id: 4,
+      symbol: "USDT",
+      network: "BNB",
+      imgUrl: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
+      address: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
+      status: true
+    },];
     // Fetch token details
-    const fetchTokenInfo = async (address, img_url = '', symbol = '') => {
+    const fetchTokenInfo = async (address) => {
+      
       try {
-        const tokenContract = new ethers.Contract(address, ERC20_ABI, provider);
-        const [name, fetchedSymbol, decimals, balance] = await Promise.all([
-          tokenContract.name(),
-          tokenContract.symbol(),
-          tokenContract.decimals(),
-          tokenContract.balanceOf(WALLET_ADDRESS)
-        ]);
-        const formattedBalance = ethers.utils.formatUnits(balance, decimals);
-        return { 
-          name, 
-          symbol: fetchedSymbol || symbol, 
-          balance: formattedBalance, 
-          address, 
-          img_url: img_url
-        };
+        if(address&&WALLET_ADDRESS){
+          const {res,err} = await proxyRequest("/v1/eth/token/info", PPOST, {addresses:address,walletAddress:WALLET_ADDRESS});
+          return res?.[0];
+        }
       } catch (error) {
         console.error(`Error fetching token info for ${address}:`, error);
+        throw new Error('Invalid token address or failed to fetch data');
+      }
+    };
+
+    // Fetch BNB token details
+    const fetchBNBTokenInfo = async (address) => {
+      try {
+        if(address&&WALLET_ADDRESS){
+          const {res,err} = await proxyRequest("/v1/bsc/token/info", PPOST, {addresses:address,walletAddress:WALLET_ADDRESS});
+          return res?.[0];
+        }
+      } catch (error) {
+        console.log(`Error fetching token info for ${address}:`, error);
         throw new Error('Invalid token address or failed to fetch data');
       }
     };
@@ -134,23 +136,56 @@ import { useFocusEffect } from '@react-navigation/native';
         setIsLoading(false);
       }
     };
+       // Fetch default BNB tokens and stored tokens
+       const fetchDefaultAndStoredBNBTokens = async () => {
+        setIsLoading(true);
+        try {
+          // Fetch default tokens
+          const defaultTokenPromises = DEFAULT_BNB_TOKENS.map(({ address, img_url, symbol }) =>
+            fetchBNBTokenInfo(address, img_url, symbol)
+          );
+          const defaultTokenData = await Promise.all(defaultTokenPromises);
+    
+          // Fetch stored tokens from AsyncStorage
+          const storedAddresses = await AsyncStorage.getItem(STORAGE_BNB_KEY);
+          const storedTokenAddresses = storedAddresses ? JSON.parse(storedAddresses) : [];
+    
+          const storedTokenPromises = storedTokenAddresses.map((address) =>
+            fetchBNBTokenInfo(address)
+          );
+          const storedTokenData = await Promise.all(storedTokenPromises);
+    
+          // Combine and sort tokens
+          const combinedTokens = [...defaultTokenData, ...storedTokenData];
+          const sortedTokens = combinedTokens.sort((a, b) => a.name.localeCompare(b.name));
+    
+          setTokenInfoList(sortedTokens);
+        } catch (error) {
+          console.error('Error fetching tokens:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
   
     // Add new token
     const handleAddToken = async () => {
       if (!newTokenAddress) {
         setNewTokenAddress('');
+        setLoadingForImport(null);
         Alert.alert('Error', 'Please enter a token contract address.');
         return;
       }
   
       if (!ethers.utils.isAddress(newTokenAddress)) {
         setNewTokenAddress('');
+        setLoadingForImport(null);
         Alert.alert('Error', 'Invalid Ethereum address.');
         return;
       }
   
       if (tokenInfoList.some((token) => token.address === newTokenAddress)) {
         setNewTokenAddress('');
+        setLoadingForImport(null);
         Alert.alert('Error', 'Token already added.');
         return;
       }
@@ -169,89 +204,177 @@ import { useFocusEffect } from '@react-navigation/native';
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedAddresses));
   
         setNewTokenAddress('');
+        setLoadingForImport(null);
+        await checkAddedList();
         Alert.alert("Info","Token Adding completed.")
         setIsLoading(false);
       } catch (error) {
         Alert.alert('Error', 'Please check the token address.');
+        console.log("-----",error)
+        setLoadingForImport(null);
         setNewTokenAddress('');
         setIsLoading(false);
       } finally {
+        setLoadingForImport(null);
         setIsLoading(false);
       }
     };
+
+    // Add BNB Token
+    const handleAddBNBToken = async () => {
+      if (!newTokenAddress||newTokenAddress.length !== 42) {
+        setNewTokenAddress('');
+        setLoadingForImport(null);
+        Alert.alert('Error', 'Please enter a valid token contract address.');
+        return;
+      }
+  
+      if (!ethers.utils.isAddress(newTokenAddress)) {
+        setNewTokenAddress('');
+        setLoadingForImport(null);
+        Alert.alert('Error', 'Invalid Binance address.');
+        return;
+      }
+  
+      if (tokenInfoList.some((token) => token.address === newTokenAddress)) {
+        setNewTokenAddress('');
+        setLoadingForImport(null);
+        Alert.alert('Error', 'Token already added.');
+        return;
+      }
+      
+      setIsLoading(true);
+      try {
+        // Fetch token info and update UI
+        const newToken = await fetchBNBTokenInfo(newTokenAddress);
+        const updatedTokens = [...tokenInfoList, newToken].sort((a, b) => a.name.localeCompare(b.name));
+        setTokenInfoList(updatedTokens);
+  
+        // Update AsyncStorage
+        const storedAddresses = await AsyncStorage.getItem(STORAGE_BNB_KEY);
+        const tokenAddresses = storedAddresses ? JSON.parse(storedAddresses) : [];
+        const updatedAddresses = Array.from(new Set([...tokenAddresses, newTokenAddress])); // Avoid duplicates
+        await AsyncStorage.setItem(STORAGE_BNB_KEY, JSON.stringify(updatedAddresses));
+  
+        setNewTokenAddress('');
+        await checkAddedList();
+        Alert.alert("Info","Token Adding completed.")
+        setLoadingForImport(null);
+        setIsLoading(false);
+      } catch (error) {
+        Alert.alert('Error', 'Please check the token address.');
+        setLoadingForImport(null);
+        setNewTokenAddress('');
+        setIsLoading(false);
+      } finally {
+        setLoadingForImport(null);
+        setIsLoading(false);
+      }
+    };
+
+
   
     // Refresh token list
     const handleRefresh = async () => {
       setRefreshing(true);
-      await fetchDefaultAndStoredTokens();
+      if(selectedToken.name==="Ethereum")
+      {
+        await fetchDefaultAndStoredTokens();
+      }
+      else{
+        await fetchDefaultAndStoredBNBTokens();
+      }
       setRefreshing(false);
     };
   
     // Fetch token data on component mount
     useEffect(() => {
-      fetchDefaultAndStoredTokens();
-    }, [WALLET_ADDRESS]);
+      if(selectedToken.name==="Ethereum")
+        {
+          fetchDefaultAndStoredTokens();
+        }
+        else{
+          fetchDefaultAndStoredBNBTokens();
+        }
+    }, [WALLET_ADDRESS,selectedToken]);
     useFocusEffect(
       useCallback(() => {
-        setShowTokenList(false);
+        setcheckTokenStatus(true);
+        checkAddedList();
+        setLoadingForImport(null);
+         setShowTokenList(true);
         setNewTokenAddress("");
-        return () => setShowTokenList(false);
+        return () => setShowTokenList(true);
       }, [])
     );
   
+    const handleERCImport=async(address,network)=>{
+      if(network==="ETH")
+      {
+       await handleAddToken(address)
+      }else{
+       await handleAddBNBToken(address)
+      }
+    }
+
+    const checkAddedList = async () => {
+      try {
+        // Storage keys
+        const storedEthToken = await AsyncStorage.getItem(STORAGE_KEY);
+        const storedBnbToken = await AsyncStorage.getItem(STORAGE_BNB_KEY);
+        const ethTokens = storedEthToken ? JSON.parse(storedEthToken) : [];
+        const bnbTokens = storedBnbToken ? JSON.parse(storedBnbToken) : [];
+        const margeTokens = [...ethTokens, ...bnbTokens];
+
+        const updatedTokenListed = tokensList.map(item => {
+          const findedValue = margeTokens.includes(item.address);
+          return {
+            ...item,
+            status: findedValue ? true : item.status
+          };
+        })
+        settokenListed(updatedTokenListed);
+        setcheckTokenStatus(false);
+      } catch (e) {
+        Alert.alert("info","Unable to get tokens Info...");
+        console.log("Error reading Wallets tokens from storage:", e);
+      }
+    }
+
     return (
       <View style={[styles.container,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
         {showTokenList ? (
           <>
-            {/* Token List View */}
-            {isLoading ? (
-              <Wallet_market_loading/>
-            ) : (
-              <View style={{height:"32%"}}>
-              <FlatList
-                data={tokenInfoList}
-                keyExtractor={(item) => item.address}
-                renderItem={({ item }) => (
-                  <View style={[styles.tokenCard,{color:state.THEME.THEME===false?"#fff":"black"}]}>
-                    {item.img_url ?
-                      <Image
-                        source={{ uri: item.img_url }}
-                        style={styles.tokenImage}
-                      /> :
-                      <LinearGradient
-                      colors={['#3b82f6', '#8b5cf6']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={[styles.tokenImage, { borderRadius: 30, justifyContent: "center", alignItems: "center" }]}
-                    >
-                        <Text style={[styles.tokenName,{color:"#fff",fontSize:28}]}>{item?.name?.charAt(0)}</Text>
-                      </LinearGradient>}
-                    <View>
-                      <Text style={[styles.tokenName,{color:state.THEME.THEME===false?"black":"#fff"}]}>{item?.name} ({item?.symbol})</Text>
-                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>Balance: {item?.balance}</Text>
-                    </View>
+            <FlatList
+              data={checkTokenStatus?[]:tokenListed}
+              keyExtractor={(item) => item.id}
+              style={styles.list}
+              refreshing={checkTokenStatus}
+              onRefresh={()=>{
+                checkAddedList();
+              }}
+              ListEmptyComponent={<Text style={[styles.gettingInfo,{color: state.THEME.THEME ? "#fff" : "black"}]}>Wait Collecting token details...</Text>}
+              renderItem={({ item }) => (
+                <TouchableOpacity disabled={item.status || loadingForImport !== null} style={[styles.itemContainer, { backgroundColor: state.THEME.THEME ? "#23262F99" : "#ebe8e8" }]} onPress={() => { setLoadingForImport(item.id), handleERCImport(item.address, item.network) }}>
+                  <Image source={{ uri: item.imgUrl }} style={styles.image} />
+                  <View style={styles.textContainer}>
+                    <Text style={[styles.name, { color: state.THEME.THEME ? "#fff" : "black" }]}>{item.symbol}</Text>
+                    <Text style={styles.subname}>{item.network}</Text>
                   </View>
-                )}
-                refreshControl={
-                  <RefreshControl tintColor={"#4CA6EA"} refreshing={refreshing} onRefresh={handleRefresh} />
-                }
-              />
-              </View>
-            )}
-            <TouchableOpacity style={[styles.backButton]} onPress={() => { setShowTokenList(false) }}>
-              <Text style={[styles.text, {color: state.THEME.THEME === false ? "black" : "#fff" }]}>Back</Text>
-            </TouchableOpacity>
+                  {loadingForImport === item.id && <ActivityIndicator color={"green"} size={"small"} />}
+                  {item.status && <Icon name={"check-decagram"} type={"materialCommunity"} size={26} color={"green"} style={{ paddingHorizontal: "3%" }} />}
+                </TouchableOpacity>
+              )}
+            />
           </>
         ) : (
           <>
-            {/* Add Token Form View */}
-            <View style={[styles.addTokenContainer]}>
-          <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
-            <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.tokenImage} />
-            <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", marginLeft: 5,fontSize:17 }}>Ethereum</Text>
-          </View>
-          {/* <Icon type={"materialCommunity"} name="menu-down" size={hp(2.9)} color={"pink"} style={{ margin: hp(2), }} /> */}
-        </View>
+            <Text style={[styles.watchlistCon.watchlistConHeading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Your Tracked Tokens</Text>
+              <Dropdown
+                theme={state.THEME.THEME}
+                selectedToken={selectedToken}
+                onSelectToken={setSelectedToken}
+              />
             <View style={styles.addTokenContainer}>
               <TextInput
                 style={[styles.input,{backgroundColor:state.THEME.THEME===false?"#fff":"black",color:state.THEME.THEME===false?"black":"#fff"}]}
@@ -266,15 +389,31 @@ import { useFocusEffect } from '@react-navigation/native';
         </TouchableOpacity>
             </View>
               <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
-                <TouchableOpacity disabled={!newTokenAddress} style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: !newTokenAddress ? "gray" : "green" }]} onPress={() => { handleAddToken() }}>
+                <TouchableOpacity disabled={!newTokenAddress} style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: !newTokenAddress ? "gray" : "green" }]} onPress={() => { selectedToken.name==="Ethereum"?handleAddToken(newTokenAddress):handleAddBNBToken(newTokenAddress) }}>
                  {isLoading?<ActivityIndicator color='#fff'/>:<Text style={[styles.text, { color: state.THEME.THEME === false ? "#fff" : "#fff" }]}>Add Asset</Text>}
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: "green" }]} onPress={() => { setShowTokenList(true) }}>
+                {/* <TouchableOpacity style={[styles.Add_asset_btn, { justifyContent: "center", backgroundColor: "green" }]} onPress={() => { setShowTokenList(true) }}>
                   <Text style={[styles.text, { color: state.THEME.THEME === false ? "#fff" : "#fff" }]}>View</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
           </>
         )}
+        <FAB
+        icon={showTokenList ? 'plus' : 'arrow-right'}
+        style={[styles.fab, { backgroundColor: state.THEME.THEME ? "#23262F99" : "#F4F4F4" }]}
+        onPress={()=>{setShowTokenList(showTokenList?false:true)}}
+        color='#2164C1'
+      />
+        <View style={{ width: wp(100), height: hp(1) }}>
+          <TokenQrCode
+            modalVisible={QrVisible}
+            setModalVisible={setQrVisible}
+            iconType={QrName}
+            qrvalue={QrValue}
+            isDark={state.THEME.THEME}
+          />
+        </View>
+
       </View>
     );
   };
@@ -345,9 +484,9 @@ import { useFocusEffect } from '@react-navigation/native';
       marginTop: 20,
     },
     Add_asset_btn:{
-      width:wp(40),
-      height:hp(6),
-      marginTop:hp(3),
+      width:wp(95),
+      height:hp(8),
+      marginTop:hp(1),
       borderColor: "#4CA6EA",
       borderWidth:1,
       borderRadius:10,
@@ -360,6 +499,60 @@ import { useFocusEffect } from '@react-navigation/native';
       fontWeight:"600",
       textAlign: "center",
       margin: hp(0),
+    },
+    watchlistCon: {
+      backgroundColor: "rgba(244, 244, 244, 1)",
+      width: "100%",
+      height: "100%",
+      paddingVertical: 10,
+      paddingHorizontal:20,
+      watchlistConHeading: {
+        fontSize: 18,
+        fontWeight: "600",
+        color: "#FFFFFF",
+        paddingBottom:12
+      }
+    },
+    fab: {
+      position: 'absolute',
+      left: 15,
+      borderColor: "#2164C1",
+      borderWidth: 1,
+      bottom:"54%"
+    },
+    list: {
+      marginTop: 1,
+      marginHorizontal: 10,
+    },
+    itemContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+      paddingLeft:14,
+      marginBottom: 8,
+      borderRadius: 8,
+    },
+    image: {
+      width: 50,
+      height: 50,
+      marginRight: 12,
+      borderRadius: 25,
+    },
+    textContainer: {
+      flex: 1,
+    },
+    name: {
+      fontWeight: 'bold',
+      fontSize: 16,
+    },
+    subname: {
+      color: 'gray',
+    },
+    gettingInfo:{
+     fontSize:19,
+     textAlign:"center",
+     fontWeight:"600",
+     marginTop:"53%"
     }
   });
   

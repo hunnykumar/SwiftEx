@@ -53,14 +53,12 @@ const GenerateWallet = (props) => {
       style={{ opacity: fadeAnim }}
     >
       <View style={style.Body}>
+        <Animated.Image style={style.logoStyle} source={darkBlue} />
         <Text style={style.headingText}> Back up your wallet now!</Text>
-
         <Text style={style.nextText}>
           In the next step you will see Secret Phrase that allows you to recover
           a wallet.
         </Text>
-        <Animated.Image style={style.logoStyle} source={darkBlue} />
-
         <TouchableOpacity style={style.textview} onPress={() => setCheckBox(!Checked)}>
           {/* <Switch value={Checked} onValueChange={() => setCheckBox(!Checked)} />
            */}
@@ -92,6 +90,18 @@ const GenerateWallet = (props) => {
             If I share my private key, my funds can get stolen
           </Text>
         </TouchableOpacity>
+        <View style={style.infoCon}>
+            <Icon
+          name={"information"}
+          type={"materialCommunity"}
+          size={25}
+          color={"#F7CC49"}
+          />
+          <Text style={{width:wp(80),fontSize:15,color:"white"}}>
+          Your private key is solely your responsibility SwfitEx cannot be held liable for any loss or sharing of your private key.
+          </Text>
+
+            </View>
         {/* {loading ? (
           <ActivityIndicator size="large" color="white" />
         ) : (
@@ -223,29 +233,38 @@ const style = StyleSheet.create({
   },
   btnview: {
     backgroundColor: "#4CA6EA",
-    width: wp(80),
+    width: wp(90),
     paddingVertical: hp(2),
     alignItems: "center",
-    borderRadius: hp(1),
+    borderRadius: 50,
     alignSelf: "center",
-    marginTop: hp(10),
+    marginTop: hp(0.5),
   },
   headingText: {
     fontWeight: "700",
     fontSize: 18,
     color: "white",
-    marginTop: hp(6),
+    marginTop: hp(1),
   },
   logoStyle: {
-    width: wp("40"),
-    height: hp("25"),
+    width: wp("45"),
+    height: hp("26"),
     padding: 30,
     marginTop: hp(6),
   },
   nextText: {
     marginTop: hp(3),
-    textAlign: "left",
+    textAlign: "center",
     color: "white",
     width: wp(80),
   },
+  infoCon:{
+    marginVertical:hp(4),
+    flexDirection:"row",
+    backgroundColor:"#F9FC691A",
+    padding:5,
+    width:wp(90),
+    justifyContent:"space-around",
+    borderRadius:10
+  }
 });

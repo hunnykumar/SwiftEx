@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import React from "react";
 
 import {
@@ -7,7 +7,7 @@ import {
 } from "react-native-responsive-screen";
 import Icon from "../../icon";
 
-const IconWithCircle = (props) => {
+export const IconWithCircle = (props) => {
   const { name, type, title, onPress } = props;
   return (
     <View>
@@ -26,6 +26,19 @@ const IconWithCircle = (props) => {
     </View>
   );
 };
+export const CustomIconWithCircle = (props) => {
+  const {name, type, title, onPress,bgColor,width,height,iconColor}=props;
+  return (
+      <TouchableOpacity style={[styles.customMainContainer,{backgroundColor:bgColor,width:width,height:height,}]} onPress={onPress}>
+        <Icon
+          name={name}
+          type={type}
+          size={21}
+          color={iconColor}
+        />
+      </TouchableOpacity >
+  );
+};
 const styles = StyleSheet.create({
   mainContainer: {
     backgroundColor: "#145DA0",
@@ -40,6 +53,11 @@ const styles = StyleSheet.create({
     color: "#145DA0",
     textAlign: "center",
   },
+  customMainContainer: {
+    borderRadius: hp(10),
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: hp(0.5),
+  },
 });
 
-export default IconWithCircle;

@@ -29,14 +29,7 @@ import { main, swapUSDCtoWETH } from './SwapExecution';
 import Snackbar from 'react-native-snackbar';
 import { swapETHtoUSDC } from './MutiStepSwap';
 import { SaveTransaction } from '../utilities/utilities';
-
-const FACTORY_ABI = require('./abi/factory.json');
-const QUOTER_ABI = require('./abi/quoter.json');
-const POOL_ABI = require('./abi/pool.json');
-
-const POOL_FACTORY_CONTRACT_ADDRESS = '0x0227628f3F023bb0B980b67D528571c95c6DaC1c'
-const QUOTER_CONTRACT_ADDRESS = '0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3'
-const RPC_URL = 'https://eth-sepolia.g.alchemy.com/v2/k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo'
+import { PPOST, proxyRequest } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
 
 // Token List
 const TOKENS = [
@@ -44,7 +37,7 @@ const TOKENS = [
     symbol: 'WETH',
     name: 'Wrapped Ethereum',
     decimals: 18,
-    address: '0xfff9976782d46cc05630d1f6ebab18b2324d6b14', 
+    address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', 
     balance: '1.5',
     logoUri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
 
@@ -56,6 +49,14 @@ const TOKENS = [
     address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
     balance: '1000',
     logoUri:'https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png'
+  },
+  {
+    symbol: 'WBNB',
+    name: 'BNB Coin',
+    decimals: 6,
+    address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+    balance: '1000',
+    logoUri:'https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png'
   }
 ];
 
@@ -79,58 +80,16 @@ const EthSwap = () => {
   const [SwapExecution,setSwapExecution]=useState(false);
 
 
-  const provider = new ethers.providers.JsonRpcProvider(RPC_URL,{chainId:11155111});
-  const factoryContract = new ethers.Contract(POOL_FACTORY_CONTRACT_ADDRESS, FACTORY_ABI, provider);
-  const quoterContract = new ethers.Contract(QUOTER_CONTRACT_ADDRESS, QUOTER_ABI, provider);
-
   const getSwapQuote = async (tokenIn, tokenOut, amountIn) => {
-    try {
-      const poolAddress = await factoryContract.getPool(
-        tokenIn.address,
-        tokenOut.address,
-        3000
-      );
-
-      if (!poolAddress) {
-        throw new Error("Pool not found for token pair");
-      }
-
-      const poolContract = new ethers.Contract(poolAddress, POOL_ABI, provider);
-      const fee = await poolContract.fee();
-
-      const formattedAmountIn = ethers.utils.parseUnits(
-        amountIn.toString(),
-        tokenIn.decimals
-      );
-
-      const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle({
-        tokenIn: tokenIn.address,
-        tokenOut: tokenOut.address,
-        fee: fee,
-        recipient: ethers.constants.AddressZero,
-        deadline: Math.floor(Date.now() / 1000) + 600,
-        amountIn: formattedAmountIn,
-        sqrtPriceLimitX96: 0
-      });
-
-      const formattedAmountOut = ethers.utils.formatUnits(
-        quotedAmountOut[0],
-        tokenOut.decimals
-      );
-
-      const pricePerToken = (parseFloat(formattedAmountOut) / parseFloat(amountIn)).toFixed(6);
-
-      return {
-        inputAmount: amountIn,
-        inputToken: tokenIn.symbol,
-        outputAmount: formattedAmountOut,
-        outputToken: tokenOut.symbol,
-        pricePerToken: pricePerToken,
-        fee: fee.toString(),
-        poolAddress: poolAddress
-      };
-    } catch (error) {
-      throw new Error(`Failed to get swap quote: ${error.message}`);
+    const { res, err } = await proxyRequest("/v1/eth/swap-quote", PPOST, { tokenIn: tokenIn, tokenOut: tokenOut, amount: amountIn });
+    console.log(res, err)
+    if (err?.status === 500) {
+      setErroVisible(true);
+      setQuoteInfo(null);
+      setLoading(false);
+    }
+    else {
+      return res;
     }
   };
 
@@ -163,7 +122,7 @@ const EthSwap = () => {
     setallblnLoading(true);
     const fetchBalance=async()=>{
      try{
-      const addresses = ["0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14", "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"];
+      const addresses = ["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"];
       const WALLET_ADDRESS = state?.wallet?.address;
 
       const resposeBalance = await fetchTokenInfo(addresses, WALLET_ADDRESS)
@@ -198,7 +157,7 @@ const EthSwap = () => {
       <Image source={{ uri: token.logoUri }} style={[styles.logoImage,{marginRight:5}]} />
       <Text style={[styles.tokenSymbol,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{token.symbol}</Text>
       </View>
-      {allblnLoading?<ActivityIndicator size={"small"} color={"green"}/>:<Text style={styles.tokenBalance}>Balance: {token?.symbol==="WETH"?WETHBAL:USDCBAL}</Text>}
+      {allblnLoading?<ActivityIndicator size={"small"} color={"green"}/>:<Text style={styles.tokenBalance}>Balance: {token?.symbol==="WETH"?WETHBAL!=="NaN"?WETHBAL:"0.00":USDCBAL!=="NaN"?USDCBAL:"0.00"}</Text>}
     </TouchableOpacity>
   );
 
@@ -221,6 +180,10 @@ const EthSwap = () => {
                 onPress={() => {
                   if (selectingFor === 'from') {
                     setFromToken(item);
+                    if(item.symbol==="WBNB")
+                    {
+                      navigation.navigate("BnbSwap");
+                    }
                   } else {
                     setToToken(item);
                   }
@@ -303,21 +266,9 @@ const EthSwap = () => {
     setSwapExecution(true);
     if (SWAPTYPE === "USDC") {
       try {
-        const result = await swapUSDCtoWETH(amount, PRIVATE_KEY);
+        const result = await swapUSDCtoWETH(PRIVATE_KEY, amount, "UsdcToWeth",quoteInfo.fee);
 
         if (result.success) {
-          // Success UI update
-          console.log('Swap successful!');
-          console.log('Amount received:', result.data.outputAmount);
-          console.log('Transaction:', result.data.transactionHash);
-          await SaveTransaction(
-            "Swap",
-            result.data.transactionHash,
-            await state.user,
-            "Eth",
-            'Multi-coin',
-            "Eth"
-          );
           setSwapExecution(false);
           Snackbar.show({
             text: "Swap Success",
@@ -351,23 +302,9 @@ const EthSwap = () => {
     if(SWAPTYPE==="WETH")
     {
       try {
-        const result = await swapETHtoUSDC( amount,PRIVATE_KEY);
+        const result = await swapUSDCtoWETH(PRIVATE_KEY, amount, "EthToUsdc",quoteInfo.fee);
         
         if (result.success) {
-            // Success case
-            console.log('Swap successful!');
-            console.log('Input:', result.data.inputAmount);
-            console.log('Output:', result.data.outputAmount);
-            console.log('Transaction links:', result.data.transactions);
-
-            await SaveTransaction(
-              "Swap",
-              result.data.transactions.swapHash,
-              await state.user,
-              "Eth",
-              'Multi-coin',
-              "Eth"
-            );
             setSwapExecution(false);
             Snackbar.show({
               text: "Swap Success",

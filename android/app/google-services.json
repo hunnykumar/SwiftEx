@@ -28,7 +28,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:121537912071:android:93a902ddfa283639e3b9a2",
         "android_client_info": {
-          "package_name": "com.test_app"
+          "package_name": "com.app.swiftEx.app"
         }
       },
       "oauth_client": [],

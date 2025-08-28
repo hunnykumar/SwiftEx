@@ -3111,7 +3111,7 @@
     },
     {
       "name": "Tether USD",
-      "address": "0xC2C527C0CACF457746Bd31B2a698Fe89de2b6d49",
+      "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
       "symbol": "USDT",
       "decimals": 6,
       "chainId": 1,
@@ -3335,7 +3335,7 @@
       "symbol": "UNI",
       "decimals": 18,
       "chainId": 5,
-      "logoURI": "ipfs://QmXttGpZrECX5qCyXbBQiqgQNytVGeZW5Anewvh2jc4psg"
+      "logoURI": "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png"
     },
     {
       "name": "Wrapped Ether",

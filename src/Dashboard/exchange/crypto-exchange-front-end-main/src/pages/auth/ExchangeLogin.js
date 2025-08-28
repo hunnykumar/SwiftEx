@@ -33,6 +33,8 @@ import { REACT_APP_HOST } from "../../ExchangeConstants";
 import { useToast } from "native-base";
 import { Exchange_Login_screen } from "../../../../../reusables/ExchangeHeader";
 import Snackbar from "react-native-snackbar";
+import authApi from "../../authApi";
+import apiHelper from "../../apiHelper";
 
 export const ExchangeLogin = (props) => {
   const toast=useToast();
@@ -103,12 +105,19 @@ const FOCUSED=useIsFocused();
 
  const save_token_inlocal=async(token_new)=>{
   try {
-    await saveToken(token_new);
+    await AsyncStorageLib.setItem("UserAuthID", token_new) 
     setLoading(false);
     setEmail("");
     setlogin_Passcode("");
-    navigation.navigate("exchange");
-    Showsuccesstoast(toast,"Success");
+    if(props?.route?.params?.diractPath==="rampScreen")
+    {
+      navigation.navigate("KycComponent");
+      Showsuccesstoast(toast,"Success");
+    }
+    else{
+      navigation.navigate("exchange");
+      Showsuccesstoast(toast,"Success");
+    }
   } catch (error) {
     console.log("----===",error)
   }
@@ -125,84 +134,21 @@ const FOCUSED=useIsFocused();
       setLoading(false)
      }
      else{
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-  
-      const raw = JSON.stringify({
-        "email": Email.toLowerCase(),
-        "otp": login_Passcode
+      const result = await apiHelper.post(REACT_APP_HOST + "/v1/auth/login", {
+        "username": Email.toLowerCase(),
+        "password": login_Passcode
       });
-  
-      const requestOptions = {
-        method: "POST",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow"
-      };
-  
-      fetch(REACT_APP_HOST+"/auth/login", requestOptions)
-        .then((response) => response.json())
-        .then((result) => {
-          console.log("----",result)
-          if (Array.isArray(result?.message)) {
-            Snackbar.show({
-              text: result?.message[0]==="email must be an email"?"Email must be an email":result?.message[0],
-              duration: Snackbar.LENGTH_SHORT,
-              backgroundColor: 'red',
-            });
-            setEmail("");
-            setlogin_Passcode("");
-            setLoading(false);
-          }
-          if(result.message==="Invalid credintials"&&result.statusCode===400)
-          {
-            setTimeout(()=>{
-              ShowErrotoast(toast,"Invalid credentials");
-            },400)
-            setlogin_Passcode("");
-            setLoading(false);
-          }
-          if(result.message==="Invalid credentials"&&result.statusCode===401)
-          {
-            setTimeout(()=>{
-              ShowErrotoast(toast,"Invalid credentials");
-            },400)
-            setlogin_Passcode("");
-            setLoading(false);
-          }
-          if(result.message==="Please verify your email"&&result.statusCode===400)
-          {
-            setTimeout(()=>{
-              Alert.alert(
-                'Account info',
-                'Account Disabled, Please Verify.',
-                [
-                  {
-                    text: 'Cancel',
-                    style: 'cancel',
-                  },
-                  {
-                    text: 'OK',
-                    onPress: () => {
-                      setactive_forgot(true);
-                    },
-                  },
-                ],
-                { cancelable: false }
-              );
-              ShowErrotoast(toast,"Please verify your email");
-            },400)
-            setlogin_Passcode("");
-            setLoading(false);
-          }
+      console.log("result",result)
+      if (result.success&&result.data.token) {
+        setLoading(false);
+       await save_token_inlocal(result.data.token)
+      }
+      else{
+        alert("error",result?.data?.message||"somthing went wrong..");
+        setLoading(false);
+      }
+    }
 
-          else{
-             save_token_inlocal(result.token)
-          }
-
-      })
-        .catch((error) => {console.log(error)})
-     }
   }
 
   const submitOtp = async () => {
@@ -292,7 +238,7 @@ const FOCUSED=useIsFocused();
             })
             .catch((error) => {
               setLoading(false);
-              console.error(error)
+              console.log(error)
             });
         }
         else {
@@ -416,7 +362,7 @@ const FOCUSED=useIsFocused();
               setLoading(false);
             }
           })
-          .catch((error) => {console.error(error)
+          .catch((error) => {console.log(error)
             setLoading(false);
             setLoading_fog(false);
             setVERFIY_OTP(false);
@@ -544,7 +490,8 @@ const FOCUSED=useIsFocused();
      {/* {lodaing_ver==true?alert("success","Email Verifying...."):<></>} */}
     <Exchange_Login_screen title="" onLeftIconPress={() => navigation.navigate("Home")} />
       <SafeAreaView style={styles.container}>
-        <TouchableWithoutFeedback onPress={()=>{Keyboard.dismiss()}}
+        <TouchableWithoutFeedback id="keybordDismissBtn"
+testID="keybordDismissBtn" onPress={()=>{Keyboard.dismiss()}}
           // style={styles.container}
           // onStartShouldSetResponder={() => Keyboard.dismiss()}
         >
@@ -572,12 +519,12 @@ const FOCUSED=useIsFocused();
                     paddingVertical:5,
                     fontWeight:"500"
                   }}>Email</Text>
-                <TextInput autoCapitalize="none" textContentType="emailAddress" placeholder={"Email Adderss"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,color:"black" }} value={Email} onChangeText={(text) => { onChangelmail(text) }} />
+                <TextInput id="emailLoginInput" testID="emailLoginInput" accessibilityLabel="textInputId" autoCapitalize="none" textContentType="emailAddress" placeholder={"Email Adderss"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,color:"black" }} value={Email} onChangeText={(text) => { onChangelmail(text) }} />
                 {active_forgot===false?
                 <>
                  <Text style={{fontWeight:"500",color: "#FFFFFF",fontSize: 16,textAlign: 'left',paddingVertical:5,marginTop:10}}>Password</Text>
                 <TextInput autoCapitalize="none" placeholder={"Password"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,marginTop:5,color:"black" }} value={login_Passcode} onChangeText={(text) => { setlogin_Passcode(text) }} secureTextEntry={true} /></>:<></>}                
-                <TouchableOpacity style={{alignSelf:"flex-end",marginTop:15}} onPress={()=>{active_forgot===false?forgot_pass():[setactive_forgot(false),setEmail("")]}}>
+                <TouchableOpacity id="forgotAndLoginBtn" testID="forgotAndLoginBtn" style={{alignSelf:"flex-end",marginTop:15}} onPress={()=>{active_forgot===false?forgot_pass():[setactive_forgot(false),setEmail("")]}}>
                 {active_forgot===false?<Text style={{color:"red",fontWeight:"300",fontSize:15,fontWeight:"400"}}>Forgot Password</Text>:<Text style={{color:"red",fontWeight:"300",fontSize:15,fontWeight:"400"}}>Login</Text>}
                 </TouchableOpacity>
                 {loading ? (
@@ -588,6 +535,8 @@ const FOCUSED=useIsFocused();
                 <Text> </Text>
               )}
                 <TouchableOpacity style={styles.PresssableBtn}
+                id="LoginAndVerifyBtn"
+                testID="LoginAndVerifyBtn"
                 disabled={VERFIY_OTP}
                   onPress={() => {
                     if (active_forgot === false) {
@@ -650,6 +599,8 @@ const FOCUSED=useIsFocused();
     justifyContent: "center",
   }}>
                 <TouchableOpacity
+                id="RegisterBtn"
+                testID="RegisterBtn"
                   onPress={() => {
                     navigation.navigate("exchangeRegister");
                   }}
@@ -678,6 +629,8 @@ const FOCUSED=useIsFocused();
               <View style={{ marginVertical: 3 }}>
                 {passcode_view === false ? <><Text style={{ marginVertical: 15, color: "white" }}>Verification OTP</Text>
                   <TextInput
+                  id="oneTimeCodeInput"
+                  testID="oneTimeCodeInput"
                     placeholderTextColor="gray"
                     style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
                     theme={{ colors: { text: "white" } }}
@@ -694,6 +647,8 @@ const FOCUSED=useIsFocused();
                   /></> : <>{/* Set pass code  */}
                   <Text style={{ marginVertical: 15, color: "white" }}>Password</Text>
                   <TextInput
+                  id="fistPasswordInput"
+                  testID="fistPasswordInput"
                   secureTextEntry={true}
                     placeholderTextColor="gray"
                     style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
@@ -709,6 +664,8 @@ const FOCUSED=useIsFocused();
                   {/* Set con-pass code  */}
                   <Text style={{ marginVertical: 15, color: "white" }}>Confirm Password</Text>
                   <TextInput
+                    id="secondPasswordInput"
+                    testID="secondPasswordInput"
                     secureTextEntry={true}
                     placeholderTextColor="gray"
                     style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
@@ -738,6 +695,8 @@ const FOCUSED=useIsFocused();
               )}
 
 <TouchableOpacity
+id="submitOtpOrsubmitpasscodeBtn"
+testID="submitOtpOrsubmitpasscodeBtn"
   disabled={passcode_view===false?false:passcode.length<8||con_passcode.length<8?true:false}
   onPress={() => {
     setLoading("true");
@@ -757,10 +716,12 @@ const FOCUSED=useIsFocused();
                 </TouchableOpacity>
               {/* <TouchableOpacity onPress={() => { navigation.navigate("exchangeLogin") }}> */}
             {passcode_view === false? <View style={{flexDirection:"row", width:"90%",justifyContent:"center"}}>
-             <TouchableOpacity onPress={() => { navigation.goBack() }}>
+             <TouchableOpacity id="EditEmailIdBtn"
+testID="EditEmailIdBtn" onPress={() => { navigation.goBack() }}>
                 <Text style={{ marginTop: 14, color: "white" }}>Edit Email Id</Text>
               </TouchableOpacity>
-              <TouchableOpacity disabled={resend_view} onPress={() => {resend_otp()}}>
+              <TouchableOpacity id="resendOtpBtn"
+testID="resendOtpBtn" disabled={resend_view} onPress={() => {resend_otp()}}>
                 <Text style={{ marginLeft:19,marginTop: 14, color: resend_view?"gray":"white" }}>{resend_view?`Resend after: ${count}`:"Resend OTP"}</Text>
               </TouchableOpacity>
              </View>:<></>}

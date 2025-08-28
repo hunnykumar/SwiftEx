@@ -1,7 +1,7 @@
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 import axios from 'axios';
 import { STELLAR_URL } from '../Dashboard/constants';
-const server = new StellarSdk.Server(STELLAR_URL.URL);
+const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
 // Function to calculate total reserved and available balance
 export async function GetStellarAvilabelBalance(publicKey) {
@@ -84,84 +84,62 @@ export async function GetStellarAvilabelBalance(publicKey) {
 
 
 
-export async function GetStellarUSDCAvilabelBalance(publicKey) {
+export async function GetStellarUSDCAvilabelBalance(publicKey,coinName,coinIssuer) {
   try {
     // Fetch account data
     const account = await server.loadAccount(publicKey);
 
     // Fetch active offers
-    let assetOffersMap = new Map(); // Track offers for each asset
+    let assetOffersMap = new Map();
 
     try {
-      const apiUrl = `${STELLAR_URL.URL}/accounts/${publicKey}/offers?limit=200&order=desc`;
-      const response = await axios.get(apiUrl);
-      const fetchedOffers = response.data._embedded?.records || [];
-      
-      // Process each offer
-      fetchedOffers.forEach(offer => {
-        if (offer.selling.asset_type !== "native") {
-          // Track offers for non-native assets
-          const assetKey = `${offer.selling.asset_code}:${offer.selling.asset_issuer}`;
-          const offerAmount = parseFloat(offer.amount);
-          const currentAmount = assetOffersMap.get(assetKey) || 0;
-          assetOffersMap.set(assetKey, currentAmount + offerAmount);
-        }
-      });
+        const apiUrl = `${STELLAR_URL.URL}/accounts/${publicKey}/offers?limit=200&order=desc`;
+        const response = await axios.get(apiUrl);
+        const fetchedOffers = response.data._embedded?.records || [];
+        
+        fetchedOffers.forEach(offer => {
+            if (offer.selling.asset_type !== "native") {
+                const assetKey = `${offer.selling.asset_code}:${offer.selling.asset_issuer}`;
+                const offerAmount = parseFloat(offer.amount);
+                const currentAmount = assetOffersMap.get(assetKey) || 0;
+                assetOffersMap.set(assetKey, currentAmount + offerAmount);
+            }
+        });
 
-      console.log("Offers Map:", Object.fromEntries(assetOffersMap)); // Debug log
-      
     } catch (offerError) {
-      console.log('No active offers or Error: ', offerError.message);
+        console.log('No active offers or Error: ', offerError.message);
     }
 
-    const transactionBuffer = 0.022;
-    
     const formatValue = (value) => {
-      return value < 0 ? "0.00000" : value.toFixed(5);
+        return value < 0 ? "0.00000" : value.toFixed(5);
     };
 
-    // Process only non-XLM balances
-    let assetBalances = {};
-    
+    let selectedAsset = null;
+
     account.balances.forEach((balance) => {
-      if (balance.asset_type !== "native") {
-        const assetKey = `${balance.asset_code}:${balance.asset_issuer}`;
-        const totalBalance = parseFloat(balance.balance);
-        const inOffers = assetOffersMap.get(assetKey) || 0;
-        
-        if (balance.asset_code === "USDC") {
-          // For USDC, subtract offers and transaction buffer
-          assetBalances.USDC = {
-            total: formatValue(totalBalance),
-            totalReserved: formatValue(inOffers),
-            availableBalance: formatValue(totalBalance - inOffers - transactionBuffer),
-            asset_type: balance.asset_type,
-            asset_code: balance.asset_code,
-            asset_issuer: balance.asset_issuer
-          };
-        } else {
-          // For other non-XLM assets, only subtract offers
-          assetBalances[balance.asset_code] = {
-            total: formatValue(totalBalance),
-            totalReserved: formatValue(inOffers),
-            availableBalance: formatValue(totalBalance - inOffers),
-            asset_type: balance.asset_type,
-            asset_code: balance.asset_code,
-            asset_issuer: balance.asset_issuer
-          };
-        }
-      }
-    });
-    console.log("==assetBalances===",assetBalances)
-    return {
-      totalReserved: assetBalances?.USDC?.totalReserved,
-      availableBalance: assetBalances?.USDC?.availableBalance,
-    };
+        if (balance.asset_type !== "native" && balance.asset_code === coinName &&balance.asset_issuer===coinIssuer) {
+            const assetKey = `${balance.asset_code}:${balance.asset_issuer}`;
+            const totalBalance = parseFloat(balance.balance);
+            const inOffers = assetOffersMap.get(assetKey) || 0;
 
-  } catch (error) {
+            selectedAsset = {
+                totalReserved: formatValue(inOffers),
+                availableBalance: formatValue(totalBalance - inOffers),
+                asset_type: balance.asset_type,
+                asset_code: balance.asset_code,
+                asset_issuer: balance.asset_issuer
+            };
+        }
+    });
+
+    if (!selectedAsset) {
+        return { error: `Token ${coinName} not found in account`,status:false };
+    }
+
+    return selectedAsset;
+
+} catch (error) {
     console.error("Error fetching account details:", error.message);
-    return {
-      error: error.message
-    };
-  }
+    return { error: error.message };
+}
 }

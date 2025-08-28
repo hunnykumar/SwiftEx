@@ -58,6 +58,7 @@ const SendTokens = (props) => {
   const [address, setAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [Loading, setLoading] = useState(false);
+  const [LoadingBal, setLoadingBal] = useState(false);
   const [balance, setBalance] = useState();
   const [walletType, setWallettype] = useState("");
   const [disable, setDisable] = useState(true);
@@ -160,15 +161,20 @@ const SendTokens = (props) => {
       } else {
         if (Type) {
           if (Type == "Ethereum") {
-            setBalance(EthBalance._z?EthBalance._z:EthBalance);
-            // await dispatch(
-            //   getEthBalance(
-            //     state.wallet.address ? state.wallet.address : address
-            //   )
-            // ).then((res) => {
-            //   console.log(res.EthBalance);
-            //   setBalance(res.EthBalance);
-            // });
+            setLoadingBal(true)
+            // setBalance(EthBalance._z?EthBalance._z:EthBalance);
+            await dispatch(
+              getEthBalance(
+                state.wallet.address ? state.wallet.address : address
+              )
+            ).then((res) => {
+              console.log(res.EthBalance);
+              setBalance(res.EthBalance);
+              setLoadingBal(false)
+            }).catch((error) => {
+              console.log(error);
+              setLoadingBal(false)
+            });
           } else if (Type == "Matic") {
             console.log(MaticBalance);
             await dispatch(
@@ -222,6 +228,7 @@ const SendTokens = (props) => {
               console.log(e);
             }
           } else if (Type == "BNB") {
+            setLoadingBal(true)
             await dispatch(getBalance(state.wallet.address))
               .then(async (response) => {
                 console.log(response);
@@ -230,10 +237,12 @@ const SendTokens = (props) => {
                   console.log(res);
                   setBalance(res.walletBalance);
                   console.log("success");
+                  setLoadingBal(false)
                 }
               })
               .catch((error) => {
                 console.log(error);
+                setLoadingBal(false)
               });
           }
         }
@@ -244,6 +253,7 @@ const SendTokens = (props) => {
   };
 
   useEffect(() => {
+    setLoadingBal(false);
     const new_data=async()=>{
       try {
           setErroVisible(false)
@@ -424,7 +434,7 @@ const checkPermission = async () => {
         </Text>
               </ScrollView>
         </View>
-        {show===true?<ActivityIndicator color={"green"} style={{top:hp(1)}}/>:<></>}
+        {LoadingBal===true?<ActivityIndicator color={"green"} style={{top:hp(1)}}/>:<></>}
         </View>
         <View style={style.inputView}>
           <TextInput
@@ -467,8 +477,8 @@ const checkPermission = async () => {
 
         {/* <View style={style.btnView}> */}
           <TouchableOpacity
-            disabled={disable}
-            style={[style.btnView,{backgroundColor:disable?"gray":"#3574B6"}]}
+            disabled={disable||LoadingBal}
+            style={[style.btnView,{backgroundColor:disable||LoadingBal?"gray":"#3574B6"}]}
             onPress={async () => {
               console.log(walletType);
               let privateKey;

@@ -28,6 +28,8 @@ import { CommonActions } from "@react-navigation/native";
 import Icon from "../icon";
 import { EthereumSecret } from "./constants";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { PPOST, proxyRequest } from "./exchange/crypto-exchange-front-end-main/src/api";
+import { error } from "console";
 const { Alchemy, Network, Wallet, Utils } = require("alchemy-sdk");
 
 var ethers = require("ethers");
@@ -66,39 +68,18 @@ const ConfirmTransaction = (props) => {
     setLoading(true);
     setDisable(true);
     if (type === "Eth") {
-      
-      console.log("________________________________________________")
-      console.log("----",rawTransaction)
-      console.log("________________________________________________")
-      const settings = {
-        apiKey: EthereumSecret.apiKey,
-        network: Network.ETH_SEPOLIA,
-      }
-      const alchemy = new Alchemy(settings);
-      let txx = await alchemy.core.sendTransaction(rawTransaction)
-        .catch((e) => {
-          console.log(e);
+       const { res, err } = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:rawTransaction});
+         if(err)
+         {
+          alert("error","Something went wrong...")
+          console.log(err);
           setLoading(false);
-        });
-      const tx = txx.wait();
-      console.log("Sent transaction", await tx);
+          setDisable(false);
+         }
 
-      if (txx.hash) {
+      if (res.txHash) {
         try {
-          const type = "Send";
-          const chainType = "Eth";
-          const saveTransaction = await SaveTransaction(
-            type,
-            txx.hash,
-            emailid,
-            token,
-            walletType,
-            chainType
-          );
-
-          console.log(saveTransaction);
           ShowToast(toast, "Transaction Successful");
-
           setLoading(false);
           setDisable(false);
           Navigate();
@@ -144,26 +125,18 @@ const ConfirmTransaction = (props) => {
         }
       }
     } else if (type === "BSC") {
-      const txx = await provider.sendTransaction(rawTransaction).catch((e) => {
-        return alert("error", e);
-      }); //SendTransaction(signer, token)
-      if (txx.hash) {
+      const { res, err } = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {signedTx:rawTransaction});
+      if(err)
+      {
+        setDisable(false);
+        setLoading(false);
+        console.log(err);
+        alert("error","Something went wrong...")
+      }
+
+   if (res.txHash) {
         try {
-          const type = "Send";
-          const chainType = "BSC";
-
-          const saveTransaction = await SaveTransaction(
-            type,
-            txx.hash,
-            emailid,
-            token,
-            walletType,
-            chainType
-          );
-
-          console.log(saveTransaction);
           ShowToast(toast, "Transaction Successful");
-
           setLoading(false);
           setDisable(false);
           Navigate();
@@ -301,6 +274,7 @@ const ConfirmTransaction = (props) => {
               return;
             } catch (e) {
               console.log(e);
+              setDisable(false);
             }
           }
 
@@ -309,7 +283,7 @@ const ConfirmTransaction = (props) => {
           console.log(type);
           setPinViewVisible(true);
           setLoading(true);
-          setDisable(true);
+          // setDisable(true);
         }}
       >
         <Text style={{ color: "white" }}>{Loading?<ActivityIndicator size={'small'} color={'white'}/>: 'Send'}</Text>
@@ -318,7 +292,6 @@ const ConfirmTransaction = (props) => {
       <TransactionPinModal
         setPinViewVisible={setPinViewVisible}
         pinViewVisible={pinViewVisible}
-        provider={props?.route?.params?.info?.provider}
         type={props?.route?.params?.info?.type}
         rawTransaction={props?.route?.params?.info?.rawTransaction}
         walletType={walletType}

@@ -7,10 +7,9 @@ import {
   UIManager,
   Touchable,
   TouchableOpacity,
-  Pressable,StatusBar, SafeAreaView, Image, Modal, TouchableWithoutFeedback, ActivityIndicator
+  Pressable, StatusBar, SafeAreaView, Image, Modal, TouchableWithoutFeedback, ActivityIndicator
 } from "react-native";
 import { Button, Text } from "react-native-paper";
-import Icons from "react-native-vector-icons/FontAwesome";
 import FontAwesome from "react-native-vector-icons";
 import SendModal from "./Modals/SendModal";
 import RecieveModal from "./Modals/RecieveModal";
@@ -35,11 +34,12 @@ import {
   getEthPrice,
   getBnbPrice,
   getXrpPrice,
+  getXLMPrice,
 } from "../utilities/utilities";
 import { tokenAddresses } from "./constants";
 import { FaucetModal } from "./Modals/faucetModal";
 import Icon from "../icon";
-import IconWithCircle from "../Screens/iconwithCircle";
+// import IconWithCircle from "../Screens/iconwithCircle";
 import darkBlue from "../../assets/darkBlue.png"
 import Wallet_selection_bottom from "./Wallets/Wallet_selection_bottom";
 if (
@@ -54,6 +54,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
   const EthBalance = useSelector((state) => state.EthBalance);
   const bnbBalance = useSelector((state) => state.walletBalance);
   const xrpBalance = useSelector((state) => state.XrpBalance);
+  const XLMBalance = useSelector((state) => state?.assetData);
   const walletState = useSelector((state) => state.wallets);
   const type = useSelector((state) => state.walletType);
 
@@ -73,9 +74,11 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
   const [ethPrice, setEthPrice] = useState(0);
   const [xrpPrice, setXrpPrice] = useState(0);
   const [balanceUsd, setBalance] = useState(0.0);
-  const [Wallet_modal,setWallet_modal]=useState(false);
-  const [Loading_upper,setLoading_upper]=useState(true);
+  const [XLMPrice, setXLMPrice] = useState(0.0);
+  const [Wallet_modal, setWallet_modal] = useState(false);
+  const [Loading_upper, setLoading_upper] = useState(true);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [balanceVisible, setbalanceVisible] = useState(false);
   // onPress={() => setModalVisible(true)}
   if (Platform.OS === "android") {
     if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -94,22 +97,22 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
     setModalVisible3(false);
   };
   const openModal3= async()=>{
-      const walletType = await AsyncStorageLib.getItem("walletType");
-      console.log(JSON.parse(walletType));
-      if (!JSON.parse(walletType))
-        return alert("please select a wallet first to swap tokens");
-      if (
-        JSON.parse(walletType) === "BSC" ||
-        JSON.parse(walletType) === "Ethereum" ||
-        JSON.parse(walletType) === "Multi-coin"
-      ) {
-        setModalVisible(false);
-        setModalVisible2(false);
-        // setModalVisible3(true); //uncommet for old swap and comment EthSwap
-        navigation.navigate("EthSwap")
-      } else {
-        alert("Swapping is only supported for Ethereum and Binance ");
-      }
+    const walletType = await AsyncStorageLib.getItem("walletType");
+    console.log(JSON.parse(walletType));
+    if (!JSON.parse(walletType))
+      return alert("please select a wallet first to swap tokens");
+    if (
+      JSON.parse(walletType) === "BSC" ||
+      JSON.parse(walletType) === "Ethereum" ||
+      JSON.parse(walletType) === "Multi-coin"
+    ) {
+      setModalVisible(false);
+      setModalVisible2(false);
+      // setModalVisible3(true); //uncommet for old swap and comment EthSwap
+      navigation.navigate("EthSwap")
+    } else {
+      alert("Swapping is only supported for Ethereum and Binance ");
+    }
   }
   const Logo = () => {
     return <Icons name="bitcoin" size={20} color="white" />;
@@ -292,41 +295,53 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
   }, [state2, wallet,state.walletBalance,state.EthBalance,state.XrpBalance,state.MaticBalance]);
 
   useEffect(() => {
-   const get_ALL_BALE=async()=>{
-    try {
-      getAllBalance().catch((e) => {
+    const get_ALL_BALE=async()=>{
+      try {
+        getAllBalance().catch((e) => {
+          console.log(e);
+        });
+      } catch (e) {
         console.log(e);
-      });
-    } catch (e) {
-      console.log(e);
+      }
     }
-   }
-   get_ALL_BALE()
+    get_ALL_BALE()
   }, [state.wallet.address, state.wallet.name, state.walletType,state.walletBalance,state.EthBalance,state.XrpBalance,state.MaticBalance]);
 
   const openExtended = () => {
     changeState();
     // LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   };
-
+  const calculateUsdValue = (balance, price) => {
+    const balanceNum = Number(balance);
+    const priceNum = Number(price)
+    
+    if (isNaN(balanceNum) || isNaN(priceNum)) {
+      return 0;
+    }
+    return balanceNum * priceNum;
+  };
   const getBalanceInUsd = (ethBalance, bnbBalance, xrpBalance) => {
+    const lumansBalance = XLMBalance?.filter(balance => balance.asset_type === "native")[0]?.balance || "0";
+
     console.log("My wallet Type", Type);
     console.log(ethBalance, bnbBalance, xrpBalance, xrpPrice);
-    const ethInUsd = Number(ethBalance) * Number(ethPrice);
-    const bnbInUsd = Number(bnbBalance) * Number(bnbPrice);
-    const xrpInUsd = Number(xrpBalance) * Number(xrpPrice);
+    const ethInUsd =calculateUsdValue (ethBalance, ethPrice);
+    const bnbInUsd =calculateUsdValue(bnbBalance,bnbPrice);
+    const xrpInUsd =calculateUsdValue(xrpBalance,xrpPrice);
+    const XLMInUsd =calculateUsdValue(lumansBalance,XLMPrice);
     console.log("Eth balance", ethInUsd);
     console.log("BNB balance", bnbInUsd);
     console.log("Xrp balance", xrpInUsd);
+    console.log("Xrp balance",state?.assetData[0]?.balance);
 
     AsyncStorageLib.getItem("walletType").then((Type) => {
       console.log("Async type", Type);
       if (JSON.parse(Type) === "Ethereum") {
-        const totalBalance = Number(ethInUsd);
+        const totalBalance = Number(ethInUsd)+Number(XLMInUsd);
         setBalance(totalBalance.toFixed(1));
         return;
       } else if (JSON.parse(Type) === "BSC") {
-        const totalBalance = Number(bnbInUsd);
+        const totalBalance = Number(bnbInUsd)+Number(XLMInUsd);
         setBalance(totalBalance.toFixed(1));
         return;
       } else if (JSON.parse(Type) === "Xrp") {
@@ -339,7 +354,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
         return;
       } else if (JSON.parse(Type) === "Multi-coin") {
         const totalBalance =
-        Number(ethInUsd) + Number(bnbInUsd) + Number(xrpInUsd);
+          Number(ethInUsd) + Number(bnbInUsd) +Number(XLMInUsd);
         console.log(totalBalance);
         setBalance(totalBalance.toFixed(1));
         return;
@@ -348,7 +363,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
     return;
     // setLoading(false)
   };
-
+  
   const getETHBNBPrice = async () => {
     /* await getEtherBnbPrice(tokenAddresses.ETH, tokenAddresses.BNB)
     .then((resp) => {
@@ -371,10 +386,15 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
       console.log("XRP price =", response.USD);
       setXrpPrice(response.USD);
     });
+    await getXLMPrice().then((response) => {
+      console.log("XLM price= ", response.USD);
+      setXLMPrice(response.USD);
+    });
 
     return true
 
   };
+  console.log("-asde-",balanceUsd)
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -391,7 +411,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
   }, []);
 
   useEffect(() => {
-     const get_BAL=async()=>{
+    const get_BAL=async()=>{
       try {
         console.log(balanceUsd);
         //getEthPrice()
@@ -400,8 +420,8 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
       } catch (error) {
         console.log(":::",error)
       }
-     }
-     get_BAL()
+    }
+    get_BAL()
   }, [
     ethPrice,
     bnbPrice,
@@ -411,8 +431,26 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
     xrpBalance,
     Type,
     state.wallet.name,
+    state?.assetData,
   ]);
 
+  useEffect(() => {
+    let isMounted = true;
+    const getBalances = async () => {
+      if (!isMounted) return;
+      try {
+        await getETHBNBPrice();
+        if (!isMounted) return;
+        getBalanceInUsd(EthBalance, bnbBalance, xrpBalance);
+      } catch (error) {
+        console.error("Balance fetch error:", error);
+      }
+    };
+    getBalances();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   // useEffect(async () => {
   //   console.log(balanceUsd);
   //   //getEthPrice()
@@ -442,17 +480,61 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
   };
   return (
     <SafeAreaView style={{ backgroundColor: state.THEME.THEME===false?"#fff":"black",marginTop:0 }}>
-    <View>
-     {
-       Loading_upper?<ActivityIndicator color={"green"}/>:
-       <View style={[styles.headerContainer,{ backgroundColor: state.THEME.THEME===false?"#fff":"black"}]}>
-      
-       <Pressable onPress={() => alert("Notifications will be added soon")}>
-         <Icon name="bell" type={"fontisto"} size={24} color={ state.THEME.THEME===false?"black":"#fff"} />
-       </Pressable>
-       {/* <FaucetModal showModal={showModal} setShowModal={setShowModal} /> */}
-       
-       <TouchableOpacity style={{backgroundColor: state.THEME.THEME===false?"silver":"black",borderRadius:16,justifyContent:"space-between",alignItems:"center",paddingHorizontal:'1%',flexDirection:"row",width:wp(40),borderColor:"#145DA0",borderWidth:1.5}} onPress={()=>{setWallet_modal(true)}}>
+       {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={state.THEME.THEME ? "black":"#fff"}/>}
+      <View>
+        {
+          Loading_upper?<ActivityIndicator color={"green"}/>:
+            <View style={[styles.headerContainer,{ backgroundColor: state.THEME.THEME===false?"#fff":"black"}]}>
+
+              <View style={styles.walletCon}>
+                <View style={styles.walletNameandBal}>
+                <View style={{flexDirection:"row",alignItems:"center"}}>
+                <Text style={[styles.walletNameandBal.walletNamefontText,{ color:state.THEME.THEME === false ? "black":"#fff"}]}>{user.slice(0, 11)} </Text>
+                  <TouchableOpacity onPress={() => { setWallet_modal(true) }}>
+                    <Icon name="chevron-down-outline" type={"ionicon"} size={21} color={state.THEME.THEME === false ? "black":"#fff"} />
+                  </TouchableOpacity>
+                </View>
+                  <View style={styles.walletSubCon}>
+                    <View style={{width:"60%"}}>
+                    <Text lineBreakMode={"tail"} style={[styles.walletNameandBal.walletNamefontBal,{color:state.THEME.THEME === false ? "black":"#fff"}]}>{balanceVisible ? "$ " + balanceUsd? "$ "+balanceUsd:"$ 0.0"  : "$ X.XX"} </Text>
+                    </View>
+                    {balanceVisible ?
+                        <Icon name="eye-off-outline" type={"ionicon"} size={26} color={"gray"} onPress={() => { setbalanceVisible(balanceVisible ? false : true) }} />:
+                        <Icon name="eye-outline" type={"ionicon"} size={26} color={"gray"} onPress={() => { setbalanceVisible(balanceVisible ? false : true) }}/>
+                       }
+                  </View>
+                </View>
+                <TouchableOpacity style={[styles.bellCon,{backgroundColor:state.THEME.THEME === false ? "#F4F4F4":"#18181C"}]} onPress={() => alert("Notifications will be added soon")}>
+                  <Icon name="notifications-outline" type={"ionicon"} size={26} color={state.THEME.THEME === false ? "#1F2286":"gray"} />
+                </TouchableOpacity>
+              </View>
+              {/* Feature section */}
+              <View style={styles.featureCon}>
+                {/* recive card */}
+                <TouchableOpacity style={[styles.featureCard,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#23262F99"}]} onPress={() => { openModal2()}}>
+                <Icon name="qr-code-outline" type={"ionicon"}  color={"#2164C1"} size={35} />
+                  <Text style={[styles.featureCard.featureCardText,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>Recive</Text>
+                </TouchableOpacity>
+                {/* send card */}
+                <TouchableOpacity style={[styles.featureCard,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#23262F99"}]} onPress={() => { openModal1()}}>
+                <Icon name="paper-plane-outline" type={"ionicon"}  color={"#2164C1"} size={35} />
+                  <Text style={[styles.featureCard.featureCardText,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>Send</Text>
+                </TouchableOpacity>
+                {/* swap card */}
+                <TouchableOpacity style={[styles.featureCard,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#23262F99"}]}  onPress={() => { openModal3()}}>
+                <Icon name="swap" type={"antDesign"}  color={"#2164C1"} size={35} />
+                  <Text style={[styles.featureCard.featureCardText,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>Swap</Text>
+                </TouchableOpacity>
+                {/* buy card */}
+                <TouchableOpacity style={[styles.featureCard,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#23262F99"}]} onPress={() => navigation.navigate("KycComponent",{tabName:"Buy"})}>
+                <Icon name="dollar-sign" type={"feather"}  color={"#2164C1"} size={35} />
+                  <Text style={[styles.featureCard.featureCardText,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>Buy</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* <FaucetModal showModal={showModal} setShowModal={setShowModal} /> */}
+
+              {/* <TouchableOpacity style={{backgroundColor: state.THEME.THEME===false?"silver":"black",borderRadius:16,justifyContent:"space-between",alignItems:"center",paddingHorizontal:'1%',flexDirection:"row",width:wp(40),borderColor:"#145DA0",borderWidth:1.5}} onPress={()=>{setWallet_modal(true)}}>
          <View style={{flexDirection:"row",justifyContent:"center",alignItems:"center"}}>
          <Image
                  source={darkBlue}
@@ -461,26 +543,16 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
        <Text style={{color:state.THEME.THEME===false?"white":"#fff",fontWeight: "bold",marginRight:4,fontSize:16}}>{user.slice(0,11)}</Text>
          </View>
        <Icon name="chevron-down-outline" type={"ionicon"} size={21} color={"#fff"} />
-     </TouchableOpacity>
+     </TouchableOpacity> */}
 
-       {/* <TouchableOpacity
-         style={styles.faucetBtn}
-         onPress={() => {
-           console.log("pressed");
-           //setShowModal(true);
-           firebaseNotification('new Bid','Swift Ex','someone bid','new bid buddy ')
+              {/* <Pressable onPress={() => alert("Notifications will be added soon")}>
+         <Icon name="bell" type={"fontisto"} size={24} color={ state.THEME.THEME===false?"black":"#fff"} />
+       </Pressable> */}
+            </View>
 
-         }}
-       >
-         <Text style={styles.faucetText}>Faucet</Text>
-       </TouchableOpacity> */}
-       {/* <Pressable style={{alignItems:"center"}} onPress={() => openExtended()}> */}
-       <TouchableOpacity style={{alignItems:"center"}} onPress={() => openExtended()}>
-         <Icon name="sliders" type={"FAIcon"} size={24} color={ state.THEME.THEME===false?"black":"#fff"} />
-       </TouchableOpacity>
-     </View>
-     }
-      <View style={{ marginVertical: hp(2) }}>
+
+        }
+        {/* <View style={{ marginVertical: hp(2) }}>
         <Text style={[styles.dollartxt,{color:state.THEME.THEME===false?"black":"#fff"}]}>
         $ {balanceUsd >= 0 ? balanceUsd : 0.0}
         </Text>
@@ -495,123 +567,177 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
         >
           {user ? user : "main wallet"}
         </Text>
-      </View>
-      <View style={styles.buttons}>
-        <TouchableOpacity onPress={() => {openModal1()}}>
-        <IconWithCircle
-          name={"arrowup"}
-          type={"antDesign"}
-          title={"Send"}
-          // onPress={() => setModalVisible(!modalVisible)}
+      </View> */}
+        {/* <View style={styles.buttons}>
+          <TouchableOpacity onPress={() => { openModal1() }}>
+            <IconWithCircle
+              name={"arrowup"}
+              type={"antDesign"}
+              title={"Send"}
+            // onPress={() => setModalVisible(!modalVisible)}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => { openModal2() }}>
+            <IconWithCircle
+              name={"arrowdown"}
+              type={"antDesign"}
+              title={"Receive"}
+            // onPress={() => setModalVisible2(true)}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={async () => { openModal3() }}>
+            <IconWithCircle
+              name={"swap-horizontal"}
+              type={"ionicon"}
+              title={"Swap"}
+            // onPress={async () => {
+            //   const walletType = await AsyncStorageLib.getItem("walletType");
+            //   console.log(JSON.parse(walletType));
+            //   if (!JSON.parse(walletType))
+            //     return alert("please select a wallet first to swap tokens");
+            //   if (
+            //     JSON.parse(walletType) === "BSC" ||
+            //     JSON.parse(walletType) === "Ethereum" ||
+            //     JSON.parse(walletType) === "Multi-coin"
+            //   ) {
+            //     setModalVisible3(true);
+            //   } else {
+            //     alert("Swapping is only supported for Ethereum and Binance ");
+            //   }
+            // }}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("buycrypto")}>
+            <IconWithCircle
+              name={"credit-card-outline"}
+              type={"materialCommunity"}
+              title={"Buy"}
+            // onPress={() => navigation.navigate("buycrypto")}
+            />
+          </TouchableOpacity>
+        </View> */}
+        <SendModal
+          modalVisible={modalVisible}
+          setModalVisible={setModalVisible}
         />
-       </TouchableOpacity>
-        <TouchableOpacity onPress={() => {openModal2()}}>
-        <IconWithCircle
-          name={"arrowdown"}
-          type={"antDesign"}
-          title={"Receive"}
-          // onPress={() => setModalVisible2(true)}
+        <RecieveModal
+          modalVisible={modalVisible2}
+          setModalVisible={setModalVisible2}
         />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={async () => {openModal3()}}>
-        <IconWithCircle
-          name={"swap-horizontal"}
-          type={"ionicon"}
-          title={"Swap"}
-          // onPress={async () => {
-          //   const walletType = await AsyncStorageLib.getItem("walletType");
-          //   console.log(JSON.parse(walletType));
-          //   if (!JSON.parse(walletType))
-          //     return alert("please select a wallet first to swap tokens");
-          //   if (
-          //     JSON.parse(walletType) === "BSC" ||
-          //     JSON.parse(walletType) === "Ethereum" ||
-          //     JSON.parse(walletType) === "Multi-coin"
-          //   ) {
-          //     setModalVisible3(true);
-          //   } else {
-          //     alert("Swapping is only supported for Ethereum and Binance ");
-          //   }
-          // }}
+        <SwapModal
+          modalVisible={modalVisible3}
+          setModalVisible={setModalVisible3}
+          swapType={swapType}
         />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("buycrypto")}>
-        <IconWithCircle
-          name={"credit-card-outline"}
-          type={"materialCommunity"}
-          title={"Buy"}
-          // onPress={() => navigation.navigate("buycrypto")}
-        />
-        </TouchableOpacity>
-      </View>
-      <SendModal
-        modalVisible={modalVisible}
-        setModalVisible={setModalVisible}
-      />
-      <RecieveModal
-        modalVisible={modalVisible2}
-        setModalVisible={setModalVisible2}
-      />
-      <SwapModal
-        modalVisible={modalVisible3}
-        setModalVisible={setModalVisible3}
-        swapType={swapType}
-      />
-
-      <TouchableOpacity
-        style={[styles.iconmainContainer,{backgroundColor:state.THEME.THEME===false?"#fff":"black",borderColor:"#145DA0",borderWidth:1}]}
-        onPress={() => {
-          navigation.navigate("Market");
-        }}
-      >
-        <View style={styles.iconTextContainer}>
-          <Icon name="graph" type={"simpleLine"} size={hp(3)} color={state.THEME.THEME===false?"black":"#fff"}/>
-          <Text style={{ marginHorizontal: hp(1), color:state.THEME.THEME===false?"black":"#fff" }}>
-            Market insights
-          </Text>
-        </View>
-      </TouchableOpacity>
-    <Modal
-        animationType="slide"
-        transparent={true}
-        visible={Wallet_modal}
-        onRequestClose={() => setWallet_modal(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setWallet_modal(false)}>
-        <View style={styles.modalBackground}>
-            <TouchableOpacity
-              onPress={() => setWallet_modal(false)}
-              style={{marginBottom:Platform.OS==="ios"?hp(-1.5):hp(-2)}}
-            >
-              <IconWithCircle
-          name={"arrowdown"}
-          type={"antDesign"}
-          title={""}
-          // onPress={() => setModalVisible(!modalVisible)}
-        />
-              {/* #2196F3 */}
-            </TouchableOpacity>
-          <View style={[styles.modalView,{backgroundColor:state.THEME.THEME===false?"#fff":"black",borderBottomColor:state.THEME.THEME===false?"#fff":"black"}]}>
-            <View style={styles.modal_heading_view}>
-            <Text style={[styles.modalText,{color:state.THEME.THEME===false?"black":"#fff"}]}>Choose wallet</Text>
-            <TouchableOpacity
-              onPress={() => [setWallet_modal(false),navigation.navigate("Wallet")]}
-            >
-            <Text style={[styles.modalText,{color:'#2196F3'}]}>Add Wallet</Text>
-            </TouchableOpacity>
-            </View>
-        <Wallet_selection_bottom onClose={handleClosewalletmodal}/>
+{/* 
+        <TouchableOpacity
+          style={[styles.iconmainContainer, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black", borderColor: "#145DA0", borderWidth: 1 }]}
+          onPress={() => {
+            navigation.navigate("Market");
+          }}
+        >
+          <View style={styles.iconTextContainer}>
+            <Icon name="graph" type={"simpleLine"} size={hp(3)} color={state.THEME.THEME === false ? "black" : "#fff"} />
+            <Text style={{ marginHorizontal: hp(1), color: state.THEME.THEME === false ? "black" : "#fff" }}>
+              Market insights
+            </Text>
           </View>
-        </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    </View>
+        </TouchableOpacity> */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={Wallet_modal}
+          onRequestClose={() => setWallet_modal(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => {setWallet_modal(false)}}>
+            <View style={styles.modalBackground}>
+              <TouchableOpacity
+                onPress={() => setWallet_modal(false)}
+                style={{ marginBottom: Platform.OS === "ios" ? hp(-1.5) : hp(-2) }}
+              >
+                {/* <IconWithCircle
+                  name={"arrowdown"}
+                  type={"antDesign"}
+                  title={""}
+                // onPress={() => setModalVisible(!modalVisible)}
+                /> */}
+                {/* #2196F3 */}
+              </TouchableOpacity>
+              <View style={[styles.modalView, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black", borderBottomColor: state.THEME.THEME === false ? "#fff" : "black" }]}>
+                <View style={styles.modal_heading_view}>
+                  <Text style={[styles.modalText, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>Choose wallet</Text>
+                  <TouchableOpacity
+                    onPress={() => [setWallet_modal(false), navigation.navigate("Wallet")]}
+                  >
+                    <Text style={[styles.modalText, { color: '#2196F3' }]}>Add Wallet</Text>
+                  </TouchableOpacity>
+                </View>
+                <Wallet_selection_bottom onClose={handleClosewalletmodal} />
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      </View>
     </SafeAreaView>
   );
 };
 
 export default MyHeader2;
 const styles = StyleSheet.create({
+  walletCon: {
+    paddingHorizontal: 19,
+    marginTop: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  walletNameandBal: {
+    walletNamefontText: {
+      fontSize: 19,
+      color: "#FFFFFF",
+      fontWeight: "500"
+    },
+    walletNamefontBal: {
+      fontSize: 32,
+      color: "#FFFFFF",
+      fontWeight: "800"
+    },
+  },
+  walletSubCon: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  bellCon: {
+    backgroundColor: "#18181C",
+    padding: 5,
+    borderColor: "gray",
+    borderWidth: 0.5,
+    borderRadius: 5
+  },
+  featureCon: {
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    marginTop: "8%",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: 90,
+    width: "100%",
+    marginBottom:1
+  },
+  featureCard: {
+    backgroundColor: "#23262F99",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "99%",
+    width: "22.5%",
+    borderRadius: 19,
+    featureCardText: {
+      marginTop:1.4,
+      fontSize: 13,
+      color: "#FFFFFF",
+      fontWeight: "500"
+    }
+  },
   profile: {
     borderWidth: 1,
     width: wp("15.1"),
@@ -744,15 +870,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   headerContainer: {
-    backgroundColor: "#fff",
-    // backgroundColor:"red",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems:"center",
-    // paddingHorizontal: 10,
-    marginTop: hp(2),
-    width: wp(90),
-    alignSelf: "center",
+    width: wp(99),
   },
   dollartxt: {
     color: "black",
@@ -806,19 +924,19 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
-  modal_heading_view:{
-    flexDirection:"row",
+  modal_heading_view: {
+    flexDirection: "row",
     width: wp(100),
     paddingVertical: 5,
-    paddingHorizontal:16,
-    justifyContent:"space-between"
+    paddingHorizontal: 16,
+    justifyContent: "space-between"
   },
   modalView: {
     width: wp(100),
-    height:hp(30),
+    height: hp(30),
     backgroundColor: 'white',
     borderRadius: 10,
-    paddingVertical:hp(1.5),
+    paddingVertical: hp(1.5),
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -828,14 +946,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-    borderColor:"#2196F3",
-    borderWidth:0.9,
+    borderColor: "#2196F3",
+    borderWidth: 0.9,
   },
   modalText: {
     marginBottom: 15,
     textAlign: 'center',
     fontSize: 18,
-    fontWeight:"400"
+    fontWeight: "400"
   },
 });
 /*

@@ -89,8 +89,7 @@ const PrivateKey = (props) => {
   };
   const handleUsernameChange = (text) => {
     // Remove whitespace from the username
-    const formattedUsername = text.replace(/\s/g, '')
-    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
+    const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
     setAccountName(formattedUsername);
   };
   return (
@@ -110,7 +109,19 @@ const PrivateKey = (props) => {
           }}
           source={title_icon}
         /> */}
-          <Text style={style.backupText}>Backup Mnemonic Phrase</Text>
+        <View style={{marginTop:10,alignItems:"flex-start"}}>
+        <Text style={style.accountText}> Account Name</Text>
+        <TextInput
+          style={[style.input,{color:"black"}]}
+          placeholder="Enter your account name"
+          value={accountName}
+          onChangeText={(text) => {handleUsernameChange(text)}}
+          placeholderTextColor="gray"
+          autoCapitalize={"none"}
+          maxLength={20}
+          />
+          </View>
+          <Text style={style.backupText}> Backup Mnemonic Phrase</Text>
           <Text style={style.welcomeText1}>
             Please select the Mnemonic in order to ensure the backup is
             correct.
@@ -150,27 +161,17 @@ const PrivateKey = (props) => {
         {/* <Text selectable={true} style={style.welcomeText2}>
           {props.route.params.wallet.wallet.mnemonic}
         </Text> */}
-        <View style={{marginTop:text_input_up?"-60%":10}}>
-        <Text style={style.accountText}> Account Name</Text>
-        <TextInput
-          style={[style.input,{color:"black"}]}
-          placeholder="Enter your account name"
-          value={accountName}
-          onChangeText={(text) => {handleUsernameChange(text)}}
-          placeholderTextColor="gray"
-          autoCapitalize={"none"}
-          maxLength={20}
-          />
-          </View>
+        
         <TouchableOpacity
           style={{alignSelf: "center",
           alignItems: "center",
           // backgroundColor:accountName && !/\s/.test(accountName) ?'green':"grey",
           backgroundColor:!accountName || !/\S/.test(accountName)?"gray":"green",
           marginTop: hp(2),
-         width: wp(60),
+         width: wp(89),
           padding: 10,
-          borderRadius: 10,
+          paddingVertical: hp(1.7),
+          borderRadius: 50,
         }}
           // disabled={accountName && !/\s/.test(accountName)  ? false : true}
           disabled={!accountName || !/\S/.test(accountName)}
@@ -190,7 +191,7 @@ const PrivateKey = (props) => {
             });
           }}
         >
-          <Text style={{color:'white'}}>Next</Text>
+          <Text style={{color:'white',fontSize:18}}>Next</Text>
         </TouchableOpacity>
 
         {/* <View style={style.Button}> */}
@@ -207,16 +208,16 @@ export default PrivateKey;
 const style = StyleSheet.create({
   Body: {
     width: wp(100),
-    alignItems: "center",
+    alignItems: "flex-start",
     textAlign: "center",
+    marginLeft: wp(4.7),
   },
   welcomeText: {
     color: "black",
   },
   welcomeText1: {
-    marginLeft: wp(4.7),
     color: "gray",
-    marginLeft: wp(4),
+    marginLeft: wp(1),
     width: wp(90),
   },
   welcomeText2: {
@@ -244,7 +245,7 @@ const style = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal:wp(3),
     borderRadius: 10,
-    width: wp(80),
+    width: wp(90),
     height: hp(5),
     marginTop: hp(1),
     alignSelf: "center",
@@ -271,12 +272,11 @@ const style = StyleSheet.create({
     marginHorizontal: wp(1.5),
   },
   backupText: {
-    fontWeight: "bold",
+    fontWeight: "400",
     fontSize: 17,
     color: "black",
-    marginLeft: 20,
-    marginTop: hp(3),
-    marginBottom: hp(2),
+    marginTop: hp(2),
+    marginBottom: hp(1),
   },
   dotView: {
     flexDirection: "row",
@@ -292,7 +292,7 @@ const style = StyleSheet.create({
     marginLeft: 18,
     marginTop: hp(2),
   },
-  accountText: { color: "black", marginHorizontal: wp(9), marginTop: hp(1) },
+  accountText: { color: "black", marginTop: hp(1) },
   nextButton: {
     alignSelf: "center",
     alignItems: "center",

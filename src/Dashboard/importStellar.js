@@ -4,7 +4,7 @@ import {widthPercentageToDP as wp,heightPercentageToDP as hp,} from "react-nativ
 import { alert } from "../Dashboard/reusables/Toasts";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 
 const importStellar = () => {
     const navigation = useNavigation();

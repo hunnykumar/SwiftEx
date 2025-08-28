@@ -17,27 +17,21 @@ import { useRef } from "react";
 import { ScrollView } from "native-base";
 import { useEffect } from "react";
 import { WebView } from 'react-native-webview';
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 
 const Payout = () => {
   const state = useSelector((state) => state);
-  const Assets = [
-    { name: "USDC",by:"centre.io", address: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",dis_ass:"GA5...KZVN",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" },
-    { name: "EURC",by:" circle.com", address: "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2", dis_ass:"GDH...NPP2",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420"},
-    { name: "CLPX",by:"clpx", address: "GDYSPBVZHPQTYMGSYNOHRZQNLB3ZWFVQ2F7EP7YBOLRGD42XIC3QUX5G",dis_ass:"GDY...UX5G",img:"../../../../../../assets/CLPX.png" },
-    { name: "RWF",by:"clickpesa", address: "GA2MSSZKJOU6RNL3EJKH3S5TB5CDYTFQFWRYFGUJVIN5I6AOIRTLUHTO",dis_ass:"GA2...UHTO",img:"../../../../../../assets/CLICKPESA.png" },
-    { name: "KES",by:"clickpesa", address: "GA2MSSZKJOU6RNL3EJKH3S5TB5CDYTFQFWRYFGUJVIN5I6AOIRTLUHTO",dis_ass:"GA2...UHTO",img:"../../../../../../assets/CLICKPESA.png" },
-  ];
   const Anchors=[
     // {name:"SwiftEx",by:"centre.io", address: state.wallet.address,image: require('../../../../../../assets/darkBlue.png'), seps: ["SEP 6", "SEP 12", "SEP 24"]},
-    {name:"MoneyGram", address: state.wallet.address,image: require('../../../../../../assets/MONEY_GRAM.png'),dis_ass:"moneygram.com", seps: ["SEP 24"],tom_url:"https://www.moneygram.com/intl/moneygramaccess"},
-    {name:"Banxa", address: state.wallet.address,image: require('../../../../../../assets/BANXA.png'),dis_ass:"banxa.com", seps: ["SEP 24"],tom_url:"https://banxa.com/"},
-    {name:"Clpx", address: state.wallet.address,image: require('../../../../../../assets/CLPX.png'),dis_ass:"clpx.finance", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://clpx.finance/transactions"},
-    {name:"Clickpesa", address: state.wallet.address,image: require('../../../../../../assets/CLICKPESA.png'),dis_ass:"clickpesa.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://clickpesa.com/"},
-    {name:"Finclusive", address: state.wallet.address,image: require('../../../../../../assets/FINCLUSIVE.png'),dis_ass:"finclusive.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://finclusive.com/"},
-    {name:"Mykobo", address: state.wallet.address,image: require('../../../../../../assets/MYKOBO.png'),dis_ass:"mykobo.co", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://mykobo.co/"},
+    // {name:"MoneyGram", address: state.wallet.address,image: require('../../../../../../assets/MONEY_GRAM.png'),dis_ass:"moneygram.com", seps: ["SEP 24"],tom_url:"https://www.moneygram.com/intl/moneygramaccess"},
+    // {name:"Banxa", address: state.wallet.address,image: require('../../../../../../assets/BANXA.png'),dis_ass:"banxa.com", seps: ["SEP 24"],tom_url:"https://banxa.com/"},
+    // {name:"Clpx", address: state.wallet.address,image: require('../../../../../../assets/CLPX.png'),dis_ass:"clpx.finance", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://clpx.finance/transactions"},
+    // {name:"Clickpesa", address: state.wallet.address,image: require('../../../../../../assets/CLICKPESA.png'),dis_ass:"clickpesa.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://clickpesa.com/"},
+    // {name:"Finclusive", address: state.wallet.address,image: require('../../../../../../assets/FINCLUSIVE.png'),dis_ass:"finclusive.com", seps: ["SEP 6", "SEP 24", "SEP 31"],tom_url:"https://finclusive.com/"},
+    {name:"Alchemy Pay", address: state.wallet.address,image: require('../../../../../../assets/AlcamyPay.jpg'),dis_ass:"alchemypay.org",tom_url:"https://www.alchemypay.org/"},
+    // {name:"Mykobo", address: state.wallet.address,image: require('../../../../../../assets/MYKOBO.png'),dis_ass:"mykobo.co", seps: ["SEP 6"],tom_url:"https://mykobo.co/"},
   ];
   const price_data=[
     { name: "USDC", price: "100", fee:"0.5", asset_code:"USDC" },
@@ -53,21 +47,16 @@ const Payout = () => {
   ]
   const navigation = useNavigation();
   const isFocused = useIsFocused();
-  const [modalContainer_menu, setmodalContainer_menu] = useState(false);
   const [done_modal, setdone_modal] = useState(false);
   const [UPLAOD_1, setUPLAOD_1] = useState(false);
   const [UPLAOD, setUPLAOD] = useState(false);
-  const [select_asset_modal, setselect_asset_modal] = useState(true);
   const [search_text, setsearch_text] = useState("");
   const AssetViewRef = useRef(null);
-  const [contentWidth, setContentWidth] = useState(0);
   const [show_anchors, setshow_anchors] = useState(false);
   const [kyc_modal_text, setkyc_modal_text] = useState("Fetching stellar.toml");
   const [kyc_modal, setkyc_modal] = useState(false);
   const [modal_load, setmodal_load] = useState(false);
   const [image_hide, setimage_hide] = useState(false);
-  const [radio_btn_selectio_, setradio_btn_selectio_] = useState(true);
-  const [radio_btn_selectio_0, setradio_btn_selectio_0] = useState(false);
   const [KYC_INFO, setKYC_INFO] = useState(false);
   const [deposit_modal, setdeposit_modal] = useState(false);
   const [price_modal, setprice_modal] = useState(false);
@@ -78,9 +67,7 @@ const Payout = () => {
   const [higlight,sethiglight]=useState(0);
   const [imageUri, setImageUri] = useState(null);
   const [Anchor_selection,setAnchor_selection]=useState(0);
-  const [matchesFound, setMatchesFound] = useState(false);
   const [URL_OPEN, setURL_OPEN] = useState("");
-  const filteredAssets = Assets.filter(list => list.name.includes(search_text));
   const filteredAnchors = Anchors.filter(list => list.name.includes(search_text));
   const handleScroll = (xOffset) => {
     if (AssetViewRef.current) {
@@ -155,8 +142,7 @@ const Payout = () => {
     setimage_hide(false);
     setKYC_INFO(false);
     setsearch_text('');
-    setselect_asset_modal(true);
-    setshow_anchors(false);
+    setshow_anchors(true);
     setkyc_modal(false);
     setDeposit_modal_new(false)
     setopen_web_view(false)
@@ -208,95 +194,8 @@ const Payout = () => {
   return (
     <View style={styles.main}>
     <Exchange_screen_header title="Deposit/Withdrawal" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
-      {/* header end */}
-      {select_asset_modal && <View style={styles.select_asset_modal}>
-        <Text style={styles.select_asset_heading}>Select Assets</Text>
-        <TextInput placeholder="Search" placeholderTextColor={"gray"} value={search_text} onChangeText={(value) => { setsearch_text(value.toUpperCase()) }} style={styles.search_bar} />
-        {search_text.length === 0 && <View style={styles.ScrollView_contain}>
-          {/* <TouchableOpacity style={[styles.left_icon,]} onPress={() => {
-            if (AssetViewRef.current && contentWidth !== 0) {
-              const backOffset = (AssetViewRef.current.contentOffset ? AssetViewRef.current.contentOffset.x : 0) - 3 * contentWidth / Assets.length;
-              handleScroll(backOffset);
-
-            }
-          }}><Icon name={"left"} type={"antDesign"} size={25} color={"white"} />
-          </TouchableOpacity>
-          <TouchableOpacity style={[[styles.left_icon,], { alignSelf: "flex-end" }]} onPress={() => {
-            if (AssetViewRef.current && contentWidth !== 0) {
-              const nextOffset = (AssetViewRef.current.contentOffset ? AssetViewRef.current.contentOffset.x : 0) + 8 * contentWidth / Assets.length;
-              handleScroll(nextOffset);
-            }
-          }}><Icon name={"right"} type={"antDesign"} size={25} color={"white"} /></TouchableOpacity>
-          <ScrollView ref={AssetViewRef} horizontal style={styles.ScrollView} showsHorizontalScrollIndicator={false} onContentSizeChange={(width) => setContentWidth(width)}> */}
-          <ScrollView>
-            {Assets.map((list, index) => {
-              return (
-                <TouchableOpacity style={[styles.card, {marginTop:5,width: wp("90%"), justifyContent: "flex-start", borderColor: higlight === index ? "green" : "#011434", flexDirection: "row", alignItems: "center", }]} key={index} onPress={() => { sethiglight(index) }}>
-                  <Image
-                    source={list.by === "clpx" ? bnb : list.by === "clickpesa" ? xrp : { uri: list.img }}
-                    style={styles.image_asset}
-                    resizeMode="cover"
-                  />
-                  <View style={{ flexDirection: "column", marginLeft: 9,marginTop:3 }}>
-                    <Text style={[styles.card_text,{textAlign:"left"}]}>{list.name}</Text>
-                    {/* <Text style={[{textAlign:"left",fontSize:10,color:"#fff"}]}>Issued by</Text> */}
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(24),borderColor:"#485DCA",paddingVertical:0}}>
-                    <Text style={[styles.card_text,{textAlign:"left",fontSize:16}]}>{list.dis_ass}</Text>
-                    </ScrollView>
-                  </View>
-                </TouchableOpacity>
-              )
-            })}
-          </ScrollView>
-        </View>}
-        {/* for search result */}
-        {search_text.length !== 0 && <View style={styles.ScrollView_contain}>
-          {/* <TouchableOpacity style={styles.left_icon} onPress={() => {
-            if (AssetViewRef.current && contentWidth !== 0) {
-              const backOffset = (AssetViewRef.current.contentOffset ? AssetViewRef.current.contentOffset.x : 0) - 3 * contentWidth / Assets.length;
-              handleScroll(backOffset);
-
-            }
-          }}><Icon name={"left"} type={"antDesign"} size={25} color={"white"} />
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.left_icon, { alignSelf: "flex-end" }]} onPress={() => {
-            if (AssetViewRef.current && contentWidth !== 0) {
-              const nextOffset = (AssetViewRef.current.contentOffset ? AssetViewRef.current.contentOffset.x : 0) + 8 * contentWidth / Assets.length;
-              handleScroll(nextOffset);
-            }
-          }}><Icon name={"right"} type={"antDesign"} size={25} color={"white"} /></TouchableOpacity>
-          <ScrollView ref={AssetViewRef} horizontal style={styles.ScrollView} showsHorizontalScrollIndicator={false} onContentSizeChange={(width) => setContentWidth(width)}> */}
-          <ScrollView>
-          {filteredAssets.length > 0 ? (
-        filteredAssets.map((list, index) => (
-          <TouchableOpacity style={[styles.card, { marginTop:5,width: wp("90%"),justifyContent: "flex-start",borderColor:higlight===index?"green":"#011434",flexDirection:"row",alignItems:"center" }]} key={index} onPress={()=>{sethiglight(index)}}>
-          <Image
-                    source={list.by === "clpx" ? bnb : list.by === "clickpesa" ? xrp : { uri: list.img }}
-                  style={styles.image_asset}
-                  resizeMode="cover"
-                />
-                             <View style={{ flexDirection: "column", marginLeft: 9,marginTop:3 }}>
-                    <Text style={[styles.card_text,{textAlign:"left"}]}>{list.name}</Text>
-                    {/* <Text style={[{textAlign:"left",fontSize:10,color:"#fff"}]}>Issued by</Text> */}
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(24),borderColor:"#485DCA",paddingVertical:0}}>
-                    <Text style={[styles.card_text,{textAlign:"left",fontSize:16}]}>{list.dis_ass}</Text>
-                    </ScrollView>
-                  </View>
-                          </TouchableOpacity>
-        ))
-      ) : (
-        <Text style={[styles.notFoundText,{marginTop:20,marginLeft:110,}]}>Not Found</Text>
-      )}
-          </ScrollView>
-        </View>}
-
-        <TouchableOpacity disabled={filteredAssets.length <= 0} style={styles.next_btn} onPress={() => { setsearch_text(''),setselect_asset_modal(false), setshow_anchors(true) }}>
-          <Text style={styles.next_btn_txt}>Next</Text>
-        </TouchableOpacity>
-      </View>}
 
       {/* Anchors View */}
-
       {show_anchors && <View style={[styles.select_asset_modal]}>
         <Text style={styles.select_asset_heading}>Select Anchor</Text>
         <TextInput placeholder="Search" placeholderTextColor={"gray"} value={search_text} onChangeText={(value) => { setsearch_text(value.toUpperCase()) }} style={styles.search_bar} />
@@ -319,7 +218,7 @@ const Payout = () => {
           <ScrollView>
             {Anchors.map((list, index) => {
               return (
-                <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),setURL_OPEN(list.tom_url),setLoading(true),setopen_web_view(true)}}>
+                <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),navigation.navigate("KycComponent",{tabName:"Deposit"})}}>
                   <View style={{flexDirection:"row",alignItems:"center"}}>
                   <Image
                   source={list.image}
@@ -331,12 +230,9 @@ const Payout = () => {
                     <Text style={[styles.card_text,{color:"gray"}]}>{list.dis_ass}</Text>
                     </View>
                   {/* <Text style={[styles.next_btn_txt,{fontSize:13,marginTop:5,fontWeight:"500"}]}>Vist stellar website</Text> */}
-                    <TouchableOpacity disabled={Anchor_selection!==index} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"#011434",alignSelf:"center" }]} onPress={()=>{[setLoading(true),setopen_web_view(true)]}}>
-                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>SEP-24</Text>
-                    </TouchableOpacity>
-                    {list.name==="Clpx"&&<TouchableOpacity disabled={true} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"gray",alignSelf:"center" }]} onPress={()=>{[setLoading(true),setopen_web_view(true)]}}>
-                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>SEP-6</Text>
-                    </TouchableOpacity>}
+                    {list?.seps&&<View disabled={Anchor_selection!==index} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"#011434",alignSelf:"center" }]}>
+                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>{list.seps}</Text>
+                    </View>}
                   </View>
                   {/* {list?.seps.map((sep, sepIndex) => (
                     <TouchableOpacity disabled={sepIndex===1||sepIndex===3||Anchor_selection!==index} style={[styles.next_btn, { marginTop: 10, height: "13%",backgroundColor:sepIndex===1||sepIndex===3?"gray":"#011434" }]} onPress={()=>{sepIndex===2?[setLoading(true),setopen_web_view(true)]:setkyc_modal(true)}}>
@@ -382,7 +278,7 @@ const Payout = () => {
             filteredAnchors.map((list, index) => {
              
                 return (
-                  <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),setURL_OPEN(list.tom_url),setLoading(true),setopen_web_view(true)}}>
+                  <TouchableOpacity style={[styles.card,{width: wp("90%"),height:hp("10%"),marginTop:10,alignItems:"flex-start",borderColor:Anchor_selection===index?"green":"gray"}]} key={index} onPress={()=>{setAnchor_selection(index),navigation.navigate("KycComponent",{tabName:"Deposit"})}}>
                   <View style={{flexDirection:"row",alignItems:"center"}}>
                   <Image
                   source={list.image}
@@ -394,30 +290,10 @@ const Payout = () => {
                     <Text style={[styles.card_text,{color:"gray"}]}>{list.dis_ass}</Text>
                     </View>
                   {/* <Text style={[styles.next_btn_txt,{fontSize:13,marginTop:5,fontWeight:"500"}]}>Vist stellar website</Text> */}
-                    <TouchableOpacity disabled={Anchor_selection!==index} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"#011434",alignSelf:"center" }]} onPress={()=>{[setLoading(true),setopen_web_view(true)]}}>
-                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>SEP-24</Text>
-                    </TouchableOpacity>
-                    {list.name==="Clpx"&&<TouchableOpacity disabled={true} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"gray",alignSelf:"center" }]} onPress={()=>{[setLoading(true),setopen_web_view(true)]}}>
-                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>SEP-6</Text>
-                    </TouchableOpacity>}
+                    {list?.seps&&<View disabled={Anchor_selection!==index} style={[styles.next_btn, { marginLeft:10,marginTop: 10, height: "39%",backgroundColor:"#011434",alignSelf:"center" }]} >
+                      <Text style={[styles.next_btn_txt,{fontSize:16}]}>{list.seps}</Text>
+                    </View>}
                   </View>
-                  {/* {list?.seps.map((sep, sepIndex) => (
-                    <TouchableOpacity disabled={sepIndex===1||sepIndex===3||Anchor_selection!==index} style={[styles.next_btn, { marginTop: 10, height: "13%",backgroundColor:sepIndex===1||sepIndex===3?"gray":"#011434" }]} onPress={()=>{sepIndex===2?[setLoading(true),setopen_web_view(true)]:setkyc_modal(true)}}>
-                      <Text style={styles.next_btn_txt} key={sepIndex}>
-                        {sep}
-                      </Text>
-                      
-                    </TouchableOpacity>
-                  ))} */}
-                 {/* {Anchor_selection===index&&<View style={{justifyContent:"center",alignSelf:"center",marginTop:10}}>
-                  <Icon
-                    name={"check-circle-outline"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"green"}
-                  />
-                  </View>
-                  } */}
                 </TouchableOpacity>
                 )
 
@@ -427,15 +303,6 @@ const Payout = () => {
             )}
           </ScrollView>
         </View>}
-
-      <View style={{flexDirection:"row",justifyContent:"space-between"}}>
-      <TouchableOpacity style={[styles.next_btn,{marginTop:5}]} onPress={() => { setsearch_text(''),setshow_anchors(false),setselect_asset_modal(true) }}>
-          <Text style={styles.next_btn_txt}>Back</Text>
-        </TouchableOpacity>
-      {/* <TouchableOpacity disabled={true} style={[styles.next_btn,{marginTop:5,backgroundColor:"gray"}]} onPress={() => { setsearch_text(''),setkyc_modal(true) }}>
-          <Text style={styles.next_btn_txt}>Next</Text>
-        </TouchableOpacity> */}
-        </View>
       </View>}
 
       <Modal
@@ -813,7 +680,7 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: "#011434",
     flexDirection: "column",
-    paddingVertical: 3
+    paddingVertical: 3,
   },
   card_text: {
     fontSize: 19,

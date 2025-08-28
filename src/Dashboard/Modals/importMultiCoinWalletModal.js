@@ -7,6 +7,8 @@ import {
   TextInput,
   ActivityIndicator,
   TouchableOpacity,
+  NativeModules,
+  Platform,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -28,6 +30,10 @@ import { alert } from "../reusables/Toasts";
 import { Paste } from "../../utilities/utilities";
 import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../../icon";
+import { recoverMultiChainWallet } from "../../utilities/WalletManager";
+import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
+const { EthereumWallet } = NativeModules;
 
 const xrpl = require("xrpl");
 
@@ -150,8 +156,7 @@ const ImportMultiCoinWalletModal = ({
 
   const handleUsernameChange = (text) => {
     // Remove whitespace from the username
-    const formattedUsername = text.replace(/\s/g, '')
-    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
+    const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
     setAccountName(formattedUsername);
   };
   return (
@@ -179,6 +184,7 @@ const ImportMultiCoinWalletModal = ({
             <Text style={style.label}>Name</Text>
             <TextInput
               value={accountName}
+              maxLength={20}
               onChangeText={(text) =>{handleUsernameChange(text)}}
               style={{ width: wp("78%"),color:"black" }}
               placeholder={accountName ? accountName : "Wallet 1"}
@@ -245,29 +251,21 @@ const ImportMultiCoinWalletModal = ({
                   );
                 }
                 // const xrpWalletFromM = xrpl.Wallet.fromMnemonic(trimmedPhrase); // UNCOMMENT
-                const entropy = ethers.utils.mnemonicToEntropy(trimmedPhrase);
-                console.log(
-                  "\t===> seed Created from mnemonic",
-                  entropy.split("x")[1]
-                );
-                // const xrpWallet = xrpl.Wallet.fromEntropy( // UNCOMMENT
-                //   entropy.split("x")[1] // UNCOMMENT
-                // ); // This is suggested because we will get seeds also // UNCOMMENT
-                // console.log(xrpWallet); // Produces different addresses // UNCOMMENT
-
-                const accountFromMnemonic =
-                  ethers.Wallet.fromMnemonic(trimmedPhrase);
-                const Keys = accountFromMnemonic._signingKey();
-                const privateKey = Keys.privateKey;
+                const accountFromMnemonic = Platform.OS==="android"?await EthereumWallet.recoverMultiChainWallet(trimmedPhrase):await recoverMultiChainWallet(trimmedPhrase);
                 const wallet = {
-                  address: accountFromMnemonic.address,
-                  privateKey: privateKey,
+                  address: accountFromMnemonic.ethereum.address,
+                  privateKey: accountFromMnemonic.ethereum.privateKey,
                   xrp: {
                     // address: xrpWallet.classicAddress, // UNCOMMENT
                     // privateKey: xrpWallet.seed, // UNCOMMENT
                     address: "000000000",
                     privateKey: "000000000",
                   },
+                  stellarWallet: {
+                    publicKey: accountFromMnemonic.stellar.publicKey,
+                    secretKey: accountFromMnemonic.stellar.secretKey
+                  },
+
                 };
                 /* const response = saveUserDetails(accountFromMnemonic.address).then(async (response)=>{
                 if(response===400){
@@ -285,12 +283,6 @@ const ImportMultiCoinWalletModal = ({
 
 
               })*/
-                const accounts = {
-                  address: wallet.address,
-                  privateKey: wallet.privateKey,
-                  name: accountName,
-                  wallets: [],
-                };
                 let wallets = [];
                 const data = await AsyncStorageLib.getItem(`${user}-wallets`)
                   .then((response) => {
@@ -319,10 +311,27 @@ const ImportMultiCoinWalletModal = ({
                       address: "000000000",
                       privateKey: "000000000",
                     },
+                    stellarWallet: {
+                      publicKey: wallet.stellarWallet.publicKey,
+                      secretKey: wallet.stellarWallet.secretKey
+                    },
                     walletType: "Multi-coin",
                     wallets: wallets,
                   },
                 ];
+                const resultApi =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
+                  "multiChainAddress":wallet.address,
+                  "stellarAddress": wallet.stellarWallet.publicKey,
+                  "isPrimary": true
+                });
+                console.log("result---result",resultApi)
+                
+                if (resultApi.success) {
+                   alert("success","wallet synced!");
+                } else {
+                  alert("error","unable to sync wallet.");
+                  console.log('Error:', resultApi.error, 'Status:', resultApi.status);
+                }
                 // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
 
                 dispatch(AddToAllWallets(allWallets, user)).then((response) => {

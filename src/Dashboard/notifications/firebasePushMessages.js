@@ -109,20 +109,37 @@ export default function PushNotifications(){
     // SaveTransaction(type, txHash, "App", coinType, "Multi-coin", coinType);
     
     // console.log("------------------------------end------------------------------------")
+    // PushNotification.localNotification({
+    //   channelId: "1",
+    //   autoCancel: true,
+    //   bigText:submessage,
+    //   bigPictureUrl: imageUrl,
+    //   subText: appName,
+    //   title: title,
+    //   message: message,
+    //   vibrate: true,
+    //   priority: 'high',
+    //   vibration: 300,
+    //   playSound: true,
+    //   soundName: 'default',
+    //   // actions: ["Yes", "No"],
+    //   invokeApp:false
+    // })
     PushNotification.localNotification({
       channelId: "1",
-      autoCancel: true,
-      bigText:submessage,
+      // autoCancel: true,
+      bigText: submessage,
       bigPictureUrl: imageUrl,
       subText: appName,
       title: title,
       message: message,
       vibrate: true,
-      priority: 'high',
       vibration: 300,
+      priority: "max",
+      importance: "max",
       playSound: true,
-      soundName: 'default',
-      // actions: ["Yes", "No"],
-      invokeApp:false
-    })
+      soundName: "default",
+      allowWhileIdle: true,
+      invokeApp: true 
+    });
   }

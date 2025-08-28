@@ -210,6 +210,7 @@ const ImportEthereumModal = ({
             <Text style={style.label}>Name</Text>
             <TextInput
               value={accountName}
+              maxLength={20}
               onChangeText={(text) => {
                 setAccountName(text);
               }}
@@ -223,7 +224,7 @@ const ImportEthereumModal = ({
             <TouchableOpacity
               onPress={async () => {
                 // setText('abc')
-                const text = await Clipboard.getStringAsync();
+                const text = await Clipboard.getString();
                 // console.log(text)
                 // setText(text)
                 // setText('abc')

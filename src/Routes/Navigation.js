@@ -77,11 +77,21 @@ import Setup_password from "../Dashboard/exchange/crypto-exchange-front-end-main
 import Exchange_otp from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/auth/Exchange_otp";
 import { App_Update } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/App_Update";
 import EthSwap from "../ethSwap/EthSwap";
+import BnbSwap from "../ethSwap/BnbSwap";
+import KycComponent from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/KycComponent";
+import TokenSend from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/TokenSend";
+import StellarTransactionViewer from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/StellarTransactionViewer";
+import TxDetails from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/txDetails";
+import FloatingScreen from "../../FloatingComponet/FloatingScreen";
+import ExportUSDC from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/ExportUsdc";
 
 const Stack = createNativeStackNavigator();
 
-const AuthStack = () => (
-  <NavigationContainer
+const AuthStack = () => {
+  const [webUri, setWebUri] = useState(null);
+  return(
+    <>
+    <NavigationContainer
     // theme={{ colors: { background: "#000C66" } }}
     theme={{ colors: { background: "black" } }}
     ref={navigationRef}
@@ -222,6 +232,14 @@ const AuthStack = () => (
           headerShown: false,
         }}
       />
+
+          <Stack.Screen
+            name="ExportUSDC"
+            component={ExportUSDC}
+            options={{
+              headerShown: false,
+            }}
+          />
 
       {/* <Stack.Screen
         name="ScoringTopTab"
@@ -535,7 +553,19 @@ const AuthStack = () => (
             fontWeight: "bold",
           },
         }}
-      />    
+      />
+      <Stack.Screen
+        name="StellarTransactionViewer"
+        component={StellarTransactionViewer}
+        options={{
+          headerShown: false,
+          headerStyle: { backgroundColor: "#4CA6EA" },
+          headerTintColor: "white",
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+        }}
+      />        
       <Stack.Screen
         name="send_recive"
         component={send_recive}
@@ -572,9 +602,37 @@ const AuthStack = () => (
         component={EthSwap}
         options={{headerShown:false}}
       />
+       <Stack.Screen
+        name="BnbSwap"
+        component={BnbSwap}
+        options={{headerShown:false}}
+      />
+       <Stack.Screen
+        name="KycComponent"
+        component={KycComponent}
+        options={{headerShown:false}}
+      />
+       <Stack.Screen
+        name="TokenSend"
+        component={TokenSend}
+        options={{headerShown:false}}
+      />
+      <Stack.Screen
+        name="TxDetails"
+        options={{headerShown:false}}
+        >
+        {(props) => <TxDetails {...props} showWebView={(uri) => setWebUri(uri)} />}
+        </Stack.Screen>
     </Stack.Navigator>
   </NavigationContainer>
-);
+      <FloatingScreen
+        uri={webUri}
+        visible={!!webUri}
+        onClose={() => setWebUri(null)}
+      />
+  </>
+  )
+};
 const NavigationProvider = () => {
   let statee = useSelector((state) => state);
   const [extended, setExtended] = useState(false);

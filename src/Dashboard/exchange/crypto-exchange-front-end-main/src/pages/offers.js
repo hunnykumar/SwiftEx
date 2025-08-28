@@ -36,6 +36,8 @@ import { useIsFocused } from '@react-navigation/native';
 import WebView from "react-native-webview";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import Offers_manages from "./Offers_manages";
+import CustomOrderBook from "./stellar/CustomOrderBook";
+import { STELLAR_URL } from "../../../../constants";
 
 
 
@@ -270,7 +272,7 @@ export const OfferListViewHome = () => {
                                 <TouchableOpacity style={{ alignSelf: "flex-end", marginRight: 10, marginTop: 10 }} onPress={() => { setopen_details(false); }}>
                                   <Icon name={"close"} type={"antDesign"} size={28} color={"black"} />
                                 </TouchableOpacity>
-                                <WebView source={{ uri: `https://stellar.expert/explorer/testnet/tx/${id}`}} />
+                                <WebView source={{ uri: `${STELLAR_URL.EXPERT_URL}/tx/${id}`}} />
                               </View>
                             </Modal>
                           </View>
@@ -303,12 +305,16 @@ export const OfferView = () => {
     phoneNumber: "",
     isEmailVerified: true,
   });
+  const [enableComponent, setenableComponent] = useState(0);
   return (
     <>
  
  <Exchange_screen_header title="Offers" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
       <View style={{ height: hp(100), backgroundColor: "#011434",paddingBottom:hp(15) }}>
-      <Offers_manages/>
+         {/* enableComponent Buttons */}
+     <Offers_manages/>
+     {/* <CustomOrderBook/> */}
+      
       </View>
     </>
   );
@@ -512,5 +518,43 @@ fontSize:20,
 fontWeight:"bold",
 color:"gray",
 marginStart:5
-}
+},
+tabContainer: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  paddingVertical: 0.1,
+  paddingHorizontal:10,
+  width:wp(100)
+},
+tabButton: {
+  paddingVertical: 12,
+  width:wp(45),
+  marginHorizontal: 5,
+  borderRadius: 10,
+  backgroundColor: "gray",
+  alignItems:"center"
+},
+activeTab: {
+  backgroundColor: "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
+  borderColor:"rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
+  borderWidth:1,
+},
+tabText: {
+  fontSize: 16,
+  fontWeight: "bold",
+  color: "white",
+},
+activeText: {
+  color: "#fff",
+},
+content: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+},
+contentText: {
+  fontSize: 20,
+  fontWeight: "bold",
+  color: "#333",
+},
 });

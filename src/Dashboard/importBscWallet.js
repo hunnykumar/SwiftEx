@@ -104,11 +104,7 @@ const ImportBscWallet = (props) => {
     }
   }, [mnemonic, privateKey, json]);
   const handleUsernameChange = (text) => {
-    const formattedUsername = text
-      .replace(/\s/g, '')
-      .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '')
-      .replace(/[^a-zA-Z0-9]/g, '');
-  
+    const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
     setAccountName(formattedUsername);
   };
 
@@ -183,6 +179,7 @@ const ImportBscWallet = (props) => {
           <Text style={style.label}>Name</Text>
           <TextInput
             value={accountName}
+            maxLength={20}
             onChangeText={(text) => {
               handleUsernameChange(text)
             }}

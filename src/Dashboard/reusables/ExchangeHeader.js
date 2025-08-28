@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, Dimensions, Animated, TouchableWithoutFeedback } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, Dimensions, Animated, TouchableWithoutFeedback, Alert } from "react-native";
 import React, { useCallback, useState } from "react";
 import Icon from "../../icon";
 import {
@@ -10,6 +10,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import darkBlue from "../../../assets/darkBlue.png";
 import { REACT_APP_LOCAL_TOKEN } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import { useSelector } from "react-redux";
+import { createGuestUser } from "../exchange/crypto-exchange-front-end-main/src/api";
 
 export const ExchangeHeaderApp = () => {
   const navigation = useNavigation();
@@ -136,9 +137,10 @@ const CustomDrawer = ({ isVisible, onClose }) => {
   const handle_logout=async()=>{
     try {
       onClose()
-      const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-      await AsyncStorage.removeItem(LOCAL_TOKEN);
-      naviagtion.navigate("exchangeLogin");
+      await AsyncStorage.removeItem("UserAuthID");
+      // createGuestUser()
+      Alert.alert("You're in Guest Mode.");
+      // naviagtion.navigate("Home");
     } catch (error) {
       console.log("--===9",error)
     }
@@ -219,6 +221,25 @@ export const Exchange_Login_screen = ({ title, onLeftIconPress }) => {
           />
         </TouchableOpacity>
         <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:state.THEME.THEME===false?"black":"#fff" }]}>{title}</Text>
+      <View style={styles.exchangerightIconContainer} />
+      </View>
+    </>
+  );
+};
+
+export const TransactionForStellar = ({ title, onLeftIconPress }) => {
+  return (
+    <>
+      <View style={[styles.exchangeheaderContainer, { backgroundColor:"#011434",height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
+        <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
+          <Icon
+            name={"arrow-left"}
+            type={"materialCommunity"}
+            size={30}
+            color={"#fff"}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:"#fff" }]}>{title}</Text>
       <View style={styles.exchangerightIconContainer} />
       </View>
     </>

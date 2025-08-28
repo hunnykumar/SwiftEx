@@ -10,9 +10,10 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { useSelector } from 'react-redux';
-const StellarSdk = require('stellar-sdk');
+import * as StellarSdk from '@stellar/stellar-sdk';
 import axios from 'axios';
-const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
+import { STELLAR_URL } from '../../../../constants';
+const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
 const StellarAccountReserve = ({ 
   isVisible, 
@@ -59,7 +60,7 @@ const StellarAccountReserve = ({
       let xlmInOffers = 0;
       let offerCount = 0;
       try {
-        const apiUrl = `https://horizon-testnet.stellar.org/accounts/${publicKey}/offers?limit=200&order=desc`;
+        const apiUrl = `${STELLAR_URL.URL}/accounts/${publicKey}/offers?limit=200&order=desc`;
         const response = await axios.get(apiUrl);
         
         // Log the response for debugging

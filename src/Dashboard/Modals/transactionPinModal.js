@@ -6,6 +6,7 @@ import {
   Button,
   Image,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -33,6 +34,7 @@ import { CommonActions } from "@react-navigation/native";
 import { useToast } from "native-base";
 import { alert, ShowToast } from "../reusables/Toasts";
 import { getAllBalances } from "../../utilities/web3utilities";
+import { PPOST, proxyRequest } from "../exchange/crypto-exchange-front-end-main/src/api";
 
 const TransactionPinModal = ({
   pinViewVisible,
@@ -132,36 +134,22 @@ const TransactionPinModal = ({
       if (enteredPin.length===6) {
         const Pin = await AsyncStorage.getItem("pin");
         setPinViewVisible(false);
-        setLoader(true);
+        // setLoader(true);
         if (JSON.parse(Pin) === enteredPin) {
           const emailid = await state.user;
           const token = await state.token;
   
           if (type === "Eth") {
-            let txx = await provider.core
-              .sendTransaction(rawTransaction)
-              .catch((e) => {
-                console.log(e);
-                setLoading(false);
-                alert("error","insufficient funds...");
-              });
-            const tx = txx.wait();
-            console.log("Sent transaction", await tx);
+
+            const { res, err } = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:rawTransaction});
+            if (err) {
+              console.log(err);
+              setLoading(false);
+              Alert.alert("Error", err.message||"Something went wrong");
+            }
   
-            if (txx.hash) {
+            if (res.txHash) {
               try {
-                const type = "Send";
-                const chainType = "Eth";
-                const saveTransaction = await SaveTransaction(
-                  type,
-                  txx.hash,
-                  emailid,
-                  token,
-                  walletType,
-                  chainType
-                );
-  
-                console.log(saveTransaction);
                 ShowToast(toast, "Transaction Successful");
   
                 setLoading(false);
@@ -220,28 +208,20 @@ const TransactionPinModal = ({
               }
             }
           } else if (type === "BSC") {
-            const txx = await provider
-              .sendTransaction(rawTransaction)
-              .catch((e) => {
-                return alert(e);
-              }); //SendTransaction(signer, token)
-            if (txx.hash) {
+            const { res, err } = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {signedTx:rawTransaction});
+            if(err)
+            {
+              setDisable(false);
+              setPinViewVisible(false);
+              setLoader(false);
+              setLoading(false);
+              console.log(err);
+              alert("error","Something went wrong...")
+            }
+      
+         if (res.txHash) {
               try {
-                const type = "Send";
-                const chainType = "BSC";
-  
-                const saveTransaction = await SaveTransaction(
-                  type,
-                  txx.hash,
-                  emailid,
-                  token,
-                  walletType,
-                  chainType
-                );
-  
-                console.log(saveTransaction);
                 ShowToast(toast, "Transaction Successful");
-  
                 setLoading(false);
                 setLoader(false);
                 setDisable(false);

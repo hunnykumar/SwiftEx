@@ -122,10 +122,7 @@ const ImportBinanceWallet = ({
     },[mnemonic,privateKey,json,accountName])
 
     const handleUsernameChange = (text) => {
-      const formattedUsername = text
-        .replace(/\s/g, '')
-        .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '')
-        .replace(/[^a-zA-Z0-9]/g, '');
+      const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
     
       setAccountName(formattedUsername);
     };
@@ -220,6 +217,7 @@ const ImportBinanceWallet = ({
             <Text style={style.label}>Name</Text>
             <TextInput
               value={accountName}
+              maxLength={20}
               onChangeText={(text) => {
                 handleUsernameChange(text)
               }}
@@ -237,7 +235,7 @@ const ImportBinanceWallet = ({
                 // setText(text)
                 // // setText('abc')
                 // console.log(label)
-                const text = await Clipboard.getStringAsync();
+                const text = await Clipboard.getString();
                 if(label==='mnemonic')
                 {
                   // Paste(setMnemonic);

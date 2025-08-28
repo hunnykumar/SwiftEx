@@ -14,7 +14,6 @@ import {
   Keyboard,
   Image,
   ScrollView,
-  Platform,
 } from "react-native";
 import "@ethersproject/shims";
 import { ethers } from "ethers";
@@ -51,7 +50,7 @@ import {
 import { tokenTotokenPrice } from "../tokens/UniswapFunctions";
 import tokenList from "../tokens/tokenList.json";
 import PancakeList from "../tokens/pancakeSwap/PancakeList.json";
-import chooseSwap from "../tokens/chooseSwap.json";
+// import chooseSwap from "../tokens/chooseSwap.json";
 import { getSwapPrice } from "../tokens/pancakeSwap/pancakeFunctions";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import SwapPinModal from "./swapPinModal";
@@ -66,9 +65,26 @@ import { SwapTokensToTokens, UniSwap } from "../tokens/UniswapFunctions";
 import { useBiometricsForSwapTransaction } from "../../biometrics/biometric";
 import { alert } from "../reusables/Toasts";
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
-import Snackbar from "react-native-snackbar";
 
 const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
+  const chooseSwap=[
+    {
+      "name": "Binance",
+      "symbol": "BNB",
+      "address": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+      "chainId": 56,
+      "decimals": 18,
+      "logoURI": "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png"
+    },
+    {
+    "name": "Ethereum",
+   "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "symbol": "WETH",
+    "decimals": 18,
+     "chainId": 1,
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png"
+        },
+  ]
   const FOCUSED=useIsFocused()
   const state = useSelector((state) => state);
   const [loading, setLoading] = useState(false);
@@ -94,6 +110,7 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
       name: "Ethereum",
       address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       symbol: "WETH",
+      decimals: 18,
       ChainId: "1",
       logoUri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
     }
@@ -109,6 +126,7 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
     name: "1inch",
     address: "0x111111111117dC0aa78b770fA6A738034120C302",
     symbol: "1INCH",
+    decimals: 18,
     ChainId: "1",
     logoUri: "https://assets.coingecko.com/coins/images/13469/thumb/1inch-token.png?1608803028",
   });
@@ -122,24 +140,14 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
   console.log(state.wallet);
   
     useEffect(() => {
-      setPinViewVisible(false)
+    setTrade();
+    setMessage("");
+    setAmount("");
+    setLoading2(false);
+    setSwapType("ETH")
+    setCoinType("1")
       const fetchData = async () => {
         try {
-          setSwapType("ETH")
-          setCoin0( {
-            name: "Ethereum",
-            address: "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
-            symbol: "WETH",
-            ChainId: "1",
-            logoUri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-          })
-          setCoin1({
-            name: "Uniswap",
-            address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
-            symbol: "UNI",
-            ChainId: "5",
-            logoUri: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
-          })
           let bal = await AsyncStorageLib.getItem("EthBalance");
           setBalance(bal)
         } catch (e) {
@@ -856,7 +864,7 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
           setWalletType(Type);
     
           if (Type === "Multi-coin") {
-            setData(chooseSwap);
+            setData(tokenList);
             setChooseChain(chooseSwap);
           } else if (Type === "Ethereum") {
             const data = tokenList.reverse();
@@ -894,7 +902,7 @@ const SwapModal = ({ modalVisible, setModalVisible, onCrossPress }) => {
       setWalletType(Type);
 
       if (Type === "Multi-coin") {
-        setData(chooseSwap);
+        setData(tokenList);
         setChooseChain(chooseSwap);
       } else if (Type === "Ethereum") {
         const data = tokenList.reverse();
@@ -1004,7 +1012,7 @@ fetchData();
       }
     }
     fetchData()
-  }, [coin0.address]);
+  }, [coin1,coin0.address]);
 
   useEffect(() => {
    const fetch=async()=>{
@@ -1041,17 +1049,10 @@ fetchData();
     if (amount != 0) {
       console.log(amount > balance);
       if (amount > balance) {
-        Keyboard.dismiss();
         setDisable(true);
         setMessage("Low Balance");
-        Snackbar.show({
-          text: "Low Balance",
-          duration: Snackbar.LENGTH_SHORT,
-          backgroundColor: 'red',
-        });
-        setLoading2(false)
+        alert("error", "Low Balance");
       } else if (!inputValidation && !inputValidation1) {
-        setLoading2(false)
         setMessage("Please enter a valid amount");
         alert("error", "Please enter a valid amount");
       } else {
@@ -1063,6 +1064,7 @@ fetchData();
   }, [amount]);
 
   const swap_get= async(amount)=>{
+    setTrade();
     setLoading2(true);
     console.log(coin1.address);
     const token = await state.token;
@@ -1428,169 +1430,105 @@ fetchData();
           setModalVisible(false);
         }}
       >
-        <View style={[styles.mainContainermodal,{backgroundColor:state.THEME.THEME===false?"white":"black",paddingTop:Platform.OS==="ios"?0:hp(5)}]}>
-        <Wallet_screen_header title="Swap" onLeftIconPress={() => {setModalVisible(!modalVisible),setTrade(0)}} />
-          <View style={styles.cardBoxContainer}>
-            {/* <TokenHeader setVisible={setModalVisible} name={name} /> */}
-            <View
-              style={styles.cardmainContainer}
-              onStartShouldSetResponder={() => Keyboard.dismiss()}
-            >
-              <View style={styles.tokenView}>
-                {/* <Text style={{ color: "#C1BDBD" }}>You Pay</Text> */}
-                <Text style={{ color: state.THEME.THEME===false?"black":"#fff" }}>You Pay</Text>
-                {/* <Text style={{ color: state.THEME.THEME===false?"black":"#fff" }}>{coin0.name}</Text> */}
+        <View style={[styles.mainContainermodal,{backgroundColor:state.THEME.THEME===false?"white":"black"}]}>
+         <Wallet_screen_header title="Send" onLeftIconPress={() => {setModalVisible(false)}} />
+          <View style={[styles.cardBoxContainer,{backgroundColor:state?.THEME?.THEME===false?"#ebebeb":"#171616"}]}>
+             <Text style={styles.labelCon}>From</Text>
+            <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: state?.THEME?.THEME === false ? "#f8f9fa" : "#080a0a" }]} onPress={()=>{setCoinType("0"),setOpenChain(true)}}>
+              <View style={styles.tokenContainer}>
+                <Image source={{  uri: coin0.logoUri
+                        ? coin0.logoUri
+                        : "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png", }} style={[styles.logoImage, { marginRight: 5 }]} />
+                <Text style={[styles.tokenSymbol, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>{coin0.name}</Text>
               </View>
-              <View style={styles.tokenView}>
-                <TextInput
-                  keyboardType="numeric"
-                  returnKeyType="done"
+            
+              <View style={{ width: wp(30), flexDirection: "row", alignItems: "center" }}>
+                <Text style={styles.tokenBalance}>Balance:</Text>
+                <Text
+                  style={[styles.tokenBalance, { flexShrink: 1 }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {balance ?? "0.00"}
+                </Text>
+              </View>
+
+            </TouchableOpacity>
+            <TextInput
+                  maxLength={30}
+                  returnKeyType='done'
+                  style={[styles.input,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a",color:state?.THEME?.THEME===false?"black":"#fff"}]}
+                  value={amount}
                   onChangeText={(text) => {
                     swap_get(text);
                     setAmount(text);
                   }}
-                  placeholder="0"
-                  placeholderTextColor={"gray"}
-                  style={[styles.textinputCon,{backgroundColor:state.THEME.THEME===false?"#fff":"black",color:state.THEME.THEME===false?"black":"#fff",fontSize:19}]}
+                  placeholder="0.0"
+                  keyboardType="decimal-pad"
+                  placeholderTextColor="#666"
                 />
-                <TouchableOpacity
-                  onPress={() => {
-                    setCoinType("0");
-                    setOpenChain(true);
-                  }}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginHorizontal: wp(5),
-                  }}
-                >
-                  <Image
-                    source={{
-                      uri: coin0.logoUri
-                        ? coin0.logoUri
-                        : "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-                    }}
-                    style={{ height: hp(4), width: wp(8.3) }}
-                  />
-                  <Text style={{ marginRight: wp(5),marginLeft:wp(1),color:state.THEME.THEME===false?"black":"#fff" }}>
-                    {coin0.symbol ? coin0.symbol==="WETH"?" ETH":coin0.symbol : "ETH"}
-                  </Text>
+            <View style={styles.swapButton}>
 
-                <AntDesign
-                  onPress={() => {
-                    setCoinType("0");
-                    setOpenChain(true);
-                  }}
-                  name={"right"}
-                  size={15}
-                  color={"#4CA6EA"}
-                  style={{ marginRight: wp(1) }}
-                  />
-                  </TouchableOpacity>
-              </View>
-
-              <View style={{ flexDirection: "row", width: wp(90) }}>
-                <Text style={{ marginLeft: wp(5), marginTop: hp(2),color:state.THEME.THEME===false?"black":"#fff" }}>Balance:{" "}</Text>
-                <View style={{ width: wp(13) }}>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(11) }}>
-                    <Text style={{ marginLeft: wp(1), marginTop: hp(2),color:state.THEME.THEME===false?"black":"#fff" }}>
-                      {balance ? balance : <Text style={{ color:state.THEME.THEME===false?"black":"#fff" }}>0</Text>}
-                    </Text>
-                  </ScrollView>
-                </View>
-              </View>
-
-              {/* <Text style={{ color: "black", marginHorizontal: wp(5) }}>
-                {" "}
-                Balance:
-                {balance ? (
-                  Number(balance).toFixed(2)
-                ) : (
-                  <Text style={{ color: "#C1BDBD" }}>0</Text>
-                )}
-              </Text> */}
-              <Text style={styles.color}></Text>
-            </View>
-
-            
-
-            <View style={{width:"100%",flexDirection:"row",marginLeft:6,alignItems:"center",marginTop:-45}}>
-              <View style={{  borderColor: 'rgba(28, 41, 77, 1)',borderBottomWidth:0.9,width:"60%",borderBlockEndColor: 'gray'}}/>
-              <TouchableOpacity style={[styles.swapiconView, { borderColor: "#3574B6", borderWidth: 1, backgroundColor: "#2F7DFF66",marginHorizontal:10 }]} onPress={() => { setCoin0(coin1), setCoin1(coin0) }}>
+              <View style={[styles.divider, { backgroundColor: state?.THEME?.THEME === false ? "#c7c5c5" : "#080a0a" }]} />
+              <TouchableOpacity style={styles.swapButtonCircle} onPress={() => { setCoin0(coin1), setCoin1(coin0) }}>
                 <Icon
                   name={"swap-vertical"}
-                  size={22}
+                  size={23}
                   color={"#3574B6"}
-                  style={{ alignSelf: "center", marginTop: hp(1) }}
                 />
               </TouchableOpacity>
-              <View style={{  borderColor: 'rgba(28, 41, 77, 1)',borderBottomWidth:0.9,width:"14%",borderBlockEndColor: 'gray'}}/>
+              <View style={[styles.divider, { backgroundColor: state?.THEME?.THEME === false ? "#c7c5c5" : "#080a0a" }]} />
             </View>
-            <View
-              style={styles.cardmainContainer1}
-              onStartShouldSetResponder={() => Keyboard.dismiss()}
-            >
-              <View style={styles.tokenView}>
-                {/* <Text style={{ color: "#C1BDBD" }}>You Get</Text> */}
-                <Text style={{ color:state.THEME.THEME===false?"black":"#fff" }}>You Get</Text>
-                {/* <Text style={{ color:state.THEME.THEME===false?"black":"#fff" }}> {coin1.name}</Text> */}
-              </View>
-              <View style={styles.tokenView}>
-                <View style={{ flexDirection: "row", width: wp(19) }}>
-                  <View style={{ width: wp(13) }}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(16) }}>
-                      <Text style={{ fontSize:19,marginLeft: wp(1), marginTop: hp(2),color:state.THEME.THEME===false?"black":"#fff" }}>
-                        {trade ? `${trade.minimumAmountOut}` : <Text style={{ color:state.THEME.THEME===false?"black":"#fff"}}>0</Text>}
-                      </Text>
-                    </ScrollView>
-                  </View>
-                </View>
-                
-                <TouchableOpacity
-                  onPress={() => {
-                    Keyboard.dismiss()
-                    if(coin0.symbol==="WETH")
-                    {
-                      Snackbar.show({
-                        text: "Eth test net only swap with UNI",
-                        duration: Snackbar.LENGTH_LONG,
-                        backgroundColor: 'orange',
-                      });
-                    }else{
-                      setCoinType("1");
-                      setVisible(true);
-                    }
-                  }}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginHorizontal: wp(5),
-                  }}
-                >
-                  <Image
-                    source={{
-                      uri: coin1.logoUri
+            
+
+          <Text style={styles.labelCon}>To</Text>
+          <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: state?.THEME?.THEME === false ? "#f8f9fa" : "#080a0a" }]} onPress={()=>{setCoinType("1"),setVisible(true)}}>
+              <View style={styles.tokenContainer}>
+                <Image source={{ uri: coin1.logoUri
                         ? coin1.logoUri
                         : "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png ",
-                    }}
-                    style={{ height: hp(4), width: wp(8.3) }}
-                  />
-                  <Text style={{ marginRight: wp(5),marginLeft:wp(1),color:state.THEME.THEME===false?"black":"#fff" }}>
-                    { coin1.symbol ? coin1.symbol : "WBTC"}
-                  </Text>
-                <AntDesign
-                  onPress={() => {
-                    setCoinType("1");
-                    setVisible(true);
-                  }}
-                  name={"right"}
-                  size={15}
-                  color={"#4CA6EA"}
-                  style={styles.rightICon}
-                  />
-                  </TouchableOpacity>
+                    }} style={[styles.logoImage, { marginRight: 5 }]} />
+                <Text style={[styles.tokenSymbol, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}> { coin1.symbol ? coin1.symbol : "WBTC"}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
+           {trade && (
+                      <View style={[styles.quoteTextCon,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>
+                        <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>≈</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>{trade.minimumAmountOut}</Text>
+                        </ScrollView>
+                      <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>{ coin1.symbol ? coin1.symbol : "WBTC"}</Text>
+                      </View>
+                    )}
+{/* {"token1totoken2": "10.501", "token2totoken1": "0.0895357", "trade": {"minimumAmountOut": "10.501", "slippageTolerance": "1"}} */}
+         
+                 {trade && (
+                   <View style={[styles.quoteDetailsContainer,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>
+                     <Text style={[styles.quoteTitle,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>Quote Details</Text>
+                     
+                     <View style={styles.quoteRow}>
+                       <Text style={styles.quoteLabel}>Rate</Text>
+                       <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>
+                         1 {coin0.name} = {trade?.conversionRate} {coin1.symbol ? coin1.symbol : "WBTC"}
+                       </Text>
+                     </View>
+         
+                     <View style={styles.quoteRow}>
+                       <Text style={styles.quoteLabel}>Slippage</Text>
+                       <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{trade?.slippageTolerance}%</Text>
+                     </View>
+         
+                     <View style={styles.quoteRow}>
+                       <Text style={styles.quoteLabel}>Minimum Received</Text>
+                       <View style={{width:wp(25),flexDirection:"row"}}>
+                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                           <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{trade.minimumAmountOut}</Text>
+                         </ScrollView>
+                         <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}> {coin1.symbol ? coin1.symbol : "WBTC"}</Text>
+                       </View>
+                     </View>
+                   </View>
+                 )}
 
             <View
               style={{
@@ -1617,7 +1555,6 @@ fetchData();
             // }}
             disabled={disable}
             onPress={async () => {
-              Keyboard.dismiss()
               //setVisible(true)
               setLoading2(true);
               console.log(coin1.address);
@@ -1978,7 +1915,12 @@ fetchData();
               }
             }}
           >
-            <Text style={styles.addButtonText}>Swap
+            <Text style={styles.addButtonText}>
+              {loading2 ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                "Swap"
+              )}
             </Text>
           </TouchableOpacity>
         </View>
@@ -1999,10 +1941,12 @@ fetchData();
         >
           <View
             style={{
+              height: hp(100),
               width: wp(99),
               backgroundColor: "#ddd",
               borderTopRightRadius: 10,
               borderTopLeftRadius: 10,
+              // marginTop: hp(5),
               left: wp(-4.5),
             }}
           >
@@ -2034,10 +1978,12 @@ fetchData();
         >
           <View
             style={{
+              height: hp(100),
               width: wp(99),
               backgroundColor: "#ddd",
               borderTopRightRadius: 10,
               borderTopLeftRadius: 10,
+              // marginTop: hp(5),
               left: wp(-4.5),
             }}
           >
@@ -2068,104 +2014,85 @@ fetchData();
             setTradeVisible(false);
           }}
         >
-          <View style={[styles.modelView,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-      <Wallet_screen_header title="Confirmation" onLeftIconPress={() => {setTradeVisible(false)}} />
-           
+          <View style={styles.modelView}>
+            {/* <Entypo
+              name="cross"
+              // color={"gray"}
+              color={"white"}
+              size={24}
+              style={styles.crossIcon}
+              onPress={() => {
+                setTradeVisible(false);
+              }}
+            /> */}
+            <Entypo
+              name="cross"
+              // color={"gray"}
+              color={"black"}
+              size={24}
+              style={styles.crossIcon}
+              onPress={() => {
+                setTradeVisible(false);
+              }}
+            />
+            <Text style={{ alignSelf: 'center', fontSize: 19, fontWeight: '700', color: 'black', marginBottom: '15%' }}>Swap Confirmation</Text>
             <View style={styles.container_view}>
-              <View style={styles.token_details}>
-                <Image
-                  source={{
-                    uri: coin0.logoUri
-                      ? coin0.logoUri
-                      : "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-                  }}
-                  style={{ height: hp(5), width: wp(11) }}
-                />
-               <View style={{marginLeft:10}}>
-               <Text style={{ fontWeight:"500",marginRight: wp(5), marginLeft: wp(1), color: state.THEME.THEME === false ? "black" : "#fff",fontSize:19 }}>
-                  {coin0.name}
+              <Text style={styles.headings}>Slip Page Tolerance</Text>
+              <View style={styles.data_view}>
+                <Text style={styles.data_text} numberOfLines={1}>
+                  {trade ? trade.slippageTolerance : 0} %
                 </Text>
-                <Text style={{ marginRight: wp(5), marginLeft: wp(1), color: state.THEME.THEME === false ? "black" : "#fff",fontSize:15 }}>
-                {amount ? amount : 0}
-                </Text>
-               </View>
               </View>
-              
-              <View style={{ marginLeft: wp(2.2),paddingVertical:14 }}>
-                <Icon
-                  name={"arrow-down-outline"}
-                  size={30}
-                  color={state.THEME.THEME === false ? "black" : "#fff"}
-                />
-              </View>
-
-              <View style={styles.token_details}>
-                <Image
-                  source={{
-                    uri: coin1.logoUri
-                      ? coin1.logoUri
-                      : "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png ",
-                  }}
-                  style={{ height: hp(5), width: wp(11) }}
-                />
-                <View style={{ marginLeft: 10 }}>
-                  <Text style={{ fontWeight:"500",marginRight: wp(5), marginLeft: wp(1), color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 19 }}>
-                    {coin1.name}
-                  </Text>
-                  <Text style={{ marginRight: wp(5), marginLeft: wp(1), color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 15 }}>
-                    {trade ? trade.minimumAmountOut : 0}
-                  </Text>
-                </View>
-               </View>
-
-              </View>
-           
-
-            <View style={[styles.container_info,{width:wp(93),justifyContent:"center",paddingVertical:hp(2)}]}>
-              <View style={[styles.token_details, { width: "100%", justifyContent: "space-between",borderColor: 'rgba(28, 41, 77, 1)',borderBottomWidth:0.9,borderBlockEndColor: 'gray',paddingBottom:hp(2) }]}>
-                <Text style={[styles.data_text_, { width: wp(33),color:"gray",fontWeight:"500" }]} numberOfLines={1} >From Wallet :</Text>
-                <View style={{ width: wp(40) }}>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <Text style={[styles.data_text_,{color:"gray",fontWeight:"500"}]} numberOfLines={1} >{state?.wallet?.address}</Text>
-                  </ScrollView>
-                </View>
-              </View>
-
-              <View style={[styles.token_details, { width: "100%", justifyContent: "space-between",marginTop:hp(2) }]}>
-              <View style={{flexDirection:"row",width:wp(31),alignItems:"center"}}>
-               <Text style={[styles.data_text_, { color:"gray",fontWeight:"500" }]} numberOfLines={1} >Provider </Text>
-                <Icon name={"information-circle"} size={22} color={"#3574B6"} />
-                </View>
-
-                <View style={{alignContent:"flex-end" }}>
-                    <Text style={[styles.data_text_,{color:"gray",fontWeight:"500"}]} numberOfLines={1} >UniSwap</Text>
-                </View>
-              </View>
-
-              <View style={[styles.token_details, { width: "100%", justifyContent: "space-between",marginTop:hp(1.5) }]}>
-              <View style={{flexDirection:"row",width:wp(31),alignItems:"center"}}>
-               <Text style={[styles.data_text_, { color:"gray",fontWeight:"500" }]} numberOfLines={1} >Max Slippage </Text>
-               <Icon name={"information-circle"} size={22} color={"#3574B6"} />
-               </View>
-
-                <View style={{alignContent:"flex-end" }}>
-                    <Text style={[styles.data_text_,{color:"gray",fontWeight:"500"}]} numberOfLines={1} >{trade ? trade.slippageTolerance : 0} %</Text>
-                </View>
-              </View>
-
-              <View style={[styles.token_details, { width: "100%", justifyContent: "space-between",marginTop:hp(1.5) }]}>
-               <View style={{flexDirection:"row",width:wp(31),alignItems:"center"}}>
-               <Text style={[styles.data_text_, { color:"gray",fontWeight:"500" }]} numberOfLines={1} >Network Fee </Text>
-                <Icon name={"information-circle"} size={22} color={"#3574B6"} />
-               </View>
-                <View style={{alignContent:"flex-end" }}>
-                    <Text style={[styles.data_text_,{color:"gray",fontWeight:"500"}]} numberOfLines={1} >null</Text>
-                </View>
-              </View>
-
             </View>
 
-            
+            <View style={styles.container_view}>
+              <Text style={styles.headings}>Amount</Text>
+              <View style={styles.data_view}>
+                <Text style={styles.data_text} numberOfLines={1}>
+                  {amount ? amount : 0} {coin0.name}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.container_view}>
+              <Text style={styles.headings}>You get</Text>
+              <View style={styles.data_view}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "3%" }}>
+                  <Text style={styles.data_text} numberOfLines={1}>
+                    {trade ? trade.minimumAmountOut : 0}
+                  </Text>
+                </ScrollView>
+                <Text style={{ width: '79%', fontWeight: '700', marginLeft: '3%' }} numberOfLines={1}>{coin1.name}</Text>
+              </View>
+            </View>
+
+            {/* <View style={styles.modelmainContainer}>
+              <Text style={styles.headingColor}>Slip Page Tolerance</Text>
+              <Text style={styles.colon}>:</Text>
+              <ScrollView horizontal>
+                <Text style={styles.textColor}>
+                  {trade ? trade.slippageTolerance : 0} %
+                </Text>
+              </ScrollView>
+            </View>
+            <View style={styles.modelmainContainer}>
+              <Text style={styles.headingColor}>Amount</Text>
+              <Text style={styles.colon}>:</Text>
+              <ScrollView horizontal>
+                <Text style={styles.textColor} numberOfLines={1}>
+                  {amount ? amount : 0} {coin0.name}
+                </Text>
+              </ScrollView>
+            </View>
+            <View style={styles.modelmainContainer}>
+              <Text style={styles.headingColor}>You get</Text>
+              <Text style={styles.colon}>:</Text>
+              <ScrollView horizontal>
+                <Text style={styles.textColor} numberOfLines={1}>
+                  {trade ? trade.minimumAmountOut : 0} {coin1.name}
+                </Text>
+              </ScrollView>
+            </View> */}
 
             <TouchableOpacity
               disabled={loading === true ? true : false}
@@ -2201,19 +2128,20 @@ fetchData();
               </Text>
             </TouchableOpacity>
           </View>
+
           <SwapPinModal
-        pinViewVisible={pinViewVisible}
-        setPinViewVisible={setPinViewVisible}
-        setModalVisible={setModalVisible}
-        setTradeVisible={setTradeVisible}
-        pancakeSwap={pancakeSwap}
-        coin0={coin0}
-        coin1={coin1}
-        SaveTransaction={SaveTransaction}
-        swapType={swapType}
-        setLoading={setLoading}
-        amount={amount}
-      />
+            pinViewVisible={pinViewVisible}
+            setPinViewVisible={setPinViewVisible}
+            setModalVisible={setModalVisible}
+            setTradeVisible={setTradeVisible}
+            pancakeSwap={pancakeSwap}
+            coin0={coin0}
+            coin1={coin1}
+            SaveTransaction={SaveTransaction}
+            swapType={swapType}
+            setLoading={setLoading}
+            amount={amount}
+          />
         </Modal2>
       </Modal>
     </View>
@@ -2224,18 +2152,26 @@ export default SwapModal;
 
 const styles = StyleSheet.create({
   mainContainermodal: {
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
     alignSelf: "center",
-    width: "100%",
-    height:"100%"
-    // marginTop: "auto",
-    // backgroundColor: "#131E3A",
+    height: hp(100),
+    width: wp(100),
+    marginTop: hp(3),
   },
   modelView: {
+    paddingTop: hp(1),
     paddingBottom: hp(5),
-    width: wp(100),
-    height:hp(100),
+    width: wp(93),
     alignSelf: "center",
     alignItems: "center",
+    // backgroundColor: "#131E3A",
+    // backgroundColor:"#145DA0",
+    backgroundColor: "white",
+    borderRadius: hp(1.9),
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "white",
   },
   modelmainContainer: {
     flexDirection: "row",
@@ -2277,14 +2213,26 @@ const styles = StyleSheet.create({
     borderColor: "#fff",
   },
   cardBoxContainer: {
-    borderWidth: StyleSheet.hairlineWidth * 1,
-    borderColor: "gray",
-    marginTop: hp(5),
-    width: wp(90),
-    alignSelf: "center",
-    borderRadius: hp(1),
-    borderColor:"#4CA6EA",
-    borderWidth:0.5
+    backgroundColor: '#ebebeb',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  input:{
+    fontSize: 24,
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    color: '#000',
+  },
+  labelCon: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
   },
   swapText: {
     color: "black",
@@ -2295,15 +2243,19 @@ const styles = StyleSheet.create({
   },
   swapiconView: {
     backgroundColor: "white",
-    height: 40,
-    width: 40,
-    borderRadius: hp(10),
-    alignContent:"center",
+    height: hp(4),
+    width: wp(8),
+    borderRadius: hp(2),
+    // alignSelf: ""mar,
+    marginLeft: wp(73),
+
     borderWidth: StyleSheet.hairlineWidth * 1,
     borderColor: "gray",
     alignItems: "center",
+    position: "absolute",
+    marginTop: hp(16),
   },
-  rightICon: { marginRight: wp(1), },
+  rightICon: { marginRight: wp(10), marginLeft: -34 },
   txtInput: {
     width: wp(20),
     padding: 4,
@@ -2411,12 +2363,12 @@ const styles = StyleSheet.create({
   addButton3: {
     // backgroundColor: "#000C66",
     backgroundColor: "#53A3EA",
-    width: wp(95),
+    width: wp(60),
     paddingVertical: hp(1.9),
     alignItems: "center",
     alignSelf: "center",
     borderRadius: hp(1.9),
-    marginTop: hp(10),
+    marginTop: hp(8),
   },
   addButtonText: {
     color: "#fff",
@@ -2506,10 +2458,9 @@ const styles = StyleSheet.create({
     padding: hp(1),
   },
   container_view: {
-    width: wp(90),
+    width: wp(80),
     alignItems: "flex-start",
     justifyContent: "space-between",
-    marginTop:hp(6)
   },
   headings: {
     width: wp(50),
@@ -2535,24 +2486,88 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "left"
   },
-  data_text_: {
-    color: "black",
-    fontSize: 14,
-    fontWeight: "700",
-    textAlign: "left"
+  tokenSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    marginBottom: 8,
   },
-  token_details:{
+  tokenContainer:{
     flexDirection:"row",
     alignItems:"center",
-    width:wp(99),
+  },
+  logoImage:{
+    height: hp(4.1),
+    width: wp(8)
+  },
+  tokenSymbol: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color:"black"
+  },
+  tokenBalance: {
+    fontSize: 14,
+    color: '#666',
+  },
+  swapButton:{
+    marginTop:14,
+    flexDirection: "row",
+    paddingHorizontal:10,
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  swapButtonCircle:{
+    borderColor:"#3574B6",
+    borderWidth:2,
+    borderRadius:100,
     padding:5
   },
-  container_info:{
-    width:wp(95),
-    padding:5,
-    borderColor:"gray",
-    borderWidth:1,
-    borderRadius:10,
-    marginTop:hp(5)
-  }
+  divider: {
+    height: wp(0.5),
+    width:wp(33),
+    backgroundColor: '#c7c5c5',
+  },
+  quoteTextCon: {
+    flexDirection:"row",
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  quoteText: {
+    fontSize: 24,
+    color: '#666',
+    // padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  quoteDetailsContainer: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  quoteTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color:"black"
+  },
+  quoteRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  quoteLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  quoteValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color:"black"
+  },
 });

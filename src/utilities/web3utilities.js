@@ -80,7 +80,7 @@ export const watchEtherTransfers = ()=> {
       console.log('Starting token balance search')
       console.log(address)
       const response = await Moralis.EvmApi.token.getWalletTokenBalances({
-        "chain": "5",
+        "chain": "1",
         "tokenAddresses": tokenAddress?[tokenAddress]:[],
         "address": address
       });
@@ -96,7 +96,7 @@ export const watchEtherTransfers = ()=> {
 
   export const getBnbTokenBalance = async (address,tokenAddress)=>{
     try {
-      console.log('Starting token balance search')
+      console.log('Starting BNB token balance search')
       console.log(address)
       const response = await Moralis.EvmApi.token.getWalletTokenBalances({
         "chain": "97",

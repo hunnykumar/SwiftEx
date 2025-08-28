@@ -15,7 +15,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { useSelector } from 'react-redux';
-import StellarSdk from 'stellar-sdk';
+import * as StellarSdk from '@stellar/stellar-sdk';
 import Icon from '../../../../../icon';
 import Snackbar from 'react-native-snackbar';
 import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from '../../../../../utilities/StellarUtils';
@@ -24,8 +24,9 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import BigNumber from 'bignumber.js';
+import { STELLAR_URL } from '../../../../constants';
 
-const STELLAR_NETWORK = StellarSdk.Networks.TESTNET;
+const STELLAR_NETWORK = StellarSdk.Networks.PUBLIC;
 
 const Offers_manages = () => {
   const state = useSelector((state) => state);
@@ -50,7 +51,7 @@ const Offers_manages = () => {
   const [lastOfferAmount,setlastOfferAmount]=useState('');
 
 
-  const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
+  const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
   useEffect(() => {
     setLoading(true);
@@ -67,7 +68,7 @@ const Offers_manages = () => {
   }, [isFocused]);
 
 
-  const fetchAvilableBalance=async(asset)=>{
+  const fetchAvilableBalance=async(asset,coinName,assetIssuer)=>{
     if(asset==="native")
     {
       GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
@@ -80,7 +81,7 @@ const Offers_manages = () => {
     }
     if(asset==="credit_alphanum4")
     {
-      GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY).then((result) => {
+      GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY,coinName,assetIssuer).then((result) => {
         setstellarAvalibleBalance(result?.availableBalance).toFixed(5)
         setreserveLoading(false)
         }).catch(error => {
@@ -93,7 +94,7 @@ const Offers_manages = () => {
   const fetchOffers = async () => {
     setLoading(true);
     try {
-      const apiUrl = `https://horizon-testnet.stellar.org/accounts/${state?.STELLAR_PUBLICK_KEY}/offers?limit=200&order=desc`;
+      const apiUrl = `${STELLAR_URL.URL}/accounts/${state?.STELLAR_PUBLICK_KEY}/offers?limit=200&order=desc`;
       const response = await axios.get(apiUrl);
       const fetchedOffers = response.data._embedded?.records || [];
 
@@ -107,13 +108,15 @@ const Offers_manages = () => {
         if (firstOffer.selling) {
           const sellingAssetType = firstOffer.selling.asset_type;
 
-          sellingAssetCode = sellingAssetType === 'native' ? 'XLM' : firstOffer.selling.asset_type || 'Unknown Asset Code';
+          sellingAssetCode = sellingAssetType === 'native' ? 'XLM' : firstOffer.selling.asset_code ;
           sellingAssetIssuer = firstOffer.selling.asset_issuer || 'Unknown Issuer';
 
         }
 
         if (firstOffer.buying) {
-          buyingAssetCode = firstOffer.buying?.asset_code || firstOffer.buying?.asset_type;
+          const buyAssetType = firstOffer.buying.asset_type;
+          buyingAssetCode = buyAssetType === 'native' ? firstOffer.buying?.asset_type:firstOffer.buying?.asset_code;
+
           buyingAssetIssuer = firstOffer.buying.asset_issuer || 'Unknown Issuer';
         }
 
@@ -143,24 +146,36 @@ const Offers_manages = () => {
     );
   };
 
-  const deleteOffer = async (offerId) => {
+  const deleteOffer = async (offer) => {
     console.log("==--------lppp",sellingAssetCode,buyingAssetCode)
     setloading_del(true);
     const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
     try {
       const account = await server.loadAccount(keypair.publicKey());
-
+  
+      const selling =
+        offer.selling.asset_type === "native"
+          ? StellarSdk.Asset.native()
+          : new StellarSdk.Asset(offer.selling.asset_code, offer.selling.asset_issuer);
+  
+      const buying =
+        offer.buying.asset_type === "native"
+          ? StellarSdk.Asset.native()
+          : new StellarSdk.Asset(offer.buying.asset_code, offer.buying.asset_issuer);
+  
+      const op = StellarSdk.Operation.manageSellOffer({
+        offerId: offer.id,
+        selling,
+        buying,
+        amount: "0",
+        price: "1",
+      });
+  
       const transaction = new StellarSdk.TransactionBuilder(account, {
-        fee: StellarSdk.BASE_FEE,
+        fee: await server.fetchBaseFee(),
         networkPassphrase: STELLAR_NETWORK,
       })
-        .addOperation(StellarSdk.Operation.manageOffer({
-          offerId: offerId,
-          selling:sellingAssetCode==="XLM"||sellingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(sellingAssetCode==='credit_alphanum4'&&"USDC", sellingAssetIssuer), 
-          buying: buyingAssetCode==="XLM"||buyingAssetCode==="native"?new StellarSdk.Asset.native():new StellarSdk.Asset(buyingAssetCode==='credit_alphanum4'&&"USDC", buyingAssetIssuer), 
-          amount: '0', 
-          price: '1', 
-        }))
+        .addOperation(op)
         .setTimeout(30)
         .build();
 
@@ -181,7 +196,7 @@ const Offers_manages = () => {
   const handleEdit = (offer,index) => {
     setlastOfferAmount(Number(offer.amount).toFixed(5))
     setreserveLoading(true)
-    fetchAvilableBalance(offer?.selling?.asset_type)
+    fetchAvilableBalance(offer?.selling?.asset_type,offer?.selling?.asset_code,offer?.selling?.asset_issuer)
     setSelectedIndex(index)
     setSelectedOffer(offer);
     setNewAmount(Number(offer.amount).toFixed(5));
@@ -191,11 +206,6 @@ const Offers_manages = () => {
 
   const updateOffer = async () => {
     Keyboard.dismiss();
-    console.log("data---", {
-      newAmount: BigNumber(newAmount || 0).toString(),
-      lastOfferAmount: BigNumber(lastOfferAmount || 0).toString(),
-      stellarAvalibleBalance: BigNumber(stellarAvalibleBalance || 0).toString()
-    });
   
     const newAmountBN = BigNumber(newAmount || 0);
     const lastOfferAmountBN = BigNumber(lastOfferAmount || 0);
@@ -207,97 +217,97 @@ const Offers_manages = () => {
         duration: Snackbar.LENGTH_SHORT,
         backgroundColor: 'red',
       });
-    } else {
-      if (
-        newAmountBN.isZero() ||
-        BigNumber(newPrice || 0).isZero()
-      ) {
-        Snackbar.show({
-          text: 'Invalid value provided',
-          duration: Snackbar.LENGTH_SHORT,
-          backgroundColor: 'red',
-        });
-        setNewAmount('');
-        setNewPrice('');
-      } else {
-        setloading_edi(true);
-        const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
-        try {
-          const account = await server.loadAccount(keypair.publicKey());
+      return;
+    }
+    if (newAmountBN.isZero() || BigNumber(newPrice || 0).isZero()) {
+      Snackbar.show({
+        text: 'Invalid value provided',
+        duration: Snackbar.LENGTH_SHORT,
+        backgroundColor: 'red',
+      });
+      setNewAmount('');
+      setNewPrice('');
+      return;
+    }
   
-          const transaction = new StellarSdk.TransactionBuilder(account, {
-            fee: StellarSdk.BASE_FEE,
-            networkPassphrase: STELLAR_NETWORK,
+    setloading_edi(true);
+    const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
+  
+    try {
+      const account = await server.loadAccount(keypair.publicKey());
+  
+      const selling =
+        sellingAssetCode === "XLM" || sellingAssetCode === "native"
+          ? StellarSdk.Asset.native()
+          : new StellarSdk.Asset(sellingAssetCode, sellingAssetIssuer);
+  
+      const buying =
+        buyingAssetCode === "XLM" || buyingAssetCode === "native"
+          ? StellarSdk.Asset.native()
+          : new StellarSdk.Asset(buyingAssetCode, buyingAssetIssuer);
+      const transaction = new StellarSdk.TransactionBuilder(account, {
+        fee: await server.fetchBaseFee(),
+        networkPassphrase: STELLAR_NETWORK,
+      })
+        .addOperation(
+          StellarSdk.Operation.manageSellOffer({
+            offerId: selectedOffer.id,
+            selling,
+            buying,
+            amount: newAmountBN.toString(),
+            price: BigNumber(newPrice).toString(),
           })
-            .addOperation(StellarSdk.Operation.manageOffer({
-              offerId: selectedOffer.id,
-              selling: sellingAssetCode === "XLM" || sellingAssetCode === "native" ? 
-                new StellarSdk.Asset.native() : 
-                new StellarSdk.Asset(
-                  sellingAssetCode === 'credit_alphanum4' || sellingAssetCode === 'USDC' ? 
-                    "USDC" : sellingAssetCode, 
-                  sellingAssetIssuer
-                ),
-              buying: buyingAssetCode === "XLM" || buyingAssetCode === "native" ? 
-                new StellarSdk.Asset.native() : 
-                new StellarSdk.Asset(
-                  buyingAssetCode === 'credit_alphanum4' || buyingAssetCode === 'USDC' ? 
-                    "USDC" : sellingAssetCode, 
-                  buyingAssetIssuer
-                ),
-              amount: newAmountBN.toString(),
-              price: BigNumber(newPrice).toString(),
-            }))
-            .setTimeout(30)
-            .build();
+        )
+        .setTimeout(30)
+        .build();
   
-          transaction.sign(keypair);
+      transaction.sign(keypair);
   
-          const response = await server.submitTransaction(transaction);
-          console.log('Offer updated:', response);
-          setloading_edi(false);
-          fetchOffers();
-          Alert.alert('Success', 'Offer updated successfully.');
-          setModalVisible(false);
-        } catch (error) {
-          setloading_edi(false);
-          console.log("Error updating offer:", error);
-          Alert.alert('Info', 'Failed to update the offer');
-        }
-      }
+      const response = await server.submitTransaction(transaction);
+      console.log('Offer updated:', response);
+  
+      setloading_edi(false);
+      fetchOffers();
+      Alert.alert('Success', 'Offer updated successfully.');
+      setModalVisible(false);
+    } catch (error) {
+      setloading_edi(false);
+      console.log("Error updating offer:", error.response?.data || error);
+      Alert.alert('Info', 'Failed to update the offer');
     }
   };
+  
   
 
   const renderItem = ({ item,index }) => (
     <View style={styles.offerItem}>
       <View style={styles.offer_id_con}>
-        <Text style={styles.offerText}>Offer ID: {item.id}</Text>
+        <Text style={[styles.offerText,{color:"#94A3B8"}]}>Offer ID: {item.id}</Text>
         <View style={styles.active_text}>
           <Text style={[styles.offerText, { color: "#2DAA20" }]}>Active</Text>
         </View>
       </View>
       <View style={styles.container_sub}>
-      <Text style={styles.offerText}>Asset Selling</Text>
-      <Text style={styles.offerText}>{item.selling.asset_type==="credit_alphanum4"?"USDC":item.selling.asset_type==="native"?"XLM":item.selling.asset_type}</Text>
+      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Asset Selling :</Text>
+      <Text style={styles.offerText}>{item?.selling?.asset_type==="native"?"XLM":item.selling?.asset_code}</Text>
       </View>
       <View style={styles.container_sub}>
-      <Text style={styles.offerText}>Asset Buying</Text>
-      <Text style={styles.offerText}>{item.buying?.asset_type==="native"?"XLM":item.buying?.asset_type==="credit_alphanum4"?"USDC":item.buying?.asset_type||item.buying?.asset_code}</Text>
+      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Asset Buying :</Text>
+      <Text style={styles.offerText}>{item?.buying?.asset_type==="native"?"XLM":item.buying?.asset_code}</Text>
       </View>
       <View style={styles.container_sub}>
-      <Text style={styles.offerText}>Amount</Text>
+      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Amount :</Text>
       <Text style={styles.offerText}>{Number(item.amount).toFixed(5)}</Text>
       </View>
       <View style={styles.container_sub}>
-      <Text style={styles.offerText}>Price</Text>
+      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Price :</Text>
       <Text style={styles.offerText}>{Number(item.price).toFixed(5)}</Text>
       </View>
       <View style={styles.buttonContainer}>
       {loading_edi&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
-        <TouchableOpacity style={{alignContent:"center",justifyContent:"center",width:50,height:35}} disabled={loading_del} onPress={() => handleEdit(item,index)}><Text style={{color:"blue",fontSize:15}}>Edit</Text></TouchableOpacity> }
+        <TouchableOpacity style={[styles.buttonView,{backgroundColor:"#2164C1",marginRight:10}]} disabled={loading_del} onPress={() => handleEdit(item,index)}><Text style={{color:"#fff",fontSize:15}}>Edit</Text></TouchableOpacity> }
         {loading_del&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
-        <TouchableOpacity style={{alignContent:"center",justifyContent:"center",width:50,height:35}} disabled={loading_edi} onPress={() => handleDelete(item.id,index)}><Text style={{color:"blue",fontSize:15}}>Delete</Text></TouchableOpacity>}
+        <TouchableOpacity style={[styles.buttonView,{backgroundColor:"rgba(254, 32, 36, 0.16)"}]} disabled={loading_edi} onPress={() => handleDelete(item,index)}><Text style={{color:"rgb(254, 32, 36)",fontSize:15}}>Delete</Text></TouchableOpacity>}
       </View>
     </View>
   );
@@ -395,7 +405,7 @@ const styles = StyleSheet.create({
     color:"black"
   },
   offerItem: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(13, 30, 59, 0.8)',
     borderRadius: 15,
     marginBottom: 15,
     shadowColor: '#000',
@@ -409,7 +419,8 @@ const styles = StyleSheet.create({
   },
   offerText: {
     fontSize: 16,
-    color: '#000000CC',
+    color: '#FFFFFF',
+    fontWeight:"500"
   },
   offerList: {
     marginTop: 10,
@@ -439,10 +450,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 10,
-    backgroundColor:"#4B84ED1A",
+    borderTopColor:"#fff",
+    borderWidth:0.5,
+    borderLeftColor:'rgba(13, 30, 59, 0.8)',
+    borderRightColor:'rgba(13, 30, 59, 0.8)',
+    borderBottomColor:'rgba(13, 30, 59, 0.8)',
     borderBottomLeftRadius:15,
     borderBottomRightRadius:15,
-    paddingHorizontal:10
+    paddingHorizontal:10,
+    paddingVertical:9
+  },
+  buttonView:{
+    alignContent:"center",
+    justifyContent:"center",
+    alignItems:"center",
+    width:80,
+    height:30,
+    borderRadius:10
   },
   error_cont:{
     justifyContent:"center",
@@ -457,14 +481,14 @@ const styles = StyleSheet.create({
   container_sub:{
     justifyContent:"space-between",
     flexDirection:"row",
-    marginBottom:10,
+    marginBottom:5,
     paddingHorizontal: 15,
   },
   offer_id_con:{
     justifyContent:"space-between",
     flexDirection:"row",
     paddingVertical:21,
-    paddingBottom:20,
+    paddingBottom:10,
     paddingHorizontal: 15,
   },
   active_text:{
