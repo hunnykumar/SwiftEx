@@ -94,6 +94,7 @@
     "react-native-device-info": "^14.0.2",
     "react-native-dialog": "^9.3.0",
     "react-native-dialog-input": "^1.0.8",
+    "react-native-dotenv": "^3.4.11",
     "react-native-element-dropdown": "^2.12.1",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^1.10.3",

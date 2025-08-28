@@ -59,6 +59,8 @@ const getTransactionType = (operation) => {
           return 'Buy Offer';
       case 'create_account':
           return 'Create Account';
+      case 'invoke_host_function':
+          return 'Chain Bridge';    
       case 'path_payment_strict_send':
           return `${operation.source_asset_code || 'XLM'}`;
       case 'path_payment_strict_receive':
@@ -91,6 +93,8 @@ const getTransactionIcon = (type) => {
       case 'path_payment_strict_send':
       case 'path_payment_strict_receive':
       return 'routes';
+    case 'invoke_host_function':
+      return 'bridge';  
     case 'setOptions':
       return 'cog';
     case 'sellCry':
@@ -151,7 +155,7 @@ console.log(operation)
  
   const isReceived = 
     operation?.to === userPublicKey ||
-    operation.type === 'create_account'||operation.type === 'change_trust';
+    operation.type === 'create_account'||operation.type === 'change_trust'||operation.type==='invoke_host_function';
 
  
   const transactionType =
@@ -170,6 +174,9 @@ console.log(operation)
     amountText = operation.amount;
   } else if (operation.type === 'create_account') {
     amountText = operation.starting_balance;
+  }  else if (operation.type === 'invoke_host_function') {
+    const resBal= operation.asset_balance_changes?.find(resObj => resObj.to === userPublicKey && resObj.type === 'transfer') || null;
+    amountText = resBal?resBal.amount:'0'
   } else if (operation.type === 'manage_sell_offer' || operation.type === 'manage_buy_offer') {
     amountText = operation.amount;
   }if (operation.type === 'buyCry'||operation.type === 'sellCry') {
@@ -279,7 +286,11 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
                 } else if (firstOp.type === 'create_account') {
                     amount = firstOp.starting_balance;
                     isReceived = true; 
-                } else if (['change_trust', 'change_trust', 'create_account'].includes(firstOp.type)) {
+                } else if (firstOp.type === 'invoke_host_function') {
+                    const resBal= firstOp.asset_balance_changes?.find(resObj => resObj.to === publicKey && resObj.type === 'transfer') || null;
+                    amount = resBal?resBal.amount:'0'
+                    isReceived = true; 
+                } else if (['change_trust', 'change_trust', 'create_account','invoke_host_function'].includes(firstOp.type)) {
                     isReceived = true;
                 } else if (firstOp.type === 'manage_sell_offer' || firstOp.type === 'manage_buy_offer') {
                    isReceived = false;

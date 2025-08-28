@@ -47,7 +47,7 @@ const Assets_manage = ({route}) => {
             //     const parsedData = JSON.parse(storedData);
             //     const matchedData = parsedData.filter(item => item.Ether_address === state.wallet.address);
             //     const publicKey = matchedData[0].publicKey;
-                StellarSdk.Networks.TESTNET
+                StellarSdk.Networks.PUBLIC
                 const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
                 server.loadAccount(state.STELLAR_PUBLICK_KEY)
                     .then(account => {
@@ -90,7 +90,7 @@ const Assets_manage = ({route}) => {
         try {
             console.log(":++++ Entered into trusting ++++:")
             const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
-            StellarSdk.Networks.TESTNET
+            StellarSdk.Networks.PUBLIC
             const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
             const transaction = new StellarSdk.TransactionBuilder(account, {
                 fee: StellarSdk.BASE_FEE,

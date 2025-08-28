@@ -243,7 +243,7 @@ const KycComponent = ({ route }) => {
         "cryptoCurrency": selectedCrypto?.crypto,
         "address": state?.ETH_KEY,
         "network": selectedCrypto?.network,
-        "payWayCode": payWayaCode,
+        "payWayCode": selectedfiat?.payWayCode,
         "memo": "test1"
       }
 

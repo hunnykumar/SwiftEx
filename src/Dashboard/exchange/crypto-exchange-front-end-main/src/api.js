@@ -3,6 +3,7 @@ import AsyncStorageLib from '@react-native-async-storage/async-storage'
 import { REACT_APP_HOST, REACT_APP_GOOGLE_VPID_KEY, REACT_APP_LOCAL_TOKEN, REACT_APP_FCM_TOKEN_KEY, REACT_PROXY_HOST} from './ExchangeConstants'
 import DeviceInfo from 'react-native-device-info'
 import messaging from '@react-native-firebase/messaging'
+import { ethers } from 'ethers'
 const SERVER_URL = REACT_APP_HOST
 const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN
 let TOKEN =''
@@ -230,10 +231,51 @@ export const proxyRequest = async (url, request, body = {}) => {
     const res = await request(opts)
     return { res }
   } catch (error) {
-    console.log('proxyError: \n', JSON.stringify(error))
+    console.error('proxyRequest error:', {
+      url,
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+    
+    let message = 'Request failed';
+    let status = 500;
+
+    if (error.response) {
+      status = error.response.status;
+      const data = error.response.data;
+      
+      // Check for specific insufficient funds error pattern
+      if (data?.message && data.message.includes('insufficient funds for gas')) {
+        // Extract the specific insufficient funds message
+        const match = data.message.match(/insufficient funds for gas \* price \+ value: have (\d+) want (\d+)/);
+        if (match) {
+          message = `Insufficient funds for gas * price + value: have ${parseFloat(ethers.utils.formatEther(match[1].toString()))?.toFixed(6)} want ${parseFloat(ethers.utils.formatEther(match[2].toString()))?.toFixed(6)}`;
+        } else {
+          message = 'Insufficient funds for transaction';
+        }
+      } else if (data?.error?.message && data.error.message.includes('insufficient funds')) {
+        // Handle nested error structure
+        message = data.error.message;
+      } else if (data?.message) {
+        message = data.message;
+      } else if (data?.error) {
+        message = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+      } else if (typeof data === 'string') {
+        message = data;
+      } else {
+        message = `HTTP ${status} Error`;
+      }
+    } else if (error.request) {
+      message = 'Network error - please check your connection';
+      status = 0;
+    } else {
+      message = error.message || 'Request setup failed';
+    }
+
     const err = {
-      message: JSON.stringify(error.response.data.error)||JSON.stringify(error.response.data.message),
-      status: error.response.status,
+      message,
+      status,
     }
     return { err }
   }

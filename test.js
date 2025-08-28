@@ -35,7 +35,7 @@ import darkBlue from "../../../../../../assets/darkBlue.png";
 import { STELLAR_URL } from "./src/Dashboard/constants";
 const Web3 = require('web3');
 import * as StellarSdk from '@stellar/stellar-sdk';
-StellarSdk.Networks.TESTNET
+StellarSdk.Networks.PUBLIC
 const alchemyUrl = RPC.ETHRPC;
 const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 export const NewOfferModal = () => {
@@ -149,7 +149,7 @@ const getAccountDetails = async () => {
       const counter_asset_buy = new StellarSdk.Asset(selectedValue === "XETH" ? "XUSD" : "XETH", AssetIssuerPublicKey);
       const transaction = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
       const offer = StellarSdk.Operation.manageOffer({
         selling: base_asset_sell,
@@ -161,7 +161,7 @@ const getAccountDetails = async () => {
 
       const offerTx = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
         .addOperation(offer)
         .setTimeout(30)
@@ -191,7 +191,7 @@ const getAccountDetails = async () => {
       const counter_asset_buy = new StellarSdk.Asset(selectedValue, AssetIssuerPublicKey);
       const transaction = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
       const offer = StellarSdk.Operation.manageOffer({
         selling: base_asset_sell,
@@ -203,7 +203,7 @@ const getAccountDetails = async () => {
 
       const offerTx = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
         .addOperation(offer)
         .setTimeout(30)
@@ -269,7 +269,7 @@ const getAccountDetails = async () => {
           setbalance("");
           setshow(true)
           console.log("<><", PublicKey)
-          StellarSdk.Networks.TESTNET
+          StellarSdk.Networks.PUBLIC
           const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
           server.loadAccount(PublicKey)
             .then(account => {

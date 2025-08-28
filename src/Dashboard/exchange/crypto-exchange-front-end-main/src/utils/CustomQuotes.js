@@ -35,6 +35,7 @@ import { onSwapETHtoUSDC } from './OneTapPayExecution';
 import { alert } from '../../../../reusables/Toasts';
 import apiHelper from '../apiHelper';
 import * as StellarSdk from '@stellar/stellar-sdk';
+import { swap_prepare } from '../../../../../../All_bridge';
 export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
 
   const styles = StyleSheet.create({
@@ -252,7 +253,7 @@ export const CustomQuotes = ({
     try {
       const walletUSDCAddress = await AsyncStorageLib.getItem("wallet");
       const addresses=JSON?.parse(walletUSDCAddress)?.address
-      const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
+      const usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
        const {res,err} = await proxyRequest("/v1/eth/token/info", PPOST, {addresses:usdtAddress,walletAddress:addresses});
       const balance =res?.[0]?.balance;
       console.log(`USDT Balance of ${addresses}: ${balance} USDT`); 
@@ -291,7 +292,7 @@ export const CustomQuotes = ({
     try {
         console.log(":++++ Entered into trusting ++++:")
         const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
-        StellarSdk.Networks.TESTNET
+        StellarSdk.Networks.PUBLIC
         const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
         const transaction = new StellarSdk.TransactionBuilder(account, {
             fee: StellarSdk.BASE_FEE,
@@ -627,74 +628,34 @@ export const CustomQuotes = ({
     // setApproved(true)
   }
    const sendEthToContract = async (amount) => {
-      try {
-        keysUpdate()
-        handleStepUpdate("USDT→USDC","pending")
-
-        const wallet = new ethers.Wallet(state?.wallet?.privateKey);
-        const usdtAddress = OneTapUSDCAddress.Address;  
-        const usdtAbi = [
-            "function transfer(address to, uint256 value) public returns (bool)"
-        ];
-        const usdtContract = new ethers.Contract("0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0", usdtAbi, wallet);
-       
-        const formattedAmount = ethers.utils.parseUnits(amount.toString(), 6);
-        const unsigned = await usdtContract.populateTransaction.transfer(usdtAddress, formattedAmount);
-        // Send transaction
-        const preInfo = await proxyRequest("/v1/eth/transaction/prepare", PPOST, {unsignedTx: unsigned,walletAddress: wallet.address});        
-        if (preInfo.err) {
-          Alert.alert(
-            "Info",
-            "Swap Faild",
-            [
-              {
-                text: "Okay",
-                onPress: ()=>{onClose()}
-              }
-            ],
-            { cancelable: false }
-          );
-        }
-        console.log("Send transaction--- ",preInfo);
-      if (preInfo?.err?.status) {
-        console.log("Transaction Failed", err);
-        setisDone(false)
-        handleStepUpdate("USDT→USDC", "error")
-        handleStepUpdate("USDC→Wallet", "error")
-      }
-      const upgradedTx = {
-        ...unsigned,
-        nonce: preInfo.res.nonce,
-        gasLimit: ethers.BigNumber.from(preInfo.res.gasLimit),
-        gasPrice: ethers.BigNumber.from(preInfo.res.gasPrice),
-        value: preInfo.res.value ? ethers.BigNumber.from(preInfo.res.value) : ethers.BigNumber.from(0),
-        chainId: Number(preInfo.res.chainId),
-      };
-        const signedTx = await wallet.signTransaction(upgradedTx);
-        const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});
-        if (respoExe.err) {
-          Alert.alert(
-            "Info",
-            "Swap Faild",
-            [
-              {
-                text: "Okay",
-                onPress: ()=>{onClose()}
-              }
-            ],
-            { cancelable: false }
-          );
-        }
-        if(respoExe?.res?.txHash)
-        {
-          setisDone(false)
-          handleStepUpdate("USDT→USDC","done")
-          setTimeout(()=>{
-            handleStepUpdate("USDC→Wallet","done")
-          },2000);
-        // setApproved(true)
-        }
-    } catch (error) {
+     try {
+       handleStepUpdate("USDT→USDC", "pending")
+       const ressult_swap = await swap_prepare(state.wallet.privateKey, state.wallet.address, state.STELLAR_PUBLICK_KEY, amount, "USDT", "USDC", "ETH")
+       console.log("last ui res ---->", ressult_swap)
+       if (ressult_swap.status_task) {
+         setisDone(false)
+         handleStepUpdate("USDT→USDC", "done")
+         setTimeout(() => {
+           handleStepUpdate("USDC→Wallet", "done")
+         }, 2000);
+       }
+       if (!ressult_swap.status_task) {
+         Alert.alert(
+           "Info",
+           ressult_swap?.res||"Swap Faild",
+           [
+             {
+               text: "Okay",
+               onPress: () => { onClose() }
+             }
+           ],
+           { cancelable: false }
+         );
+         setisDone(false)
+         handleStepUpdate("USDT→USDC", "error")
+         handleStepUpdate("USDC→Wallet", "error")
+       }
+     } catch (error) {
         console.log("Transaction Failed", error);
         setisDone(false)
         handleStepUpdate("USDT→USDC","error")
@@ -746,10 +707,10 @@ export const CustomQuotes = ({
       if (resultApi.success) {
          const keypair = StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY);
      const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(resultApi.data.wallet.xdr, "base64");
-        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.TESTNET);
+        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.PUBLIC);
         tx.sign(keypair);
         const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
-        StellarSdk.Networks.TESTNET
+        StellarSdk.Networks.PUBLIC
         const result = await server.submitTransaction(tx);
         if(result?.successful===true)
         {        

@@ -10,7 +10,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { REACT_APP_HOST, REACT_APP_LOCAL_TOKEN } from '../ExchangeConstants';
+import { REACT_APP_HOST, REACT_APP_LOCAL_TOKEN, REACT_PROXY_HOST } from '../ExchangeConstants';
 import AsyncStorageLib from '@react-native-async-storage/async-storage';
 import darkBlue from '../../../../../../assets/darkBlue.png'
 import steller_img from '../../../../../../assets/Stellar_(XLM).png'
@@ -118,7 +118,7 @@ useEffect(()=>{
             setACTIVATION_MODAL_PROD(true)
         }
 
-      const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
+      const usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
       if (usdtAddress && addresses) {
         const { res, err } = await proxyRequest("/v1/eth/token/info", PPOST, { addresses: usdtAddress, walletAddress: addresses });     
         const balance = res?.[0]?.balance;
@@ -250,43 +250,15 @@ const getOffersData = async () => {
 
   const sendEthToContract = async () => {
     try {
-      keysUpdate()
-      const usdtAbi = [
-        "function transfer(address to, uint256 value) public returns (bool)"
-      ];
-      // Load wallet with private key
       const wallet = new ethers.Wallet(state?.wallet?.privateKey);
-      const usdtAddress = OneTapUSDCAddress.Address;
-      // Load ERC-20 contract
-      const tokenContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
-      // Convert amount to correct format
-      const formattedAmount = ethers.utils.parseUnits(amount, 6);
-      const unsigned = await tokenContract.populateTransaction.transfer(usdtAddress, formattedAmount);
-      // Send transaction
-      const preInfo = await proxyRequest("/v1/eth/transaction/prepare", PPOST, { unsignedTx: unsigned, walletAddress: wallet.address });
-      if (preInfo?.err) {
-        setfianl_modal_text("Transaction Failed");
-        console.log("Transaction Failed", preInfo);
+      const respoExe = await swap_prepare(state?.wallet?.privateKey, wallet.address, state.STELLAR_PUBLICK_KEY, amount, "USDT", "USDC", "ETH")
+      console.log("classic last ui res ---->", respoExe)
+      if (respoExe?.status_task) {
+        setfianl_modal_text("Transaction Successful");
         setfianl_modal_loading(false);
         setfianl_modal_error(true);
       }
-      const upgradedTx = {
-        ...unsigned,
-        nonce: preInfo.res.nonce,
-        gasLimit: ethers.BigNumber.from(preInfo.res.gasLimit),
-        gasPrice: ethers.BigNumber.from(preInfo.res.gasPrice),
-        value: preInfo.res.value ? ethers.BigNumber.from(preInfo.res.value) : ethers.BigNumber.from(0),
-        chainId: Number(preInfo.res.chainId),
-      };
-      const signedTx = await wallet.signTransaction(upgradedTx);
-      const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});
-      if (respoExe?.res?.txHash) {
-        console.log("Transaction Sent", `Tx Hash: ${respoExe?.res?.txHash}`);
-      setfianl_modal_text("Transaction Successful");
-        setfianl_modal_loading(false);
-        setfianl_modal_error(true);
-      }
-      if (respoExe?.err) {
+      if (!respoExe.status_task) {
         setfianl_modal_text("Transaction Failed");
         console.log("Transaction Failed", respoExe);
         setfianl_modal_loading(false);
@@ -373,10 +345,11 @@ const getOffersData = async () => {
   };
   
   const collectQuotes = async (value,typeOfchain) => {
+    const deviceToken = await getToken();
       const myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
-      myHeaders.append("Authorization", "Bearer " + await getToken());
-  
+      myHeaders.append("Authorization", "Bearer " + deviceToken);
+      myHeaders.append("x-auth-device-token", deviceToken);
       const raw = JSON.stringify({
         "amount": value,
         "chainType":typeOfchain
@@ -389,12 +362,12 @@ const getOffersData = async () => {
         redirect: "follow"
       };
   
-      fetch(REACT_APP_HOST + "/users/swapInfo", requestOptions)
+      fetch(REACT_PROXY_HOST + `/v1/bridge/swap-quotes`, requestOptions)
         .then((response) => response.json())
         .then((result) => {
           console.log("---err->",result)
-          if (result?.status === 200) {
-            setresQuotes(result?.response),
+          if (result?.quotes) {
+            setresQuotes(result?.quotes),
             setgetInfo(false)
           }
           else {
@@ -427,7 +400,7 @@ const getOffersData = async () => {
                    onClose={()=>{handleClose()}}
                    tokenChain={"ETH"}
                    tokenName={"WETH"}
-                   tokenAddress={"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"}
+                   tokenAddress={"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"}
                    ACTIVATED={state?.STELLAR_ADDRESS_STATUS}
                  /> */}
       <ScrollView style={{marginBottom:hp(5)}}>

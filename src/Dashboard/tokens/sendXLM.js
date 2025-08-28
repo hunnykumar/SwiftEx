@@ -42,7 +42,7 @@ import StellarAccountReserve from "../exchange/crypto-exchange-front-end-main/sr
 import WalletActivationComponent from "../exchange/crypto-exchange-front-end-main/src/utils/WalletActivationComponent";
 // const StellarSdK = require('stellar-base');
 import * as StellarSdk from '@stellar/stellar-sdk';
-StellarSdk.Networks.TESTNET
+StellarSdk.Networks.PUBLIC
 const SendXLM = (props) => {
     const toast=useToast();
     const FOCUSED = useIsFocused()
@@ -188,7 +188,7 @@ const SendXLM = (props) => {
     }
 
     const get_stellar = async (steller_key) => {
-      StellarSdk.Networks.TESTNET
+      StellarSdk.Networks.PUBLIC
       const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
         server.loadAccount(steller_key)
             .then(account => {
@@ -249,7 +249,7 @@ const SendXLM = (props) => {
             try {
               Showsuccesstoast(toast,"Sending Payment");
               const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
-              StellarSdk.Networks.TESTNET;
+              StellarSdk.Networks.PUBLIC;
               // Load the source account
               const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecret);
               const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());
@@ -257,7 +257,7 @@ const SendXLM = (props) => {
               // Create the transaction
               const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
                   fee: await server.fetchBaseFee(),
-                  networkPassphrase: StellarSdk.Networks.TESTNET,
+                  networkPassphrase: StellarSdk.Networks.PUBLIC,
               })
               .addOperation(
                   StellarSdk.Operation.payment({

@@ -37,7 +37,7 @@ const TOKENS = [
     symbol: 'WETH',
     name: 'Wrapped Ethereum',
     decimals: 18,
-    address: '0xfff9976782d46cc05630d1f6ebab18b2324d6b14', 
+    address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', 
     balance: '1.5',
     logoUri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
 
@@ -122,7 +122,7 @@ const EthSwap = () => {
     setallblnLoading(true);
     const fetchBalance=async()=>{
      try{
-      const addresses = ["0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14", "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"];
+      const addresses = ["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"];
       const WALLET_ADDRESS = state?.wallet?.address;
 
       const resposeBalance = await fetchTokenInfo(addresses, WALLET_ADDRESS)

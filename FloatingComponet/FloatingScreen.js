@@ -10,6 +10,8 @@ import {
     ActivityIndicator,
     Platform,
     Animated,
+    KeyboardAvoidingView,
+    Keyboard,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import {
@@ -22,8 +24,10 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [loading, setLoading] = useState(true);
     const [showControls, setShowControls] = useState(false);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
     const pos = useRef(new Animated.ValueXY({ x: 50, y: 50 })).current;
     const backHandler = useRef(null);
+    const webViewRef = useRef(null);
 
     useEffect(() => {
         if (visible) {
@@ -45,6 +49,44 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
         };
     }, [visible, isMinimized]);
 
+    // Keyboard event listeners
+    useEffect(() => {
+        const keyboardWillShow = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+            (e) => {
+                setKeyboardHeight(e.endCoordinates.height);
+                // Inject JavaScript to scroll to focused element
+                if (webViewRef.current && !isMinimized) {
+                    webViewRef.current.injectJavaScript(`
+                        setTimeout(() => {
+                            const activeElement = document.activeElement;
+                            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                                activeElement.scrollIntoView({ 
+                                    behavior: 'smooth', 
+                                    block: 'center',
+                                    inline: 'nearest'
+                                });
+                            }
+                        }, 100);
+                        true;
+                    `);
+                }
+            }
+        );
+
+        const keyboardWillHide = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+            () => {
+                setKeyboardHeight(0);
+            }
+        );
+
+        return () => {
+            keyboardWillShow.remove();
+            keyboardWillHide.remove();
+        };
+    }, [isMinimized]);
+
     const panResponder = useRef(
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
@@ -65,6 +107,7 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
         Alert.alert("Info", "Do you want to minimise this screen?", [
             { text: "Exit", onPress: onClose, style: "cancel" },
             { text: "Yes", onPress: () => { setIsMinimized(true), setShowControls(true) } },
+            { text: "Cancel", style: "cancel" },
         ]);
     };
 
@@ -114,9 +157,12 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
                     </View>
                 </Animated.View>
             ) : (
-                <View style={styles.full}>
+                <KeyboardAvoidingView 
+                    style={styles.full}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                >
                     <TopHeader />
-                </View>
+                </KeyboardAvoidingView>
             )}
 
             <View
@@ -124,13 +170,67 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
                 style={[
                     styles.webviewWrapper,
                     isMinimized ? styles.webviewHidden : styles.webviewVisible,
+                    // Adjust bottom margin when keyboard is visible
+                    !isMinimized && keyboardHeight > 0 && {
+                        bottom: Platform.OS === 'ios' ? keyboardHeight : 0,
+                        marginBottom: Platform.OS === 'android' ? keyboardHeight : 0,
+                    }
                 ]}
             >
                 <WebView
+                    ref={webViewRef}
                     source={{ uri }}
                     style={styles.webview}
                     onLoad={() => setLoading(false)}
                     onError={() => setLoading(false)}
+                    // Enable automatic adjustment for keyboard
+                    automaticallyAdjustContentInsets={true}
+                    contentInsetAdjustmentBehavior="automatic"
+                    // Allow zooming for better text input experience
+                    scalesPageToFit={false}
+                    // Improve keyboard handling
+                    keyboardDisplayRequiresUserAction={false}
+                    // JavaScript for better input handling
+                    injectedJavaScript={`
+                        // Function to handle input focus
+                        function handleInputFocus() {
+                            const inputs = document.querySelectorAll('input, textarea');
+                            inputs.forEach(input => {
+                                input.addEventListener('focus', function() {
+                                    setTimeout(() => {
+                                        this.scrollIntoView({ 
+                                            behavior: 'smooth', 
+                                            block: 'center',
+                                            inline: 'nearest'
+                                        });
+                                    }, 300);
+                                });
+                            });
+                        }
+                        
+                        // Run when page loads
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', handleInputFocus);
+                        } else {
+                            handleInputFocus();
+                        }
+                        
+                        // Also run for dynamically added inputs
+                        const observer = new MutationObserver(function(mutations) {
+                            mutations.forEach(function(mutation) {
+                                if (mutation.type === 'childList') {
+                                    handleInputFocus();
+                                }
+                            });
+                        });
+                        
+                        observer.observe(document.body, {
+                            childList: true,
+                            subtree: true
+                        });
+                        
+                        true; // Required for injected JavaScript
+                    `}
                 />
                 {loading && (
                     <View style={styles.loadingContainer}>
