@@ -17,6 +17,7 @@ import TokenQrCode from './Modals/TokensQrCode';
 import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';
 import { FAB } from 'react-native-paper';
 import Icon from '../icon';
+import { getTokenBalancesUsingAddress } from './exchange/crypto-exchange-front-end-main/src/utils/getWalletInfo/EtherWalletService';
 
   
   const Token_Import = () => {
@@ -83,9 +84,12 @@ import Icon from '../icon';
     const fetchTokenInfo = async (address) => {
       
       try {
-        if(address&&WALLET_ADDRESS){
-          const {res,err} = await proxyRequest("/v1/eth/token/info", PPOST, {addresses:address,walletAddress:WALLET_ADDRESS});
-          return res?.[0];
+        if (address && WALLET_ADDRESS) {
+          const fetchedTokens = await getTokenBalancesUsingAddress(address, WALLET_ADDRESS, "ETH")
+          console.log("walleetREspo--", fetchedTokens)
+          if (fetchedTokens.status) {
+            return fetchedTokens.tokenInfo[0]
+          }
         }
       } catch (error) {
         console.error(`Error fetching token info for ${address}:`, error);
@@ -97,8 +101,11 @@ import Icon from '../icon';
     const fetchBNBTokenInfo = async (address) => {
       try {
         if(address&&WALLET_ADDRESS){
-          const {res,err} = await proxyRequest("/v1/bsc/token/info", PPOST, {addresses:address,walletAddress:WALLET_ADDRESS});
-          return res?.[0];
+          const fetchedTokens = await getTokenBalancesUsingAddress(address, WALLET_ADDRESS, "BSC")
+          console.log("walleetREspo--", fetchedTokens)
+          if (fetchedTokens.status) {
+            return fetchedTokens.tokenInfo[0]
+          }
         }
       } catch (error) {
         console.log(`Error fetching token info for ${address}:`, error);

@@ -32,6 +32,7 @@ import { alert, ShowErrotoast, Showsuccesstoast } from "../../../../reusables/To
 import { isAddress } from "ethers/lib/utils";
 import { ethers } from "ethers";
 import { PGET, PPOST, proxyRequest } from "../api";
+import { getTokenBalancesUsingAddress } from "../utils/getWalletInfo/EtherWalletService";
 const TokenSend = ({ route }) => {
   const toast = useToast();
   const FOCUSED = useIsFocused()
@@ -96,7 +97,9 @@ const TokenSend = ({ route }) => {
   const sendEthTokens = async (tokenAddress,tokenDecimals) => {
     try {
       const usdtAbi = [
-        "function transfer(address to, uint256 value) public returns (bool)"
+        "function balanceOf(address) view returns (uint256)",
+        "function decimals() view returns (uint8)",
+        "function transfer(address to, uint256 amount) returns (bool)"
       ];
         // Load wallet with private key
         const wallet = new ethers.Wallet(state?.wallet?.privateKey);
@@ -117,7 +120,7 @@ const TokenSend = ({ route }) => {
         gasLimit: ethers.BigNumber.from(60000),
         gasPrice: ethers.BigNumber.from(preInfo.res.gasFeeData.gasPrice),
         nonce: preInfo.res.transactionCount,
-        chainId: 11155111,
+        chainId: 1,
         value: ethers.BigNumber.from(0)
       };
       const signedTx = await wallet.signTransaction(upgradedTx);
@@ -232,8 +235,11 @@ const TokenSend = ({ route }) => {
   const fetchTokenInfo = async (address) => {
     try {
       if (address && state?.wallet?.address) {
-        const { res, err } = await proxyRequest("/v1/eth/token/info", PPOST, { addresses: address, walletAddress: state?.wallet?.address });
-        return res?.[0];
+        const fetchedTokens = await getTokenBalancesUsingAddress(address, state?.wallet?.address, "ETH")
+        console.log("walleetREspo--", fetchedTokens)
+        if (fetchedTokens.status) {
+          return fetchedTokens.tokenInfo[0]
+        }
       }
     } catch (error) {
       console.error(`Error fetching token info for ${address}:`, error);
@@ -245,8 +251,11 @@ const TokenSend = ({ route }) => {
   const fetchBNBTokenInfo = async (address) => {
     try {
       if (address && state?.wallet?.address) {
-        const { res, err } = await proxyRequest("/v1/bsc/token/info", PPOST, { address: address, walletAddress: state?.wallet?.address });
-        return res?.[0];
+        const fetchedTokens = await getTokenBalancesUsingAddress(address, state?.wallet?.address, "BSC")
+        console.log("walleetREspo--", fetchedTokens)
+        if (fetchedTokens.status) {
+          return fetchedTokens.tokenInfo[0]
+        }
       }
     } catch (error) {
       console.error(`Error fetching token info for ${address}:`, error);

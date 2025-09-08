@@ -10,6 +10,8 @@ import { useEffect, useState } from "react";
 import { ShowErrotoast } from "../../../../../reusables/Toasts";
 import Snackbar from "react-native-snackbar";
 import authApi from "../../authApi";
+import apiHelper from "../../apiHelper";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Exchange_otp = (props) => {
     const navigation = useNavigation();
@@ -17,7 +19,7 @@ const Exchange_otp = (props) => {
     const toast = useToast();
     const [Loading, setLoading] = useState(false);
     const [passcode, setpasscode] = useState("");
-    const [con_passcode, setcon_passcode] = useState("");
+    const [rePassword, setrePassword] = useState("");
     const [otp, setOtp] = useState();
     
 
@@ -38,17 +40,25 @@ const Exchange_otp = (props) => {
                 backgroundColor: 'red',
               });
           }else{
-            const result = await authApi.post(REACT_APP_HOST+"/v1/auth/verify-otp",{
+            const result = await apiHelper.post(REACT_APP_HOST+"/v1/auth/verify-user",{
                 "email": props.route.params.Email,
-                "otp": otp
+                "otp": Number(otp)
             });
+            console.log("---result--",result)
             if (result.success) {
-                setLoading(false);
-                navigation.navigate("ExchangeDetailsSubmittion");
                 setOtp(null);
+                setLoading(false);
+                await AsyncStorage.setItem("UserAuthID", result.data.token) 
+                navigation.navigate("exchange");
+                Snackbar.show({
+                    text: "Login Success.",
+                    duration: Snackbar.LENGTH_SHORT,
+                    backgroundColor: 'green',
+                  });
+                // navigation.navigate("ExchangeDetailsSubmittion");
             } else {
                 setLoading(false);
-                ShowErrotoast(toast,result);
+                ShowErrotoast(toast,result.error);
                 setOtp(null);
             }
           }
@@ -60,7 +70,53 @@ const Exchange_otp = (props) => {
         }
 
       };
-      
+
+      const submitOtpWithPassCode = async () => {
+        try {
+            setLoading(true);
+          if (!otp) {
+
+            setLoading(false);
+              Snackbar.show({
+                text: "Otp required.",
+                duration: Snackbar.LENGTH_SHORT,
+                backgroundColor: 'red',
+              });
+          }else{
+            const result = await apiHelper.post(REACT_APP_HOST+"/v1/auth/reset-password",{
+                "email": props.route.params.Email,
+                "otp": Number(otp),
+                "password":rePassword
+            });
+            console.log("---result--",result)
+            if (result.data.success) {
+                setOtp(null);
+                setLoading(false); 
+                navigation.goBack();
+                Snackbar.show({
+                    text: "Password Reset Success.",
+                    duration: Snackbar.LENGTH_SHORT,
+                    backgroundColor: 'green',
+                  });
+                // navigation.navigate("ExchangeDetailsSubmittion");
+            } else {
+                setLoading(false);
+                ShowErrotoast(toast,result.error);
+                setOtp(null);
+            }
+          }
+        } catch (err) {
+            setLoading(false);
+            console.log("---",err)
+        } finally {
+          setLoading(false);
+        }
+
+      };
+      const onChangepass = (input) => {
+          const formattedInput = input.replace(/\s/g, '');
+          setrePassword(formattedInput);
+      };
     return (
         <View style={styles.container}>
             <Exchange_Login_screen title="" onLeftIconPress={() => navigation.goBack()} />
@@ -83,7 +139,27 @@ const Exchange_otp = (props) => {
                     returnKeyType="done"
                 />
                 
+                
             </View>
+            {props.route.params.type==="OP_FUG"&&
+            <View style={{ justifyContent: "center", alignItems: "center", paddingHorizontal: wp(9) }}>
+                <Text style={{ marginVertical: 15, color: "white", alignSelf: "flex-start",fontSize:19 }}>Password</Text>
+                <TextInput
+                id="verificationCodePass"
+                testID="verificationCodePass"
+                    placeholderTextColor="gray"
+                    style={[styles.input, { color: "black", backgroundColor: "#fff" }]}
+                    maxLength={10}
+                    value={rePassword}
+                    placeholder={"Abcd!123"}
+                    onChangeText={(text) => {
+                        onChangepass(text)
+                    }}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    returnKeyType="done"
+                />
+            </View>}
 
             {Loading ? (
     <View style={styles.PresssableBtn} disabled={true}>
@@ -96,7 +172,7 @@ const Exchange_otp = (props) => {
         disabled={Loading}
         onPress={() => {
             Keyboard.dismiss();
-            submitOtp();
+            props.route.params.type==="OP_FUG"?submitOtpWithPassCode():submitOtp()
         }}
         style={styles.PresssableBtn}
     >

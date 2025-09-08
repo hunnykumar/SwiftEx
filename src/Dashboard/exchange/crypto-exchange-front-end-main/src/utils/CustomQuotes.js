@@ -36,6 +36,7 @@ import { alert } from '../../../../reusables/Toasts';
 import apiHelper from '../apiHelper';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { swap_prepare } from '../../../../../../All_bridge';
+import { getTokenBalancesUsingAddress, getWalletBalance } from './getWalletInfo/EtherWalletService';
 export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
 
   const styles = StyleSheet.create({
@@ -254,8 +255,9 @@ export const CustomQuotes = ({
       const walletUSDCAddress = await AsyncStorageLib.getItem("wallet");
       const addresses=JSON?.parse(walletUSDCAddress)?.address
       const usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-       const {res,err} = await proxyRequest("/v1/eth/token/info", PPOST, {addresses:usdtAddress,walletAddress:addresses});
-      const balance =res?.[0]?.balance;
+      const fetchedTokens = await getTokenBalancesUsingAddress(usdtAddress, addresses, "ETH")
+      console.log("walleetREspo--", fetchedTokens)
+      const balance =fetchedTokens.tokenInfo[0].balance;
       console.log(`USDT Balance of ${addresses}: ${balance} USDT`); 
       if(parseFloat(value)>=parseFloat(balance)||parseFloat(balance)===0){
         setcompletTransaction(true)
@@ -503,10 +505,9 @@ export const CustomQuotes = ({
         console.log("---err->",res)
         const nonParseData = await AsyncStorageLib.getItem("wallet");
         const walletAddress=JSON.parse(nonParseData).address;
-        const resProxy = await proxyRequest(`/v1/eth/${walletAddress}/balance`, PGET);
-        const balanceInEth = ethers.utils.formatEther(resProxy?.res);
-        console.log("---ae",balanceInEth)
-            if(parseFloat(value)>=parseFloat(balanceInEth)||parseFloat(balanceInEth)===0){
+         const balanceInEth=await getWalletBalance(walletAddress,"ETH");
+        console.log("---ae",balanceInEth.balance)
+            if(parseFloat(value)>=parseFloat(balanceInEth.balance)||parseFloat(balanceInEth.balance)===0){
               setcompletTransaction(true)
             }
             else{

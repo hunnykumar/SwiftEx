@@ -28,6 +28,7 @@ import { QuoteModalBottomSheet } from '../utils/QuotesComponent';
 import { CustomQuotes } from '../utils/CustomQuotes';
 import Wallet_selection_bottom from '../../../../Wallets/Wallet_selection_bottom';
 import { debounce } from 'lodash';
+import { fetchTokenInfo } from '../../../../../ethSwap/tokenUtils';
 const classic = ({ route }) => {
   const Focused=useIsFocused();
   const toast=useToast();
@@ -120,8 +121,8 @@ useEffect(()=>{
 
       const usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
       if (usdtAddress && addresses) {
-        const { res, err } = await proxyRequest("/v1/eth/token/info", PPOST, { addresses: usdtAddress, walletAddress: addresses });     
-        const balance = res?.[0]?.balance;
+         const resposeBalance = await fetchTokenInfo(usdtAddress, addresses)
+        const balance = resposeBalance[0].tokenBalance;
         console.log(`USDT Balance of ${addresses}: ${balance} USDT`);
         
         setWALLETBALANCE(balance);

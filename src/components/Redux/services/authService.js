@@ -10,6 +10,7 @@ import { NativeModules, Platform } from 'react-native';
 import { PGET, PPOST, proxyRequest } from '../../../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
 import { createWallet } from '../../../utilities/WalletManager';
 import * as StellarSdk from '@stellar/stellar-sdk';
+import { getWalletBalance } from '../../../Dashboard/exchange/crypto-exchange-front-end-main/src/utils/getWalletInfo/EtherWalletService';
 const { EthereumWallet } = NativeModules;
 
 const xrpl = require("xrpl");
@@ -162,14 +163,13 @@ const getBalance = async (address) => {
   console.log(address);
   try {
     if (address) {
-      const { res, err } = await proxyRequest(`/v1/bsc/${address}/balance`, PGET);
-      // AsyncStorage.setItem('balance', balance);
-      const bscBal=await ethers.utils.formatEther(res);
-      AsyncStorage.setItem("balance", bscBal);
+      const bscBal=await getWalletBalance(address,"BSC");
+      if(bscBal.status){
+      AsyncStorage.setItem("balance", bscBal.balance);
       return {
         status: "success",
         message: "Balance fetched",
-        walletBalance: bscBal,
+        walletBalance: bscBal.balance,
       };
     } else {
       return {
@@ -178,6 +178,7 @@ const getBalance = async (address) => {
         walletBalance: 0,
       };
     }
+  }
   } catch (e) {
     console.log(e);
   }
@@ -237,22 +238,21 @@ const getBalance = async (address) => {
 const getEthBalance = async (address) => {
   try {
     if (address) {
-      const { res, err } = await proxyRequest(`/v1/eth/${address}/balance`, PGET);
-
-      const ethBal=await ethers.utils.formatEther(res);
-      AsyncStorage.setItem("EthBalance", ethBal);
-
-      return {
-        status: "success",
-        message: "Eth Balance fetched",
-        EthBalance: ethBal,
-      };
-    } else {
-      return {
-        status: "error",
-        message: "Eth Balance fetched",
-        EthBalance: 0,
-      };
+      const ethBal=await getWalletBalance(address,"ETH");
+      if(ethBal.status){
+        AsyncStorage.setItem("EthBalance", ethBal.balance);
+        return {
+          status: "success",
+          message: "Eth Balance fetched",
+          EthBalance: ethBal.balance,
+        };
+      } else {
+        return {
+          status: "error",
+          message: "Eth Balance fetched",
+          EthBalance: 0,
+        };
+      }
     }
   } catch (error) {
     return {

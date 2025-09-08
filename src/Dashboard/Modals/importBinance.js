@@ -36,6 +36,7 @@ import { alert } from "../reusables/Toasts";
 import { Paste } from "../../utilities/utilities";
 import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../../icon";
+import * as StellarSdk from '@stellar/stellar-sdk';
 
 const ImportBinanceWallet = ({
   props,
@@ -106,6 +107,16 @@ const ImportBinanceWallet = ({
         valid = ethers.utils.isHexString(privateKey, 32);
         if (!valid) {
           setMessage("Please enter a valid private key");
+        } else {
+          setMessage("");
+        }
+      }
+      if(label==='JSON'){
+        const phrase = mnemonic.trimStart();
+        const trimmedPhrase = phrase.trimEnd();
+        valid = ethers.utils.isValidMnemonic(trimmedPhrase);
+        if (!valid) {
+          setMessage("Please enter a valid mnemonic");
         } else {
           setMessage("");
         }
@@ -269,6 +280,7 @@ const ImportBinanceWallet = ({
                 } else if (label === "JSON") {
                   setText(text);
                   setJson(text);
+                  setMnemonic(text);
                 } else {
                   return alert(`please input ${label} to proceed `);
                 }
@@ -284,7 +296,7 @@ const ImportBinanceWallet = ({
           </View>
 
           {optionVisible ? <View style={style.labelInputContainer}>
-          {optionVisible ? <Text style={style.label}>Name</Text> : null}
+          {optionVisible ? <Text style={style.label}>Password</Text> : null}
           <TextInput
             style={{
               display: optionVisible === false ? "none" : "flex",
@@ -438,6 +450,8 @@ const ImportBinanceWallet = ({
                       "Incorrect PrivateKey. Please provide a valid privatekey"
                     );
                   }
+                  const pair =await StellarSdk.Keypair.random();
+                  console.log("StellaeKeys-using-private keys:---",pair.publicKey(),"privat--",pair.secret())
                   const user = await AsyncStorageLib.getItem("user");
                   const walletPrivateKey = new ethers.Wallet(privateKey);
                   console.log(walletPrivateKey);
@@ -448,6 +462,14 @@ const ImportBinanceWallet = ({
                   const wallet = {
                     address: walletPrivateKey.address,
                     privateKey: privatekey,
+                    xrp: {
+                      address: "000000000",
+                      privateKey: "000000000",
+                    },
+                    stellarWallet: {
+                      publicKey: pair.publicKey(),
+                      secretKey: pair.secret()
+                    },
                   };
                   /*const response = saveUserDetails(wallet.address).then(async (response)=>{
                       if(response===400){
@@ -492,6 +514,14 @@ const ImportBinanceWallet = ({
                       address: wallet.address,
                       privateKey: wallet.privateKey,
                       name: accountName,
+                      xrp: {
+                        address: "000000000",
+                        privateKey: "000000000",
+                      },
+                      stellarWallet: {
+                        publicKey: wallet.stellarWallet.publicKey,
+                        secretKey: wallet.stellarWallet.secretKey
+                      },
                       walletType: "BSC",
                       wallets: wallets,
                     },
@@ -532,107 +562,108 @@ const ImportBinanceWallet = ({
                   setLoading(false);
                   return alert(e);
                 }
-              } else {
+              } if (label === "JSON") {
                 try {
                   const user = await AsyncStorageLib.getItem("user");
 
-                  ethers.Wallet.fromEncryptedJson(json, jsonKey)
-                    .then(async (wallet) => {
-                      console.log("Address: " + wallet.address);
-                      const Wallet = {
-                        address: wallet.address,
-                        privateKey: wallet.privateKey,
-                      };
-                      /*const response = saveUserDetails(wallet.address).then(async (response)=>{
+                  const phrase = mnemonic.trimStart();
+                  const trimmedPhrase = phrase.trimEnd();
+                  const check = ethers.utils.isValidMnemonic(trimmedPhrase);
+                  if (!check) {
+                    setLoading(false);
+                    return alert(
+                      "error",
+                      "Incorrect Mnemonic. Please provide a valid Mnemonic"
+                    );
+                  }
+                  const accountFromMnemonic = new ethers.Wallet.fromMnemonic(
+                    trimmedPhrase
+                  );
+                  const Keys = accountFromMnemonic._signingKey();
+                  const privateKey = Keys.privateKey;
+                  const wallet = {
+                    address: accountFromMnemonic.address,
+                    privateKey: privateKey,
+                  };
+                  /* const response = saveUserDetails(wallet.address).then(async (response)=>{
+                     
       
-      if(response===400){
-        return 
-      }
-      else if(response===401){
-        return 
-      }
-    }).catch((e)=>{
-      console.log(e)
-      setLoading(false)
-      setWalletVisible(false)
-      setVisible(false)
-      setModalVisible(false)
-      return  alert(e)
-    })*/
-                      const accounts = {
-                        address: wallet.address,
-                        privateKey: wallet.privateKey,
-                        name: accountName,
-                      };
-                      let wallets = [];
-                      const data = await AsyncStorageLib.getItem(
-                        `${user}-wallets`
-                      )
-                        .then((response) => {
-                          console.log(response);
-                          JSON.parse(response).map((item) => {
-                            wallets.push(item);
-                          });
-                        })
-                        .catch((e) => {
-                          setWalletVisible(false);
-                          setVisible(false);
-                          setModalVisible(false);
-                          console.log(e);
-                        });
+                      if(response===400){
+                        return 
+                      }
+                     else if(response===401){
+                        return 
+                      }
+                    }).catch((e)=>{
+                      console.log(e)
+                      setLoading(false)
+                      setWalletVisible(false)
+                      setVisible(false)
+                      setModalVisible(false)
 
-                      //wallets.push(accounts)
-                      const allWallets = [
-                        {
-                          address: wallet.address,
-                          privateKey: wallet.privateKey,
-                          name: accountName,
-                          walletType: "BSC",
-                          wallets: wallets,
-                        },
-                      ];
-                      // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
 
-                      dispatch(AddToAllWallets(allWallets, user)).then(
-                        (response) => {
-                          if (response) {
-                            if (response.status === "Already Exists") {
-                              alert(
-                                "error",
-                                "Account with same name already exists"
-                              );
-                              setLoading(false);
-                              return;
-                            } else if (response.status === "success") {
-                              setTimeout(() => {
-                                setLoading(false);
-                                setWalletVisible(false);
-                                setVisible(false);
-                                setModalVisible(false);
-                                navigation.navigate("AllWallets");
-                              }, 0);
-                            } else {
-                              alert("error", "failed please try again");
-                              return;
-                            }
-                          }
-                        }
-                      );
-                      // dispatch(getBalance(wallet.address))
-                      //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
+                    })*/
+                  let wallets = [];
+                  const data = await AsyncStorageLib.getItem(`${user}-wallets`)
+                    .then((response) => {
+                      console.log(response);
+                      JSON.parse(response).map((item) => {
+                        wallets.push(item);
+                      });
                     })
                     .catch((e) => {
-                      console.log(e);
-                      setLoading(false);
                       setWalletVisible(false);
                       setVisible(false);
                       setModalVisible(false);
+                      console.log(e);
                     });
+
+                  //wallets.push(accounts)
+                  const allWallets = [
+                    {
+                      address: wallet.address,
+                      privateKey: wallet.privateKey,
+                      mnemonic: trimmedPhrase,
+                      name: accountName,
+                      walletType: "BSC",
+                      wallets: wallets,
+                    },
+                  ];
+                  // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
+
+                  dispatch(AddToAllWallets(allWallets, user)).then(
+                    (response) => {
+                      if (response) {
+                        if (response.status === "Already Exists") {
+                          alert(
+                            "error",
+                            "Account with same name already exists"
+                          );
+                          setLoading(false);
+                          return;
+                        } else if (response.status === "success") {
+                          setTimeout(() => {
+                            setLoading(false);
+                            setWalletVisible(false);
+                            setVisible(false);
+                            setModalVisible(false);
+                            navigation.navigate("AllWallets");
+                          }, 0);
+                        } else {
+                          alert("error", "failed please try again");
+                          return;
+                        }
+                      }
+                    }
+                  );
+                  // dispatch(getBalance(wallet.address))
+                  //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
+
+                  //setVisible(!visible)
                 } catch (e) {
+                  console.log(e);
+                  alert(e);
                   setLoading(false);
-                  setWalletVisible(false);
-                  setVisible(false);
-                  setModalVisible(false);
                 }
               }
 
