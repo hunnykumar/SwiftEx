@@ -513,7 +513,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                 {/* recive card */}
                 <TouchableOpacity style={[styles.featureCard,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#23262F99"}]} onPress={() => { openModal2()}}>
                 <Icon name="qr-code-outline" type={"ionicon"}  color={"#2164C1"} size={35} />
-                  <Text style={[styles.featureCard.featureCardText,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>Recive</Text>
+                  <Text style={[styles.featureCard.featureCardText,{color:state.THEME.THEME===false?"black":"#FFFFFF"}]}>Receive</Text>
                 </TouchableOpacity>
                 {/* send card */}
                 <TouchableOpacity style={[styles.featureCard,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#23262F99"}]} onPress={() => { openModal1()}}>

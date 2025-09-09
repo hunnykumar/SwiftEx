@@ -29,8 +29,20 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 const AMMSwap = () => {
   const state=useSelector((state)=>state);
   const [fromToken, setFromToken] = useState({
+    code: "XLM",
+    issuer: null,
+    contract: null,
+    name: "Stellar Lumens",
+    org: "Stellar Network",
+    domain: "stellar.org",
+    icon: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq",
+    decimals: 7,
+    balance: '1,245.32',
+  });
+  
+  const [toToken, setToToken] = useState({
     code: "USDC",
-    issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
     contract: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
     name: "USD Coin",
     org: "Centre Consortium LLC dba Centre Consortium",
@@ -39,17 +51,6 @@ const AMMSwap = () => {
     decimals: 7,
     balance: '1,245.32',
   });
-  
-  const [toToken, setToToken] = useState({
-    code: "BTC",
-    issuer: "GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM",
-    contract: "CAO7DDJNGMOYQPRYDY5JVZ5YEK4UQBSMGLAEWRCUOTRMDSBMGWSAATDZ",
-    name: "BTC",
-    org: "Ultra Capital LLC dba Ultra Capital",
-    domain: "ultracapital.xyz",
-    icon: "https://stellar.myfilebase.com/ipfs/QmUjsGiNcUFTbiKoMZyBtgkSwfndBXSbRKFpGrYKvHC1fX",
-    decimals: 7
-  },);
   const navigation=useNavigation();
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');

@@ -11,10 +11,10 @@ const WETH_ABI = [
 ];
 
 const ADDRESSES = {
-    POOL_FACTORY: '0x5C69bEe701ef814a2B6a3EDD4B65B2d6b5dC217F',
-    QUOTER: '0xb27308f9F90D607463bb33eA1Be4eD2508b5b3A9',
-    SWAP_ROUTER: '0xE592427A0AEce92De3Edee1F18E0157C05861564',
-    WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    POOL_FACTORY: '0x0227628f3F023bb0B980b67D528571c95c6DaC1c',
+    QUOTER: '0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3',
+    SWAP_ROUTER: '0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E',
+    WETH: '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14',
     USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
 };
 
@@ -27,7 +27,7 @@ class SwapResult {
     }
 }
 
-async function swapETHtoUSDC(amount, privateKey, rpcUrl = 'https://eth-sepolia.g.alchemy.com/v2/k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo') {
+async function swapETHtoUSDC(amount, privateKey, rpcUrl = 'https://1rpc.io/sepolia') {
     try {
         // Initialize provider and signer
         const provider = new ethers.providers.JsonRpcProvider(rpcUrl);

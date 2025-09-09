@@ -281,92 +281,52 @@ const FOCUSED=useIsFocused();
       setVERFIY_OTP(false);
     } else {
       try {
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        const raw = JSON.stringify({
+        const result = await apiHelper.post(REACT_APP_HOST + "/v1/auth/forgot-password", {
           "email": Email.toLowerCase()
         });
+        console.log("result:--",result)
+        if (result.data.success) {
+          setlodaing_ver(false);
+          setLoading_fog(true);
+          setTimeout(() => {
+            Showsuccesstoast(toast, "OTP sent successfully in your mail.");
+          }, 400)
+          setLoading_fog(false);
+          setVERFIY_OTP(false);
+          setLoading(false);
+          navigation.navigate("Exchange_otp", {
+            Email: Email.toLowerCase(),
+            type: "OP_FUG"
+          });
 
-        const requestOptions = {
-          method: "POST",
-          headers: myHeaders,
-          body: raw,
-          redirect: "follow"
-        };
-
-        fetch(REACT_APP_HOST +"/users/forgotPasscode", requestOptions)
-          .then((response) => response.json())
-          .then((result) => {
-              console.log("---",result)
-              if (result.errorMessage === "OTP sent successfully"&&result.errorCode===200) {
-              setlodaing_ver(false);
-              setLoading_fog(true);
-              setTimeout(()=>{
-                Showsuccesstoast(toast,"OTP sent successfully in your mail.");
-              },400)
-              setLoading_fog(false);
-              setVERFIY_OTP(false);
-              setLoading(false);
-              navigation.navigate("Exchange_otp", {
-                Email:result.token,
-                type:"old_res"
-              });
-            }
-            if(result.statusCode===400)
-            {
-              if (Array.isArray(result?.message)) {
-                Snackbar.show({
-                  text: result?.message[0]==="email must be an email"?"Email must be an email":result?.message[0],
-                  duration: Snackbar.LENGTH_SHORT,
-                  backgroundColor: 'red',
-                });
-                setlodaing_ver(false);
-              setLoading_fog(true);
-              setEmail("");
-              setLoading_fog(false);
-              setVERFIY_OTP(false);
-              setLoading(false);
-              } else {
-                ShowErrotoast(toast, result.message);
-                setlodaing_ver(false);
-              setLoading_fog(true);
-              setEmail("");
-              setLoading_fog(false);
-              setVERFIY_OTP(false);
-              setLoading(false);
-              }
-              
-            }
-            if(result?.errorMessage==="User not found")
-            {
-              setlodaing_ver(false);
-              setLoading_fog(true);
-              setEmail("");
-              setLoading_fog(false);
-              setTimeout(()=>{
-                ShowErrotoast(toast,"User not found");
-              },400)
-              setVERFIY_OTP(false);
-              setLoading(false);
-            }
-            if(result.statusCode===500)
-            {
-              setlodaing_ver(false);
-              setLoading_fog(true);
-              setEmail("");
-              setLoading_fog(false);
-              setTimeout(()=>{
-                ShowErrotoast(toast,"Something went worng.");
-              },400)
-              setVERFIY_OTP(false);
-              setLoading(false);
-            }
-          })
-          .catch((error) => {console.log(error)
-            setLoading(false);
+        }
+        if (result.data.error) {
+          setLoading(false);
+          setLoading_fog(false);
+          setVERFIY_OTP(false);
+          if (Array.isArray(result?.data?.error?.message)) {
+            Snackbar.show({
+              text: result?.data?.message[0] === "email must be an email" ? "Email must be an email" : result?.message[0],
+              duration: Snackbar.LENGTH_SHORT,
+              backgroundColor: 'red',
+            });
+            setlodaing_ver(false);
+            setLoading_fog(true);
+            setEmail("");
             setLoading_fog(false);
             setVERFIY_OTP(false);
-          });
+            setLoading(false);
+          } else {
+            ShowErrotoast(toast, result.message);
+            setlodaing_ver(false);
+            setLoading_fog(true);
+            setEmail("");
+            setLoading_fog(false);
+            setVERFIY_OTP(false);
+            setLoading(false);
+          }
+
+        }
       } catch (err) {
         setLoading(false);
         setLoading_fog(false);

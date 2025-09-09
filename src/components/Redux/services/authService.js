@@ -10,6 +10,7 @@ import { NativeModules, Platform } from 'react-native';
 import { PGET, PPOST, proxyRequest } from '../../../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
 import { createWallet } from '../../../utilities/WalletManager';
 import * as StellarSdk from '@stellar/stellar-sdk';
+import { getWalletBalance } from '../../../Dashboard/exchange/crypto-exchange-front-end-main/src/utils/getWalletInfo/EtherWalletService';
 const { EthereumWallet } = NativeModules;
 
 const xrpl = require("xrpl");
@@ -162,9 +163,10 @@ const getBalance = async (address) => {
   console.log(address);
   try {
     if (address) {
-      const { res, err } = await proxyRequest(`/v1/bsc/${address}/balance`, PGET);
+      const balanceInEth=await getWalletBalance(address,"BSC");
+      console.log("---ae",balanceInEth.balance)
       // AsyncStorage.setItem('balance', balance);
-      const bscBal=await ethers.utils.formatEther(res);
+      const bscBal=balanceInEth.balance;
       AsyncStorage.setItem("balance", bscBal);
       return {
         status: "success",
@@ -237,9 +239,10 @@ const getBalance = async (address) => {
 const getEthBalance = async (address) => {
   try {
     if (address) {
-      const { res, err } = await proxyRequest(`/v1/eth/${address}/balance`, PGET);
+      const balanceInEth=await getWalletBalance(address,"ETH");
+      console.log("---ae",balanceInEth.balance)
 
-      const ethBal=await ethers.utils.formatEther(res);
+      const ethBal=balanceInEth.balance;
       AsyncStorage.setItem("EthBalance", ethBal);
 
       return {

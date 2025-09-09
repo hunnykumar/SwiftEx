@@ -29,6 +29,8 @@ import { Exchange_Login_screen } from "../../../../../reusables/ExchangeHeader";
 import darkBlue from "../../../../../../../assets/darkBlue.png";
 import Icon from "../../../../../../icon";
 import Snackbar from "react-native-snackbar";
+import apiHelper from "../../apiHelper";
+import { REACT_APP_HOST } from "../../ExchangeConstants";
 
 export const ExchangeRegister = (props) => {
   const toast=useToast();
@@ -61,6 +63,9 @@ export const ExchangeRegister = (props) => {
   const FOCUSED=useIsFocused();
 
 useEffect(()=>{
+  setLoading(false);
+  setpassword('')
+  setrePassword('')
   setFormContent({
     firstName: "",
     lastName: "",
@@ -76,25 +81,23 @@ useEffect(()=>{
     setLoading(true);
     
     try {
-      const { err, res } = await signup({
-        ...formContent,
-        phoneNumber: `${formContent.email}`,
-      });
-  
-      setLoading(false);
-      console.log(err);
-      console.log("----", err, res);
-  
-      if (res && res.message === "OTP sent successfully") {
+      const result = await apiHelper.post(REACT_APP_HOST+"/v1/auth/signup",{
+        "firstName": formContent.firstName,
+        "lastName": formContent.lastName,
+        "email": formContent.email.toLowerCase(),
+        "password": rePassword
+    });
+      console.log("result:--",result)
+      if (result.data.success) {
         navigation.navigate("Exchange_otp", {
-          Email: res.token,
+          Email: formContent.email.toLowerCase(),
           type: "new_res",
         });
-        return;
+
       }
-  
-      if (err) {
-        handleErrorMessage(err);
+      if (!result.data.success) {
+        setLoading(false);
+        handleErrorMessage(result.data||result.error);
       }
   
     } catch (error) {
@@ -122,6 +125,8 @@ useEffect(()=>{
         showSnackbar("Last name should not be empty.");
       } else if (err.message.includes("firstName should not be empty")) {
         showSnackbar("First name should not be empty.");
+      }else{
+        showSnackbar(err.message[0]);
       }
     } else {
       setShowMessage(true);
@@ -149,8 +154,8 @@ useEffect(()=>{
     setFormContent({ ...formContent, lastName: formattedInput })
   };
   const onChangelmail = (input) => {
-    // const formattedInput = input.replace(/\s/g, '').toLowerCase();
-    setFormContent({ ...formContent, email: input.toLowerCase() })
+    const formattedInput = input.replace(/\s/g, '');
+    setFormContent({ ...formContent, email: formattedInput })
   };
 
   const onChangepass = (input, type) => {
@@ -235,7 +240,7 @@ useEffect(()=>{
                 theme={{ colors: { text: "white" } }}
                 value={formContent.email}
                 placeholder={"Enter your email address"}
-                keyboardType='email-address'
+                keyboardType='default'
                 onChangeText={(text) =>
                    onChangelmail(text)
                 }

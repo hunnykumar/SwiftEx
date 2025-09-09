@@ -452,13 +452,13 @@ export const ProfileView = (props) => {
                   end={{ x: 1, y: 0 }}
                   style={[styles.tokenImage]}
                 >
-                  <Text style={[styles.tokenName, { color: "#fff", fontSize: 28 }]}>{user?.firstName?.charAt(0)?.toLocaleUpperCase()}</Text>
+                  <Text style={[styles.tokenName, { color: "#fff", fontSize: 28 }]}>{user?.email?.charAt(0)?.toLocaleUpperCase()}</Text>
                 </LinearGradient>
             <View style={[styles.fnlnTextView]}>
-              <Text style={{ fontSize: hp(2), color: "white", fontSize: hp(2.3), width: wp(63),marginLeft:wp(1.2) }}>{user?.firstName + " " + user?.lastName}</Text>
+              {/* <Text style={{ fontSize: hp(2), color: "white", fontSize: hp(2.3), width: wp(63),marginLeft:wp(1.2) }}>{user?.firstName + " " + user?.lastName}</Text>
               <View style={styles.verifiedTextCon}>
                 <Text style={styles.verifiedText}>Verified!</Text>
-              </View>
+              </View> */}
             </View>
             <View style={styles.emailphoneView}>
               <Text style={{ color: "white", fontSize: 16 }}>Email</Text>

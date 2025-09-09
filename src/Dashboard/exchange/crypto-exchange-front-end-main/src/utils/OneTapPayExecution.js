@@ -3,8 +3,9 @@ const QUOTER_ABI = require('../../../../../ethSwap/abi/quoter.json');
 const SWAP_ROUTER_ABI = require('../../../../../ethSwap/abi/swaprouter.json');
 const POOL_ABI = require('../../../../../ethSwap/abi/pool.json');
 const { ethers } = require('ethers');
-const { proxyRequest, PPOST, PGET } = require('../api');
+const { proxyRequest, PPOST } = require('../api');
 const { toString } = require('lodash');
+const { getWalletBalance } = require('./getWalletInfo/EtherWalletService');
 
 const WETH_ABI = [
     "function deposit() external payable",
@@ -15,11 +16,11 @@ const WETH_ABI = [
 
 // Contract Addresses
 const ADDRESSES = {
-    POOL_FACTORY: '0x5C69bEe701ef814a2B6a3EDD4B65B2d6b5dC217F',
-    QUOTER: '0xb27308f9F90D607463bb33eA1Be4eD2508b5b3A9',
-    SWAP_ROUTER: '0xE592427A0AEce92De3Edee1F18E0157C05861564',
-    WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-    USDT: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+    POOL_FACTORY: '0x0227628f3F023bb0B980b67D528571c95c6DaC1c',
+    QUOTER: '0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3',
+    SWAP_ROUTER: '0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E',
+    WETH: '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14',
+    USDT: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0'
 };
 
 
@@ -27,8 +28,8 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
     try {
         const wallet = new ethers.Wallet(privateKey);
         const address = await wallet.getAddress();
-        const resProxy = await proxyRequest(`/v1/eth/${address}/balance`, PGET);
-        const ethBalance = ethers.utils.parseEther(resProxy?.res);
+        const balanceIn=await getWalletBalance(address,"ETH");
+        const ethBalance = ethers.utils.parseEther(balanceIn.balance.toString());
         const amountIn = ethers.utils.parseEther(amount);
         if (ethBalance.lt(amountIn)) {
             return {
@@ -91,12 +92,12 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
             tokenIn: {
                 "symbol": "WETH",
                 "decimals": 18,
-                "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+                "address": "0xfff9976782d46cc05630d1f6ebab18b2324d6b14"
             },
             tokenOut: {
                 "symbol": "USDT",
                 "decimals": 6,
-                "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                "address": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0"
             }, amount: toString(amount)
         });
                       console.log("----QuotedAmountOutRes",QuotedAmountOutRes.res);

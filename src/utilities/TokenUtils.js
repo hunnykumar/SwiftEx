@@ -1,219 +1,159 @@
-const TokenList = require('../Dashboard/tokens/tokenList.json');
-const PancakeList =require ('../Dashboard/tokens/pancakeSwap/PancakeList.json');
-const { proxyRequest, PPOST } = require('../Dashboard/exchange/crypto-exchange-front-end-main/src/api');
-const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+const TokenList = require("../Dashboard/tokens/tokenList.json");
+const PancakeList = require("../Dashboard/tokens/pancakeSwap/PancakeList.json");
+const { getTokenBalancesUsingAddress } = require("./getWalletInfo/multiiChainHelper");
+
+const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+
+async function getStoredAddresses(key) {
+  try {
+    const storedData = await AsyncStorage.getItem(key);
+    return storedData ? JSON.parse(storedData) : [];
+  } catch (err) {
+    console.error(`Error reading tokens from storage [${key}]:`, err);
+    return [];
+  }
+}
+
+const priceCache = {};
+
+async function fetchPrices(symbols) {
+  const unique = [...new Set(symbols.filter(Boolean))];
+  if (unique.length === 0) return {};
+
+  const url = `https://min-api.cryptocompare.com/data/pricemulti?fsyms=${unique.join(",")}&tsyms=USD`;
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    unique.forEach(sym => {
+      priceCache[sym] = json[sym]?.USD || null;
+    });
+    return priceCache;
+  } catch (err) {
+    console.error("Error fetching batch prices:", err);
+    return {};
+  }
+}
+
+async function fetchTokenInfoGeneric(address, wallet, network, tokenList, fallback = {}) {
+  try {
+    if (!address || !wallet) return null;
+
+    const fetched = await getTokenBalancesUsingAddress(address, wallet, network);
+    const data = fetched.tokenInfo[0];
+
+    const tokenMeta = tokenList.find(
+      (t) => t.address.toLowerCase() === address.toLowerCase()
+    );
+
+    return {
+      name: data?.name || "Unknown",
+      symbol: data?.symbol || "???",
+      balance: data?.balance || "0",
+      address: data?.address || address,
+      network,
+      img_url: tokenMeta?.logoURI || fallback.img_url || "",
+      price: null, // filled later
+      decimals: data?.decimals || 18
+    };
+  } catch (err) {
+    console.error(`Error fetching token info for ${address} on ${network}:`, err);
+    const tokenMeta = tokenList.find(
+      (t) => t.address.toLowerCase() === address.toLowerCase()
+    );
+    return {
+      name: "Unknown Token",
+      symbol: fallback.symbol || "???",
+      balance: "0",
+      address,
+      network,
+      img_url: tokenMeta?.logoURI || fallback.img_url || "",
+      price: null,
+      decimals: 0,
+      error: err.message
+    };
+  }
+}
+
+function compareTokens(a, b) {
+  const balanceA = parseFloat(a.balance || 0);
+  const balanceB = parseFloat(b.balance || 0);
+
+  if (balanceA > 0 && balanceB === 0) return -1;
+  if (balanceA === 0 && balanceB > 0) return 1;
+  if (balanceA !== balanceB) return balanceB - balanceA;
+
+  return (a.name || a.symbol || "").localeCompare(b.name || b.symbol || "");
+}
 
 async function fetchAllTokensData(WALLET_ADDRESS) {
-  // Storage keys
   const STORAGE_KEY = `tokens_${WALLET_ADDRESS}`;
   const STORAGE_BNB_KEY = `tokens_BNB${WALLET_ADDRESS}`;
 
-
-  // Function to fetch token price from CryptoCompare API
-  const fetchTokenPrice = async (symbol) => {
-    try {
-      if (!symbol || symbol === "???" || symbol === "Unknown") {
-        return null;
-      }
-      
-      const response = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${symbol}&tsyms=USD`)
-      .then((res)=>res.json())
-      .then((resJson)=>{
-        return resJson
-      })
-      return response.USD || null;
-    } catch (error) {
-      console.error(`Error fetching price for ${symbol}:`, error);
-      return null;
-    }
-  };
-
-  // Default tokens array
   const DEFAULT_TOKENS = [
     {
-        symbol: "USDT",
-        img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
-        address: "0xdAC17F958D2ee523a2206206994597C13D831ec7" 
-      },
-      {
-        symbol: "UNI",
-        img_url: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
-        address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
-      },
-      {
-        symbol: "1INCH",
-        img_url: "https://assets.coingecko.com/coins/images/13469/thumb/1inch-token.png?1608803028", 
-        address: "0x111111111117dC0aa78b770fA6A738034120C302"
-      }
+      symbol: "USDT",
+      img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
+      address: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0" 
+    },
+    {
+      symbol: "UNI",
+      img_url: "https://tokens.pancakeswap.finance/images/0xBf5140A22578168FD562DCcF235E5D43A02ce9B1.png",
+      address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
+    },
+    {
+      symbol: "USDC",
+      img_url: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png", 
+      address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+    }
   ];
-  
-  // Default BNB Tokens
+
   const DEFAULT_BNB_TOKENS = [
     {
-        symbol: "USDT",
-        img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png", 
-        address: "0x55d398326f99059fF775485246999027B3197955"
-      }
-  ]
-
-  // Fetch ETH token info
-  const fetchTokenInfo = async (address, img_url = '', symbol = '') => {
-    try {
-      const imageData = TokenList.find(token => 
-        token.address.toLowerCase() === address.toLowerCase()
-      );
-      if (address && WALLET_ADDRESS) {
-        const { res, err } = await proxyRequest("/v1/eth/token/info", PPOST, { addresses: address, walletAddress: WALLET_ADDRESS });
-        const respoData=res?.[0];
-        const price = await fetchTokenPrice(respoData?.symbol);
-        return { 
-          name:respoData?.name, 
-          symbol: respoData?.symbol, 
-          balance: respoData?.balance, 
-          address: respoData?.address,
-          network: "ETH",
-          img_url: imageData?.logoURI||'',
-          price: price,
-          decimals:respoData?.decimals
-        };
-      }
-
-    } catch (error) {
-      console.error(`Error fetching token info for ${address}:`, error);
-      const price = await fetchTokenPrice(symbol);
-      const imageData = TokenList.find(token => 
-        token.address.toLowerCase() === address.toLowerCase()
-      );
-      return {
-        name: "Unknown Token",
-        symbol: symbol || "???",
-        balance: "0",
-        address,
-        network: "ETH",
-        img_url: imageData?.logoURI||'',
-        price: price,
-        error: error.message
-      };
+      symbol: "USDT",
+      img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png", 
+      address: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
     }
-  };
-
-  // Fetch BNB token info
-  const fetchBNBTokenInfo = async (address, img_url = '', symbol = '') => {
-    try {
-      if (address && WALLET_ADDRESS) {
-        const { res, err } = await proxyRequest("/v1/bsc/token/info", PPOST, { addresses: address, walletAddress: WALLET_ADDRESS });
-        const data=res?.[0];
-        const imageData = PancakeList.find(token => 
-          token.address.toLowerCase() === address.toLowerCase()
-        );
-        const price = await fetchTokenPrice(data?.symbol);
-        return {
-          name:data?.name,
-          symbol: data?.symbol,
-          balance: data?.balance,
-          address:data?.address,
-          network: "BSC",
-          img_url: imageData?.logoURI || '',
-          price: price,
-          decimals:data?.decimals
-        };
-      }
-    } catch (error) {
-      console.error(`Error fetching token info for ${address}:`, error);
-      const imageData = PancakeList.find(token => 
-        token.address.toLowerCase() === address.toLowerCase()
-      );
-      const price = await fetchTokenPrice(symbol);
-      return {
-        name: "Unknown Token",
-        symbol: symbol || "???",
-        balance: "0",
-        address,
-        network: "BSC",
-        img_url:  imageData?.logoURI||'',
-        price: price,
-        error: error.message
-      };
-    }
-  };
+  ];
 
   try {
-    // Get stored ETH token addresses
-    let storedEthAddresses = [];
-    try {
-      const storedData = await AsyncStorage.getItem(STORAGE_KEY);
-      storedEthAddresses = storedData ? JSON.parse(storedData) : [];
-    } catch (e) {
-      console.error("Error reading ETH tokens from storage:", e);
-    }
-
-    // Get stored BNB token addresses
-    let storedBnbAddresses = [];
-    try {
-      const storedData = await AsyncStorage.getItem(STORAGE_BNB_KEY);
-      storedBnbAddresses = storedData ? JSON.parse(storedData) : [];
-    } catch (e) {
-      console.error("Error reading BNB tokens from storage:", e);
-    }
-
-    // Fetch all tokens in parallel
+    const [storedEthAddresses, storedBnbAddresses] = await Promise.all([
+      getStoredAddresses(STORAGE_KEY),
+      getStoredAddresses(STORAGE_BNB_KEY)
+    ]);
     const fetchPromises = [
-        // Default ETH tokens
-        ...DEFAULT_TOKENS.map(({ address, img_url, symbol }) => 
-          fetchTokenInfo(address, img_url, symbol)
-        ),
-        // Stored ETH tokens
-        ...storedEthAddresses.map(address => 
-          fetchTokenInfo(address)
-        ),
-        // Default BNB tokens
-        ...DEFAULT_BNB_TOKENS.map(({ address, img_url, symbol }) => 
-          fetchBNBTokenInfo(address, img_url, symbol)
-        ),
-        // Stored BNB tokens
-        ...storedBnbAddresses.map(address => 
-          fetchBNBTokenInfo(address)
-        )
-      ];
+      ...DEFAULT_TOKENS.map((t) =>
+        fetchTokenInfoGeneric(t.address, WALLET_ADDRESS, "ETH", TokenList, t)
+      ),
+      ...storedEthAddresses.map((addr) =>
+        fetchTokenInfoGeneric(addr, WALLET_ADDRESS, "ETH", TokenList)
+      ),
+      ...DEFAULT_BNB_TOKENS.map((t) =>
+        fetchTokenInfoGeneric(t.address, WALLET_ADDRESS, "BSC", PancakeList, t)
+      ),
+      ...storedBnbAddresses.map((addr) =>
+        fetchTokenInfoGeneric(addr, WALLET_ADDRESS, "BSC", PancakeList)
+      )
+    ];
 
-    // Wait for all tokens to be fetched
-    const allTokens = await Promise.all(fetchPromises);
-    // Sort all tokens with non-zero balance at the top
-    const sortedTokens = allTokens.sort((a, b) => {
-      // Convert balances to numbers
-      const balanceA = parseFloat(a.balance || 0);
-      const balanceB = parseFloat(b.balance || 0);
-      
-      // First sort by whether balance is > 0
-      if (balanceA > 0 && balanceB === 0) {
-        return -1; // a comes first
-      }
-      if (balanceA === 0 && balanceB > 0) {
-        return 1; // b comes first
-      }
-      
-      // If both have positive balances or both have zero balance,
-      // then sort by balance amount (higher first)
-      if (balanceA !== balanceB) {
-        return balanceB - balanceA;
-      }
-      
-      // If balances are equal, sort by name
-      return a.name.localeCompare(b.name);
-    });
+    const allTokensResults = await Promise.all(fetchPromises);
+    const allTokens = allTokensResults.filter(Boolean);
 
-    // Return a single result object with all tokens in one array
-    const result = {
+    const symbols = allTokens.map(t => t.symbol);
+    await fetchPrices(symbols);
+    const enrichedTokens = allTokens.map(t => ({
+      ...t,
+      price: priceCache[t.symbol] ?? null
+    }));
+    const sortedTokens = enrichedTokens.sort(compareTokens);
+    return {
       tokens: sortedTokens,
       timestamp: new Date().toISOString(),
       wallet: WALLET_ADDRESS
     };
-
-    return result;
-  } catch (error) {
-    console.error("Error fetching all tokens:", error);
+  } catch (err) {
+    console.error("Error fetching all tokens:", err);
     return {
-      error: error.message,
+      error: err.message,
       tokens: [],
       timestamp: new Date().toISOString(),
       wallet: WALLET_ADDRESS

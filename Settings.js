@@ -241,9 +241,9 @@ const Settings = (props) => {
 
   const logout_from_app=async()=>{
     try {
-      const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
+      // const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
             //AsyncStorageLib.removeItem('user')
-            AsyncStorageLib.removeItem(LOCAL_TOKEN);
+            // AsyncStorageLib.removeItem(LOCAL_TOKEN);
             props.navigation.navigate("Passcode");
             /* dispatch(logout()).then((res)=>{
       }).catch((e)=>{

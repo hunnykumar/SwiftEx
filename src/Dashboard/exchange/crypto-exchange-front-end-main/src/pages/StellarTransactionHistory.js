@@ -309,40 +309,40 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
             })
         );
 
-const { res,err } = await authRequest("/users/alchemyOrders", POST);
-if(err){
+// const { res,err } = await authRequest("/users/alchemyOrders", POST);
+// if(err){
   setTransactions(processedTransactions);
-}
-if(res.status&&res.total>0)
-{
-  const processedAlcTrs = await Promise.all(
-    res.records.map(async (trans) => {
-      const tx = trans;
-      const type = trans.orderType==="BUY" ? "buyCry" : "sellCry";
-      const amount = trans.orderType==="BUY"? trans.requsetdPayload.amount: trans.requsetdPayload.cryptoAmount;
-      const operation = {
-        type,
-        amount,
-        cryptoName:trans.orderType==="BUY"? trans.requsetdPayload.cryptoCurrency: trans.requsetdPayload.crypto
-      };
+// }
+// if(res.status&&res.total>0)
+// {
+//   const processedAlcTrs = await Promise.all(
+//     res.records.map(async (trans) => {
+//       const tx = trans;
+//       const type = trans.orderType==="BUY" ? "buyCry" : "sellCry";
+//       const amount = trans.orderType==="BUY"? trans.requsetdPayload.amount: trans.requsetdPayload.cryptoAmount;
+//       const operation = {
+//         type,
+//         amount,
+//         cryptoName:trans.orderType==="BUY"? trans.requsetdPayload.cryptoCurrency: trans.requsetdPayload.crypto
+//       };
   
-      return {
-        id: tx.orderId || '',
-        date: formatDate(tx.createdAt),
-        amount:amount,
-        success: trans.status,
-        memo: 'No memo',
-        operations: {
-          records: [operation],
-        },
-        isReceived:false,
-      };
-    })  
-  );
-   setTransactions([]);
-   const  margingBothData=[...processedTransactions,...processedAlcTrs];
-   setTransactions(margingBothData);
-}
+//       return {
+//         id: tx.orderId || '',
+//         date: formatDate(tx.createdAt),
+//         amount:amount,
+//         success: trans.status,
+//         memo: 'No memo',
+//         operations: {
+//           records: [operation],
+//         },
+//         isReceived:false,
+//       };
+//     })  
+//   );
+//    setTransactions([]);
+//    const  margingBothData=[...processedTransactions,...processedAlcTrs];
+//    setTransactions(margingBothData);
+// }
 
 
     } catch (error) {
