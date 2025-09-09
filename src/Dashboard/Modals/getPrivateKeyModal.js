@@ -99,7 +99,7 @@ export const GetPrivateKeyModal = ({ visible, setVisible, onCrossPress }) => {
 
           <Text style={style.welcomeText}> Back up you wallet now </Text>
           <Text style={style.welcomeText}>
-            In the next page , you will see your secret phrase
+            In the next page, you will see your secret phrase
           </Text>
           <TouchableOpacity
             style={{
@@ -118,7 +118,7 @@ export const GetPrivateKeyModal = ({ visible, setVisible, onCrossPress }) => {
             />
             <View style={{ marginLeft: 10 }}>
             <Text style={style.welcomeText2}>
-              If i loose my private key , my funds will be lost
+              If I loose my private key, my funds will be lost
             </Text>
               {/* <Switch
                 value={Checked}
@@ -145,7 +145,7 @@ export const GetPrivateKeyModal = ({ visible, setVisible, onCrossPress }) => {
             />
             <View style={{ marginLeft: 10 }}>
             <Text style={style.welcomeText2}>
-              If i share my private key , my funds can get stolen
+              If I share my private key, my funds can get stolen
             </Text>
               {/* <Switch
                 value={Checked2}

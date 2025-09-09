@@ -9,6 +9,7 @@ import { StyleSheet,TouchableOpacity,Image } from "react-native"
 import Icon from "../icon";
 import darkBlue from "../../assets/Dark-Blue.png";
 import { useSelector } from "react-redux"
+import { Wallet_screen_header } from "./reusables/ExchangeHeader"
 export default function BiometricPage()
 {
     const state=useSelector((state)=>state);
@@ -37,15 +38,7 @@ export default function BiometricPage()
 
     return(
         <View style={{backgroundColor:state.THEME.THEME===false?"#fff":"black", height:heightPercentageToDP(100)}}>
-<View style={[styles.header,{backgroundColor:state.THEME.THEME===false?"#4CA6EA":"black"}]}>
-    <TouchableOpacity style={styles.backButton} onPress={()=>{navigation.goBack()}}>
-    <Icon name={"left"} type={"antDesign"} size={29} color={"white"}/>
-    </TouchableOpacity>
-    {Platform.OS==='android'?<Text style={[styles.headerText_android,]}>{"Authentication"}</Text>:<Text style={styles.headerText}>{"Authentication"}</Text>}
-    <TouchableOpacity onPress={()=>{navigation.navigate("Home")}}>
-    <Image source={darkBlue} style={styles.headerImage} />
-    </TouchableOpacity>
-  </View>  
+          <Wallet_screen_header title="Authentication" onLeftIconPress={() => navigation.goBack()} />
 
             <View style={{  display:'flex', flexDirection:'row', justifyContent:'space-evenly', marginTop:50}}>
              <View>

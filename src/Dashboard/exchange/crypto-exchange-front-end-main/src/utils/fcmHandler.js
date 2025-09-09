@@ -30,7 +30,7 @@ export const onMessageListener = () =>
 
       // Check if user is the bidder
       const { targetUser } = payload.data
-      const { err, res } = await authRequest('/users/getUserDetails', GET)
+      const { err, res } = await authRequest('/users/:id', GET)
       if (err) return reject(err.message)
       if (res._id !== targetUser) return reject()
 

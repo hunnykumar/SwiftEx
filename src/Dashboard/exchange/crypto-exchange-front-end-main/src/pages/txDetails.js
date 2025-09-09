@@ -1,81 +1,70 @@
-import React,{useEffect, useLayoutEffect, useState} from 'react'
-import { StyleSheet, Text, View, Button ,TextInput, FlatList, TouchableOpacity,ActivityIndicator, Alert, ScrollView } from 'react-native';
-import { Avatar,  Card, Title, Paragraph, CardItem} from 'react-native-paper';
-import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
-import { urls } from './constants';
+
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { useDispatch, useSelector } from "react-redux";
-import AsyncStorageLib from '@react-native-async-storage/async-storage';
-import { alert } from '../../../../reusables/Toasts';
+import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
+
+const TxDetails = ({ route,showWebView }) => {
+    const navigation = useNavigation();
+    const { userKycUrl } = route.params || {};
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        if (!userKycUrl) {
+            navigation.goBack();
+            Alert.alert("Error", "invalid url");
+            setLoading(false);
+        }
+        showWebView(userKycUrl)
+        navigation.goBack();
+    }, [userKycUrl]);
 
 
-
-export const TxDetails = (props)=>{
-  const type = useSelector((state) =>  state.walletType)
-  const[walletType, setWalletType] = useState()
-const url = `https://testnet.bscscan.com/tx/${props.route.params.data.hash}`
-
-console.log(props.route.params.data.hash)
-useEffect(async()=>{
-  AsyncStorageLib.getItem('walletType').then(async(Type)=>{
-
-    if(JSON.parse(Type)=="Ethereum"){
-      setWalletType('Ethereum')
-    }else if(JSON.parse(Type)=="Matic"){
-      setWalletType('Matic')
-      
-    }else if(JSON.parse(Type)=="Xrp"){
-      setWalletType('Xrp')
-      
-    }
-    else if(JSON.parse(Type)=="BSC"){
-      setWalletType("BSC")
-    }
-    else if(JSON.parse(Type)=="Multi-coin"){
-      if(props.route.params.data.chainType==='Eth'){
-        setWalletType('Ethereum')
-      }
-      else if(props.route.params.data.chainType==='BSC'){
-        setWalletType("BSC")
-
-      }
-      else if(props.route.params.data.chainType==='Matic'){
-        setWalletType("Matic")
-
-      }
-      else{
-        
-        return alert('error',"no chainType found in multi-coin transaction. Error 404")
-      }
-    }
-  })
-},[])
     return (
-    
-   
         <View style={styles.container}>
-        
-        <WebView 
-        source={{ uri: walletType=='Ethereum'?etherUrl:walletType=='Matic'?MaticUrl:walletType=='Xrp'?XrpUrl:url }}
-        
-        />
-          </View>
-      );
+            {/* <Exchange_screen_header title="Info" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} /> */}
+            {/* <WebView
+                source={{ uri: userKycUrl }}
+                style={styles.webview}
+                onLoad={() => setLoading(false)}
+                onError={() => {
+                    setLoading(false);
+                }}
+            />
 
-}
+            {loading && (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="green" />
+                    <Text style={styles.loadingText}>Preparing Details...</Text>
+                </View>
+            )} */}
+        </View>
+    );
+};
 
 const styles = StyleSheet.create({
     container: {
-      flex: 1,
-      backgroundColor: '#fff',
-      marginTop:50,
-      height:10,
+        flex: 1,
+        backgroundColor: '#011434',
     },
-   content:{
-  padding:40,
-   },
-   list:{
-  marginTop:30,
-   }
-  });
+    webview: {
+        flex: 1,
+    },
+    loadingContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#011434',
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize:16,
+        color:"#fff"
+    },
+});
 
+export default TxDetails;

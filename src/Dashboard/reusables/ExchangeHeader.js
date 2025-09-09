@@ -1,14 +1,16 @@
-import { View, Text, StyleSheet, Image } from "react-native";
-import React from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, Dimensions, Animated, TouchableWithoutFeedback, Alert } from "react-native";
+import React, { useCallback, useState } from "react";
 import Icon from "../../icon";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import darkBlue from "../../../assets/darkBlue.png";
 import { REACT_APP_LOCAL_TOKEN } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
+import { useSelector } from "react-redux";
+import { createGuestUser } from "../exchange/crypto-exchange-front-end-main/src/api";
 
 export const ExchangeHeaderApp = () => {
   const navigation = useNavigation();
@@ -73,6 +75,174 @@ export const ExchangeHeaderIcon = () => {
         <Text style={{ color: "#E96A6A" }}>Logout</Text>
       </View>
     </View>
+  );
+};
+
+export const Exchange_screen_header = ({ title, onLeftIconPress, onRightIconPress }) => {
+  const [isDrawerVisible, setDrawerVisible] = useState(false);
+
+  const toggleDrawer = () => {
+    setDrawerVisible(!isDrawerVisible);
+    if (onRightIconPress) {
+      onRightIconPress();
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      setDrawerVisible(false);
+      return () => setDrawerVisible(false);
+    }, [])
+  );
+
+  return (
+    <>
+      <View style={[styles.exchangeheaderContainer, { height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
+        <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
+          <Icon
+            name={"arrow-left"}
+            type={"materialCommunity"}
+            size={30}
+            color={"#fff"}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4) }]}>{title}</Text>
+        <TouchableOpacity onPress={toggleDrawer} style={[styles.exchangerightIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
+          <Icon name={"menu"} type={"materialCommunity"} size={30} color={"#fff"} />
+        </TouchableOpacity>
+      </View>
+      <CustomDrawer isVisible={isDrawerVisible} onClose={toggleDrawer} />
+    </>
+  );
+};
+
+const { width } = Dimensions.get('window');
+
+const CustomDrawer = ({ isVisible, onClose }) => {
+  const naviagtion=useNavigation();
+  const translateX = React.useRef(new Animated.Value(width)).current;
+  React.useEffect(() => {
+    Animated.timing(translateX, {
+      toValue: isVisible ? 0 : width,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [isVisible]);
+
+  const handle_nav=async(addres)=>{
+    onClose()
+    naviagtion.navigate(addres)
+  }
+
+  const handle_logout=async()=>{
+    try {
+      onClose()
+      await AsyncStorage.removeItem("UserAuthID");
+      // createGuestUser()
+      Alert.alert("You're in Guest Mode.");
+      // naviagtion.navigate("Home");
+    } catch (error) {
+      console.log("--===9",error)
+    }
+  }
+  return (
+    <TouchableWithoutFeedback onPress={onClose}>
+    <Animated.View style={{
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        height: '100%',
+        width: "100%",
+        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        zIndex: 100,
+        transform: [{ translateX }]
+      }}>
+      <TouchableWithoutFeedback>
+        <Animated.View style={[styles.exchangedrawerContainer, { transform: [{ translateX }] }]}>
+          <TouchableOpacity onPress={onClose} style={[styles.exchangecloseButton, { alignSelf: Platform.OS === "ios" ? "flex-end" : "flex-start" }]}>
+            <Icon name={"arrow-right-circle-outline"} type={"materialCommunity"} size={33} color={"#fff"} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.exchangetextcont}>
+            <Icon name={"anchor"} type={"materialCommunity"} size={28} color={"gray"} />
+            <Text style={[styles.exchangedrawerText,{color:"gray"}]}>Anchor Settings</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.exchangetextcont}>
+            <Icon name={"card-account-details"} type={"materialCommunity"} size={28} color={"gray"} />
+            <Text style={[styles.exchangedrawerText,{color:"gray"}]}>KYC</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.exchangetextcont} onPress={() => {handle_nav("Wallet")}}>
+          <Icon name={"wallet"} type={"materialCommunity"} size={28} color={"#fff"} />
+            <Text style={styles.exchangedrawerText}>Wallet</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.exchangetextcont} onPress={() => {handle_logout()}}>
+        <Icon name={"logout"} type={"materialCommunity"} size={28} color={"#fff"} />
+        <Text style={styles.exchangedrawerText}>Logout</Text>
+      </TouchableOpacity>
+
+        </Animated.View>
+      </TouchableWithoutFeedback>
+    </Animated.View >
+  </TouchableWithoutFeedback>
+  );
+};
+
+
+export const Wallet_screen_header = ({ title, onLeftIconPress }) => {
+  const state = useSelector((state) => state);
+  return (
+    <>
+      <View style={[styles.exchangeheaderContainer, { backgroundColor:state.THEME.THEME===false?"#fff":"black",height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
+        <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
+          <Icon
+            name={"arrow-left"}
+            type={"materialCommunity"}
+            size={30}
+            color={state.THEME.THEME===false?"black":"#fff"}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:state.THEME.THEME===false?"black":"#fff" }]}>{title}</Text>
+      <View style={styles.exchangerightIconContainer} />
+      </View>
+    </>
+  );
+};
+
+export const Exchange_Login_screen = ({ title, onLeftIconPress }) => {
+  const state = useSelector((state) => state);
+  return (
+    <>
+      <View style={[styles.exchangeheaderContainer, { backgroundColor:"#131E3A",height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
+        <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
+          <Icon
+            name={"arrow-left"}
+            type={"materialCommunity"}
+            size={30}
+            color={"#fff"}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:state.THEME.THEME===false?"black":"#fff" }]}>{title}</Text>
+      <View style={styles.exchangerightIconContainer} />
+      </View>
+    </>
+  );
+};
+
+export const TransactionForStellar = ({ title, onLeftIconPress }) => {
+  return (
+    <>
+      <View style={[styles.exchangeheaderContainer, { backgroundColor:"#011434",height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
+        <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
+          <Icon
+            name={"arrow-left"}
+            type={"materialCommunity"}
+            size={30}
+            color={"#fff"}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:"#fff" }]}>{title}</Text>
+      <View style={styles.exchangerightIconContainer} />
+      </View>
+    </>
   );
 };
 
@@ -169,4 +339,56 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginRight: wp(10),
   },
+  exchangeheaderContainer: {
+    flexDirection: 'row',       
+    alignItems: 'center',       
+    justifyContent: 'space-between', 
+    paddingHorizontal: 17,               
+    backgroundColor: '#011434', 
+  },
+  exchangeleftIconContainer: {
+    width: 40,                  
+    justifyContent: 'center',    
+  },
+  exchangeheaderTitle: {
+    flex: 1,                    
+    textAlign: 'center',         
+    fontSize: 21,                
+    fontWeight: 'bold',          
+    color: '#fff',               
+  },
+  exchangerightIconContainer: {
+    width: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-end',               
+  },
+  exchangedrawerContainer: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    height: '100%',
+    width: width * 0.75,
+    backgroundColor: 'rgba(33, 43, 83, 1)',
+    padding: 20,
+    zIndex: 100,
+  },
+  exchangecloseButton: {
+    marginBottom: 20,
+    alignSelf:"flex-end"
+  },
+  exchangecloseButtonText: {
+    color: '#fff',
+    fontSize: 18,
+  },
+  exchangedrawerText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight:"600",
+    marginLeft:wp(2)
+  },
+  exchangetextcont:{
+    marginVertical: 10,
+    flexDirection:"row",
+    alignItems:"center"
+  }
 });

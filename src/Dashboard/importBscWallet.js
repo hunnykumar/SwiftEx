@@ -7,6 +7,8 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Keyboard,
+  NativeModules,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -34,8 +36,14 @@ import "@ethersproject/shims";
 import { ethers } from "ethers";
 import { genUsrToken } from "./Auth/jwtHandler";
 import { alert } from "./reusables/Toasts";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
+import { recoverMultiChainWallet } from "../utilities/WalletManager";
+import * as StellarSdk from '@stellar/stellar-sdk';
+const { EthereumWallet } = NativeModules;
 
 const ImportBscWallet = (props) => {
+  const navi=useNavigation();
   const [loading, setLoading] = useState(false);
   const [accountName, setAccountName] = useState("");
   const [mnemonic, setMnemonic] = useState("");
@@ -90,6 +98,16 @@ const ImportBscWallet = (props) => {
           setMessage("");
         }
       }
+      if (label === "JSON") {
+        const phrase = mnemonic.trimStart();
+        const trimmedPhrase = phrase.trimEnd();
+        valid = ethers.utils.isValidMnemonic(trimmedPhrase);
+        if (!valid) {
+          setMessage("Please enter a valid mnemonic");
+        } else {
+          setMessage("");
+        }
+      }
 
       if (accountName && (mnemonic || privateKey || json) && valid) {
         setDisable(false);
@@ -100,11 +118,16 @@ const ImportBscWallet = (props) => {
       setMessage("");
     }
   }, [mnemonic, privateKey, json]);
+  const handleUsernameChange = (text) => {
+    const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
+    setAccountName(formattedUsername);
+  };
 
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
+      <Wallet_screen_header title="Binance Wallet" onLeftIconPress={() => navi.goBack()} />
       <View style={style.Body}>
         <View style={style.Button}>
           <TouchableOpacity
@@ -171,10 +194,11 @@ const ImportBscWallet = (props) => {
           <Text style={style.label}>Name</Text>
           <TextInput
             value={accountName}
+            maxLength={20}
             onChangeText={(text) => {
-              setAccountName(text);
+              handleUsernameChange(text)
             }}
-            style={{ width: wp("78%") }}
+            style={{ width: wp("78%"),color:"black" }}
             placeholder={accountName ? accountName : "Wallet 1"}
             placeholderTextColor={"gray"}
           />
@@ -214,9 +238,9 @@ const ImportBscWallet = (props) => {
           }}>
           <Text style={style.paste}>Paste</Text>
           </TouchableOpacity>
-          <Text>Phrase</Text>
+          <Text style={{color:"#4CA6EA"}}>Phrase</Text>
           <TextInput
-            style={style.input}
+            style={[style.input,{color:"black"}]}
             value={text}
             onChangeText={(text) => {
               if (label === "privateKey") {
@@ -228,6 +252,7 @@ const ImportBscWallet = (props) => {
               } else if (label === "JSON") {
                 setText(text);
                 setJson(text);
+                setMnemonic(text);
               } else {
                 return alert(`please input ${label} to proceed `);
               }
@@ -236,14 +261,14 @@ const ImportBscWallet = (props) => {
               label === "privateKey"
                 ? "Enter your private Key here"
                 : label === "JSON"
-                ? "Enter your secret JSON Key here"
+                ? "Enter your secret phrase Key here"
                 : "Enter your secret phrase here"
             }
           />
         </View>
 
-        <TextInput
-          style={style.jsonInput}
+        {label==="JSON"&&<TextInput
+          style={[style.jsonInput,{color:"black"}]}
           value={jsonKey}
           onChangeText={(text) => {
             setJsonKey(text);
@@ -251,7 +276,7 @@ const ImportBscWallet = (props) => {
           placeholderTextColor="gray"
           autoCapitalize={"none"}
           placeholder="JSON password"
-        />
+        />}
 
         {loading ? (
           <ActivityIndicator size="large" color="green" />
@@ -272,115 +297,112 @@ const ImportBscWallet = (props) => {
           style={style.btn}
           disabled={disable}
           onPress={async () => {
+            Keyboard.dismiss()
             const pin = await AsyncStorageLib.getItem("pin");
             if (!accountName) {
               return alert("error", "Please enter an wallet name to proceed");
             }
             setLoading(true);
-            setTimeout(() => {
-              if (label === "mnemonic") {
-                try {
-                  const phrase = mnemonic.trimStart();
-                  const trimmedPhrase = phrase.trimEnd();
-                  const check = ethers.utils.isValidMnemonic(trimmedPhrase);
-                  if (!check) {
-                    setLoading(false);
-                    return alert(
-                      "error",
-                      "Incorrect Mnemonic. Please provide a valid Mnemonic"
-                    );
-                  }
-                  const accountFromMnemonic = new ethers.Wallet.fromMnemonic(
-                    trimmedPhrase
+
+            if (label === "JSON"||label==="mnemonic") {
+              try {
+                const phrase = mnemonic.trimStart();
+                const trimmedPhrase = phrase.trimEnd();
+                const check = ethers.utils.isValidMnemonic(trimmedPhrase);
+                if (!check) {
+                  setLoading(false);
+                  return alert(
+                    "error",
+                    "Incorrect Mnemonic. Please provide a valid Mnemonic"
                   );
-                  const Keys = accountFromMnemonic._signingKey();
-                  const privateKey = Keys.privateKey;
-                  const wallet = {
-                    address: accountFromMnemonic.address,
-                    privateKey: privateKey,
-                  };
-                  /*  const response = saveUserDetails(wallet.address).then((response)=>{
-                      if(response.code===400){
-                        setLoading(false)
+                }
+                const accountFromMnemonic = Platform.OS === "android" ? await EthereumWallet.recoverMultiChainWallet(trimmedPhrase) : await recoverMultiChainWallet(trimmedPhrase);
+                const wallet = {
+                  address: accountFromMnemonic.ethereum.address,
+                  privateKey: accountFromMnemonic.ethereum.privateKey,
+                  xrp: {
+                    address: "000000000",
+                    privateKey: "000000000",
+                  },
+                  stellarWallet: {
+                    publicKey: accountFromMnemonic.stellar.publicKey,
+                    secretKey: accountFromMnemonic.stellar.secretKey
+                  },
+                };
 
-                        return alert(response.message)
-                      }
-                      else if(response.code===401){
-                        setLoading(false)
+                console.log(pin);
+                const body = {
+                  accountName: accountName,
+                  pin: JSON.parse(pin),
+                };
+                const token = genUsrToken(body);
+                console.log(token);
 
-                        return alert(response.message)
-                      }
-                    }).catch((e)=>{
-                      console.log(e)
-                      setLoading(false)
-
-                    })*/
-
-                  console.log(pin);
-                  const body = {
-                    accountName: accountName,
-                    pin: JSON.parse(pin),
-                  };
-                  const token = genUsrToken(body);
-                  console.log(token);
-
-                  const accounts = {
+                const accounts = {
+                  address: wallet.address,
+                  privateKey: wallet.privateKey,
+                  mnemonic: trimmedPhrase,
+                  name: accountName,
+                  xrp: {
+                  address: "000000000",
+                  privateKey: "000000000",
+                  },
+                  stellarWallet: {
+                    publicKey: wallet.stellarWallet.publicKey,
+                    secretKey: wallet.stellarWallet.secretKey
+                  },
+                  walletType: "BSC",
+                  wallets: [],
+                };
+                let wallets = [];
+                wallets.push(accounts);
+                const allWallets = [
+                  {
                     address: wallet.address,
                     privateKey: wallet.privateKey,
                     name: accountName,
                     mnemonic: trimmedPhrase,
                     walletType: "BSC",
-                    wallets: [],
-                  };
-                  let wallets = [];
-                  wallets.push(accounts);
-                  const allWallets = [
-                    {
-                      address: wallet.address,
-                      privateKey: wallet.privateKey,
-                      name: accountName,
-                      mnemonic: trimmedPhrase,
-                      walletType: "BSC",
-                    },
-                  ];
+                  },
+                ];
 
-                  AsyncStorageLib.setItem(
-                    "wallet",
-                    JSON.stringify(allWallets[0])
-                  );
-                  AsyncStorageLib.setItem(
-                    `${accountName}-wallets`,
-                    JSON.stringify(allWallets)
-                  );
-                  AsyncStorageLib.setItem("user", accountName);
-                  AsyncStorageLib.setItem("token", token);
-                  AsyncStorageLib.setItem("currentWallet", accountName);
+                AsyncStorageLib.setItem(
+                  "wallet",
+                  JSON.stringify(allWallets[0])
+                );
+                AsyncStorageLib.setItem(
+                  `${accountName}-wallets`,
+                  JSON.stringify(allWallets)
+                );
+                AsyncStorageLib.setItem("user", accountName);
+                AsyncStorageLib.setItem("token", token);
+                AsyncStorageLib.setItem("currentWallet", accountName);
 
-                  dispatch(setUser(accountName));
-                  dispatch(
-                    setCurrentWallet(
-                      wallet.address,
-                      accountName,
-                      wallet.privateKey,
-                      trimmedPhrase
-                    )
-                  );
-                  dispatch(AddToAllWallets(wallets, accountName));
-                  dispatch(getBalance(wallet.address));
-                  dispatch(setToken(token));
-                  //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
-                  dispatch(setWalletType("BSC"));
+                dispatch(setUser(accountName));
+                dispatch(
+                  setCurrentWallet(
+                    wallet.address,
+                    accountName,
+                    wallet.privateKey,
+                    trimmedPhrase
+                  )
+                );
+                dispatch(AddToAllWallets(wallets, accountName));
+                dispatch(getBalance(wallet.address));
+                dispatch(setToken(token));
+                //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
+                dispatch(setWalletType("BSC"));
 
-                  setLoading(false);
-                  props.navigation.navigate("HomeScreen");
+                setLoading(false);
+                props.navigation.navigate("HomeScreen");
 
-                  //setVisible(!visible)
-                } catch (e) {
-                  console.log(e);
-                  alert("error", e);
-                  setLoading(false);
-                }
-              } else if (label === "privateKey") {
+                //setVisible(!visible)
+              } catch (e) {
+                console.log(e);
+                alert("error", e);
+                setLoading(false);
+              }
+            } else if (label === "privateKey") {
                 try {
                   console.log('starting private key')
                   const check = ethers.utils.isHexString(privateKey, 32);
@@ -391,6 +413,8 @@ const ImportBscWallet = (props) => {
                       "Incorrect PrivateKey. Please provide a valid privatekey"
                     );
                   }
+                  const pair =await StellarSdk.Keypair.random();
+                  console.log("StellaeKeys-using-private keys:---",pair.publicKey(),"privat--",pair.secret())
                   const walletPrivateKey = new ethers.Wallet(privateKey);
                   console.log(walletPrivateKey.mnemonic);
                   const Keys = walletPrivateKey._signingKey();
@@ -398,22 +422,16 @@ const ImportBscWallet = (props) => {
                   const wallet = {
                     address: walletPrivateKey.address,
                     privateKey: privatekey,
+                    xrp: {
+                      address: "000000000",
+                      privateKey: "000000000",
+                    },
+                    stellarWallet: {
+                      publicKey: pair.publicKey(),
+                      secretKey: pair.secret()
+                    },
                   };
-                  /*  const response = saveUserDetails(wallet.address).then((response)=>{
-                      if(response.code===400){
-                        setLoading(false)
-                        return alert(response.message)
-                      }
-                      else if(response.code===401){
-                        setLoading(false)
-
-                        return alert(response.message)
-                      }
-                    }).catch((e)=>{
-                      console.log(e)
-                      setLoading(false)
-
-                    })*/
+                  
                   console.log(pin);
                   const body = {
                     accountName: accountName,
@@ -426,6 +444,14 @@ const ImportBscWallet = (props) => {
                     address: wallet.address,
                     privateKey: wallet.privateKey,
                     name: accountName,
+                    xrp: {
+                      address: "000000000",
+                      privateKey: "000000000",
+                    },
+                    stellarWallet: {
+                      publicKey: wallet.stellarWallet.publicKey,
+                      secretKey: wallet.stellarWallet.secretKey
+                    },
                     walletType: "BSC",
                     wallets: [],
                   };
@@ -473,94 +499,7 @@ const ImportBscWallet = (props) => {
                   setLoading(false);
                   return alert("error", e);
                 }
-              } else {
-                ethers.Wallet.fromEncryptedJson(json, jsonKey)
-                  .then((wallet) => {
-                    console.log("Address: " + wallet.address);
-                    const Wallet = {
-                      address: wallet.address,
-                      privateKey: wallet.privateKey,
-                    };
-                    /* const response = saveUserDetails(wallet.address).then((response)=>{
-      if(response.code===400){
-        setLoading(false)
-
-        return alert(response.message)
-      }
-      else if(response.code===401){
-        setLoading(false)
-
-        return alert(response.message)
-      }
-    }).catch((e)=>{
-      console.log(e)
-      setLoading(false)
-
-    })*/
-
-                    console.log(pin);
-                    const body = {
-                      accountName: accountName,
-                      pin: JSON.parse(pin),
-                    };
-                    const token = genUsrToken(body);
-                    console.log(token);
-
-                    const accounts = {
-                      address: wallet.address,
-                      privateKey: wallet.privateKey,
-                      name: accountName,
-                      walletType: "BSC",
-                      wallets: [],
-                    };
-                    let wallets = [];
-                    wallets.push(accounts);
-                    const allWallets = [
-                      {
-                        address: wallet.address,
-                        privateKey: wallet.privateKey,
-                        name: accountName,
-                        walletType: "BSC",
-                      },
-                    ];
-
-                    AsyncStorageLib.setItem(
-                      "wallet",
-                      JSON.stringify(allWallets[0])
-                    );
-                    AsyncStorageLib.setItem(
-                      `${accountName}-wallets`,
-                      JSON.stringify(allWallets)
-                    );
-                    AsyncStorageLib.setItem("user", accountName);
-                    AsyncStorageLib.setItem("currentWallet", accountName);
-                    AsyncStorageLib.setItem("token", token);
-
-                    dispatch(setUser(accountName));
-                    dispatch(
-                      setCurrentWallet(
-                        wallet.address,
-                        accountName,
-                        wallet.privateKey
-                      )
-                    );
-                    dispatch(AddToAllWallets(wallets, accountName));
-                    dispatch(getBalance(wallet.address));
-                    dispatch(setToken(token));
-                    //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
-                    dispatch(setWalletType("BSC"));
-
-                    setLoading(false);
-                    props.navigation.navigate("HomeScreen");
-                  })
-                  .catch((e) => {
-                    console.log(e);
-                    setLoading(false);
-                    return alert("error", e);
-                  });
-                setLoading(false);
               }
-            }, 1);
           }}
         >
           <Text style={{ color: "white" }}>Import</Text>

@@ -22,9 +22,9 @@ import editImage from "../../../../../../assets/editImage.png";
 import Profile from "../../../../../../assets/Profile.png"
 import walletImg from "../../../../../../assets/walletImg.png";
 import copyRide from "../.././../../../../assets/copyRide.png";
-import { REACT_APP_LOCAL_TOKEN } from "../ExchangeConstants";
+import { REACT_APP_HOST, REACT_APP_LOCAL_TOKEN } from "../ExchangeConstants";
 import darkBlue from "../../../../../../assets/darkBlue.png";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -37,6 +37,10 @@ import BankModel from "../components/bankModel";
 import idCard from "../../../../../../assets/idCard.png";
 import  Clipboard from "@react-native-clipboard/clipboard";
 import { alert } from "../../../../reusables/Toasts";
+import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
+import {Exchange_profile_loading} from "../../../../reusables/Exchange_loading";
+import DeviceInfo from "react-native-device-info";
+import authApi from "../authApi";
 const VERIFICATION_STATUS = {
   VERIFIED: "VERIFIED",
   UNVERIFIED: "UNVERIFIED",
@@ -329,61 +333,70 @@ const EmailView = ({ value, isVerified, emailStyle }) => {
 };
 
 export const ProfileView = (props) => {
-  const { emailStyle } = props;
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isSubmit, setIsSubmit] = useState(false);
-  const state = useSelector((state) => state);
-  const [profile, setProfile] = useState({
-    isVerified: false,
-    firstName: "",
-    lastName: "",
-    email: "",
-    phoneNumber: "",
-    walletAddress: "",
-    isEmailVerified: false,
-  });
-  const [message, setMessage] = useState("");
-  const [account, setAccount] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [modalContainer_menu,setmodalContainer_menu]=useState(false);
-  const [avl_plan, setavl_plan] = useState([
-    { id: 1, month: "1 month", save_on_price: 16, org_price: "5", current_price: "Free", type: "Mothly", subscriber_type: "" },
-    { id: 2, month: "3 month", save_on_price: 16, org_price: "15", current_price: "$ 14.6", type: "Quarter", subscriber_type: "MOST POPULAR" },
-    { id: 3, month: "Yearly", save_on_price: 16, org_price: "60", current_price: "$ 58", type: "Yearly", subscriber_type: "BEST VALUE" }
-  ]);
-  const [expire_plan, setexpire_plan] = useState("");
-  const [subscription_id,setsubscription_id]=useState(0);
+  const [Load,setLoad]=useState(true)
+  const [IsAuthBackendToken,setIsAuthBackendToken]=useState(false)
+  const [subscription_id,setsubscription_id]=useState(1)
+  const [expire_plan,setexpire_plan]=useState("");
+  const [user,setuser]=useState(null);
+  const state=useSelector((state)=>state);
+  const FOCUSED=useIsFocused()
   useEffect(() => {
-    fetchProfileData();
-  }, []);
-  
-  useEffect(() => {
-    // setsubscription_id(1)
-    const res = PlanExpire(avl_plan[subscription_id].month)
+    setsubscription_id(1)
+    const res = PlanExpire(avl_plan[subscription_id].type)
     setexpire_plan(res);
-  }, [subscription_id]);
+    fetchProfileInfo()
+  }, [FOCUSED]);
 
-  useEffect(() => {
-    getAccountDetails();
-  }, []);
 
-  const PlanExpire = (time_line) => {
-    let today = new Date();
+
+  const fetchUserInfo = async () => {
+    const result = await authApi.get(REACT_APP_HOST+"/v1/users/profile");
+    if (result.success) {
+      setuser(result.data.user);
+      setLoad(false)
+      setIsAuthBackendToken(true)
+    } else {
+      setLoad(false)
+      setIsAuthBackendToken(false)
+      setuser(null);
+      console.log('Failed to fetch:', result.error);
+      alert("error","unable to fetch profile.")
+    }
+  }
+
+  const fetchProfileInfo=async()=>{
+    try {
+      const token= await AsyncStorage.getItem("UserAuthID");
+      if(!token){
+        setLoad(false)
+        setIsAuthBackendToken(false)
+      }
+      else{
+        await fetchUserInfo()
+      }
+    } catch (error) {
+      console.log("error--",error)
+      setLoad(false)
+      setIsAuthBackendToken(false)
+    }
+  }
+
+  const PlanExpire = (time_line,startingDate) => {
+    let today = startingDate ? new Date(startingDate) : new Date();
     let expire_date = new Date(today);
 
     switch (time_line) {
         case '1 month':
-            expire_date.setMonth(today.getMonth() + 1);
+            expire_date.setMonth(expire_date.getMonth() + 1);
             break;
         case '3 month':
-            expire_date.setMonth(today.getMonth() + 3);
+            expire_date.setMonth(expire_date.getMonth() + 3);
             break;
         case 'Yearly':
-            expire_date.setFullYear(today.getFullYear() + 1);
+            expire_date.setFullYear(expire_date.getFullYear() + 1);
             break;
         default:
-            console.log('Invalid subscription time line.');
-            return;
+            return 'Invalid subscription time line.';
     }
 
     const day = expire_date.getDate();
@@ -395,403 +408,128 @@ export const ProfileView = (props) => {
     const month = months[expire_date.getMonth()];
     return `Valid till ${day} ${month} ${year}`;
 }
-
-  const getAccountDetails = async () => {
-    setIsLoading(true);
-    try {
-      const { res, err } = await authRequest("/users/getStripeAccount", GET);
-      if (err) return setMessage(` ${err.message}`);
-      setIsLoading(false);
-      setAccount(res);
-    } catch (err) {
-      console.log(err);
-      setMessage(err.message || "Something went wrong");
-      setIsLoading(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchProfileData = async () => {
-    try {
-      const { res, err } = await authRequest("/users/getUserDetails", GET);
-      if (err) return [navigation.navigate("exchangeLogin"),setMessage(`${err.status}: ${err.message}`)];
-      setProfile(res);
-    } catch (err) {
-      console.log(err);
-      setMessage(err.message || "Something went wrong");
-    }
-  };
-
-  const applyForKyc = async () => {
-    try {
-      const { err } = await authRequest("/users/kyc", POST);
-      if (err) return setMessage(`${err.status}: ${err.message}`);
-
-      await fetchProfileData();
-      return setMessage("KYC success");
-    } catch (err) {
-      console.log(err);
-      setMessage(err.message || "Something went wrong");
-    }
-  };
-
-  const data = [
-    // {
-    //   bankname: "HDFC",
-    //   bankholder: "Rosie Jackson",
-    //   payoutType: "Standard",
-    //   country: "India",
-    //   currency: "INR",
-    // },
-  ];
-  const navigation = useNavigation();
-  const copyToClipboard = () => {
-    Clipboard.setString(state.STELLAR_PUBLICK_KEY);
-    alert("success", "Copied");
-  };
+  const navigation=useNavigation()
+  const [avl_plan, setavl_plan] = useState([
+    { id: 1, month: "1 Year", save_on_price: 16, org_price: "5", current_price: "Free", type: "Yearly", subscriber_type: "" },
+    { id: 2, month: "1 month", save_on_price: 16, org_price: "5", current_price: "Free", type: "Monthly", subscriber_type: "" },
+    { id: 3, month: "3 month", save_on_price: 16, org_price: "15", current_price: "$ 14.6", type: "Quarter", subscriber_type: "MOST POPULAR" },
+    { id: 4, month: "Yearly", save_on_price: 16, org_price: "60", current_price: "$ 58", type: "Yearly", subscriber_type: "BEST VALUE" }
+  ]);
   return (
     <>
-       <View style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      // padding: 10,
-      backgroundColor: '#4CA6EA',
-      elevation: 4,
-    }}>
-      {/* Left Icon */}
-      <Icon
-              name={"left"}
-              type={"antDesign"}
-              size={28}
-              color={"white"}
-              style={{marginLeft:wp(2)}}
-              onPress={() =>navigation.goBack()}
-            />
-
-      {/* Middle Text */}
-      <Text style={{
-        fontSize: 20,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        color:"#fff",
-        flex: 1,
-        marginLeft:wp(13),
-        marginTop:Platform.OS==="ios"?hp(3):hp(0)
-      }}>Profile</Text>
-
-      {/* Right Image and Menu Icon */}
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-      }}>
-         <TouchableOpacity onPress={() => navigation.navigate("Home")}>
-        <Image
-          source={darkBlue}
-          style={{
-            height: hp("8"),
-            width: wp("12"),
-            marginRight: 10,
-            borderRadius: 15,
-          }}
-        />
-        </TouchableOpacity>
-        <TouchableOpacity
-            onPress={() => {
-              setmodalContainer_menu(true)
-            }}
-          >
-        <Icon
-              name={"menu"}
-              type={"materialCommunity"}
-              size={30}
-              color={"#fff"}
-            />
-        </TouchableOpacity>
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={modalContainer_menu}>
-
-            <TouchableOpacity style={styles.modalContainer_option_top} onPress={() => { setmodalContainer_menu(false) }}>
-              <View style={styles.modalContainer_option_sub}>
-
-
-
-                <TouchableOpacity style={styles.modalContainer_option_view}>
-                  <Icon
-                    name={"anchor"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"gray"}
-                  />
-                  <Text style={styles.modalContainer_option_text}>Anchor Settings</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view}>
-                  <Icon
-                    name={"badge-account-outline"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"gray"}
-                  />
-                  <Text style={styles.modalContainer_option_text}>KYC</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view} onPress={()=>{navigation.navigate("Wallet")}}>
-      <Icon
-        name={"wallet-outline"}
-        type={"materialCommunity"}
-        size={30}
-        color={"white"}
-      />
-      <Text style={[styles.modalContainer_option_text,{color:"white"}]}>Wallet</Text>
-      </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => {
-                  console.log('clicked');
-                  const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-                  AsyncStorage.removeItem(LOCAL_TOKEN);
-                  setmodalContainer_menu(false)
-                  navigation.navigate('exchangeLogin');
-                }}>
-                  <Icon
-                    name={"logout"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"#fff"}
-                  />
-                  <Text style={[styles.modalContainer_option_text, { color: "#fff" }]}>Logout</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => { setmodalContainer_menu(false) }}>
-                  <Icon
-                    name={"close"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"#fff"}
-                  />
-                  <Text style={[styles.modalContainer_option_text, { color: "#fff" }]}>Close Menu</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </Modal>
-      </View>
-    </View>
-
-
+    <Exchange_screen_header title="Profile" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
     <View>
       <View style={styles.content}>
-          <View style={styles.profileContainer}>
-            <Icon
-              name={"account-circle-outline"}
-              type={"materialCommunity"}
-              color={"white"}
-              size={60}
-              style={{ marginTop: 10 }}
-            />
+        <View style={styles.profileContainer}>
+        {Load?
+      <Exchange_profile_loading/>
+      :  
+              !IsAuthBackendToken?
+                <View style={styles.guesetUserCon}>
+                  <LinearGradient
+                    colors={['#3b82f6', '#8b5cf6']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.tokenImage]}
+                  >
+                    <Text style={[styles.tokenName, { color: "#fff", fontSize: 28 }]}>G</Text>
+                  </LinearGradient>
+                  <View style={{justifyContent:"center",alignItems:"flex-start",marginBottom:-8,width:"90%",marginLeft:8}}>
+                    <View style={{flexDirection:"row",width:"90%",justifyContent:"space-between",alignItems:"center"}}>
+                      <Text style={[styles.guesetUserCon.userName]}>Guest User</Text>
+                      <TouchableOpacity style={styles.amountSugCon.amountSugCard} onPress={() => { navigation.navigate("exchangeLogin") }}>
+                        <Text style={styles.amountSugCon.amountSugCardText}>Log In</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={[styles.guesetUserCon.userName,{fontSize:15,color:"gray"}]}>You're in Guest Mode.</Text>
+                  </View>
+                </View>
+      :
+      <>
+                <LinearGradient
+                  colors={['#3b82f6', '#8b5cf6']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={[styles.tokenImage]}
+                >
+                  <Text style={[styles.tokenName, { color: "#fff", fontSize: 28 }]}>{user?.email?.charAt(0)?.toLocaleUpperCase()}</Text>
+                </LinearGradient>
             <View style={[styles.fnlnTextView]}>
-              <Text style={{ fontSize: hp(2), color: "white", fontSize: hp(2.3), width: wp(63),marginLeft:wp(1.2) }}>{profile.firstName + " " + profile.lastName}</Text>
+              {/* <Text style={{ fontSize: hp(2), color: "white", fontSize: hp(2.3), width: wp(63),marginLeft:wp(1.2) }}>{user?.firstName + " " + user?.lastName}</Text>
               <View style={styles.verifiedTextCon}>
                 <Text style={styles.verifiedText}>Verified!</Text>
-              </View>
+              </View> */}
             </View>
             <View style={styles.emailphoneView}>
               <Text style={{ color: "white", fontSize: 16 }}>Email</Text>
-              <Text style={{ color: "white", marginTop: 4, fontSize: 16 }}>{profile.email}</Text>
+              <Text style={{ color: "white", marginTop: 4, fontSize: 16 }}>{user.email}</Text>
             </View>
+            </>
+            }
           </View>
 
           <View>
-    {/* <Image source={darkBlue} style={{ height: hp("9"),width: wp("12"),alignSelf:"flex-end",position:"absolute"}} /> */}
+
         <View style={{justifyContent:"center",marginTop:hp(2.7)}}>
 
-        {/* <Text style={{color:"#35CA1D",fontSize:16,alignSelf:"flex-end",position:"absolute"}}>SwiftEx</Text> */}
-        <FieldView
-          title="KYC Status"
-          value={profile.isVerified}
-          applyForKyc={applyForKyc}
-          type="kyc"
-        />
         </View>
         </View>
 
-        <View style={styles.walletCard}>
-          {/* <LinearGradient
-            start={[1, 0]}
-            end={[0, 1]}
-            colors={["rgba(223, 172, 196, 1)", "rgba(192, 197, 234, 1)"]}
-            style={styles.linearContainer}
-          > */}
 
-<View  style={[styles.linearContainer]}>
-            <View style={styles.iconwithTextContainer}>
-              <View style={styles.walletContainer}>
-                <Text style={styles.myWallet}>My Wallet </Text>
-                {/* <Icon
-                      name={"wallet"}
-                      type={"materialCommunity"}
-                      color={"rgba(129, 108, 255, 0.97)"}
-                      size={24}
-                    /> */}
-                {/* <Image source={walletImg} style={styles.walletImg} /> */}
-              </View>
-              <View style={styles.walletContainer}>
-              
-                <Text style={styles.connectedText}>Connected!</Text>
-              </View>
-            </View>
-
-            <View style={styles.copyRideContainer}>
-             
-              <View style={{borderColor:"#485DCA",borderWidth:0.9,borderRadius:5,flexDirection:"row"}}>
-
-               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(70),marginTop:1.9}}>
-                   <Text style={{color:"#fff",margin:5,padding:3}}>{state.STELLAR_PUBLICK_KEY}</Text>
-                    </ScrollView>
-              <View style={{ marginHorizontal:1,marginLeft:10 }}>
-              
-                <TouchableOpacity onPress={()=>{copyToClipboard()}}>
-                <Icon
-                      name={"content-copy"}
-                      type={"materialCommunity"}
-                      color={"rgba(129, 108, 255, 0.97)"}
-                      size={24}
-                      style={{marginTop:0.3}}
-                      />
-                <Text style={styles.copyText}>copy</Text>
-                </TouchableOpacity>
-              </View>
-                      </View>
-            </View>
-            </View>
-          {/* </LinearGradient> */}
-          <Text style={styles.heading_text}>Activated Subcription</Text>
-        <TouchableOpacity style={styles.plan_details} onPress={()=>{navigation.navigate("Subscription_det",{ID:subscription_id})}}>
-                    <View style={styles.Check_box}>
-                        <Icon name={"check"} type={"materialCommunity"} size={28} color={"#fff"} />
-                    </View>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginHorizontal: wp(5) }}>
-                        <View style={[styles.right_container, { alignItems: "flex-start", }]}>
-                            <Text style={styles.comman_text}>{avl_plan[subscription_id].month}</Text>
-                            <Text style={styles.expire_text}>{expire_plan}</Text>
-                        </View>
-
-                        <View style={[styles.right_container, { marginRight: wp(2) }]}>
-                            <Text style={styles.comman_text_1}>{avl_plan[subscription_id].current_price}</Text>
-                            <Text style={[styles.comman_text_1, { fontSize: 13, fontWeight: "400" }]}>{avl_plan[subscription_id].type}</Text>
-                        </View>
-                    </View>
-                </TouchableOpacity>
-        <View>
-        </View>
-          <EmailView
-            numberOfLines={1}
-            emailStyle={styles.emailText}
-            value={profile.email}
-            isVerified={profile.isEmailVerified}
-          />
-        </View>
-        
-      {/* {isLoading===true?<ActivityIndicator color="green"/>: */}
-        
-        {/* // account ? (
           <>
-          <View style={styles.deleteContainer}>
-            <Text style={styles.accountText}>Account Details</Text>
-            <View style={{ alignItems: "center" }}>
-              <Icon
-                name={"delete"}
-                type={"materialCommunity"}
-                size={hp(2)}
-                color={"#E96A6A"}
-              />
-              <Text style={styles.deleteText}>Delete</Text>
-            </View>
-          </View>
-            <View style={styles.tableContainer}>
-
-              <View  style={{
-                  borderRadius: wp(3),
-                  borderColor: "rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
-                  borderWidth: 1,
-                  backgroundColor:"#212B53"
-                }} >
-                <View style={styles.assetTextContainer}>
-
-                   <Text style={styles.amountText}>Bank</Text>
-                  <Text style={styles.amountText}>Holder</Text>
-                  <Text style={styles.amountText}>Payout</Text>
-                  <Text style={styles.amountText}>Country</Text>
-                  <Text style={styles.amountText}>Currency</Text>
+            <View style={styles.walletCard}>
+              <View  style={[styles.linearContainer]}>
+                <View style={styles.iconwithTextContainer}>
+                  <View style={styles.walletContainer}>
+                    <Text style={styles.myWallet}>My Wallet </Text>
+                  </View>
+                  <View style={styles.walletContainer}>
+                    <Text style={styles.connectedText}>Connected!</Text>
+                  </View>
                 </View>
-                {account.external_accounts.data.map((item, index) => {
-                  return (
-                    <View style={styles.activeTextConatiner} key={index}>
-                      <Text style={styles.amountText}>{item.bank_name}</Text>
-                      <Text style={styles.amountText}>
-                        {item.account_holder_name}
-                      </Text>
-                      <Text style={styles.amountText}>
-                        {item.available_payout_methods[0]}
-                      </Text>
-                      <Text style={styles.amountText}>{item.country}</Text>
-                      <Text style={styles.amountText}>{item.currency}</Text>
-                    </View>
-                  );
-                })} */}
-              {/* </LinearGradient> */}
-              {/* </View>
-            </View>
-            <View style={styles.enableContainer}>
-              <Text style={styles.enableText}>Charges Enabled: No</Text>
-              <Text style={styles.payoutText}>Payout Enabled: No</Text>
-            </View>
-          </> */}
-        {/* ) : ( */}
-        {/* <View>
-            <Text style={styles.addedText}>No Bank Account Added!</Text>
 
-               <View style={styles.addacountBtn}> */}
-              {/* <TouchableOpacity
-                style={{
-                  paddingVertical: hp(1),
-                  width: wp(50),
-                  alignItems: "center",
-                  backgroundColor:"#212B53",
-                  borderRadius: hp(2),
-                  borderColor: "rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
-                  borderWidth:0.9
-                }}
-                onPress={() => {
-                  setModalVisible(!modalVisible);
-                }}
-              >
-                <Text style={styles.accounttextColor}>Add Bank Account</Text>
+                <View style={styles.copyRideContainer}>
+                  <View style={{borderColor:"#485DCA",borderWidth:0.9,borderRadius:5,flexDirection:"row"}}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(70),marginTop:1.9}}>
+                       <Text style={{color:"#fff",margin:5,padding:3}}>{state.STELLAR_PUBLICK_KEY}</Text>
+                        </ScrollView>
+                  <View style={{ marginHorizontal:1,marginLeft:10 }}>
+                    <TouchableOpacity onPress={()=>{copyToClipboard()}}>
+                    <Icon
+                          name={"content-copy"}
+                          type={"materialCommunity"}
+                          color={"rgba(129, 108, 255, 0.97)"}
+                          size={24}
+                          style={{marginTop:0.3}}
+                          />
+                    <Text style={styles.copyText}>copy</Text>
+                    </TouchableOpacity>
+                  </View>
+                          </View>
+                </View>
+              </View>
+
+              <Text style={styles.heading_text}>Activated Subcription</Text>
+              <TouchableOpacity style={styles.plan_details} onPress={()=>{navigation.navigate("Subscription_det",{ID:subscription_id})}}>
+                <View style={styles.Check_box}>
+                    <Icon name={"check"} type={"materialCommunity"} size={28} color={"#fff"} />
+                </View>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginHorizontal: wp(5) }}>
+                    <View style={[styles.right_container, { alignItems: "flex-start", }]}>
+                        <Text style={styles.comman_text}>{avl_plan[subscription_id].month}</Text>
+                        <Text style={styles.expire_text}>{expire_plan}</Text>
+                    </View>
+
+                    <View style={[styles.right_container, { marginRight: wp(2) }]}>
+                        <Text style={styles.comman_text_1}>{avl_plan[subscription_id].current_price}</Text>
+                        <Text style={[styles.comman_text_1, { fontSize: 13, fontWeight: "400" }]}>{avl_plan[subscription_id].type}</Text>
+                    </View>
+                </View>
               </TouchableOpacity>
-              </View> */}
-            {/* </LinearGradient> */}
-            {/* <NewAccountModal
-              onCrossIcon={() => {
-                setModalVisible(false);
-              }}
-              isVisible={modalVisible}
-              setModalVisible={setModalVisible}
-              getAccountDetails={getAccountDetails}
-              onPress={() => {
-                setModalVisible(!modalVisible);
-                setIsSubmit(!isSubmit);
-              }}
-            /> */}
-            {/* <BankModel
-              isVisible={isSubmit}
-              onPress={() => {
-                setIsSubmit(!isSubmit);
-              }}
-            />
-          </View> */}
-        {/* )} */}
+            </View>
+          </>
+
+
       </View>
     </View>
     </>
@@ -837,7 +575,6 @@ const styles = StyleSheet.create({
     height: hp(6),
     width: wp(12),
     borderRadius: hp(5),
-    // marginLeft: wp(3),
     borderColor:"gray",
     borderWidth:1.9
   },
@@ -881,8 +618,6 @@ const styles = StyleSheet.create({
     borderColor: "#659DEA",
   },
   emailphoneView: {
-    // flexDirection: "row",
-    // justifyContent: "space-between",
     marginTop: hp(3),
     borderBottomWidth: StyleSheet.hairlineWidth * 1,
     paddingBottom: hp(1.6),
@@ -935,7 +670,7 @@ const styles = StyleSheet.create({
     width: wp(4),
   },
   connectedText: {
-    color: "#008C62",
+    color: "#35CA1D",
   },
   copyRideContainer: {
     flexDirection: "row",
@@ -992,7 +727,6 @@ const styles = StyleSheet.create({
   amountText: {
     color: "#fff",
     width: wp(16),
-    // textAlign:"center"
   },
   standardText: {
     color: "#fff",
@@ -1088,13 +822,6 @@ const styles = StyleSheet.create({
   idtext: {
     color: "#CBBBDC",
   },
-  checkImg: {
-    marginHorizontal: hp(0.6),
-  },
-  connectedText: {
-    // color: "#008C62",
-        color: "#35CA1D",
-  },
   readyText: {
     color: "#fff",
     fontSize: hp(2.3),
@@ -1106,7 +833,6 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     backgroundColor: "#659DEA",
-    // alignSelf: "flex-end",
     alignItems: "center",
     width: wp(20),
     paddingVertical: hp(0.7),
@@ -1148,8 +874,6 @@ const styles = StyleSheet.create({
     fontSize:19,
     fontWeight:"bold",
     alignSelf: "center",
-    // textAlign: "center",
-    // marginStart:wp(34)
     marginStart:wp(34)
   },
   text1_ios_TOP: {
@@ -1160,73 +884,146 @@ const styles = StyleSheet.create({
     paddingTop:hp(3),
   },
   modalContainer_option_top: {
-    // flex: 1,
     alignSelf:"flex-end",
     alignItems: 'center',
-    // backgroundColor: 'rgba(0, 0, 0, 0.3)',
     width:"100%",
     height:"60%",
   },
   modalContainer_option_sub:{
     alignSelf:"flex-end",
     backgroundColor: 'rgba(33, 43, 83, 1)',
-  padding: 10,
-  borderRadius: 10,
-  width:"65%",
-  height:"70%"
-},
-modalContainer_option_view:{
-  flexDirection:"row",
-  marginTop:25,
-  alignItems:"center",
-},
-modalContainer_option_text:{
-fontSize:20,
-fontWeight:"bold",
-color:"gray",
-marginStart:5
-},
-plan_details: {
-  backgroundColor: "rgba(42, 84, 156, 1)rgba(43, 82, 147, 1)",
-  borderRadius: 10,
-  paddingVertical: wp(5),
-  width:wp(95)
-},
-Check_box: {
-  alignContent:"center",
-  justifyContent:"center",
-  top: hp(-1),
-  height: hp(3.4),
-  width: wp(7.5),
-  backgroundColor: "rgba(230, 114, 41, 1)rgba(230, 161, 32, 1)",
-  borderRadius: 24,
-  position: "absolute",
-  marginLeft: wp(-1.4),
-},
-right_container: {
-  alignItems: "center",
-  paddingVertical: hp(0.5),
-  paddingLeft: wp(2)
-}, comman_text: {
-  color: "#fff",
-  fontSize: 26,
-  fontWeight: "800"
-},
-expire_text: {
-  color: "orange",
-  fontSize: 12,
-  fontWeight: "500",
-  marginTop: hp(0.2)
-},
-comman_text_1: {
-  color: "#fff",
-  fontSize: 24,
-  fontWeight: "800"
-},
-heading_text:{
-  color: "#fff",
-  fontSize: 19,
-  fontWeight: "600",
-  paddingVertical:hp(1.4)
-}
+    padding: 10,
+    borderRadius: 10,
+    width:"65%",
+    height:"70%"
+  },
+  modalContainer_option_view:{
+    flexDirection:"row",
+    marginTop:25,
+    alignItems:"center",
+  },
+  modalContainer_option_text:{
+    fontSize:20,
+    fontWeight:"bold",
+    color:"gray",
+    marginStart:5
+  },
+  plan_details: {
+    backgroundColor: "rgba(42, 84, 156, 1)rgba(43, 82, 147, 1)",
+    borderRadius: 10,
+    paddingVertical: wp(5),
+    width:wp(95)
+  },
+  Check_box: {
+    alignContent:"center",
+    justifyContent:"center",
+    top: hp(-1),
+    height: hp(3.4),
+    width: wp(7.5),
+    backgroundColor: "rgba(230, 114, 41, 1)rgba(230, 161, 32, 1)",
+    borderRadius: 24,
+    position: "absolute",
+    marginLeft: wp(-1.4),
+  },
+  right_container: {
+    alignItems: "center",
+    paddingVertical: hp(0.5),
+    paddingLeft: wp(2)
+  }, 
+  comman_text: {
+    color: "#fff",
+    fontSize: 26,
+    fontWeight: "800"
+  },
+  expire_text: {
+    color: "orange",
+    fontSize: 12,
+    fontWeight: "500",
+    marginTop: hp(0.2)
+  },
+  comman_text_1: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "800"
+  },
+  heading_text:{
+    color: "#fff",
+    fontSize: 19,
+    fontWeight: "600",
+    paddingVertical:hp(1.4)
+  },
+  tokenImage: {
+    width: 53,
+    height: 53,
+    marginTop: 10,
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center" 
+  },
+  tokenName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign:"center"
+  },
+  guesetUserCon: {
+    width: "100%",
+    flexDirection:"row",
+    justifyContent:"flex-start",
+    alignItems:"center",
+    alignSelf:"center",
+    paddingHorizontal:10,
+    userName: {
+      fontSize: 18,
+      fontWeight: "500",
+      textAlign: "center",
+      color:"#fff"
+    }
+  },
+  amountSugCon: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 6.9,
+    paddingHorizontal: 5,
+    amountSugCard: {
+      alignItems: "center",
+      justifyContent: "center",
+      width: 80,
+      height: 33,
+      borderRadius: 8,
+      backgroundColor: "#23262F"
+    },
+    amountSugCardText: {
+      color: "#FFFFFF",
+      fontSize: 16
+    }
+  },
+  // New styles for guest mode
+  guestMessageContainer: {
+    width: wp(95),
+    marginTop: hp(3),
+    alignSelf: "center",
+    alignItems: "center",
+    padding: hp(3),
+    borderWidth: 0.9,
+    borderRadius: hp(2),
+    borderColor: "rgba(72, 93, 202, 1)",
+  },
+  guestMessageText: {
+    color: "#fff",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: hp(2),
+  },
+  loginButton: {
+    backgroundColor: "#659DEA",
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(8),
+    borderRadius: hp(1),
+  },
+  loginButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  }
 });

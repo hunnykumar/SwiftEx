@@ -21,6 +21,7 @@ import {
   BackHandler,
   FlatList,
   Dimensions,
+  StatusBar,
 } from "react-native";
 import BootstrapStyleSheet from "react-native-bootstrap-styles";
 import { useDispatch, useSelector } from "react-redux";
@@ -49,11 +50,17 @@ import { RAPID_STELLAR, SET_ASSET_DATA } from "../../../../../components/Redux/a
 import SelectWallet from "../../../../Modals/SelectWallet";
 import SELECT_WALLET_EXC from "../../../../Modals/SELECT_WALLET_EXC";
 import { STELLAR_URL } from "../../../../constants";
+import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
+import { Charts_Loadings, Exchange_single_loading } from "../../../../reusables/Exchange_loading";
+import { LineChart } from "react-native-gifted-charts";
+import useFirebaseCloudMessaging from "../../../../notifications/firebaseNotifications";
+import DeviceInfo from 'react-native-device-info';
 // import StellarSdk from '@stellar/stellar-sdk';
-const StellarSdk = require('stellar-sdk');
-StellarSdk.Network.useTestNetwork();
+import * as StellarSdk from '@stellar/stellar-sdk';
+StellarSdk.Networks.PUBLIC
 
 export const HomeView = ({ setPressed }) => {
+  const { FCM_getToken, requestUserPermission } = useFirebaseCloudMessaging();
   const dispatch_ = useDispatch()
   const [modalContainer_menu,setmodalContainer_menu]=useState(false);
   const AnchorViewRef = useRef(null);
@@ -62,18 +69,20 @@ export const HomeView = ({ setPressed }) => {
   const [ShowButtonLeft,setShowButtonLeft]=useState(false);
   const [open_chart_api,setopen_chart_api]=useState(false);
   const [VISIBLE_SELECT,setVISIBLE_SELECT]=useState(false);
+  const [Wallet_activation,setWallet_activation]=useState(false)
   const [chart_api,setchart_api]=useState([
-    {id:0,name:"XLM  ",name_0:"USDC",url:"https://horizon.stellar.lobstr.co/trade_aggregations?base_asset_type=native&counter_asset_type=credit_alphanum4&counter_asset_code=USDC&counter_asset_issuer=GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN&start_time=1722320811000&resolution=60000&offset=0&limit=20&order=desc",img_0:'https://s2.coinmarketcap.com/static/img/coins/64x64/512.png',img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"},
-    {id:1,name:"ETH  ",name_0:"USDC",url:"https://horizon.stellar.lobstr.co/trade_aggregations?base_asset_type=credit_alphanum4&base_asset_code=ETH&base_asset_issuer=GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC&counter_asset_type=credit_alphanum4&counter_asset_code=USDC&counter_asset_issuer=GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN&start_time=1722320811000&resolution=60000&offset=0&limit=20&order=desc",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",img_0:"https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png"},
-    {id:2,name:"XLM  ",name_0:"EURC",url:"https://horizon.stellar.lobstr.co/trade_aggregations?base_asset_type=native&counter_asset_type=credit_alphanum4&counter_asset_code=EURC&counter_asset_issuer=GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2&start_time=1722322255000&resolution=60000&offset=0&limit=20&order=desc",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420",img_0:'https://s2.coinmarketcap.com/static/img/coins/64x64/512.png'},
-    {id:3,name:"USDC",name_0:"EURC",url:"https://horizon.stellar.org/trade_aggregations?base_asset_type=credit_alphanum4&base_asset_code=USDC&base_asset_issuer=GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN&counter_asset_type=credit_alphanum4&counter_asset_code=EURC&counter_asset_issuer=GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2&start_time=1722229906000&resolution=900000&offset=0&limit=20&order=desc",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420",img_0:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"},
+    {id:0,name:"XLM  ",name_0:"USDC",url:"https://horizon.stellar.lobstr.co/trade_aggregations?base_asset_type=native&counter_asset_type=credit_alphanum4&counter_asset_code=USDC&counter_asset_issuer=GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN&start_time=1722320811000&resolution=60000&offset=0&limit=30&order=desc",img_0:'https://s2.coinmarketcap.com/static/img/coins/64x64/512.png',img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"},
+    {id:1,name:"ETH  ",name_0:"USDC",url:"https://horizon.stellar.lobstr.co/trade_aggregations?base_asset_type=credit_alphanum4&base_asset_code=ETH&base_asset_issuer=GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC&counter_asset_type=credit_alphanum4&counter_asset_code=USDC&counter_asset_issuer=GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN&start_time=1722320811000&resolution=60000&offset=0&limit=30&order=desc",img:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",img_0:"https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png"},
+    {id:2,name:"XLM  ",name_0:"EURC",url:"https://horizon.stellar.lobstr.co/trade_aggregations?base_asset_type=native&counter_asset_type=credit_alphanum4&counter_asset_code=EURC&counter_asset_issuer=GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2&start_time=1722322255000&resolution=60000&offset=0&limit=30&order=desc",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420",img_0:'https://s2.coinmarketcap.com/static/img/coins/64x64/512.png'},
+    {id:3,name:"USDC",name_0:"EURC",url:"https://horizon.stellar.org/trade_aggregations?base_asset_type=credit_alphanum4&base_asset_code=USDC&base_asset_issuer=GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN&counter_asset_type=credit_alphanum4&counter_asset_code=EURC&counter_asset_issuer=GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2&start_time=1722229906000&resolution=900000&offset=0&limit=30&order=desc",img:"https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420",img_0:"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"},
   ])
   const [chart_index,setchart_index]=useState(0);
   const chooseRenderItem_1 = ({ item }) => (
-    <TouchableOpacity onPress={() => {setchart_index(item.id),setopen_chart_api(false)}} style={[styles.chooseItemContainer,{borderRadius:5,height:hp(6),justifyContent:"flex-start"}]}>
-      <Image source={ { uri: item.img_0 }} style={{width:wp(7.7),height:hp(3.5)}}/>
-      <Text style={[styles.chooseItemText]}>{item.name}   vs</Text>
-      <Image source={ { uri: item.img }} style={{width:wp(7.7),height:hp(3.5),marginLeft:wp(3)}}/>
+    <TouchableOpacity onPress={() => {setchart_index(item.id),setopen_chart_api(false)}} style={[styles.chooseItemContainer,{borderRadius:5,height:hp(6),justifyContent:'space-around'}]}>
+      <Image source={ { uri: item.img_0 }} style={{width:wp(8),height:hp(4)}}/>
+      <Text style={[styles.chooseItemText]}>{item.name}</Text>
+      <Text style={{color:"#fff",fontSize:19}}>VS</Text>
+      <Image source={ { uri: item.img }} style={{width:wp(8),height:hp(4),marginLeft:wp(3)}}/>
       <Text style={[styles.chooseItemText]}>{item.name_0}</Text>
     </TouchableOpacity>
   );
@@ -95,7 +104,8 @@ export const HomeView = ({ setPressed }) => {
     }
   };
   const Focused_screen=useIsFocused();
-  const [steller_key,setsteller_key]=useState("Updating keys...");
+  const [steller_key,setsteller_key]=useState();
+  const [loading,setloading]=useState(true);
   const state = useSelector((state) => state);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState();
@@ -123,12 +133,13 @@ export const HomeView = ({ setPressed }) => {
   const [Offer_active,setOffer_active]=useState(false);
   const Anchor=[
     // {name:"SwiftEx",status:"Verified",image: require('../../../../../../assets/darkBlue.png'),city:"India / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Slovakia / Slovenia / Solomon Islands / South Africa / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Taiwan / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turkey / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"XETH, XUSD",Fiat_Assets:"$ USD, € EUR",Payment_Rails:"Card, Bank Transfer, Local Method" },
-    {name:"MoneyGram",status:"Pending",image: require('../../../../../../assets/MONEY_GRAM.png'),city:"Afghanistan / Albania / Angola / Anguilla / Antigua and Barbuda / Argentina / Armenia / Aruba / Australia / Bahamas / Bahrain / Barbados / Belarus / Belgium / Belize / Benin / Berumda / Bhutan / Bolivia / Bosnia and Herzegovina / Botswana / Brazil / Brunei Darussalam / Bulgaria / Burkina Faso / Burundi / Cambodia / Cameroon / Canada / Cape Verde / Cayman Islands / Central African Republic / Chad / Chile / Colombia / Comoros / Costa Rica / Cote D'Ivoire / Croatia / Curacao / Cyprus / Czech Republic / Democratic Republic of the Congo / Denmark / Djibouti / Dominica / Dominican Republic / Ecuador / El Salvador / Equatorial Guinea / Estonia / Eswatini / Ethiopia / Fiji / Finland / France / French Guiana / Gabon / Gambia / Georgia / Germany / Ghana / Gibraltar / Greece / Grenada / Guadeloupe / Guam / Guatemala / Guinea / Guinea-Bissau / Guyana / Haiti / Honduras / Hong Kong / Hungary / Iceland / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Lithuania / Luxembourg / Macao / Macedonia / Madagascar / Malawi / Malaysia / Maldives / Mali / Malta / Marshall Islands / Martinique / Mauritania / Mauritius / Mayotte / Mexico / Micronesia / Moldova / Mongolia / Montenegro / Montserrat / Mozambique / Myanmar / Namibia / Netherlands / New Zealand / Nicaragua / Niger / Nigeria / Norway / Oman / Palestine / Panama / Paraguay / Peru / Philippines / Poland / Portugal / Puerto Rico / Reunion / Romania / Rwanda / Saint Kitts And Nevis / Saint Lucia / Saint Martin / Saint Vincent And The Grenadines / Samoa / Sao Tome And Principe / Saudi Arabia / Senegal / Serbia / Seychelles / Sierra Leone / Singapore / Sint Maarten / Slovakia / Solomon Islands / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"USDC",Payment_Rails:"Global Rails, Cash" },
-    {name:"Mykobo",status:"Pending",image: require('../../../../../../assets/MYKOBO.png'),city:"Austria / Belgium / Bulgaria / Croatia / Cyprus / Czech Republic / Denmark / Estonia / Finland / France / Germany / Greece / Hungary / Ireland / Italy / Lithuania / Luxembourg / Malta / Netherlands / Poland / Portugal / Romania / Slovakia / Slovenia / Spain / Sweden",Fiat_Assets:"€ EUR",Crypto_Assets:"EURC",Payment_Rails:"Bank Transfer, SEPA" },
-    {name:"Banxa",status:"Pending",image: require('../../../../../../assets/BANXA.png'),city:"Australia / Austria / Brazil / Canada / Hong Kong / India / Indonesia / Mexico / Netherlands / Philippines / South Africa / Switzerland / Turkey / United States",Fiat_Assets:"$ USD",Crypto_Assets:"USDC ,XLM",Payment_Rails:"Card, Apple Pay, Google Pay, ACH, SEPA, Bank Transfer, Local Method"},
-    {name:"Clpx",status:"Pending",image: require('../../../../../../assets/CLPX.png'),city:"Chile",Crypto_Assets:"CLPX" },
-    {name:"Clickpesa",status:"Pending",image: require('../../../../../../assets/CLICKPESA.png'),city:"Kenya / Rwanda / Tanzania",Crypto_Assets:"USDC, XLM, RWF, TZS, KES",Fiat_Assets:"$ USD"},
-    {name:"Finclusive",status:"Pending",image: require('../../../../../../assets/FINCLUSIVE.png'),city:"Benin / Burkina Faso / Cape Verde / Cote D'Ivoire / Gambia / Ghana / Guinea / Guinea-Bissau / Liberia / Mali / Mauritania / Niger / Nigeria / Senegal / Sierra Leone / Togo",Crypto_Assets:"USDC",Fiat_Assets:"$ USD" },
+    // {name:"MoneyGram",status:"Pending",image: require('../../../../../../assets/MONEY_GRAM.png'),city:"Afghanistan / Albania / Angola / Anguilla / Antigua and Barbuda / Argentina / Armenia / Aruba / Australia / Bahamas / Bahrain / Barbados / Belarus / Belgium / Belize / Benin / Berumda / Bhutan / Bolivia / Bosnia and Herzegovina / Botswana / Brazil / Brunei Darussalam / Bulgaria / Burkina Faso / Burundi / Cambodia / Cameroon / Canada / Cape Verde / Cayman Islands / Central African Republic / Chad / Chile / Colombia / Comoros / Costa Rica / Cote D'Ivoire / Croatia / Curacao / Cyprus / Czech Republic / Democratic Republic of the Congo / Denmark / Djibouti / Dominica / Dominican Republic / Ecuador / El Salvador / Equatorial Guinea / Estonia / Eswatini / Ethiopia / Fiji / Finland / France / French Guiana / Gabon / Gambia / Georgia / Germany / Ghana / Gibraltar / Greece / Grenada / Guadeloupe / Guam / Guatemala / Guinea / Guinea-Bissau / Guyana / Haiti / Honduras / Hong Kong / Hungary / Iceland / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Lithuania / Luxembourg / Macao / Macedonia / Madagascar / Malawi / Malaysia / Maldives / Mali / Malta / Marshall Islands / Martinique / Mauritania / Mauritius / Mayotte / Mexico / Micronesia / Moldova / Mongolia / Montenegro / Montserrat / Mozambique / Myanmar / Namibia / Netherlands / New Zealand / Nicaragua / Niger / Nigeria / Norway / Oman / Palestine / Panama / Paraguay / Peru / Philippines / Poland / Portugal / Puerto Rico / Reunion / Romania / Rwanda / Saint Kitts And Nevis / Saint Lucia / Saint Martin / Saint Vincent And The Grenadines / Samoa / Sao Tome And Principe / Saudi Arabia / Senegal / Serbia / Seychelles / Sierra Leone / Singapore / Sint Maarten / Slovakia / Solomon Islands / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"USDC",Payment_Rails:"Global Rails, Cash" },
+    {name:"Alchemy Pay",status:"Active",image: require('../../../../../../assets/AlcamyPay.jpg'),city:"Afghanistan / Albania / Algeria / Andorra / Angola / Anguilla / Antigua and Barbuda / Argentina / Armenia / Aruba / Australia / Austria / Azerbaijan / Bahamas / Bahrain / Bangladesh / Barbados / Belarus / Belgium / Belize / Benin / Bermuda / Bhutan / Bolivia / Bosnia and Herzegovina / Botswana / Brazil / Brunei Darussalam / Bulgaria / Burkina Faso / Burundi / Cambodia / Cameroon / Canada / Cape Verde / Cayman Islands / Central African Republic / Chad / Chile / China / Colombia / Comoros / Congo - Brazzaville / Congo - Kinshasa / Costa Rica / Cote D'Ivoire / Croatia / Cuba / Curacao / Cyprus / Czech Republic / Democratic Republic of the Congo / Denmark / Djibouti / Dominica / Dominican Republic / Ecuador / El Salvador / Equatorial Guinea / Eritrea / Estonia / Eswatini / Ethiopia / Fiji / Finland / France / French Guiana / Gabon / Gambia / Georgia / Germany / Ghana / Gibraltar / Global / Greece / Greenland / Grenada / Guadeloupe / Guam / Guatemala / Guinea / Guinea-Bissau / Guyana / Haiti / Honduras / Hong Kong / Hungary / Iceland / India / Indonesia / Ireland / Israel / Italy / Jamaica / Japan / Jordan / Kazakhstan / Kenya / Kosovo / Kuwait / Kyrgyzstan / Laos / Latvia / Lebanon / Liberia / Libya / Lithuania / Luxembourg / Macao / Macedonia / Madagascar / Malawi / Malaysia / Maldives / Mali / Malta / Marshall Islands / Martinique / Mauritania / Mauritius / Mayotte / Mexico / Micronesia / Moldova / Monaco / Mongolia / Montenegro / Montserrat / Mozambique / Myanmar / Namibia / Netherlands / New Zealand / Nicaragua / Niger / Nigeria / Norway / Oman / Pakistan / Palestine / Panama / Papua New Guinea / Paraguay / Peru / Philippines / Poland / Portugal / Puerto Rico / Qatar / Romania / Rwanda / Réunion / Saint Kitts And Nevis / Saint Lucia / Saint Martin / Saint Vincent And The Grenadines / Samoa / Sao Tome And Principe / Saudi Arabia / Senegal / Serbia / Seychelles / Sierra Leone / Singapore / Sint Maarten / Slovakia / Slovenia / Solomon Islands / South Africa / South Korea / South Sudan / Spain / Sri Lanka / Suriname / Sweden / Switzerland / Taiwan / Tanzania / Thailand / Timor-Leste / Togo / Tonga / Trinidad And Tobago / Turkey / Turks And Caicos Islands / Tuvalu / Uganda / Ukraine / United Arab Emirates / United Kingdom / United States / Uruguay / Uzbekistan / Vanuatu / Venezuela / Vietnam / Virgin Islands, British / Virgin Islands, U.S. / Yemen / Zambia",Crypto_Assets:"XLM",Fiat_Assets:"$ USD",Payment_Rails:"Apple PayBank, TransferCardGoogle, PayLocal, MethodSEPA",PaymentView:"Apple PayBank" },
+    // {name:"Mykobo",status:"Active",image: require('../../../../../../assets/MYKOBO.png'),city:"Austria / Belgium / Bulgaria / Croatia / Cyprus / Czech Republic / Denmark / Estonia / Finland / France / Germany / Greece / Hungary / Ireland / Italy / Lithuania / Luxembourg / Malta / Netherlands / Poland / Portugal / Romania / Slovakia / Slovenia / Spain / Sweden",Fiat_Assets:"€ EUR",Crypto_Assets:"EURC",Payment_Rails:"Bank Transfer, SEPA" },
+    // {name:"Banxa",status:"Pending",image: require('../../../../../../assets/BANXA.png'),city:"Australia / Austria / Brazil / Canada / Hong Kong / India / Indonesia / Mexico / Netherlands / Philippines / South Africa / Switzerland / Turkey / United States",Fiat_Assets:"$ USD",Crypto_Assets:"USDC ,XLM",Payment_Rails:"Card, Apple Pay, Google Pay, ACH, SEPA, Bank Transfer, Local Method"},
+    // {name:"Clpx",status:"Pending",image: require('../../../../../../assets/CLPX.png'),city:"Chile",Crypto_Assets:"CLPX" },
+    // {name:"Clickpesa",status:"Pending",image: require('../../../../../../assets/CLICKPESA.png'),city:"Kenya / Rwanda / Tanzania",Crypto_Assets:"USDC, XLM, RWF, TZS, KES",Fiat_Assets:"$ USD"},
+    // {name:"Finclusive",status:"Pending",image: require('../../../../../../assets/FINCLUSIVE.png'),city:"Benin / Burkina Faso / Cape Verde / Cote D'Ivoire / Gambia / Ghana / Guinea / Guinea-Bissau / Liberia / Mali / Mauritania / Niger / Nigeria / Senegal / Sierra Leone / Togo",Crypto_Assets:"USDC",Fiat_Assets:"$ USD" },
   ];
   const [steller_key_private,setsteller_key_private]=useState("");
   const [Anchor_modal,setAnchor_modal]=useState(false);
@@ -136,6 +147,12 @@ export const HomeView = ({ setPressed }) => {
   const [kyc_modal,setkyc_modal]=useState(false);
   const [kyc_status,setkyc_status]=useState(true);
   const [con_modal,setcon_modal]=useState(false)
+  const [api_data_loading,setapi_data_loading]=useState(false)
+  const [lineColor, setlineColor] = useState();
+  const [Data, setData] = useState([]);
+  const [lastData, setlastData] = useState([]);
+  const [points_data,setpoints_data]=useState();
+  const [points_data_time,setpoints_data_time]=useState();
 
   const bootstrapStyleSheet = new BootstrapStyleSheet();
   const { s, c } = bootstrapStyleSheet;
@@ -157,57 +174,90 @@ export const HomeView = ({ setPressed }) => {
     setShowButtonLeft(false);
   },[Focused_screen])
 
-  //activate stellar account function
-  const active_account=async()=>{
-    console.log("<<<<<<<clicked");
-    const token = await getToken();
-    console.log(token)
-  try {
-    const storedData = await AsyncStorageLib.getItem('user_email');
-    const postData={
-      email: storedData,
-      publicKey: state.STELLAR_PUBLICK_KEY,
+  useEffect(()=>{
+    const fetch_color=async()=>{
+     try {
+      const last_Value = Data?.close;
+      const second_LastValue = lastData?.close;
+      const line_Color = last_Value > second_LastValue ? "green" : "red";      
+      setlineColor(line_Color)
+    } catch (error) {
+      console.log("*----",error)
     }
-    const response = await fetch(REACT_APP_HOST+'/users/updatePublicKeyByEmail', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(postData),
-    });
-
-    const data = await response.json();
-     if(data.success===true)
-     {
-      dispatch_({
+  }
+  fetch_color()
+},[Data])
+  //activate stellar account function
+  const active_account = async () => {
+    console.log("<<<<<<<clicked");
+    
+    try {
+      // Activate wallet feedback immediately
+      setWallet_activation(true);
+  
+      // Retrieve token and stored email in parallel
+      const [token, storedEmail] = await Promise.all([
+        getToken(),
+        AsyncStorageLib.getItem('user_email')
+      ]);
+  
+      console.log("Token:", token);
+  
+      const postData = {
+        email: storedEmail,
+        publicKey: state?.STELLAR_PUBLICK_KEY,
+        wallletPublicKey:state?.ETH_KEY
+      };
+  
+      // Update public key by email
+      const response = await fetch(`${REACT_APP_HOST}/users/updatePublicKeyByEmail`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(postData),
+      });
+      
+      const data = await response.json();
+      console.log("--->>>>", data);
+  
+      if (data.message === "Funded successfully") {
+        // Dispatch success action and load account details from Stellar in parallel
+       await dispatch_({
           type: RAPID_STELLAR,
           payload: {
-            ETH_KEY:state.ETH_KEY,
-            STELLAR_PUBLICK_KEY:state.STELLAR_PUBLICK_KEY,
-            STELLAR_SECRET_KEY:state.STELLAR_SECRET_KEY,
-            STELLAR_ADDRESS_STATUS:true
+            ETH_KEY: state.ETH_KEY,
+            STELLAR_PUBLICK_KEY: state.STELLAR_PUBLICK_KEY,
+            STELLAR_SECRET_KEY: state.STELLAR_SECRET_KEY,
+            STELLAR_ADDRESS_STATUS: true
           },
+        });
+        await dispatch_({
+          type: SET_ASSET_DATA,
+          payload:[{"asset_type": "native", "balance": "5.0000000", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000"}],
         })
-            // await changeTrust()
-     }
-    if (response.ok) {
-      console.log("===",data.success);
-    } else {
-      console.error('Error:', data);
-    }
-  } catch (error) {
-    console.error('Network error:', error);
-  }
+        setWallet_activation(false);
+
+      } else if (data.message === "Error funding account") {
+        console.log("Error: Funding account failed.");
+        setWallet_activation(false);
+      }
   
-  }
+    } catch (error) {
+      console.log('Network or fetch error:', error);
+      setWallet_activation(false);
+    }
+  };
+  
+  
 
   
  
  const changeTrust = async () => {
     try {
       console.log(":++++ Entered into trusting ++++:")
-const server = new StellarSdk.Server(STELLAR_URL.URL);
+const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
         const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
         const transaction = new StellarSdk.TransactionBuilder(account, {
             fee: StellarSdk.BASE_FEE,
@@ -220,7 +270,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
             // )
             .addOperation(
                 StellarSdk.Operation.changeTrust({
-                    asset: new StellarSdk.Asset("USDC", "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"),
+                    asset: new StellarSdk.Asset("USDC", "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"),
                 })
             )
             .setTimeout(30)
@@ -239,7 +289,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
           },
         })
         console.log(`Trustline updated successfully`);
-        StellarSdk.Network.useTestNetwork();
+        StellarSdk.Networks.PUBLIC
           server.loadAccount(state.STELLAR_PUBLICK_KEY)
             .then(account => {
               console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);
@@ -255,7 +305,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
             });
 
     } catch (error) {
-        console.error(`Error changing trust:`, error);
+        console.log(`Error changing trust:`, error);
     }
 };
 
@@ -271,13 +321,14 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
     parsedValue===null?setkyc_status(true):setkyc_status(true)
       console.log('Retrieved value:', parsedValue);
     } catch (error) {
-      console.error('Error retrieving data', error);
+      console.log('Error retrieving data', error);
       setkyc_status(true);
     }
   };
 
   const getData = async () => {
     try {
+      setloading(true)
       const data = await AsyncStorageLib.getItem('myDataKey');
       // if (data) {
         // const parsedData = JSON.parse(data);
@@ -292,8 +343,10 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
       // } else {
         // console.log('No data found for key steller keys');
       // }
+      setloading(false)
     } catch (error) {
-      console.error('Error getting data for key steller keys:', error);
+      console.log('Error getting data for key steller keys:', error);
+      setloading(true)
     }
     // try {
     //   const storedData = await AsyncStorageLib.getItem('myDataKey');
@@ -309,7 +362,7 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
     //     console.log('No data found in AsyncStorage');
     //   }
     // } catch (error) {
-    //   console.error('Error retrieving data:', error);
+    //   console.log('Error retrieving data:', error);
     // }
   };
 
@@ -323,61 +376,71 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
     if(err)
     {
       const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-           AsyncStorage.removeItem(LOCAL_TOKEN);
-           Navigate()
+          //  AsyncStorage.removeItem(LOCAL_TOKEN);
+          //  Navigate()
            
-      navigation.navigate('exchangeLogin')
+      // navigation.navigate('exchangeLogin')
     }
     } catch (err) {
       console.log(err);
     }
   };
   useEffect(()=>{
-    if(state.STELLAR_ADDRESS_STATUS===false)
+    if(state.STELLAR_ADDRESS_STATUS===false&&STELLAR_URL.USERTYPE!=="PROD")
     {
-      active_account()
+      // active_account()
     }
-    getData()
     getAccountDetails();
     getData_new_Kyc()
+    getData()
   },[Focused_screen]);
   useEffect(() => {
-    getData()
     getAccountDetails();
     fetchProfileData();
-    getOffersData();
-    getBidsData();
+    getData()
+    // getOffersData();
+    // getBidsData();
     syncDevice();
   }, []);
   useEffect(() => {
-    getData()
     fetchProfileData();
-    getOffersData();
-    getBidsData();
+    // getOffersData();
+    getData()
+    // getBidsData();
     syncDevice();
   }, [change]);
 
   const syncDevice = async () => {
-    const token = await getRegistrationToken();
+    const token = await FCM_getToken();
     console.log(token);
-    console.log("hi", token);
+    console.log("hi----->>>ttokenb", token);
+    const device_info = {
+      'deviceBrand': await DeviceInfo.getBrand(),
+      'deviceModel': await DeviceInfo.getModel(),
+      'systemVersion': await DeviceInfo.getSystemVersion(),
+      "deviceUniqueID": await DeviceInfo.getUniqueIdSync(),
+      "deviceIP": await DeviceInfo.getIpAddressSync(),
+      "deviceType": await DeviceInfo.getDeviceType(),
+      "deviceMacAddress": await DeviceInfo.getMacAddress()
+    }
     if(!token)
     {
-      const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-           AsyncStorage.removeItem(LOCAL_TOKEN);
-           Navigate()
+      // const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
+      //      AsyncStorage.removeItem(LOCAL_TOKEN);
+      //      Navigate()
            
-      navigation.navigate('exchangeLogin')
-      return
+      // navigation.navigate('exchangeLogin')
+      // return
     }
     try {
       const { res } = await authRequest(
-        `/users/getInSynced/${await getRegistrationToken()}`,
+        `/users/getInSynced/${token}`,
         GET
       );
       if (res.isInSynced) {
         const { err } = await authRequest("/users/syncDevice", POST, {
-          fcmRegToken: await getRegistrationToken(),
+          fcmRegToken: token,
+          deviceInfo:device_info
         });
         if (err) return setMessage(`${err.message}`);
         return setMessage("Your device is synced");
@@ -392,11 +455,30 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
 
   const fetchProfileData = async () => {
     try {
-      const { res, err } = await authRequest("/users/getUserDetails", GET);
+      const { res, err } = await authRequest("/users/:id", GET);
       await AsyncStorage.setItem("user_email",res.email);
-      if (err)return [navigation.navigate("exchangeLogin"),setMessage(` ${err.message} please log in again!`)];
-      setProfile(res);
+      console.log("8888888000------1111-------",res,err)
+      // if (err)return [navigation.navigate("exchangeLogin"),setMessage(` ${err.message} please log in again!`)];
+      if(err)
+      {
+        setProfile({
+          isVerified: true,
+          firstName: "jane",
+          lastName: "doe",
+          email: "xyz@gmail.com",
+          phoneNumber: "93400xxxx",
+          isEmailVerified: true,
+        });
+      }
     } catch (err) {
+      setProfile({
+        isVerified: true,
+        firstName: "jane",
+        lastName: "doe",
+        email: "xyz@gmail.com",
+        phoneNumber: "93400xxxx",
+        isEmailVerified: true,
+      });
       //console.log(err)
       setMessage(err.message || "Something went wrong");
     }
@@ -448,11 +530,20 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
       const apiResponse = await response.json();
       const records = apiResponse._embedded.records;
       setAPI_data(records);
+      setData(records[0]);
+      setlastData(records[1]);
+      setpoints_data(records[0]?.close)
+      setpoints_data_time(new Date(parseInt(records[0]?.timestamp)).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+      }))
+
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.log('Error fetching data:', error);
     }
   };
-  // Transform data for the chart
+  
   const chartData = API_data.map(item => ({
     x: new Date(parseInt(item.timestamp)).getTime(), // Convert timestamp to milliseconds
     y: parseFloat(item.close), // Use the 'close' value for the y-axis
@@ -461,8 +552,8 @@ const server = new StellarSdk.Server(STELLAR_URL.URL);
 
   useEffect(() => {
     fetchData()
-    const intervalId = setInterval(fetchData, 1000);
-    return () => clearInterval(intervalId);
+    // const intervalId = setInterval(fetchData, 1000);
+    // return () => clearInterval(intervalId);
   }, [chart_index]);
 
   useEffect(() => {
@@ -548,7 +639,7 @@ const submit_kyc=async()=>{
       close_()
     },1300)
   } catch (error) {
-    console.error('Error storing data', error);
+    console.log('Error storing data', error);
   }
 }
 const close_=()=>{
@@ -573,355 +664,100 @@ useFocusEffect(
   }, [])
 );
 
+// const formatDate = (timestamp) => {
+//   const date = new Date(Number(timestamp)); // Convert string timestamp to number
+//   return `${date.getHours()}:${date.getMinutes()}`; // Format as HH:mm
+// };
+
+useEffect(() => {
+  if (API_data.length === 0) {
+    setapi_data_loading(true);
+  } else {
+    setapi_data_loading(false); 
+  }
+}, [API_data]); 
   return (
     <>
- <View style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      // padding: 10,
-      backgroundColor: '#4CA6EA',
-      elevation: 4,
-    }}>
-      {/* Left Icon */}
-      <Icon
-              name={"left"}
-              type={"antDesign"}
-              size={28}
-              color={"white"}
-              style={{marginLeft:wp(2)}}
-              onPress={() =>navigation.navigate("Home")}
-            />
+           {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={"#011434"}/>}
+    <Exchange_screen_header title="Trade Wallet" onLeftIconPress={() => navigation.navigate("Home")} onRightIconPress={() => console.log('Pressed')} />
 
-      {/* Middle Text */}
-      <Text style={{
-        fontSize: 20,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        color:"#fff",
-        flex: 1,
-        marginLeft:wp(13),
-        marginTop:Platform.OS==="ios"?hp(3):hp(0)
-      }}>Home</Text>
-
-      {/* Right Image and Menu Icon */}
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-      }}>
-         <TouchableOpacity onPress={() => navigation.navigate("Home")}>
-        <Image
-          source={darkBlue}
-          style={{
-            height: hp("8"),
-            width: wp("12"),
-            marginRight: 10,
-            borderRadius: 15,
-          }}
-        />
-        </TouchableOpacity>
-        <TouchableOpacity
-            onPress={() => {
-              setmodalContainer_menu(true)
-            }}
-          >
-        <Icon
-              name={"menu"}
-              type={"materialCommunity"}
-              size={30}
-              color={"#fff"}
-            />
-        </TouchableOpacity>
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={modalContainer_menu}>
-
-            <TouchableOpacity style={styles.modalContainer_option_top} onPress={() => { setmodalContainer_menu(false) }}>
-              <View style={styles.modalContainer_option_sub}>
-
-
-
-                <TouchableOpacity style={styles.modalContainer_option_view}>
-                  <Icon
-                    name={"anchor"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"gray"}
-                  />
-                  <Text style={styles.modalContainer_option_text}>Anchor Settings</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view}>
-                  <Icon
-                    name={"badge-account-outline"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"gray"}
-                  />
-                  <Text style={styles.modalContainer_option_text}>KYC</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view}>
-                  <Icon
-                    name={"playlist-check"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"gray"}
-                  />
-                  <Text style={styles.modalContainer_option_text}>My Subscription</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => {
-                  console.log('clicked');
-                  const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-                  AsyncStorage.removeItem(LOCAL_TOKEN);
-                  setmodalContainer_menu(false)
-                  navigation.navigate('exchangeLogin');
-                }}>
-                  <Icon
-                    name={"logout"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"#fff"}
-                  />
-                  <Text style={[styles.modalContainer_option_text, { color: "#fff" }]}>Logout</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => { setmodalContainer_menu(false) }}>
-                  <Icon
-                    name={"close"}
-                    type={"materialCommunity"}
-                    size={30}
-                    color={"#fff"}
-                  />
-                  <Text style={[styles.modalContainer_option_text, { color: "#fff" }]}>Close Menu</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </Modal>
-      </View>
-    </View>
-<Modal
-      animationType="fade"
-      transparent={true}
-      visible={modalContainer_menu}>
-       
-      <TouchableOpacity style={styles.modalContainer_option_top}  onPress={()=>{setmodalContainer_menu(false)}}> 
-      <View style={styles.modalContainer_option_sub}>
-     
-
-      <TouchableOpacity style={styles.modalContainer_option_view}>
-      <Icon
-        name={"anchor"}
-        type={"materialCommunity"}
-        size={30}
-        color={"gray"}
-      />
-      <Text style={styles.modalContainer_option_text}>Anchor Settings</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.modalContainer_option_view}>
-      <Icon
-        name={"badge-account-outline"}
-        type={"materialCommunity"}
-        size={30}
-        color={"gray"}
-      />
-      <Text style={styles.modalContainer_option_text}>KYC</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.modalContainer_option_view} onPress={()=>{navigation.navigate("Home")}}>
-      <Icon
-        name={"wallet-outline"}
-        type={"materialCommunity"}
-        size={30}
-        color={"white"}
-      />
-      <Text style={[styles.modalContainer_option_text,{color:"white"}]}>Wallet</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.modalContainer_option_view}   onPress={() => {
-        console.log('clicked');
-        const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-        AsyncStorage.removeItem(LOCAL_TOKEN);
-        setmodalContainer_menu(false)
-        navigation.navigate('exchangeLogin');
-      }}>
-      <Icon
-        name={"logout"}
-        type={"materialCommunity"}
-        size={30}
-        color={"#fff"}
-      />
-      <Text style={[styles.modalContainer_option_text,{color:"#fff"}]}>Logout</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.modalContainer_option_view} onPress={()=>{setmodalContainer_menu(false)}}>
-      <Icon
-        name={"close"}
-        type={"materialCommunity"}
-        size={30}
-        color={"#fff"}
-      />
-      <Text style={[styles.modalContainer_option_text,{color:"#fff"}]}>Close Menu</Text>
-      </TouchableOpacity>
-      </View>
-      </TouchableOpacity>
-    </Modal>
-
-      
     <ScrollView
     style={{ backgroundColor: "#011434"}}
       contentContainerStyle={{
         // paddingBottom: hp(20),
-        backgroundColor: "#131E3A",
+        backgroundColor: "#011434",
       }}
     >
       
       <View style={styles.container}>
       
-               <View style={styles.container_a}>
-                  {/* <View style={{flexDirection:"row",justifyContent:"space-between",zIndex:20,position:"absolute",width:wp(95),marginTop:80}}> */}
-                 {ShowButtonLeft? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5}} onPress={() => {
-          if (AnchorViewRef.current && contentWidth !== 0) {
-            const backOffset = (AnchorViewRef.current.contentOffset ? AnchorViewRef.current.contentOffset.x : 0) - 3 * contentWidth / Anchor.length;
-            handleScroll(backOffset);
-
-          }}}><Icon name={"left"} type={"antDesign"} size={25} color={"white"} style={{marginRight:5}}/>
-               </TouchableOpacity>:<></>}
-
-              {ShowButtonRight? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5,alignSelf:"flex-end"}} onPress={() => {
-          if (AnchorViewRef.current && contentWidth !== 0) {
-            const nextOffset = (AnchorViewRef.current.contentOffset ? AnchorViewRef.current.contentOffset.x : 0) + 3 * contentWidth / Anchor.length;
-            handleScroll(nextOffset);
-          }
-        }}><Icon name={"right"} type={"antDesign"} size={25} color={"white"}/></TouchableOpacity>:<></>}
-                  {/* </View> */}
-               <View style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center"}}>
-               <Text style={{textAlign:"left",marginHorizontal:10,marginTop:10,fontWeight: "bold",fontSize:20,color:"#fff"}}>Anchors</Text>
-                <TouchableOpacity style={{flexDirection:"row",justifyContent:"center",alignItems:"center"}} onPress={()=>{navigation.navigate("Home")}}>
-                <Icon
-                      name={"chevron-left"}
-                      type={"materialCommunity"}
-                      color={"#4CA6EA"}
-                      size={24}
-                      style={{marginTop:13}}
-                    />
-                <Text style={{marginLeft:-5,textAlign:"left",marginHorizontal:10,marginTop:10,fontWeight: "300",fontSize:20,color:"#4CA6EA"}}>Wallet</Text>
+      <View style={{backgroundColor:"#011434"}}>
+          {profile && (
+            profile.isVerified === true ? (
+              <View style={styles.quickActionCon}>
+                <View style={[styles.quickActionCon,{flexDirection:"row"}]}>
+                <TouchableOpacity
+                  style={styles.PresssableBtn}
+                  onPress={() => {
+                    navigation.navigate("classic", { Asset_type: "ETH" })
+                  }}
+                >
+                   <Icon name={"wallet"} type={"material"} color={"#fff"} size={30}/>
+                  <Text style={styles.PresssableBtnText}>Import USDC</Text>
                 </TouchableOpacity>
-               </View>
 
-      <ScrollView ref={AnchorViewRef} horizontal style={{backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",padding:8,borderRadius:10,marginHorizontal:19,marginLeft:wp(6)}} showsHorizontalScrollIndicator={false} onContentSizeChange={(width) => setContentWidth(width)} onScroll={handleScroll_new}>
-              {Anchor.map((list, index) => {
-                return (
-                  <View>
-                    <TouchableOpacity  onPress={()=>{setAnchor_modal(true),setindex_Anchor(index)}} style={[styles.card,{backgroundColor:list.status==="Pending"?"#2b3c57":"#011434"}]} key={index}>
-                      <View style={{ width: "30%", height: "27%", borderBottomLeftRadius: 10, borderColor: 'rgba(122, 59, 144, 1)rgba(100, 115, 197, 1)', borderWidth: 1.9, position: "absolute", alignSelf: "flex-end", borderTopRightRadius: 10,zIndex:20 }}>
-                        <Icon name={list.status === "Pending" ? "clock-time-two-outline" : "check-circle-outline"} type={"materialCommunity"} color={list.status === "Pending" ? "yellow" : "#35CA1D"} size={24} />
-                      </View>
-                     <View style={styles.image}>
-                     <Image
-                        source={list.image}
-                        style={{width: 70,
-                          height: 65,
-                          borderRadius:list.name==="Mykobo"? 100:10}}
-                      />
-                     </View>
-                      <Text style={styles.name}>{list.name}</Text>
-                      <Text style={[styles.status, { color: list.status === "Pending" ? "yellow" : "#35CA1D" }]}>{list.status}</Text>
-                    </TouchableOpacity>
-                        {kyc_status===false?<TouchableOpacity onPress={()=>{submit_kyc()}}>
-                      {list.name==="SwiftEx"&&<Animated.View style={[styles.frame_1, { borderColor: shiningAnimation }]}>
-               <Text style={{color:'green',fontSize:16,textAlign:"center"}}>Submit KYC</Text>
-                </Animated.View>}
-                    </TouchableOpacity>:<></>}
-                    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={kyc_modal}>
-      <View style={styles.kyc_Container}>
-        <View style={styles.kyc_Content}>
-    <Image source={darkBlue} style={styles.logoImg_kyc} />
-          <Text style={styles.kyc_text}>Document submiting for KYC</Text>
-          <ActivityIndicator size="large" color="green" />
-        </View>
-      </View>
-    </Modal>
-                  </View>
-                )
-              })}
-      </ScrollView>
+                <TouchableOpacity
+                  style={styles.PresssableBtn}
+                  onPress={() => {
+                    navigation.navigate("ExportUSDC", { Asset_type: "ETH" })
+                  }}
+                >
+                   <Icon name={"wallet"} type={"material"} color={"#fff"} size={30}/>
+                  <Text style={styles.PresssableBtnText}>Export USDC</Text>
+                </TouchableOpacity>
+                </View>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={Anchor_modal}
-        // onRequestClose={closeModal}
-      >
-      
-      <View style={{backgroundColor: '#fff',borderRadius: 10,marginHorizontal:10,height:hp(80),marginTop:hp(10)}}>
-          <TouchableOpacity style={{alignSelf:"flex-end",padding:10}} onPress={()=>{setAnchor_modal(false),setindex_Anchor(0)}}>
-          <Icon name={"close"} type={"materialCommunity"} size={30} color={"black"}/>
-          </TouchableOpacity>
-           {Anchor.map((list,index)=>{
-              if(index===index_Anchor)
-              {
-                  return(
-                    <View style={{flex:1}}>
-                     <View style={{flexDirection:"row"}}>
-                     <View style={styles.image}>
-                     <Image
-                        source={list.image}
-                        style={{width: 75,
-                          height: 65,
-                          borderRadius:list.name==="Mykobo"? 30:10,
-                          marginLeft:10}}
-                      />
-                     </View>
-                     <Text style={{fontSize:19,textAlign:"center",marginTop:19,fontWeight:"bold"}}>{list.name}</Text>
-                     </View>
-                     <View style={{flexDirection:"row",marginStart:10,marginTop:10,borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
-                       <Icon name={"map-marker"} type={"materialCommunity"} size={30} color={"#212B53"}/>
-                       <ScrollView style={{height:hp(14)}}>
-                        <Text style={{marginStart:10,marginTop:5}}>{list.city}</Text>
-                       </ScrollView>
-                      <View>
-                      </View>
-                     </View>
-                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
-                     <Text style={{marginStart:21,marginTop:5,fontSize:20}}>Crypto Assets</Text>
-                      <Text style={{marginStart:29,marginTop:9,fontSize:16}}>{list.Crypto_Assets}</Text>
-                     </View>
+                <View style={[styles.quickActionCon,{flexDirection:"row"}]}>
+                <TouchableOpacity
+                  style={styles.PresssableBtn}
+                  onPress={() => {
+                    Offer_condition(Offer_active)
+                  }}
+                >
+                   <Icon name={"moving"} type={"material"} color={"#fff"} size={30} />
+                  <Text style={styles.PresssableBtnText}>Trade</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.PresssableBtn}
+                  onPress={() => {
+                    navigation.navigate("Assets_manage");
+                  }}
+                >
+                   <Icon name={"wallet"} type={"material"} color={"#fff"} size={30}/>
+                  <Text style={styles.PresssableBtnText}>Assets</Text>
+                </TouchableOpacity>
+                </View>
 
-                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
-                     <Text style={{marginStart:26,marginTop:5,fontSize:20}}>Fiat Assets</Text>
-                      <Text style={{marginStart:29,marginTop:9,fontSize:16}}>{list.Fiat_Assets}</Text>
-                     </View>
-
-                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
-                     <Text style={{marginStart:26,marginTop:5,fontSize:20}}>Payment Rails</Text>
-                      <Text style={{marginStart:29,marginTop:9,fontSize:16}}>{list.Payment_Rails}</Text>
-                     </View>
-                    </View>
-                  )
-              }
-           })}
-        </View>
-
-      </Modal>
-    </View>
+              </View>
+            ) : (
+              <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 5 }}>
+                <Text style={styles.kycText}>FETCHING UPDATES {profile.isVerified === false ? kyc() : ""}</Text>
+                <ActivityIndicator color={"green"} />
+              </View>
+            )
+          )}
+</View>
               <View style={[styles.linearContainer,{backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)"}]}>
               <SELECT_WALLET_EXC
         visible={VISIBLE_SELECT}
-        setVisible={setVISIBLE_SELECT}
-        setModalVisible={setVISIBLE_SELECT}
+        setVisible={()=>{setVISIBLE_SELECT(false)}}
+        setModalVisible={()=>{setVISIBLE_SELECT(false)}}
       />
             {state.wallet ? (
               <View>
                 <View style={styles.iconwithTextContainer}>
                   <TouchableOpacity style={[styles.walletContainer,{ borderColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",borderBottomColor:"#4CA6EA",borderWidth:1}]} onPress={()=>{navigation.navigate("MyWallet")}}>
-                    <Text style={styles.myWallet}>My Wallet </Text>
+                    <Text style={styles.myWallet}>Linked Wallet </Text>
                     <Icon
                       name={"wallet"}
                       type={"materialCommunity"}
@@ -936,46 +772,36 @@ useFocusEffect(
                       type={"materialCommunity"}
                       color={"#008C62"}
                     /> */}
-                    <Text style={styles.connectedText}>Connected!</Text>
+                    <Text style={[styles.connectedText]}>USDC: </Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(10), paddingVertical: 0.1, borderRadius: 5 }}>
+                    <Text style={styles.connectedText}>{state?.STELLAR_ADDRESS_STATUS===false?"0.00":state?.assetData?.filter(b => b.asset_code === "USDC").find((b, _, arr) => parseFloat(b.balance) > 0 && (b === arr[0] || parseFloat(arr[0].balance) <= 0))?.balance || "0.00"}</Text>
+                      </ScrollView>
                   </View>
                 </View>
                 <View style={{}}>
-                  <View style={{flexDirection:"row",marginTop:19}}>
-                    <Text style={styles.textColor}>Ethereum Address </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60),borderColor:"#485DCA",borderWidth:0.9,paddingVertical:2.2,borderRadius:5}}>
-                   <Text style={[styles.textColor,styles.width_scrroll]}>{state.wallet.address}</Text>
-                    </ScrollView>
-                    <TouchableOpacity onPress={()=>{copyToClipboard(state.wallet.address)}}>
-                    <Icon
-                      name={"content-copy"}
-                      type={"materialCommunity"}
-                      color={"rgba(129, 108, 255, 0.97)"}
-                      size={24}
-                      style={{marginTop:0.3,marginLeft:2.9}}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={()=>{navigation.navigate("AllWallets")}}>
-                    <Text style={{color:"#4CA6EA",marginLeft:wp(1),marginTop:hp(0.5),paddingHorizontal:(1.5)}}>Manage</Text>
-                    </TouchableOpacity>
-                  </View> 
 
-                  <View style={{flexDirection:"row",marginTop:10}}>
-                    <Text style={styles.textColor}>Stellar Public Key   </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60),borderColor:"#485DCA",borderWidth:0.9,paddingVertical:2.9,borderRadius:5}}>
-                   <Text style={[styles.textColor,styles.width_scrroll]}>{steller_key}</Text>
-                    </ScrollView>
-                    <TouchableOpacity onPress={()=>{copyToClipboard(steller_key)}}>
-                    <Icon
-                      name={"content-copy"}
-                      type={"materialCommunity"}
-                      color={"rgba(129, 108, 255, 0.97)"}
-                      size={24}
-                      style={{marginTop:0.3,marginLeft:wp(1)}}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={()=>{setVISIBLE_SELECT(true)}}>
-                    <Text style={{color:"#4CA6EA",marginLeft:wp(1),marginTop:hp(0.5),marginRight:wp(3)}}>Import</Text>
-                    </TouchableOpacity>
+                  <View style={{marginVertical:hp(0.5)}}>
+                    <Text style={styles.textColor}>Stellar Public Key</Text>
+                    <View style={{flexDirection:"row"}}>
+                    {loading&&!steller_key?<View style={{width: wp(70)}}>
+                           <Exchange_single_loading/>
+                        </View>:
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(60), paddingVertical: 1, borderRadius: 5 }}>
+                        <Text style={[styles.textColor, styles.width_scrroll]}>{steller_key}</Text>
+                      </ScrollView>}
+                      <TouchableOpacity onPress={() => { copyToClipboard(steller_key) }}>
+                        <Icon
+                          name={"content-copy"}
+                          type={"materialCommunity"}
+                          color={"rgba(129, 108, 255, 0.97)"}
+                          size={24}
+                          style={{ marginTop: 0.3, marginLeft: wp(1) }}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => { setVISIBLE_SELECT(true) }}>
+                        <Text style={{ color: "#4CA6EA", marginLeft: wp(1), marginTop: hp(0.5), marginRight: wp(3) }}>Import</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View> 
 
                   
@@ -1003,171 +829,213 @@ useFocusEffect(
         )}
       </View>
 
-<View style={{backgroundColor:"#011434"}}>
-{profile && (
-          <View>
-              {profile.isVerified===true ? (
-                <View style={{flexDirection:"row",justifyContent:"center"}}>
-                  <TouchableOpacity 
-                    style={[styles.PresssableBtn,{width: wp(93),marginLeft:3,height:hp(8)}]}
-                    onPress={() => {
-                     // setOpen(true)
-                        Offer_condition(Offer_active)
-                    }}
-                  >
-                    <Text style={{ color: "#fff",fontSize:19,fontWeight:"bold" }}>Trade</Text>
-                  </TouchableOpacity>
-                  
-                  {/* <NewOfferModal
-                    user={profile}
-                    open={open}
-                    onCrossPress={()=>{setOpen(false)}}
-                    setOpen={setOpen}
-                    getOffersData={getOffersData}
-                  /> */}
-                </View>
-              ) : (
-               <View style={{flexDirection:"row",justifyContent:"center",marginVertical:5}}>
-                <Text style={styles.kycText}>FATCHING UPDATING {profile.isVerified===false?kyc():""}</Text>
-                <ActivityIndicator color={"green"}/>
-               </View>
-              )}
-            </View>
-          // </View>
-        )}
-</View>
-        <View style={{ backgroundColor: "#011434",flexDirection:"row",justifyContent:"center" }}>
-          <TouchableOpacity
-            style={[styles.PresssableBtn,{flexDirection:"row",justifyContent:"center",marginTop:1,width: wp(45),height:hp(8),marginLeft:3,paddingHorizontal:wp(0)}]}
-            onPress={() => {
-              navigation.navigate("classic",{Asset_type:"Ethereum"})
-            }}
-          >
-            <Text style={{ color: "#fff", fontSize: 17, fontWeight: "bold",textAlign:"center"}}>Bridge Tokens</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-                    style={[styles.PresssableBtn,{height:hp(8),width: wp(45),marginLeft:10,marginTop:1,justifyContent:"center"}]}
-                    onPress={() => {
-                      navigation.navigate("Assets_manage");
-                    }}
-                  >
-            <Text style={{ color: "#fff", fontSize: 17, fontWeight: "bold",textAlign:"center"}}>Assets</Text>
+      <View style={styles.container_a}>
+                  {/* <View style={{flexDirection:"row",justifyContent:"space-between",zIndex:20,position:"absolute",width:wp(95),marginTop:80}}> */}
+                 {/* {ShowButtonLeft? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5}} onPress={() => {
+          if (AnchorViewRef.current && contentWidth !== 0) {
+            const backOffset = (AnchorViewRef.current.contentOffset ? AnchorViewRef.current.contentOffset.x : 0) - 3 * contentWidth / Anchor.length;
+            handleScroll(backOffset);
 
-                    {/* <Text style={{ color: "#fff",fontSize:18,fontWeight:"bold" }}>Assets</Text> */}
+          }}}><Icon name={"left"} type={"antDesign"} size={25} color={"white"} style={{marginRight:5}}/>
+               </TouchableOpacity>:<></>} */}
+
+              {/* {ShowButtonRight? <TouchableOpacity style={{zIndex:20,position:"absolute",width:wp(8),marginTop:80,backgroundColor:"rgba(255,255,255,0.2)",borderRadius:10,padding:5,alignSelf:"flex-end"}} onPress={() => {
+          if (AnchorViewRef.current && contentWidth !== 0) {
+            const nextOffset = (AnchorViewRef.current.contentOffset ? AnchorViewRef.current.contentOffset.x : 0) + 3 * contentWidth / Anchor.length;
+            handleScroll(nextOffset);
+          }
+        }}><Icon name={"right"} type={"antDesign"} size={25} color={"white"}/></TouchableOpacity>:<></>} */}
+                  {/* </View> */}
+               <View style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center",marginTop:1}}>
+               <Text style={{textAlign:"left",marginHorizontal:10,fontWeight: "bold",fontSize:20,color:"#fff"}}>Anchors</Text>
+                <TouchableOpacity style={{flexDirection:"row",justifyContent:"center",alignItems:"center"}} onPress={()=>{navigation.navigate("Home")}}>
+                <Icon
+                      name={"chevron-left"}
+                      type={"materialCommunity"}
+                      color={"#4CA6EA"}
+                      size={24}
+                    />
+                <Text style={{marginLeft:-5,textAlign:"left",marginHorizontal:10,fontWeight: "300",fontSize:20,color:"#4CA6EA"}}>Wallet</Text>
+                </TouchableOpacity>
+               </View>
+
+      {/* <ScrollView ref={AnchorViewRef} horizontal style={{paddingVertical:hp(1),padding:3,borderRadius:10,marginHorizontal:wp(0.1),marginLeft:wp(0.1)}} showsHorizontalScrollIndicator={false} onContentSizeChange={(width) => setContentWidth(width)} onScroll={handleScroll_new}> */}
+              {Anchor.map((list, index) => {
+                return (
+                  <TouchableOpacity onPress={() => { setAnchor_modal(true), setindex_Anchor(index) }} style={styles.card} key={index}>
+                    <View style={{flexDirection:"row"}}>
+                      <View style={styles.image}>
+                        <Image source={list.image} style={{ width: 90, height: 66, borderRadius: 10 }} />
+                      </View>
+                      <View style={styles.ancharTextCon}>
+                        <Text style={styles.name}>{list.name}</Text>
+                        <Text style={styles.status}>Crypto: {list.Crypto_Assets}, Fiat: {list.Fiat_Assets} </Text>
+                        <Text style={styles.status}>Payment: {list.PaymentView} </Text>
+                      </View>
+                    </View>
+                    <View style={styles.anchorStatus}>
+                      <Icon name={"check-circle-outline"} type={"materialCommunity"} color={"#35CA1D"} size={24} />
+                    </View>
                   </TouchableOpacity>
+                )
+              })}
+              <Modal
+                animationType="fade"
+                transparent={true}
+                visible={Wallet_activation}>
+                <View style={styles.kyc_Container}>
+                  <View style={[styles.kyc_Content,{width:wp(90)}]}>
+                    <Image source={darkBlue} style={styles.logoImg_kyc} />
+                    <Text style={styles.kyc_text}>Stellar Wallet Activating and funding.</Text>
+                    <ActivityIndicator size="large" color="green" />
+                  </View>
+                </View>
+              </Modal>
+      {/* </ScrollView> */}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={Anchor_modal}
+        // onRequestClose={closeModal}
+      >
+      
+      <View style={{backgroundColor: '#fff',borderRadius: 10,marginHorizontal:10,height:hp(80),marginTop:hp(10)}}>
+          <TouchableOpacity style={{alignSelf:"flex-end",padding:10}} onPress={()=>{setAnchor_modal(false),setindex_Anchor(0)}}>
+          <Icon name={"close"} type={"materialCommunity"} size={30} color={"black"}/>
+          </TouchableOpacity>
+           {Anchor.map((list,index)=>{
+              if(index===index_Anchor)
+              {
+                  return(
+                    <View style={{flex:1}}>
+                     <View style={{flexDirection:"row"}}>
+                     <View style={styles.image}>
+                     <Image
+                        source={list.image}
+                        style={{width: 75,
+                          height: 65,
+                          borderRadius:list.name==="Mykobo"? 30:10,
+                          marginLeft:10}}
+                      />
+                     </View>
+                     <Text style={{fontSize:19,textAlign:"center",marginTop:19,fontWeight:"bold",color:"black"}}>{list.name}</Text>
+                     </View>
+                     <View style={{flexDirection:"row",marginStart:10,marginTop:10,borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
+                       <Icon name={"map-marker"} type={"materialCommunity"} size={30} color={"#212B53"}/>
+                       <ScrollView style={{height:hp(14)}}>
+                        <Text style={{marginStart:10,marginTop:5,color:"black"}}>{list.city}</Text>
+                       </ScrollView>
+                      <View>
+                      </View>
+                     </View>
+                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
+                     <Text style={{marginStart:21,marginTop:5,fontSize:20,color:"black"}}>Crypto Assets</Text>
+                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Crypto_Assets}</Text>
+                     </View>
+
+                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
+                     <Text style={{marginStart:26,marginTop:5,fontSize:20,color:"black"}}>Fiat Assets</Text>
+                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Fiat_Assets}</Text>
+                     </View>
+
+                     <View style={{borderWidth:1.3,margin:10,padding:5,borderBottomColor:"black",borderTopColor:"white",borderLeftColor:"white",borderRightColor:"white"}}>
+                     <Text style={{marginStart:26,marginTop:5,fontSize:20,color:"black"}}>Payment Rails</Text>
+                      <Text style={{marginStart:29,marginTop:9,fontSize:16,color:"black"}}>{list.Payment_Rails}</Text>
+                     </View>
+                      
+                     <View style={{margin:10,padding:5,width:"28%"}}>
+                    <Button title="Check Out" color={"#4CA6EA"} onPress={()=>{[setAnchor_modal(false),navigation.navigate("KycComponent",{tabName:"Buy"})]}}/>
+                     </View>
+                    </View>
+                  )
+              }
+           })}
         </View>
 
-  <View style={Platform.OS === "ios" ?{justifyContent:'center',alignItems:'center',backgroundColor:"#011434"} :{justifyContent:'center',alignItems:'center',backgroundColor:"#011434"}}>
-    <View style={{position:"relative",zIndex:20,marginBottom:-30,marginTop:10,alignSelf:"flex-end",marginRight:25}}>
-    <Icon
-        name={"chevron-down"}
-        type={"materialCommunity"}
-        size={28}
-        color={"white"}
-        onPress={()=>{setopen_chart_api(true)}}
-      />
+      </Modal>
     </View>
+        
+        <View style={{ justifyContent: 'center', alignItems: 'flex-start', backgroundColor: "#011434", paddingVertical: 1,paddingLeft:wp(5) }}>
+          <Text style={{ color: "#fff", fontSize: 19,fontWeight:"600" }}>${points_data || 0.00}</Text>
+          <Text style={{ color: "#fff", fontSize: 14 }}>{points_data_time || 0.00}</Text>
+        </View>
+        <View style={{justifyContent:'center',alignItems:'center',backgroundColor:"#011434",}}>
 
-    
-    { API_data.length===0?<ActivityIndicator color={"green"} size={"large"}/>:
-    <Chart
-      style={{  width:370,height:310, padding: 1 }}
-      data={chartData}
-      padding={{ left: 40, bottom: 30, right: 20, top: 30 }}
-      xDomain={{ min: Math.min(...chartData.map(d => d.x)), max: Math.max(...chartData.map(d => d.x)) }}
-      yDomain={{ min: Math.min(...chartData.map(d => d.y)), max: Math.max(...chartData.map(d => d.y)) }}
-    >
-      <VerticalAxis
-        tickCount={10}
-        theme={{
-          grid:{visible:false},
-          labels: {
-            formatter: (v) => v.toFixed(1),
-            label: { color: "#fff" }
-          },
-        }}
-      />
-      <HorizontalAxis
-        tickCount={10}
-        theme={{
-          grid:{visible:false},
-          labels: {
-            formatter: (v) => {
-              const date = new Date(v);
-              return `${date.getHours()}:${date.getMinutes()}`;
-            },
-            label: { color: "#fff" }
-          }
-        }}
-      />
-      <Area
-        theme={{ gradient: { from: { color: '#44bd32' }, to: { color: '#44bd32', opacity: 0.2 } } }}
-      />
-      <Line
-        tooltipComponent={
-          <Tooltip
-            theme={{
-              label: {
-                color: 'white',
-                fontSize: 11,
-                fontWeight: 700,
-                textAnchor: 'middle',
-                opacity: 1,
-                dx: 0,
-                dy: 16.5,
-              },
-              shape: {
-                width: 80,
-                height: 30,
-                dx: 0,
-                dy: 20,
-                rx: 4,
-                color: 'black',
-              }
-            }}
-            formatter={(d) => `Close: ${d.y.toFixed(10)}\nAvg: ${d.avg.toFixed(10)}`}
-          />
-        }
-        theme={{
-          stroke: { color: '#44bd32', width: 5 },
-          scatter: {
-            default: { width: 8, height: 8, rx: 4, color: '#44ad32' },
-            selected: { color: 'red' }
-          }
-        }}
-      />
-    </Chart>
-    }
-
+    { api_data_loading?<Charts_Loadings/>:
+              <Chart
+              style={{ width: 370, height: 190 }}
+              data={chartData}
+              padding={{ left: 10, bottom: 30, right: 20, top: 30 }}
+              xDomain={{ 
+                min: Math.min(...chartData.map(d => d.x)), 
+                max: Math.max(...chartData.map(d => d.x)) 
+              }}
+              yDomain={{ 
+                min: Math.min(...chartData.map(d => d.y)) - (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))), // 10% padding below
+                max: Math.max(...chartData.map(d => d.y)) + (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))) // 10% padding above
+              }}
+            >
+              <Line
+                tooltipComponent={
+                  <Tooltip theme={{formatter: ({ y,x }) =>{setpoints_data(y),setpoints_data_time(x)
+                    setpoints_data_time(new Date(parseInt(x)).toLocaleTimeString([], { 
+                      hour: '2-digit', 
+                      minute: '2-digit', 
+                      second: '2-digit' 
+                    }))
+                  },
+                  shape: {
+                    width: 0,
+                    height: 0,
+                    dx: 0,
+                    dy: 0,
+                    color: 'black',
+                  }
+                }}/>
+                }
+                theme={{
+                  stroke: { color: lineColor || '#44bd32', width: 2 },
+                  scatter: {
+                    selected: { width: 8, height: 8, rx: 4,color: 'red' }
+                  }
+                }}
+                smoothing="bezier" 
+              />
+            </Chart>
+}
+</View>
+        {/* </View>  */}
+<View style={{backgroundColor:"#011434"}}>
         <TouchableOpacity style={{backgroundColor: "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
     padding: hp(0.5),
     width: wp(95),
     alignSelf: "center",
     borderRadius: hp(1.6),
     marginBottom: hp(1),
-    marginTop:hp(1.4)}}
+    marginTop:hp(0.5)}}
     onPress={()=>{setopen_chart_api(true)}}
     >
               <Text style={{fontSize: 19,color: "white",textAlign:"center",fontWeight:"500"}}>Trade between {chart_api[chart_index].name==="USDC"?chart_api[chart_index].name+"  ":chart_api[chart_index].name}vs  {chart_api[chart_index].name_0}</Text>
         </TouchableOpacity>
-        </View> 
         <Modal
         animationType="slide"
         transparent={true}
         visible={open_chart_api}
-      >
+        >
         <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setopen_chart_api(false)}>
           <View style={[styles.chooseModalContent]}>
-          <Text style={{fontSize:21,color:"#fff"}}>Select Assets Pair</Text>
+          <Text style={{fontSize:21,color:"#fff",fontWeight:"bold"}}>Select Assets Pair</Text>
             <FlatList
               data={chart_api}
               renderItem={chooseRenderItem_1}
               keyExtractor={(item) => item.id.toString()}
-            />
+              />
           </View>
         </TouchableOpacity>
       </Modal>
-            <OfferListViewHome/>
+              </View>
+            {/* <OfferListViewHome/> */}
     </ScrollView>
     </>
   );
@@ -1185,13 +1053,16 @@ const styles = StyleSheet.create({
   },
   linearContainer: {
     width: wp(94),
-    padding: hp(2),
-    paddingVertical: hp(3),
+    padding: hp(1),
+    marginTop:"2%",
+    // paddingVertical: hp(2),
     borderRadius: hp(2),
-    // marginTop: hp(3),
+    borderColor:"#FFFFFF33",
+    borderWidth:1
   },
   textColor: {
     color: "#fff",
+    marginVertical:hp(0.3)
   },
   iconwithTextContainer: {
     flexDirection: "row",
@@ -1207,7 +1078,7 @@ const styles = StyleSheet.create({
   },
   myWallet: {
     fontWeight: "bold",
-    fontSize:20,
+    fontSize:16,
     color:"#fff"
   },
   width_scrroll:{
@@ -1243,16 +1114,21 @@ const styles = StyleSheet.create({
   },
   PresssableBtn: {
     backgroundColor: "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
-    padding: hp(2),
-    width: wp(93.6),
-    borderColor:"rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
-    borderWidth:1.3,
+    borderColor:"#FFFFFF33",
+    borderWidth:1,
     alignSelf: "center",
-    paddingHorizontal: wp(3),
-    borderRadius: hp(2.5),
-    marginBottom: hp(1),
-    alignItems: "center",
-    marginTop:hp(1.4)
+    borderRadius: hp(2),
+    marginVertical:hp(0.5),
+    alignItems:"center",
+    width: "50%",
+    marginHorizontal:wp(1),
+    padding:6,
+    paddingVertical:6
+  },
+  PresssableBtnText:{
+    color:"#fff",
+    fontSize:15,
+    fontWeight:"600"
   },
   addofferText: {
     flexDirection: "row",
@@ -1339,21 +1215,19 @@ const styles = StyleSheet.create({
     fontSize:17
   },
   container_a: {
-    flex: 1,
-    width:"94%",
-    // alignItems: 'center',
-    // justifyContent: 'center',
-    backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
-    margin:10,
-    borderRadius:10
+    width: wp(99),
+    padding: hp(1),
+    backgroundColor:"#011434"
   },
   card: {
-    marginRight: 10,
-    borderWidth: 1.9,
-    borderColor: 'rgba(122, 59, 144, 1)rgba(100, 115, 197, 1)',
+    marginTop:10,
+    marginLeft: 3,
     borderRadius: 10,
-    padding: 8,
-    backgroundColor:"#011434"
+    padding: 10,
+    backgroundColor:"#2b3c57",
+    justifyContent:"space-between",
+    flexDirection:"row",
+    width:"100%"
   },
   image: {
     width: 90,
@@ -1368,7 +1242,7 @@ const styles = StyleSheet.create({
   },
   status: {
     fontSize: 14,
-    color: 'yellow',
+    color: 'gray',
   },
   frame_1: {
     borderWidth: 2,
@@ -1384,7 +1258,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   kyc_Content: {
     backgroundColor: '#fff',
@@ -1396,6 +1270,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 16,
     fontWeight: 'bold',
+    color:"black"
   },
   logoImg_kyc: {
     height: hp("9"),
@@ -1430,30 +1305,47 @@ marginStart:5
 },
 chooseModalContainer: {
   flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
+  justifyContent: 'flex-end',
+  alignItems: 'flex-end',
   backgroundColor: 'rgba(0, 0, 0, 0.5)',
 },
 chooseModalContent: {
   backgroundColor: 'rgba(33, 43, 83, 1)',
   padding: 20,
-  borderRadius: 10,
-  width: '80%',
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+  width: "100%",
   maxHeight: '80%',
+  borderTopColor:"rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
+  borderWidth:2
 },
 chooseItemContainer: {
   marginVertical: 3,
   flexDirection: 'row',
   alignItems: 'center',
   borderColor: 'rgba(28, 41, 77, 1)',
-  borderWidth: 0.9,
-  borderBottomColor: '#fff',
+  borderBottomWidth:0.9,
+  borderBlockEndColor: '#fff',
   marginBottom: 4,
 },
 chooseItemText: {
   fontSize: 19,
   color: '#fff',
-  marginLeft:wp(3)
+  marginLeft:wp(-10)
 },
+quickActionCon:{ 
+  backgroundColor:"#011434",
+  flexDirection:"column",
+  justifyContent:"space-between",
+  alignSelf:"center",
+  width: "96%"
+ },
+ ancharTextCon:{
+  paddingVertical:3,
+  marginLeft:10
+ },
+ anchorStatus:{
+  justifyContent:"center",
+ }
   
 });

@@ -21,7 +21,10 @@ import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../icon";
 import { Button } from "native-base";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
 const MyPrivateKey = (props) => {
+  const navi=useNavigation()
     const state = useSelector((state)=>state)
   const [accountName, setAccountName] = useState("");
   const [visible, setVisible] = useState(false);
@@ -129,6 +132,7 @@ const MyPrivateKey = (props) => {
 }
   return (
     <View style={{ backgroundColor:state.THEME.THEME===false?"#fff":"black", height: hp(100) }}>
+          <Wallet_screen_header title="Secret Key" onLeftIconPress={() => navi.goBack()} />
       <Animated.View // Special animatable View
         style={{ opacity: fadeAnim }}
       >
@@ -197,14 +201,13 @@ const MyPrivateKey = (props) => {
         <View style={style.dotView}>
           <Icon name="dot-single" type={"entypo"} size={20} color={state.THEME.THEME===false?"black":"#fff"}/>
           <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>
-            Keep your mnemonic in a safe place isolated from any network
+          Keep your mnemonic in a safe place, isolated from any network.
           </Text>
         </View>
         <View style={style.dotView1}>
           <Icon name="dot-single" type={"entypo"} size={20} color={state.THEME.THEME===false?"black":"#fff"}/>
           <Text style={[style.welcomeText,{color:state.THEME.THEME===false?"black":"#fff"}]}>
-            Don't share and store mnemonic with a network, such as email,photo,
-            social apps, and so on
+           Do not share it through email, photos, social media, apps, etc.
           </Text>
         </View>
 

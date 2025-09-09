@@ -383,7 +383,10 @@ import "@ethersproject/shims";
 import { ethers } from "ethers";
 import { genrateAuthToken, genUsrToken } from "./Auth/jwtHandler";
 import { alert } from "./reusables/Toasts";
-const StellarSdk = require('stellar-sdk');
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
+import Snackbar from "react-native-snackbar";
+import * as StellarSdk from '@stellar/stellar-sdk';
 const storeData = async (publicKey,secretKey,Ether_address) => {
   try {
     let userTransactions = [];
@@ -431,13 +434,11 @@ const getData = async () => {
 };
 
 const CheckMnemonic = (props) => {
+  const navi=useNavigation();
   console.log("||||||||||||||||||||||||||||||||||||||||||||||",props.route.params.wallet.addres)
   const wallet_Men = props.route.params.wallet.mnemonic.split(' ');
 
-  const genrate_keypair = (ether_add) => {
-    const pair = StellarSdk.Keypair.random();
-    const publicKey = pair.publicKey();
-    const secretKey = pair.secret();
+  const genrate_keypair = (ether_add,publicKey,secretKey) => {
     console.log('G-Public Key:-', publicKey);
     console.log('G-Secret Key:-', secretKey);
     storeData(publicKey, secretKey,ether_add);
@@ -536,17 +537,18 @@ const CheckMnemonic = (props) => {
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
+    <Wallet_screen_header title="Check Mnemonic" onLeftIconPress={() => navi.goBack()} />
       <View style={style.Body}>
         <Text style={style.verifyText}>Verify Secret Phrase</Text>
         <Text style={style.wordText}>
         Please top on the correct answer of the below seed phrases.
         </Text>
 
-        <View style={{ marginTop: hp(8) }}>
+        <View style={{ marginTop: hp(2) }}>
         {shuffledQuestions.map((q, index) => (
             <View key={index} style={{ marginVertical: 5 }}>
               <Text style={{marginLeft:wp(3),color:"black"}}>{q.question}</Text>
-             <View style={{flexDirection:"row",marginLeft:wp(19)}}>
+             <View style={{flexDirection:"row"}}>
              {q.options.map((option, optIndex) => (
                 <TouchableOpacity
                   key={optIndex}
@@ -556,10 +558,11 @@ const CheckMnemonic = (props) => {
                     borderColor:"#4CA6EA",
                     borderWidth:0.6,
                     marginHorizontal:wp(1.5),
-                    width:wp(20),
+                    width:wp(26),
                     height:hp(5),
                     alignItems:"center",
-                    justifyContent:"center"
+                    justifyContent:"center",
+                    marginTop:hp(1)
                   }}
                   onPress={() => handleAnswer(index, option)}
                 >
@@ -571,11 +574,11 @@ const CheckMnemonic = (props) => {
           ))}
         </View>
         
-        {loading ? (
+        {loading ? 
+          <View style={[style.ButtonView,{backgroundColor:"white"}]}>
           <ActivityIndicator size="large" color="green" />
-        ) : (
-          <Text></Text>
-        )}
+          </View>
+          :        
         <TouchableOpacity
           style={style.ButtonView}
           onPress={async () => {
@@ -605,6 +608,10 @@ const CheckMnemonic = (props) => {
                     address: props.route.params.wallet.xrp.address,
                     privateKey: props.route.params.wallet.xrp.privateKey,
                   },
+                  stellarWallet: {
+                    publicKey: props.route.params.wallet.stellarWallet.publicKey,
+                    secretKey: props.route.params.wallet.stellarWallet.secretKey
+                  },
                   wallets: [],
                 };
                 let wallets = [];
@@ -618,6 +625,10 @@ const CheckMnemonic = (props) => {
                     xrp: {
                       address: props.route.params.wallet.xrp.address,
                       privateKey: props.route.params.wallet.xrp.privateKey,
+                    },
+                    stellarWallet: {
+                      publicKey: props.route.params.wallet.stellarWallet.publicKey,
+                      secretKey: props.route.params.wallet.stellarWallet.secretKey
                     },
                     walletType: "Multi-coin",
                   },
@@ -670,24 +681,42 @@ const CheckMnemonic = (props) => {
                 dispatch(setWalletType("Multi-coin"));
                 dispatch(setToken(token));
                 // add NEW ACCOUNT DATA FOR NEW STELLAR ACCOUNT
-                genrate_keypair(props.route.params.wallet.address)
+                genrate_keypair(props.route.params.wallet.address,props.route.params.wallet.stellarWallet.publicKey,props.route.params.wallet.stellarWallet.secretKey)
                 console.log("navigating to home screen");
                 props.navigation.navigate("HomeScreen");
-                alert("success", "correct mnemonic");
+                alert("success", "Mnemonic validated successfully!");
                 getData();      
             } catch (e) {
               console.log(e);
             }
           }
           else {
-            alert("error","Incorrect Answers, please try again");
-            setAnswers(Array(4).fill(null));
-            shuffleQuestions();
+                  const hasNull = answers.some((answer) => answer === null);
+                  if (hasNull) {
+                    Snackbar.show({
+                      text: 'Please provide all answers before submitting.',
+                      duration: Snackbar.LENGTH_SHORT,
+                      backgroundColor: 'red',
+                    });
+                    setAnswers(Array(4).fill(null));
+                    shuffleQuestions();
+                  }
+                  else{
+
+                    Snackbar.show({
+                      text: 'Incorrect Answers, please try again',
+                      duration: Snackbar.LENGTH_SHORT,
+                      backgroundColor:'red',
+                    });
+                    setAnswers(Array(4).fill(null));
+                    shuffleQuestions();
+                  }
           }
           }}
         >
-          <Text style={{ color: "white" }}>Done</Text>
+          <Text style={{ color: "white",fontSize:15 }}>Done</Text>
         </TouchableOpacity>
+        }
       </View>
     </Animated.View>
   );
@@ -698,9 +727,11 @@ export default CheckMnemonic;
 const style = StyleSheet.create({
   Body: {
     backgroundColor: "white",
-    height: hp(100),
-
+    width: wp(100),
+    height:hp(100),
+    alignSelf:"center",
     textAlign: "center",
+    paddingLeft:wp(5)
   },
   welcomeText: {
     fontSize: 15,
@@ -772,24 +803,24 @@ const style = StyleSheet.create({
     color: "black",
     fontSize: 16,
     fontWeight: "600",
-    textAlign: "center",
-    marginTop: hp(2),
+    textAlign: "left",
+    marginTop: hp(3),
+    marginHorizontal: wp(2),
   },
   wordText: {
     color: "black",
-    textAlign: "center",
-    marginTop: hp(1),
+    textAlign: "left",
+    marginTop: hp(2),
     width: wp(88),
-    marginHorizontal: wp(5),
+    marginHorizontal: wp(2),
   },
   ButtonView: {
     backgroundColor: "#4CA6EA",
-    width: wp(85),
-    alignSelf: "center",
+    width: wp(90),
     alignItems: "center",
-    padding: 10,
-    borderRadius: 10,
-    marginTop: hp(6),
+    padding: 15,
+    borderRadius: 50,
+    marginTop: hp(5),
   },
   pressable: {
     borderColor: "#D7D7D7",

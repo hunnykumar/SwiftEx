@@ -11,6 +11,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   ScrollView,
+  Alert,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -30,6 +31,10 @@ import { ExchangeHeaderIcon } from "../../../../../header";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { REACT_APP_HOST } from "../../ExchangeConstants";
 import { useToast } from "native-base";
+import { Exchange_Login_screen } from "../../../../../reusables/ExchangeHeader";
+import Snackbar from "react-native-snackbar";
+import authApi from "../../authApi";
+import apiHelper from "../../apiHelper";
 
 export const ExchangeLogin = (props) => {
   const toast=useToast();
@@ -98,7 +103,25 @@ const FOCUSED=useIsFocused();
     // }
   // };
 
-
+ const save_token_inlocal=async(token_new)=>{
+  try {
+    await AsyncStorageLib.setItem("UserAuthID", token_new) 
+    setLoading(false);
+    setEmail("");
+    setlogin_Passcode("");
+    if(props?.route?.params?.diractPath==="rampScreen")
+    {
+      navigation.navigate("KycComponent");
+      Showsuccesstoast(toast,"Success");
+    }
+    else{
+      navigation.navigate("exchange");
+      Showsuccesstoast(toast,"Success");
+    }
+  } catch (error) {
+    console.log("----===",error)
+  }
+ }
 
   const submitPhoneNumber = async () => {
      if(!Email||!login_Passcode)
@@ -111,46 +134,21 @@ const FOCUSED=useIsFocused();
       setLoading(false)
      }
      else{
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-  
-      const raw = JSON.stringify({
-        "email": Email.toLowerCase(),
-        "otp": login_Passcode
+      const result = await apiHelper.post(REACT_APP_HOST + "/v1/auth/login", {
+        "username": Email.toLowerCase(),
+        "password": login_Passcode
       });
-  
-      const requestOptions = {
-        method: "POST",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow"
-      };
-  
-      fetch(REACT_APP_HOST+"/users/login", requestOptions)
-        .then((response) => response.json())
-        .then((result) => {
-          if(result.message==="Invalid credintials"||result.statusCode===400)
-          {
-            setTimeout(()=>{
-              ShowErrotoast(toast,"Invalid credintials");
-            },400)
-            setlogin_Passcode("");
-            setLoading(false);
-          }
-          else{
-            saveToken(result.token);
-            setTimeout(()=>{
-              Showsuccesstoast(toast,"Success");
-            },400)
-            setLoading(false);
-            setEmail("");
-            setlogin_Passcode("");
-            navigation.navigate("exchange");
-          }
+      console.log("result",result)
+      if (result.success&&result.data.token) {
+        setLoading(false);
+       await save_token_inlocal(result.data.token)
+      }
+      else{
+        alert("error",result?.data?.message||"somthing went wrong..");
+        setLoading(false);
+      }
+    }
 
-      })
-        .catch((error) => {console.log(error)})
-     }
   }
 
   const submitOtp = async () => {
@@ -172,10 +170,11 @@ const FOCUSED=useIsFocused();
         },400)
         setOtp(null);
       } else {
+        // setpasscode_view(true);
+        navigation.navigate("Setup_password",{Email:Email})
         setOtp(null);
         setIsOtpSent(false);
         setMessage("");
-        setpasscode_view(true);
       }
     } catch (err) {
       setMessage(err.message);
@@ -239,7 +238,7 @@ const FOCUSED=useIsFocused();
             })
             .catch((error) => {
               setLoading(false);
-              console.error(error)
+              console.log(error)
             });
         }
         else {
@@ -263,14 +262,17 @@ const FOCUSED=useIsFocused();
 
   const forgot_pass=()=>{
       setactive_forgot(true);
+      setlodaing_ver(false);
+      setVERFIY_OTP(false)
   }
 
   const get_otp_forget = async () => {
+
     setVERFIY_OTP(true);
     Keyboard.dismiss()
     setlodaing_ver(true);
     setLoading_fog(true);
-    if (!Email) {
+    if (Email.length<0) {
       setlodaing_ver(false);
        setLoading_fog(false);
        setTimeout(()=>{
@@ -279,54 +281,60 @@ const FOCUSED=useIsFocused();
       setVERFIY_OTP(false);
     } else {
       try {
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        const raw = JSON.stringify({
+        const result = await apiHelper.post(REACT_APP_HOST + "/v1/auth/forgot-password", {
           "email": Email.toLowerCase()
         });
+        console.log("result:--",result)
+        if (result.data.success) {
+          setlodaing_ver(false);
+          setLoading_fog(true);
+          setTimeout(() => {
+            Showsuccesstoast(toast, "OTP sent successfully in your mail.");
+          }, 400)
+          setLoading_fog(false);
+          setVERFIY_OTP(false);
+          setLoading(false);
+          navigation.navigate("Exchange_otp", {
+            Email: Email.toLowerCase(),
+            type: "OP_FUG"
+          });
 
-        const requestOptions = {
-          method: "POST",
-          headers: myHeaders,
-          body: raw,
-          redirect: "follow"
-        };
+        }
+        if (result.data.error) {
+          setLoading(false);
+          setLoading_fog(false);
+          setVERFIY_OTP(false);
+          if (Array.isArray(result?.data?.error?.message)) {
+            Snackbar.show({
+              text: result?.data?.message[0] === "email must be an email" ? "Email must be an email" : result?.message[0],
+              duration: Snackbar.LENGTH_SHORT,
+              backgroundColor: 'red',
+            });
+            setlodaing_ver(false);
+            setLoading_fog(true);
+            setEmail("");
+            setLoading_fog(false);
+            setVERFIY_OTP(false);
+            setLoading(false);
+          } else {
+            ShowErrotoast(toast, result.message);
+            setlodaing_ver(false);
+            setLoading_fog(true);
+            setEmail("");
+            setLoading_fog(false);
+            setVERFIY_OTP(false);
+            setLoading(false);
+          }
 
-        fetch(REACT_APP_HOST +"/users/forgot_passcode", requestOptions)
-          .then((response) => response.json())
-          .then((result) => {
-            if (result.message === "Otp Send successfully") {
-              setlodaing_ver(false);
-              setLoading_fog(true);
-              setEmail("");
-              setTimeout(()=>{
-                Showsuccesstoast(toast,"OTP sent successfully in your mail.");
-              },400)
-              setLoading_fog(false);
-              setVERFIY_OTP(false);
-              navigation.navigate("exchangeLogin", {
-                phoneNumber: Email,
-              });
-            }
-            else {
-              setlodaing_ver(false);
-              setLoading_fog(true);
-              setEmail("");
-              setLoading_fog(false);
-              setTimeout(()=>{
-                ShowErrotoast(toast,"User not found.");
-              },400)
-              setVERFIY_OTP(false);
-            }
-            console.log(result)
-          })
-          .catch((error) => console.error(error));
+        }
       } catch (err) {
+        setLoading(false);
         setLoading_fog(false);
          setLoading_fog(true);
         setMessage(err.message);
         setLoading_fog(false);
       } finally {
+        setLoading(false);
         setLoading_fog(false);
         setLoading_fog(true);
         setLoading(false);
@@ -342,7 +350,7 @@ const FOCUSED=useIsFocused();
     </TouchableWithoutFeedback>
   );
 
-  useFocusEffect(() => {
+  useEffect(() => {
     console.log("focus changed");
     try {
       if (props.route.params) {
@@ -359,7 +367,7 @@ const FOCUSED=useIsFocused();
     } catch (e) {
       console.log(e);
     }
-  });
+  },[]);
 
   useEffect(() => {
     setreset_otp(false)
@@ -412,8 +420,7 @@ const FOCUSED=useIsFocused();
     setcon_passcode(formattedInput);
   };
   const onChangelmail = (input) => {
-    const formattedInput = input.replace(/\s/g, '').toLowerCase();
-    setEmail(formattedInput)
+    setEmail(input)
   };
 
   useEffect(() => {
@@ -440,23 +447,24 @@ const FOCUSED=useIsFocused();
   }
   return (
     <>
-     {lodaing_ver==true?alert("success","Email Verifying...."):<></>}
-      <ExchangeHeaderIcon title="Exchange " isLogOut={false} />
+     {/* {lodaing_ver==true?alert("success","Email Verifying...."):<></>} */}
+    <Exchange_Login_screen title="" onLeftIconPress={() => navigation.navigate("Home")} />
       <SafeAreaView style={styles.container}>
-        <TouchableWithoutFeedback onPress={()=>{Keyboard.dismiss()}}
+        <TouchableWithoutFeedback id="keybordDismissBtn"
+testID="keybordDismissBtn" onPress={()=>{Keyboard.dismiss()}}
           // style={styles.container}
           // onStartShouldSetResponder={() => Keyboard.dismiss()}
         >
           {isOtpSent === false ? (
             <View style={styles.content}>
-              <View style={{ marginTop: hp(3), borderRadius: hp(2) }}>
+              <View style={{ marginTop: hp(1), borderRadius: hp(2) }}>
                 <Image style={styles.tinyLogo} source={darkBlue} />
 
-                <Text style={styles.text}>Welcome Back!</Text>
+                <Text style={styles.text}>Hi, Welcome Back! 👋</Text>
                 <Text
                   style={{
                     color: "#FFFFFF",
-                    fontSize: 16,
+                    fontSize: 19,
                     textAlign: "center",
                     marginTop: hp(1),
                     marginBottom: hp(3),
@@ -464,10 +472,31 @@ const FOCUSED=useIsFocused();
                 >
                   {active_forgot===true?"Recover to your account":"Login to your account"}
                 </Text>
-               
-                <TextInput autoCapitalize="none" textContentType="emailAddress" placeholder={"Email Adderss"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16 }} value={Email} onChangeText={(text) => { onChangelmail(text) }} />
-                {active_forgot===false?<TextInput autoCapitalize="none" placeholder={"Password"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,marginTop:19 }} value={login_Passcode} onChangeText={(text) => { setlogin_Passcode(text) }} secureTextEntry={true} />:<></>}                
+               <Text style={{
+                    color: "#FFFFFF",
+                    fontSize: 16,
+                    textAlign: 'left',
+                    paddingVertical:5,
+                    fontWeight:"500"
+                  }}>Email</Text>
+                <TextInput id="emailLoginInput" testID="emailLoginInput" accessibilityLabel="textInputId" autoCapitalize="none" textContentType="emailAddress" placeholder={"Email Adderss"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,color:"black" }} value={Email} onChangeText={(text) => { onChangelmail(text) }} />
+                {active_forgot===false?
+                <>
+                 <Text style={{fontWeight:"500",color: "#FFFFFF",fontSize: 16,textAlign: 'left',paddingVertical:5,marginTop:10}}>Password</Text>
+                <TextInput autoCapitalize="none" placeholder={"Password"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,marginTop:5,color:"black" }} value={login_Passcode} onChangeText={(text) => { setlogin_Passcode(text) }} secureTextEntry={true} /></>:<></>}                
+                <TouchableOpacity id="forgotAndLoginBtn" testID="forgotAndLoginBtn" style={{alignSelf:"flex-end",marginTop:15}} onPress={()=>{active_forgot===false?forgot_pass():[setactive_forgot(false),setEmail("")]}}>
+                {active_forgot===false?<Text style={{color:"red",fontWeight:"300",fontSize:15,fontWeight:"400"}}>Forgot Password</Text>:<Text style={{color:"red",fontWeight:"300",fontSize:15,fontWeight:"400"}}>Login</Text>}
+                </TouchableOpacity>
+                {loading ? (
+                <View style={{ marginTop: 5 }}>
+                  <ActivityIndicator size="large" color="white" />
+                </View>
+              ) : (
+                <Text> </Text>
+              )}
                 <TouchableOpacity style={styles.PresssableBtn}
+                id="LoginAndVerifyBtn"
+                testID="LoginAndVerifyBtn"
                 disabled={VERFIY_OTP}
                   onPress={() => {
                     if (active_forgot === false) {
@@ -513,32 +542,25 @@ const FOCUSED=useIsFocused();
                 ) : (
                   <Text></Text>
                 )} */}
-                <TouchableOpacity style={{alignSelf:"center",marginTop:15}} onPress={()=>{active_forgot===false?forgot_pass():[setactive_forgot(false),setEmail("")]}}>
+                {/* <TouchableOpacity style={{alignSelf:"center",marginTop:15}} onPress={()=>{active_forgot===false?forgot_pass():[setactive_forgot(false),setEmail("")]}}>
                 {active_forgot===false?<Text style={{color:"white"}}>Forgot Password</Text>:<Text style={{color:"white"}}>Login</Text>}
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
 
-              {loading ? (
-                <View style={{ marginTop: 10 }}>
-                  <ActivityIndicator size="large" color="white" />
-                </View>
-              ) : (
-                <Text> </Text>
-              )}
+              
 
               <View style={{
-    marginTop: active_forgot===false?Platform.OS==="android"?hp(10):hp(16):hp(25),
-    height: hp(6),
+    marginTop: hp(0.1),
+    height: hp(5),
     width: 400,
-    backgroundColor: "#003166",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
     display: "flex",
     alignItems: "center",
     textAlign: "center",
     justifyContent: "center",
   }}>
                 <TouchableOpacity
+                id="RegisterBtn"
+                testID="RegisterBtn"
                   onPress={() => {
                     navigation.navigate("exchangeRegister");
                   }}
@@ -567,8 +589,10 @@ const FOCUSED=useIsFocused();
               <View style={{ marginVertical: 3 }}>
                 {passcode_view === false ? <><Text style={{ marginVertical: 15, color: "white" }}>Verification OTP</Text>
                   <TextInput
+                  id="oneTimeCodeInput"
+                  testID="oneTimeCodeInput"
                     placeholderTextColor="gray"
-                    style={styles.input}
+                    style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
                     theme={{ colors: { text: "white" } }}
                     value={otp}
                     placeholder={"OTP"}
@@ -583,9 +607,11 @@ const FOCUSED=useIsFocused();
                   /></> : <>{/* Set pass code  */}
                   <Text style={{ marginVertical: 15, color: "white" }}>Password</Text>
                   <TextInput
+                  id="fistPasswordInput"
+                  testID="fistPasswordInput"
                   secureTextEntry={true}
                     placeholderTextColor="gray"
-                    style={styles.input}
+                    style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
                     // theme={{ colors: { text: "white" } }}
                     value={passcode}
                     placeholder={"ABC@!123"}
@@ -598,9 +624,11 @@ const FOCUSED=useIsFocused();
                   {/* Set con-pass code  */}
                   <Text style={{ marginVertical: 15, color: "white" }}>Confirm Password</Text>
                   <TextInput
+                    id="secondPasswordInput"
+                    testID="secondPasswordInput"
                     secureTextEntry={true}
                     placeholderTextColor="gray"
-                    style={styles.input}
+                    style={[styles.input,{color:"black",backgroundColor:"#fff"}]}
                     // theme={{ colors: { text: "white" } }}
                     value={con_passcode}
                     placeholder={"ABC@!123"}
@@ -627,6 +655,8 @@ const FOCUSED=useIsFocused();
               )}
 
 <TouchableOpacity
+id="submitOtpOrsubmitpasscodeBtn"
+testID="submitOtpOrsubmitpasscodeBtn"
   disabled={passcode_view===false?false:passcode.length<8||con_passcode.length<8?true:false}
   onPress={() => {
     setLoading("true");
@@ -646,10 +676,12 @@ const FOCUSED=useIsFocused();
                 </TouchableOpacity>
               {/* <TouchableOpacity onPress={() => { navigation.navigate("exchangeLogin") }}> */}
             {passcode_view === false? <View style={{flexDirection:"row", width:"90%",justifyContent:"center"}}>
-             <TouchableOpacity onPress={() => { navigation.goBack() }}>
+             <TouchableOpacity id="EditEmailIdBtn"
+testID="EditEmailIdBtn" onPress={() => { navigation.goBack() }}>
                 <Text style={{ marginTop: 14, color: "white" }}>Edit Email Id</Text>
               </TouchableOpacity>
-              <TouchableOpacity disabled={resend_view} onPress={() => {resend_otp()}}>
+              <TouchableOpacity id="resendOtpBtn"
+testID="resendOtpBtn" disabled={resend_view} onPress={() => {resend_otp()}}>
                 <Text style={{ marginLeft:19,marginTop: 14, color: resend_view?"gray":"white" }}>{resend_view?`Resend after: ${count}`:"Resend OTP"}</Text>
               </TouchableOpacity>
              </View>:<></>}
@@ -676,7 +708,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     textAlign: "center",
     // justifyContent: "space-evenly",
-    marginTop: hp("1"),
+    marginTop:0,
     color: "white",
   },
 
@@ -695,7 +727,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "#FFFFFF",
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "700",
     // paddingVertical: 10,
     textAlign: "center",

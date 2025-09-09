@@ -13,11 +13,18 @@ import { useEffect } from "react";
 import { REACT_APP_HOST, REACT_APP_LOCAL_TOKEN } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { GET, authRequest } from "./exchange/crypto-exchange-front-end-main/src/api";
-import { delay } from "lodash";
+import { delay, result } from "lodash";
 import { alert } from "./reusables/Toasts";
-import { Grid, LineChart, XAxis, YAxis } from "react-native-svg-charts";
 import { Area, Chart, HorizontalAxis, Line, Tooltip, VerticalAxis } from "react-native-responsive-linechart";
 import { useSelector } from "react-redux";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { LineChart } from "react-native-gifted-charts";
+import Ether_image from "../../assets/ethereum.png";
+import Stellar_image from "../../assets/Stellar_(XLM).png";
+import Bnb_image from "../../assets/bnb-icon2_2x.png";
+import TokenQrCode from "./Modals/TokensQrCode";
+
+
 const Asset_info = ({ route }) => {
   const state = useSelector((state) => state);
     const FOUCUSED = useIsFocused();
@@ -30,6 +37,12 @@ const Asset_info = ({ route }) => {
     const [chart_show, setchart_show] = useState(true);
     const [final, setfinal] = useState([]);
     const [chart, setchart] = useState([]);
+    const [lineColor, setlineColor] = useState();
+    const [points_data,setpoints_data]=useState();
+    const [points_data_time,setpoints_data_time]=useState();
+    const [QrVisible,setQrVisible]=useState(false);
+    const [QrValue,setQrValue]=useState("");
+    const [QrName,setQrName]=useState("");
     const [Profile, setProfile] = useState({
         isVerified: false,
         firstName: "jane",
@@ -39,14 +52,7 @@ const Asset_info = ({ route }) => {
         isEmailVerified: false,
     });
     const [token, settoken] = useState("");
-    const [timeData, setTimeData] = useState([
-        "5m",
-        "10m",
-        "15m",
-        "20m",
-        "25m",
-        "30m",
-    ]);
+    const [chartData, setchartData] = useState([]);
     const [tooltip_info_0, settooltip_info_0] = useState(false);
     const [tooltip_info_1, settooltip_info_1] = useState(false);
     const [tooltip_info_2, settooltip_info_2] = useState(false);
@@ -73,8 +79,8 @@ const Asset_info = ({ route }) => {
                 setVisible(false);
                 seticonType("");
                 setTimeout(() => {
-                    handle_asset_call(asset_type)
-                getChart(asset_type)
+                    handle_asset_call(asset_type?.symbol?.toUpperCase()||asset_type?.symbole)
+                getChart(asset_type?.symbol?.toUpperCase()||asset_type?.symbole)
                 }, 500);
             } catch (error) {
                 console.log("error fetch chart",error)
@@ -93,13 +99,13 @@ const Asset_info = ({ route }) => {
     //     setVisible(false);
     //     seticonType("");
     //     setTimeout(() => {
-    //         handle_asset_call(asset_type)
-    //     getChart(asset_type)
+    //         handle_asset_call(asset_type?.symbol?.toUpperCase()||asset_type?.symbole)
+    //     getChart(asset_type?.symbol?.toUpperCase()||asset_type?.symbole)
     //     }, 500);
     // }, [])
 
     const handle_asset_call = async (asset_type) => {
-        asset_type === "XLM" ? feth_detial_Xlm() : fetchKline()
+        asset_type === "XLM" ? feth_detial_Xlm() : fetchKline(asset_type) 
     }
 
     async function feth_detial_Xlm() {
@@ -138,37 +144,37 @@ const Asset_info = ({ route }) => {
     async function getChart(name) {
 
         await fetch(
-            `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1h&limit=5`,
+            `https://api.binance.com/api/v1/klines?symbol=${name==="USDT"?"USDC":name}USDT&interval=1m&limit=30`,
             {
                 method: "GET",
             }
         )
             .then((resp) => resp.json())
             .then((resp) => {
-                const trades = resp.map((interval) => parseFloat(interval[1]));
-                //   setchart(trades)
-                const firstTrade = trades[0];
-                const lastTrade = trades.slice(-1)[0];
-                const percent = (
-                    ((lastTrade - firstTrade) / firstTrade) *
-                    100
-                ).toFixed(2);
-                //   setchart(trades)
-                const transformedData = resp.map(item => ({
-                    x: new Date(item[0]), // Use the timestamp for x
-                    y: parseFloat(item[4]) // Use the closing price for y
-                }));
+                const transformedData = resp.map(item => {
+                    const timestamp = new Date(item[0]).toLocaleTimeString(); // Converts epoch to readable date
+                    const closePrice = parseFloat(item[4]); // Close price
+                    return { date: timestamp, value: closePrice };
+                  });
 
-                console.log("8******************_____", transformedData);
+                console.log("8******************_____", resp);
                 setchart(transformedData)
+                setpoints_data(transformedData[transformedData?.length-1]?.value);
+                setpoints_data_time(transformedData[transformedData?.length-1]?.date);
+                const chart_Data = resp.map(item => ({
+                    x: new Date(parseInt(item[0])).getTime(),
+                    y: parseFloat(item[4])
+                  }));
+                  setchartData(chart_Data)
                 setchart_show(false)
+
             })
             .catch((err) => {
                 console.log(err);
             });
     }
 
-    const fetchKline = async () => {
+    const fetchKline = async (asset_type) => {
         try {
             const raw = "";
             const requestOptions = {
@@ -177,10 +183,24 @@ const Asset_info = ({ route }) => {
                     "Content-Type": "application/json",
                 },
             };
-            await fetch(REACT_APP_HOST + "/market-data/getcryptodata", requestOptions)
-                .then((response) => response.json())
-                .then((responseJson) => {
-                    res_find(responseJson[0].MarketData)
+            await fetch(`https://api.binance.com/api/v3/ticker/tradingDay?symbol=${asset_type==="USDT"?"USDC":asset_type}USDT`, requestOptions)
+            .then((response) => response.json())
+            .then((responseJson) => {
+                    let temp=[
+                        {
+                            current_price:responseJson.lastPrice,
+                            high_24h:responseJson.highPrice,
+                            low_24h:responseJson.lowPrice,
+                            market_cap:".",
+                            total_volume:responseJson.volume,
+                            total_supply:".",
+                            price_change_percentage_24h:responseJson.priceChange+"%",
+                        }
+                    ];
+                    setfinal(temp)
+                    delay(() => {
+                        setLoading(false);
+                    }, 100);
                 })
                 .catch((error) => {
                     console.error(error);
@@ -192,7 +212,7 @@ const Asset_info = ({ route }) => {
     };
     const res_find = async (Data) => {
         let find_temp = "";
-        find_temp = asset_type;
+        find_temp = asset_type?.symbol?.toUpperCase()||asset_type?.symbole;
         const filteredData = Data.filter(item => item.symbol === find_temp.toLowerCase());
         setfinal(filteredData);
         delay(() => {
@@ -203,7 +223,7 @@ const Asset_info = ({ route }) => {
     const trade_bridge = async () => {
         // const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
         // const token = await AsyncStorageLib.getItem(REACT_APP_LOCAL_TOKEN);
-        token ? navigation.navigate("classic",{Asset_type:asset_type==="XLM"?"ETH":asset_type}) : navigation.navigate("exchangeLogin")
+        token ? navigation.navigate("classic",{Asset_type:asset_type?.symbol?.toUpperCase()||asset_type?.symbole==="XLM"?"ETH":asset_type?.symbol?.toUpperCase()||asset_type?.symbole}) : navigation.navigate("exchangeLogin")
     }
     const cashout_manage = async () => {
         // const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
@@ -217,7 +237,7 @@ const Asset_info = ({ route }) => {
     }
     const for_trading = async () => {
         try {
-            const { res, err } = await authRequest("/users/getUserDetails", GET);
+            const { res, err } = await authRequest("/users/:id", GET);
             if (err) return [navigation.navigate("exchangeLogin")];
             setProfile(res);
             await getOffersData()
@@ -242,192 +262,279 @@ const Asset_info = ({ route }) => {
 
     }
 
+    useEffect(()=>{
+        const fetch_color=async()=>{
+         try {
+          const last_Value = chart[chart.length - 1].value;
+          const second_LastValue = chart[chart.length - 2].value;
+          const line_Color = last_Value > second_LastValue ? "green" : "red";
+          setlineColor(line_Color)
+         } catch (error) {
+          console.log("*----",error)
+         }
+        }
+        fetch_color()
+      },[chart])
 
+      const handle_asset_send=async()=>{
+        if(asset_type.symbole === "XLM")
+        {
+            navigation.navigate("SendXLM")
+        }
+        if(asset_type.symbole&&asset_type.symbole!=="XLM")
+        {
+            navigation.navigate("Send", {
+                token: asset_type?.symbole === "ETH" ? "Ethereum" : asset_type?.symbole,
+            })
+        }
+        if(asset_type?.symbol?.toUpperCase())
+        {
+            navigation.navigate("TokenSend",{tokenAddress:asset_type?.address,tokenType:asset_type?.network==="ETH"?"Ethereum":"Binance",tokenDecimals:asset_type?.decimals})
+        }
+      }
+      const handle_asset_request=async()=>{
+        if(asset_type.symbole)
+        {
+            setVisible(true);
+            seticonType(asset_type?.symbole);
+        }
+        if(asset_type?.symbol?.toUpperCase())
+        {
+            setQrValue(state?.wallet?.address);
+            setQrName(asset_type?.name);
+            setQrVisible(true);
+        }
+      }
     return (
         <>
-            <View style={[styles.container,{backgroundColor:state.THEME.THEME===false?"#4CA6EA":"black",borderBottomColor:"gray",borderWidth:0.5}]}>
-                <TouchableOpacity onPress={(() => navigation.goBack())}>
-                    <Icon type={'antDesign'} name='left' size={29} color={'white'} style={styles.icon} />
-                </TouchableOpacity>
-                <Text style={styles.text}>{asset_type}</Text>
-                <TouchableOpacity onPress={(() => navigation.navigate("Home"))}>
-                    <Image source={darkBlue} style={styles.image} />
-                </TouchableOpacity>
-            </View>
-            <ScrollView style={[styles.main_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
+        <Wallet_screen_header title={asset_type?.symbol?.toUpperCase()||asset_type?.symbole} onLeftIconPress={() => navigation.goBack()} />
+            <View style={[styles.main_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
+               <View style={{flexDirection:"row",paddingHorizontal:wp(4),paddingVertical:hp(0.3),alignItems:"center"}}>
+               <Image source={asset_type?.symbol?.toUpperCase()||asset_type?.symbole!=="XLM"?{ uri: asset_type?.img||asset_type?.img_url }:Stellar_image} style={{width:wp(6.6),height:hp(3.5)}}/>
+               <Text style={[styles.chart_top,{color: state.THEME.THEME === false ? "black" : "#fff",fontSize:13,marginHorizontal:hp(0.3)}]}>{asset_type?.name}</Text>
+               </View>
+                <Text style={[styles.chart_top,{color: state.THEME.THEME === false ? "black" : "#fff",marginVertical: hp(-0.5),}]}>$ {!points_data?0.00:points_data} </Text>
+                <Text style={[styles.chart_top,{color: state.THEME.THEME === false ? "black" : "#fff",fontSize:13}]}>{points_data_time} </Text>
                 <View style={[styles.chart_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-                    {chart_show === false ? <Chart
-                        style={{ height: hp(35), width: wp(99), padding: 1 }}
-                        data={chart}
-                        padding={{ left: 40, bottom: 30, right: 20, top: 30 }}
-                        xDomain={{ min: new Date(chart[0].x).getTime(), max: new Date(chart[chart.length - 1].x).getTime() }}
-                        yDomain={{ min: Math.min(...chart.map(d => d.y)), max: Math.max(...chart.map(d => d.y)) }}
-                    >
-                        <VerticalAxis tickCount={10} theme={{ grid:{visible:false},labels: { formatter: (v) => v.toFixed(2),label:{color:state.THEME.THEME===false?"black":"#fff"} } }} />
-                        <HorizontalAxis tickCount={10} theme={{
-                            grid:{visible:false},
-                            labels: {
-                                formatter: (v) => {
-                                    const date = new Date(v);
-                                    return `${date.getHours()}:${date.getMinutes()}`;
-                                },
-                                label:{color:state.THEME.THEME===false?"black":"#fff"}
-                            },
-                        }} />
-                        <Area theme={{ gradient: { from: { color: '#44bd32' }, to: { color: '#44bd32', opacity: 0.2 } } }} />
-                        <Line
-                            tooltipComponent={<Tooltip theme={{ label: {
-                                color: 'white',
-                                fontSize: 12,
-                                fontWeight: 700,
-                                textAnchor: 'middle',
-                                opacity: 1,
-                                dx: 0,
-                                dy: 16.5,
-                              },
-                              shape: {
-                                width: 50,
-                                height: 20,
-                                dx: 0,
-                                dy: 20,
-                                rx: 4,
-                                color: 'black',
-                              },
-                              }}/>}
-                            theme={{ stroke: { color: '#44bd32', width: 5 }, scatter: { default: { width: 8, height: 8, rx: 4, color: '#44ad32' }, selected: { color: 'red' } } }}
-                        />
-                    </Chart> : <ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} />}
+                    {chart_show === false ? 
+                        <View>
+                            {/* <LineChart
+                                hideRules
+                                data={chart}
+                                hideDataPoints
+                                adjustToWidth
+                                spacing={wp(90) / chart.length - 1}
+                                isAnimated={true}
+                                curved
+                                color={lineColor}
+                                xAxisLabelsHeight={-15}
+                                hideYAxisText
+                                yAxisOffset={chart[0].value}
+                                height={asset_type?.symbol?.toUpperCase()||asset_type?.symbole==="XLM"?50:hp(14)}
+                                yAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
+                                xAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
+                                pointerConfig={{
+                                    pointerStripColor: lineColor,
+                                    pointerColor: lineColor,
+                                    pointerLabelComponent: item => {
+                                        setpoints_data(item[0].value)
+                                        setpoints_data_time(item[0].date)
+                                    }
+                                }}
+                            /> */}
+                            <Chart
+                                style={{ width: wp(98), height: 230 }}
+                                data={chartData}
+                                padding={{ left: 10, bottom: 30, right: 20, top: 30 }}
+                                xDomain={{
+                                    min: Math.min(...chartData.map(d => d.x)),
+                                    max: Math.max(...chartData.map(d => d.x))
+                                }}
+                                yDomain={{
+                                    min: Math.min(...chartData.map(d => d.y)) - (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))), // 10% padding below
+                                    max: Math.max(...chartData.map(d => d.y)) + (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))) // 10% padding above
+                                }}
+                            >
+                                <Line
+                                    tooltipComponent={
+                                        <Tooltip theme={{
+                                            formatter: ({ y, x }) => {
+                                                setpoints_data(y), setpoints_data_time(x)
+                                                setpoints_data_time(new Date(parseInt(x)).toLocaleString())
+                                            },
+                                            shape: {
+                                                width: 0,
+                                                height: 0,
+                                                dx: 0,
+                                                dy: 0,
+                                                color: 'black',
+                                            }
+                                        }} />
+                                    }
+                                    theme={{
+                                        stroke: { color: lineColor || '#44bd32', width: 2 },
+                                        scatter: {
+                                            selected: { width: 10, height: 11, rx: 5, color: '#2F7DFF' }
+                                        }
+                                    }}
+                                    smoothing="bezier"
+                                />
+                            </Chart>
+                        </View>
+                     : <ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} />}
 
                 </View>
-                <View style={[styles.opt_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black",borderColor:"gray",borderWidth:0.5}]}>
-                    <TouchableOpacity onPress={() => { settooltip_info_0(true),settooltip_info_1(false),settooltip_info_2(false) }} style={styles.tooltip_con}>
+                <View style={[styles.opt_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
+                    <TouchableOpacity onPress={() => { settooltip_info_0(true),settooltip_info_1(false),settooltip_info_2(false) }} style={[styles.tooltip_con,{marginLeft: wp(50)}]}>
                         {tooltip_info_0 ? <View style={[styles.tooltip_con_txt,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
                             <Text style={{color:state.THEME.THEME===false?"black":"#fff",textAlign:"center"}}>Allbridge enables cross-chain asset transfers between multiple blockchain networks.</Text>
                         </View> :
                             <Icon
-                                name={"information-outline"}
+                                name={"information"}
                                 type={"materialCommunity"}
-                                color={"rgba(129, 108, 255, 0.97)"}
+                                color={"#2F7DFF"}
                                 size={21}
                             />}
                     </TouchableOpacity>
-                    <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_cons} onPress={() => {
-                        asset_type === "XLM" ? navigation.navigate("SendXLM") :
-                            navigation.navigate("Send", {
-                                token: asset_type === "ETH" ? "Ethereum" : asset_type,
-                            })
-                    }}>
-                        <Icon type={'materialCommunity'} name='arrow-top-right' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"} style={styles.opt_icon} />
-                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Send</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity  style={styles.opt_cons} disabled={chart_show&&Loading||asset_type==="XRP"} onPress={async() => { await trade_bridge() }}>
-                        <Image source={brridge_new} style={styles.image_brige} />
-                        {/* <Icon type={'materialCommunity'} name='swap-horizontal-variant' size={25} color={"#4CA6EA"} style={styles.opt_icon} /> */}
-                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Bridge & Trade</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_cons} onPress={() => {
-                        setVisible(true);
-                        seticonType(asset_type);
-                    }}>
-                        <Icon type={'materialCommunity'} name='arrow-bottom-left' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"} style={styles.opt_icon} />
-                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Request</Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={[styles.opt_other,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-                    <View style={[styles.T_C_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-                    <TouchableOpacity onPress={() => { settooltip_info_0(false),settooltip_info_1(true),settooltip_info_2(false) }} style={[styles.tooltip_con,{marginLeft: wp(30),}]}>
-                        {tooltip_info_1 ? <View style={[styles.tooltip_con_txt,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
+                    <TouchableOpacity onPress={() => { settooltip_info_0(false),settooltip_info_1(true),settooltip_info_2(false) }} style={[styles.tooltip_con,{marginLeft: wp(70)}]}>
+                        {tooltip_info_1 ? <View style={[styles.tooltip_con_txt,{backgroundColor:state.THEME.THEME===false?"#fff":"black",}]}>
                             <Text style={{color:state.THEME.THEME===false?"black":"#fff",textAlign:"center"}}>Trading involves buying, selling, or exchanging cryptocurrencies for profit.</Text>
                         </View> :
                             <Icon
-                                name={"information-outline"}
+                                name={"information"}
                                 type={"materialCommunity"}
-                                color={"rgba(129, 108, 255, 0.97)"}
+                                color={"#2F7DFF"}
                                 size={21}
                             />}
                     </TouchableOpacity>
-                        <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_other_cons} onPress={async() => { await  trade_manage() }}>
-                            <Icon type={'materialCommunity'} name='chart-timeline-variant' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"} style={styles.opt_icon} />
-                            <Text style={[styles.opt_other_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Trade</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => { settooltip_info_0(false),settooltip_info_1(false),settooltip_info_2(true) }} style={[styles.tooltip_con,{marginLeft: wp(70),}]}>
-                        {tooltip_info_2 ? <View style={[styles.tooltip_con_txt,{backgroundColor:state.THEME.THEME===false?"#fff":"black",marginLeft: wp(-20)}]}>
+                    <TouchableOpacity onPress={() => { settooltip_info_0(false),settooltip_info_1(false),settooltip_info_2(true) }} style={[styles.tooltip_con,{marginLeft: wp(89),}]}>
+                        {tooltip_info_2 ? <View style={[styles.tooltip_con_txt,{backgroundColor:state.THEME.THEME===false?"#fff":"black", marginLeft:wp(-30),}]}>
                             <Text style={{color:state.THEME.THEME===false?"black":"#fff",textAlign:"center"}}>Cashout involves converting assets or cryptocurrencies into fiat money.</Text>
                         </View> :
                             <Icon
-                                name={"information-outline"}
+                                name={"information"}
                                 type={"materialCommunity"}
-                                color={"rgba(129, 108, 255, 0.97)"}
+                                color={"#2F7DFF"}
                                 size={21}
                             />}
                     </TouchableOpacity>
-                        <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_other_cons} onPress={async() => { await cashout_manage() }}>
-                            <Icon type={'materialCommunity'} name='cash' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"} style={styles.opt_icon} />
-                            <Text style={[styles.opt_other_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Cashout</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <View style={styles.horizontalLine} />
+                    <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_cons} onPress={() => {
+                      handle_asset_send()
+                    }}>
+                        <View style={styles.opt_icon}>
+                        <Icon type={'materialCommunity'} name='arrow-top-right' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"}/>
+                        </View>
+                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Send</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_cons} onPress={() => {
+                       handle_asset_request()
+                    }}>
+                        <View style={styles.opt_icon}>
+                        <Icon type={'materialCommunity'} name='arrow-bottom-left' size={25} color={chart_show&&Loading?"gray":"#4CA6EA"}  />
+                        </View>
+                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Request</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity  style={styles.opt_cons} disabled={chart_show&&Loading} onPress={async() => { await trade_bridge() }}>
+                    <View style={styles.opt_icon}>
+                        <Image source={brridge_new} style={styles.image_brige} />
+                        </View>
+                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff",textAlign:"center"}]}>Bridge &{`\n`}Trade</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity disabled={chart_show&&Loading} style={styles.opt_cons} onPress={async() => { await  trade_manage() }}>
+                        <View style={styles.opt_icon}>
+                            <Icon type={'materialCommunity'} name='chart-timeline-variant' size={25} color={chart_show && Loading ? "gray" : "#4CA6EA"} />
+                        </View>
+                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Trade</Text>
+                    </TouchableOpacity>
+
+                       <TouchableOpacity disabled={chart_show&&Loading}  style={styles.opt_cons} onPress={async() => { await cashout_manage() }}>
+                        <View style={styles.opt_icon}>
+                            <Icon type={'materialCommunity'} name='cash' size={25} color={chart_show && Loading ? "gray" : "#4CA6EA"} />
+                        </View>
+                        <Text style={[styles.opt_text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Cashout</Text>
+                    </TouchableOpacity>
+                  
+                </View>
+                <View style={[styles.opt_other,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"black"}]}>
+                    <ScrollView style={{paddingBottom:hp(10)}}>
+                    {/* <View style={styles.horizontalLine} /> */}
                     {Loading === true ? <ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} style={{ alignSelf: "center" }} /> :
                         final.map((list, index) => {
                             return (
                                 <>
-                                    <Text style={[styles.opt_market_head, { marginTop: hp(1),color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type} price (24H)</Text>
-                                    <View style={{ flexDirection: "row", padding: 4 }}>
-                                        <View style={{ width: wp(40) }}>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Price</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.current_price : asset_type === "XLM" ? list.current_price : list.current_price} price (24H)</Text>
-                                        </View>
-                                        <View>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Price (USD)</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.current_price : list.current_price}$</Text>
+                                    <View style={[styles.opt_other_con, { backgroundColor: state.THEME.THEME === false ? "#F4F4F4" : "black",borderColor:state.THEME.THEME === false ? "#F4F4F4" : "black" }]}>
+                                        <Text style={[styles.opt_market_head, { marginTop: hp(1), color: state.THEME.THEME === false ? "black" : "#fff" }]}>{asset_type?.symbol?.toUpperCase() || asset_type?.symbole} price (24H)</Text>
+                                        <View style={{ padding: 4 }}>
+                                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(45) }]}>Price (24H)</Text>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>{asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.current_price : asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.current_price : list.current_price}</Text>
+                                                </View>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(50) }]}>Price (USD)</Text>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.current_price : list.current_price}</Text>
+                                                </View>
+                                            </View>
+                                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(45) }]}>24H high</Text>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.high_24h : list.high_24h}</Text>
+                                                </View>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(50) }]}>24H low</Text>
+                                                    <Text style={[styles.opt_market_head, { fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.low_24h : list.low_24h}</Text>
+                                                </View>
+                                            </View>
                                         </View>
                                     </View>
-                                    <View style={{ flexDirection: "row", marginLeft: 1.9 }}>
-                                        <View style={{ width: wp(40) }}>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>24H high</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.high_24h : list.high_24h}$</Text>
-                                        </View>
-                                        <View>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>24H low</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.low_24h : list.low_24h}$</Text>
-                                        </View>
-                                    </View>
-
                                     {/* Market */}
-                                    <View style={styles.horizontalLine} />
-                                    <Text style={[styles.opt_market_head, { marginTop: hp(1), marginLeft: 1 ,color:state.THEME.THEME===false?"black":"#fff"}]}>Market stats</Text>
-                                    <View style={{ flexDirection: "row", padding: 4 }}>
-                                        <View style={{ width: wp(40) }}>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Market cap</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.market_cap : list.market_cap}$</Text>
-                                        </View>
-                                        <View>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Volume</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.total_volume : list.total_volume}</Text>
-                                        </View>
-                                    </View>
-                                    <View style={{ flexDirection: "row", marginLeft: 1.9 }}>
-                                        <View style={{ width: wp(40) }}>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Supply</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.total_supply : list.total_supply}</Text>
-                                        </View>
-                                        <View>
-                                            <Text style={[styles.opt_market_head, { fontSize: 14,color:state.THEME.THEME===false?"black":"#fff" }]}>Price changes % 24h</Text>
-                                            <Text style={[styles.opt_market_head, { marginTop: -10, fontSize: 15,color:state.THEME.THEME===false?"black":"#fff" }]}>{asset_type === "XLM" ? list.price_change_percentage_24h : list.price_change_percentage_24h}</Text>
+                                    <View style={[styles.opt_other_con, { backgroundColor: state.THEME.THEME === false ? "#F4F4F4" : "black",borderColor:state.THEME.THEME === false ? "#F4F4F4" : "black" }]}>
+                                        <Text style={[styles.opt_market_head, { marginTop: hp(1), marginLeft: 1, color: state.THEME.THEME === false ? "black" : "#fff" }]}>Market stats</Text>
+                                        <View style={{ padding: 4, flexDirection: "column" }}>
+                                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(45) }]}>Market cap</Text>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff" }]}>$ {asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.market_cap : list.market_cap}</Text>
+                                                </View>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(50) }]}>Volume</Text>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(35) }]}>{asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.total_volume : list.total_volume}</Text>
+                                                </View>
+                                            </View>
+                                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(45) }]}>Supply</Text>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(40) }]}>{asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.total_supply : list.total_supply}</Text>
+                                                </View>
+                                                <View>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 14, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(50) }]}>changes 24h</Text>
+                                                    <Text style={[styles.opt_market_head, { paddingLeft: 0, fontSize: 15, color: state.THEME.THEME === false ? "black" : "#fff", width: wp(35) }]}>{asset_type?.symbol?.toUpperCase() || asset_type?.symbole === "XLM" ? list.price_change_percentage_24h : list.price_change_percentage_24h}</Text>
+                                                </View>
+                                            </View>
                                         </View>
                                     </View>
                                 </>
                             )
                         })}
-
+                    </ScrollView>
                 </View>
                 <RecieveAddress
                     modalVisible={visible}
                     setModalVisible={setVisible}
                     iconType={iconType}
                 />
+                <View style={{ width: wp(100), height: hp(1) }}>
+                    <TokenQrCode
+                        modalVisible={QrVisible}
+                        setModalVisible={setQrVisible}
+                        iconType={QrName}
+                        qrvalue={QrValue}
+                        isDark={state.THEME.THEME}
+                    />
+                </View>
 
-            </ScrollView>
+            </View>
         </>
     )
 }
@@ -476,25 +583,29 @@ const styles = StyleSheet.create({
     opt_con: {
         height: hp(10.5),
         flexDirection: "row",
-        width: wp(95),
+        width: wp(99),
         backgroundColor: "#fff",
         alignSelf: "center",
         borderRadius: 10,
-        marginTop: -25,
+        marginTop: -65,
         justifyContent: "space-around",
         alignItems: "center"
     },
     opt_other: {
-        // height: hp(9.5),
-        width: wp(95),
-        backgroundColor: "#fff",
+        width: wp(99),
+        height:hp(40),
         alignSelf: "center",
-        borderRadius: 10,
-        marginTop: 13,
-        alignItems: "flex-start",
-        paddingLeft: 19,
-        marginBottom: hp(3),
-        paddingBottom: hp(1)
+        alignItems: "center",
+        paddingLeft: 14,
+    },
+    opt_other_con: {
+        marginTop: hp(1),
+        paddingHorizontal: wp(0.5),
+        paddingVertical:hp(1),
+        borderTopColor: "#75747433",
+        borderWidth: 1,
+        width: wp(95),
+        alignSelf: "center"
     },
     T_C_con: {
         flexDirection: "row",
@@ -510,6 +621,12 @@ const styles = StyleSheet.create({
     },
     opt_icon: {
         paddingVertical: hp(1),
+        width:wp(11),
+        height:hp(5),
+        borderRadius:wp(10),
+        justifyContent:"center",
+        alignItems:"center",
+        backgroundColor:"#2F7DFF1A"
     },
     opt_cons: {
         alignItems: "center",
@@ -546,15 +663,22 @@ const styles = StyleSheet.create({
         position: "absolute",
         zIndex: 10,
         alignSelf: "flex-start",
-        marginLeft: wp(40),
-        marginTop: hp(2)
+        marginLeft: wp(47),
+        marginTop: hp(1)
     },
     tooltip_con_txt:{
-        marginTop: hp(-2),
+        marginTop: hp(-10),
+        marginLeft:wp(-19),
         width:wp(35),
         borderRadius:14,
         borderColor: "#4CA6EA",
         borderWidth:3
+    },
+    chart_top:{
+        fontSize: 34,
+        fontWeight: "600",
+        marginVertical: hp(0.1),
+        marginHorizontal:wp(5)
     }
 });
 

@@ -9,10 +9,11 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  TextInput,
 } from "react-native";
-import { TextInput } from "react-native-paper";
+
 import { LinearGradient } from "react-native-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -24,6 +25,12 @@ import { signup } from "../../api";
 import { useSelector } from "react-redux";
 import {ShowErrotoast, alert} from '../../../../../reusables/Toasts'
 import { useToast } from "native-base";
+import { Exchange_Login_screen } from "../../../../../reusables/ExchangeHeader";
+import darkBlue from "../../../../../../../assets/darkBlue.png";
+import Icon from "../../../../../../icon";
+import Snackbar from "react-native-snackbar";
+import apiHelper from "../../apiHelper";
+import { REACT_APP_HOST } from "../../ExchangeConstants";
 
 export const ExchangeRegister = (props) => {
   const toast=useToast();
@@ -38,6 +45,8 @@ export const ExchangeRegister = (props) => {
   const [formattedValue, setFormattedValue] = useState("");
   const [email, setEmail] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
+  const [password, setpassword] = useState("");
+  const [rePassword, setrePassword] = useState("");
   const [formContent, setFormContent] = useState({
     firstName: "",
     lastName: "",
@@ -51,59 +60,119 @@ export const ExchangeRegister = (props) => {
   const phoneInput = useRef(null);
 
   const navigation = useNavigation();
+  const FOCUSED=useIsFocused();
+
+useEffect(()=>{
+  setLoading(false);
+  setpassword('')
+  setrePassword('')
+  setFormContent({
+    firstName: "",
+    lastName: "",
+    phoneNumber: email,
+    email: "",
+    accountAddress: "",
+    walletAddress: state.wallet ? state.wallet.address : "",
+    password: "",
+  })
+},[FOCUSED])
 
   const handleSubmit = async () => {
     setLoading(true);
-    const { err } = await signup({
-      ...formContent,
-      phoneNumber: `${formContent.email}`,
+    
+    try {
+      const result = await apiHelper.post(REACT_APP_HOST+"/v1/auth/signup",{
+        "firstName": formContent.firstName,
+        "lastName": formContent.lastName,
+        "email": formContent.email.toLowerCase(),
+        "password": rePassword
     });
-    setLoading(false);
-    console.log(err)
-    if (err.message === "Otp Send successfully") {
-        navigation.navigate("exchangeLogin", {
-        phoneNumber: formContent.email,
+      console.log("result:--",result)
+      if (result.data.success) {
+        navigation.navigate("Exchange_otp", {
+          Email: formContent.email.toLowerCase(),
+          type: "new_res",
+        });
+
+      }
+      if (!result.data.success) {
+        setLoading(false);
+        handleErrorMessage(result.data||result.error);
+      }
+  
+    } catch (error) {
+      setLoading(false);
+      console.log('Error during signup:', error);
+      Snackbar.show({
+        text: "An unexpected error occurred.",
+        duration: Snackbar.LENGTH_SHORT,
+        backgroundColor: 'red',
       });
     }
-    if(err.message==="Email already registered")
-    {
-      ShowErrotoast(toast,"Email already registered");
-    }
-    if(err.message==="Wallet already registered")
-    {
-      ShowErrotoast(toast,"Wallet already registered");
-    }
-    if (Array.isArray(err.message) && err.message.includes("email must be an email")) {
-      ShowErrotoast(toast, "Email must be an email");
-    }
-    if (Array.isArray(err.message) && err.message.includes("lastName should not be empty")) {
-      ShowErrotoast(toast, "Last name should not be empty");
-    }
-    if (Array.isArray(err.message) && err.message.includes("firstName should not be empty")) {
-      ShowErrotoast(toast, "First name should not be empty");
-    }
-    
-    if (err) {
+  };
+  
+  const handleErrorMessage = (err) => {
+    if (err.message === "Otp not Send.") {
+      showSnackbar("Something went wrong.");
+    } else if (err.message === "Phone number already registered") {
+      showSnackbar("Email already registered.");
+    } else if (err.message === "Wallet already registered") {
+      showSnackbar("Wallet already registered.");
+    } else if (Array.isArray(err.message)) {
+      if (err.message.includes("email must be an email")) {
+        showSnackbar("Email must be a valid email.");
+      } else if (err.message.includes("lastName should not be empty")) {
+        showSnackbar("Last name should not be empty.");
+      } else if (err.message.includes("firstName should not be empty")) {
+        showSnackbar("First name should not be empty.");
+      }else{
+        showSnackbar(err.message[0]);
+      }
+    } else {
       setShowMessage(true);
-      return setMessage(err.message);
+      setMessage(err.message);
     }
   };
+  
+  const showSnackbar = (message) => {
+    Snackbar.show({
+      text: message,
+      duration: Snackbar.LENGTH_SHORT,
+      backgroundColor: 'red',
+    });
+  };
+  
 
   const onChangename = (input) => {
-    const formattedInput = input.replace(/\s/g, '');
+    const formattedInput = input.replace(/\s/g, '')
+    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
     setFormContent({ ...formContent, firstName: formattedInput })
   };
   const onChangelast = (input) => {
-    const formattedInput = input.replace(/\s/g, '');
+    const formattedInput = input.replace(/\s/g, '')
+    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
     setFormContent({ ...formContent, lastName: formattedInput })
   };
   const onChangelmail = (input) => {
-    // const formattedInput = input.replace(/\s/g, '').toLowerCase();
-    setFormContent({ ...formContent, email: input.toLowerCase() })
+    const formattedInput = input.replace(/\s/g, '');
+    setFormContent({ ...formContent, email: formattedInput })
+  };
+
+  const onChangepass = (input, type) => {
+    if (type === 1) {
+      const formattedInput = input.replace(/\s/g, '');
+      setpassword(formattedInput);
+    }
+    if (type === 2) {
+      const formattedInput = input.replace(/\s/g, '');
+      setrePassword(formattedInput);
+    }
+
   };
 
   return (
     <>
+    <Exchange_Login_screen title="" onLeftIconPress={() => navigation.goBack()} />
       <KeyboardAvoidingView style={styles.container} behavior="height">
         <ScrollView>
           <View
@@ -116,7 +185,8 @@ export const ExchangeRegister = (props) => {
               color: "white",
             }}
           >
-            <Text style={{ color: "#fff", marginBottom: 20, fontSize: 16,textAlign:"center",marginTop:hp(3) ,fontWeight:"700"}}>
+            <Image style={styles.tinyLogo} source={darkBlue} />
+            <Text style={{ color: "#fff", paddingVertical:hp(0.4), fontSize: 20,textAlign:"center" ,fontWeight:"700"}}>
               Create your exchange account
             </Text>
 
@@ -126,6 +196,8 @@ export const ExchangeRegister = (props) => {
                 <Text style={styles.text}>First Name</Text>
 
               <TextInput
+                id="firstNameInput"
+                testID="firstNameInput"
                 style={styles.input}
                 theme={{ colors: { text: "white" } }}
                 value={formContent.firstName}
@@ -133,7 +205,6 @@ export const ExchangeRegister = (props) => {
                 onChangeText={(text) =>
                   onChangename(text)
                 }
-                autoCapitalize={"none"}
                 placeholderTextColor="gray"
                 
               />
@@ -141,9 +212,11 @@ export const ExchangeRegister = (props) => {
 
 
 
-            <View style={styles.inp}>
-                <Text style={styles.text}>Last name</Text>
+            <View style={[styles.inp,{marginTop:hp(1)}]}>
+                <Text style={styles.text}>Last Name</Text>
               <TextInput
+                id="lastNameInput"
+                testID="lastNameInput"
                 placeholderTextColor="gray"
                 style={styles.input}
                 theme={{ colors: { text: "white" } }}
@@ -155,41 +228,68 @@ export const ExchangeRegister = (props) => {
               />
             </View>
             
-            <View style={styles.inp}>
+            <View style={[styles.inp,{marginTop:hp(1)}]}>
                 <Text style={styles.text}>
-                  Email address
+                  Email Address
                 </Text>
               <TextInput
+                id="emailInput"
+                testID="emailInput"
                 placeholderTextColor="gray"
                 style={styles.input}
                 theme={{ colors: { text: "white" } }}
                 value={formContent.email}
                 placeholder={"Enter your email address"}
-                keyboardType='email-address'
+                keyboardType='default'
                 onChangeText={(text) =>
                    onChangelmail(text)
                 }
               />
             </View>
-            <View style={styles.inp}>
-                <Text style={styles.text}>
-                  Wallet Address
-                </Text>
-              <Text
-                style={styles.input}
-              >{formContent.walletAddress}
-              </Text>
-            </View>
-           <View style={{height:32}}>
-           {showMessage ? (
-              // <Text style={{ color: "white",marginStart:13}}>{message}</Text>
-              <Text style={{ color: "white",marginStart:13}}></Text>
-            ) : (
-              <View></View>
-            )}
-           </View>
 
+            <View style={[styles.inp,{marginTop:hp(1)}]}>
+                <Text style={styles.text}>
+                  Password
+                </Text>
+              <TextInput
+                id="passwordInput"
+                testID="passwordInput"
+                placeholderTextColor="gray"
+                style={styles.input}
+                theme={{ colors: { text: "white" } }}
+                value={password}
+                placeholder={"ABC@!123"}
+                onChangeText={(text) => {
+                  onChangepass(text,1)
+                }}
+                autoCapitalize="none"
+                keyboardType="default"
+              />
+            </View>
+
+            <View style={[styles.inp,{marginTop:hp(1),marginBottom:hp(3)}]}>
+                <Text style={styles.text}>
+                 Re-Password
+                </Text>
+              <TextInput
+                id="rePasswordInput"
+                testID="rePasswordInput"
+                placeholderTextColor="gray"
+                style={styles.input}
+                theme={{ colors: { text: "white" } }}
+                value={rePassword}
+                placeholder={"ABC@!123"}
+                onChangeText={(text) => {
+                    onChangepass(text,2)
+                }}
+                autoCapitalize="none"
+                keyboardType="default"
+              />
+            </View>
 <TouchableOpacity
+id="createAccountBtn"
+testID="createAccountBtn"
+  disabled={loading}
   onPress={() => {
     handleSubmit();
   }}
@@ -203,9 +303,7 @@ export const ExchangeRegister = (props) => {
               > */}
                   <Text style={styles.buttonText}>
                     {loading ? (
-                      <View style={{display:'flex', alignContent:'center', alignItems:'center', alignSelf:'center', marginLeft:wp(70)}}>
                         <ActivityIndicator size="small" color="white" />
-                      </View>
                     ) : (
                       "Create my account"
                     )}
@@ -214,6 +312,8 @@ export const ExchangeRegister = (props) => {
                 </TouchableOpacity>
             <View style={styles.lowerbox}>
               <TouchableOpacity
+              id="alreadyAccountBtn"
+              testID="alreadyAccountBtn"
                 onPress={() => {
                   navigation.navigate("exchangeLogin");
                 }}
@@ -235,14 +335,14 @@ export const ExchangeRegister = (props) => {
 const styles = StyleSheet.create({
   input: {
     height: hp("5%"),
-    marginBottom: hp("2"),
-    color: "#fff",
-    marginTop: hp("1"),
-    width: wp("70"),
-    paddingRight: wp("7"),
-    backgroundColor: "#131E3A",
-    borderRadius: wp("20"),
+    color: "black",
+    marginTop: hp(0.5),
+    width: wp(80),
+    backgroundColor: "#fff",
+    borderRadius: 4,
     marginLeft: wp("10"),
+    fontSize:18,
+    paddingHorizontal:wp(1)
   },
   content: {
     display: "flex",
@@ -256,6 +356,12 @@ const styles = StyleSheet.create({
     marginTop: hp(3),
     color: "#FFF",
    
+  },
+  tinyLogo: {
+    width: wp("20"),
+    height: hp("13"),
+    marginTop: hp(0.3),
+    alignSelf: "center",
   },
   btn: {
     width: wp("80"),
@@ -275,11 +381,11 @@ const styles = StyleSheet.create({
     marginBottom: wp("5"),
     fontSize: hp("5"),
   },
-  tinyLogo: {
-    width: wp("5"),
-    height: hp("5"),
-    padding: 20,
-  },
+  // tinyLogo: {
+  //   width: wp("5"),
+  //   height: hp("5"),
+  //   padding: 20,
+  // },
   icon: {
     display: "flex",
     flexDirection: "row",
@@ -319,15 +425,12 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     textAlign: "center",
-    // fontSize: 24,
+    fontSize: 16,
   },
   lowerbox: {
-    marginTop: hp(8),
-    height:hp(6),
+    marginTop: hp(0.2),
+    height:hp(3),
     width: 400,
-    backgroundColor: "#003166",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
     display: "flex",
     alignItems: "center",
     textAlign: "center",

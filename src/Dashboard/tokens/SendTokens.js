@@ -44,6 +44,8 @@ import Icon from "../../icon";
 import { WalletHeader } from "../header";
 import { NavigationActions } from "react-navigation";
 import darkBlue from "../../../assets/darkBlue.png"
+import { Wallet_screen_header } from "../reusables/ExchangeHeader";
+import ErrorComponet from "../../utilities/ErrorComponet";
 var ethers = require("ethers");
 const xrpl = require("xrpl");
 //'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1644979850'
@@ -56,6 +58,7 @@ const SendTokens = (props) => {
   const [address, setAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [Loading, setLoading] = useState(false);
+  const [LoadingBal, setLoadingBal] = useState(false);
   const [balance, setBalance] = useState();
   const [walletType, setWallettype] = useState("");
   const [disable, setDisable] = useState(true);
@@ -64,19 +67,46 @@ const SendTokens = (props) => {
   const dispatch = useDispatch();
   const isFocused=useIsFocused();
   const [show,setshow]=useState(false);
+  const [lastScannedData, setLastScannedData] = useState(null);
+  const [ErroVisible,setErroVisible]=useState(false);
   const navigation = useNavigation();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  
   const onBarCodeRead = (e) => {
-    if (e.data !== qrData) { 
-      setQrData(e.data);
-      alert("success","QR Code Decoded successfully..");
+    if (e?.data && e?.data !== lastScannedData) {
+      setLastScannedData(e?.data); // Update the last scanned data
+      setErroVisible(false)
+      alert("success", "QR Code Decoded successfully..");
       setAddress("");
-      setAddress(e.data);
-      toggleModal();
+      setAddress(e?.data);
+      setModalVisible(false);
+  
+      if (!checkAddressValidity(e?.data)) {
+        setModalVisible(false);
+        setErroVisible(false)
+        setAddress("");
+        setErroVisible(true)
+      }
     }
   };
 
+
+  const handleCameraStatus = (status) => {
+    if (status === "NOT_AUTHORIZED") {
+      setModalVisible(false);
+      Alert.alert(
+        "Camera Permissions Required.",
+        "Please enable camera permissions in settings to scan QR code.",
+        [
+          { text: "Close", style: "cancel" },
+          { text: "Open", onPress: () => Linking.openSettings() },
+        ]
+      );
+    }
+    // No need to explicitly toggle modal visibility on "READY"
+    // Let `toggleModal` or user actions handle visibility
+  };
   const getXrpBal = async (address) => {
     console.log(address);
 
@@ -131,15 +161,20 @@ const SendTokens = (props) => {
       } else {
         if (Type) {
           if (Type == "Ethereum") {
-            setBalance(EthBalance._z?EthBalance._z:EthBalance);
-            // await dispatch(
-            //   getEthBalance(
-            //     state.wallet.address ? state.wallet.address : address
-            //   )
-            // ).then((res) => {
-            //   console.log(res.EthBalance);
-            //   setBalance(res.EthBalance);
-            // });
+            setLoadingBal(true)
+            // setBalance(EthBalance._z?EthBalance._z:EthBalance);
+            await dispatch(
+              getEthBalance(
+                state.wallet.address ? state.wallet.address : address
+              )
+            ).then((res) => {
+              console.log(res.EthBalance);
+              setBalance(res.EthBalance);
+              setLoadingBal(false)
+            }).catch((error) => {
+              console.log(error);
+              setLoadingBal(false)
+            });
           } else if (Type == "Matic") {
             console.log(MaticBalance);
             await dispatch(
@@ -193,6 +228,7 @@ const SendTokens = (props) => {
               console.log(e);
             }
           } else if (Type == "BNB") {
+            setLoadingBal(true)
             await dispatch(getBalance(state.wallet.address))
               .then(async (response) => {
                 console.log(response);
@@ -201,10 +237,12 @@ const SendTokens = (props) => {
                   console.log(res);
                   setBalance(res.walletBalance);
                   console.log("success");
+                  setLoadingBal(false)
                 }
               })
               .catch((error) => {
                 console.log(error);
+                setLoadingBal(false)
               });
           }
         }
@@ -215,8 +253,10 @@ const SendTokens = (props) => {
   };
 
   useEffect(() => {
+    setLoadingBal(false);
     const new_data=async()=>{
       try {
+          setErroVisible(false)
           console.log(props?.route?.params?.token);
           const Type = await AsyncStorageLib.getItem("walletType");
           setWallettype(JSON.parse(Type));
@@ -280,6 +320,7 @@ const SendTokens = (props) => {
     if (address) {
       if (!valid) {
         setMessage("Please enter a valid address");
+        setAddress("")
       } else {
         setMessage("");
       }
@@ -339,29 +380,23 @@ const checkPermission = async () => {
   {
     
   }
+
+    // Reset lastScannedData when modal is closed
+    useEffect(() => {
+      if (!isModalVisible) {
+        setLastScannedData(null);
+      }
+    }, [isModalVisible]);
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
-{Platform.OS==="ios"?<View style={{backgroundColor:state.THEME.THEME===false?"#4CA6EA":"black",flexDirection:"row",height: hp(8),borderBottomColor:"gray",borderColor:state.THEME.THEME===false?"gray":"black",borderWidth:0.5}}>
-<Icon type={'antDesign'} name='left' size={29} color={'white'} onPress={()=>{navigation.goBack()}} style={{padding:hp(1.5),marginTop:'3%'}}/>
-<Text style={{color:"white",alignSelf:"center",marginLeft:"19%",marginTop:'9%',fontSize:19}}>Transaction Details</Text>
-<TouchableOpacity onPress={()=>{navigation.navigate("Home")}}>
-<Image source={darkBlue} style={{height: hp("9"),
-    width: wp("12"),
-    marginLeft: Platform.OS==="ios"?wp(11):wp(6)}}/>
-</TouchableOpacity>
-    </View>:
-<View style={{backgroundColor:state.THEME.THEME===false?"#4CA6EA":"black",flexDirection:"row",borderWidth:0.5,borderBottomColor:"gray",borderColor:state.THEME.THEME===false?"gray":"black",}}>
-<Icon type={'antDesign'} name='left' size={29} color={'white'} onPress={()=>{navigation.goBack()}} style={{padding:hp(1.5),marginTop:'3%'}}/>
-<Text style={{color:"white",alignSelf:"center",marginLeft:"20%",fontWeight:'bold',fontSize:17}}>Transaction Details</Text>
-<TouchableOpacity onPress={()=>{navigation.navigate("Home")}}>
-<Image source={darkBlue} style={{height: hp("9"),
-    width: wp("12"),
-    marginLeft: wp(15)}}/>
-</TouchableOpacity>
-</View>}
-      {/* <WalletHeader title={props.route.params.token}/> */}
+    <Wallet_screen_header title="Send" onLeftIconPress={() => navigation.goBack()} />
+    <ErrorComponet
+          isVisible={ErroVisible}
+          onClose={() => setErroVisible(false)}
+          message="The scanned QR code contains an invalid public key. Please make sure you're scanning the correct QR code and try again."
+        />
       <View style={{ backgroundColor:state.THEME.THEME===false?"#fff":"black", height: hp(100) }}>
         <View style={style.inputView}>
           <TextInput
@@ -399,12 +434,13 @@ const checkPermission = async () => {
         </Text>
               </ScrollView>
         </View>
-        {show===true?<ActivityIndicator color={"green"} style={{top:hp(1)}}/>:<></>}
+        {LoadingBal===true?<ActivityIndicator color={"green"} style={{top:hp(1)}}/>:<></>}
         </View>
         <View style={style.inputView}>
           <TextInput
             value={amount}
             keyboardType="numeric"
+            returnKeyType="done"
             onChangeText={(input) => {
               if (amount && address) {
                 setDisable(false);
@@ -441,8 +477,8 @@ const checkPermission = async () => {
 
         {/* <View style={style.btnView}> */}
           <TouchableOpacity
-            disabled={disable}
-            style={[style.btnView,{backgroundColor:disable?"gray":"#3574B6"}]}
+            disabled={disable||LoadingBal}
+            style={[style.btnView,{backgroundColor:disable||LoadingBal?"gray":"#3574B6"}]}
             onPress={async () => {
               console.log(walletType);
               let privateKey;
@@ -519,44 +555,27 @@ const checkPermission = async () => {
         visible={isModalVisible}
         onRequestClose={toggleModal}
       >
-         <RNCamera
-      ref={cameraRef}
-      style={style.preview}
-      onBarCodeRead={onBarCodeRead}
-      captureAudio={false}
-    >
-          {({ status }) => {
-            if (status==="NOT_AUTHORIZED") {
-              setModalVisible(false),
-              Alert.alert("Camera Permissions Required.","Please enable camera permissions in settings to scan QR code.",
-              [
-                {text:"Close",style:"cancel"},
-                {text:"Open",onPress:()=>{
-                    Linking.openSettings()
-                }},
-              ])
-            }
-            if(status==="READY")
-              {
-                setModalVisible(true)
-              }
-            return (
-              <>
-                <View style={style.header}>
-                  <TouchableOpacity onPress={() => { setModalVisible(false) }}>
-                    <Icon name="arrow-left" size={24} color="#fff" style={style.backIcon} />
-                  </TouchableOpacity>
-                  <Text style={[style.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
+          <RNCamera
+            ref={cameraRef}
+            style={style.preview}
+            onBarCodeRead={onBarCodeRead}
+            captureAudio={false}
+            onStatusChange={({ status }) => handleCameraStatus(status)} // Use onStatusChange
+          >
+            <>
+              <View style={style.header}>
+                <TouchableOpacity onPress={() => { setModalVisible(false); }}>
+                  <Icon name="arrow-left" size={24} color="#fff" style={style.backIcon} />
+                </TouchableOpacity>
+                <Text style={[style.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
+              </View>
+              <View style={style.rectangleContainer}>
+                <View style={style.rectangle}>
+                  <View style={style.innerRectangle} />
                 </View>
-                <View style={style.rectangleContainer}>
-                  <View style={style.rectangle}>
-                    <View style={style.innerRectangle} />
-                  </View>
-                </View>
-              </>
-            )
-          }}
-    </RNCamera>
+              </View>
+            </>
+          </RNCamera>
         {/* <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
           <View style={{ backgroundColor: '#145DA0', padding: 20, borderRadius: 10,width:"90%",height:"50%" }}>
             <Text style={{color:"white",fontWeight:"700",alignSelf:"center",fontSize:19}} onPress={()=>{
@@ -676,7 +695,7 @@ const style = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingHorizontal: 16,
-    height: 60,
+    height: hp(10)
   },
   backIcon: {
     marginRight:wp(28),

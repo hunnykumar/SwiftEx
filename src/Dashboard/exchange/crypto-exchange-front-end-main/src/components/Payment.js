@@ -23,7 +23,7 @@ const Payment = () => {
   const fetchProfileData = async () => {
     
     try {
-      const { res, err } = await authRequest("/users/getUserDetails", GET);
+      const { res, err } = await authRequest("/users/:id", GET);
       if (err) return alert("error","getting error in fatching data.");
       console.log("+++++++++++++++++++++++++++",res.email)
       setemail(res.email);

@@ -30,8 +30,11 @@ import darkBlue from "../../assets/multicoin_wallet.png"
 import Xrpimage from "../../assets/xrp.png";
 import stellar from "../../assets/Stellar_(XLM).png"
 import Maticimage from "../../assets/matic.png";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
 
 const ImportAccount = (props) => {
+  const navi=useNavigation();
   const [Checked, setCheckBox] = useState(false);
   const [Checked2, setCheckBox2] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -90,6 +93,7 @@ const ImportAccount = (props) => {
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
+      <Wallet_screen_header title="Import Wallet" onLeftIconPress={() => navi.goBack()} />
       <View style={style.Body}>
         <TouchableOpacity
           style={style.Box1}
@@ -220,10 +224,15 @@ const style = StyleSheet.create({
   },
   text: {
     marginHorizontal: wp(4),
+    color:"black",
+    fontSize:16,
+    fontWeight:"500"
   },
   text1:{
     marginHorizontal: wp(3),
-
+    color:"black",
+    fontSize:16,
+    fontWeight:"500"
   },
   img: {
     height: hp(4),

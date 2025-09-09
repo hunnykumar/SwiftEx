@@ -51,7 +51,7 @@ const getTokens = async () => {
 
 const getPair = async () => {
   const provider = new ethers.providers.JsonRpcProvider(
-    "https://eth-mainnet.g.alchemy.com/v2/demo"
+    "https://1rpc.io/eth"
   );
   const poolAddress = "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8";
   const poolImmutablesAbi = [
@@ -266,12 +266,13 @@ function toHex(Amount) {
 // };
 
 async function getETHtoTokenPrice(tokenAddress, ethAmount) {
-  const provider = new ethers.providers.AlchemyProvider("homestead", EthereumSecret.apiKey);
-  
+  console.log("----->getting Enter",tokenAddress,ethAmount)
+  const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC)
+
   const chainId = ChainId.MAINNET;
   const token = await Fetcher.fetchTokenData(chainId, tokenAddress, provider);
   const weth = WETH[chainId];
-  
+
   const pair = await Fetcher.fetchPairData(token, weth, provider);
   const route = new Route([pair], weth);
 
@@ -289,8 +290,9 @@ async function getETHtoTokenPrice(tokenAddress, ethAmount) {
   const tradeDetails = {
     slippageTolerance: slippageTolerance.toSignificant(1),
     minimumAmountOut: trade.minimumAmountOut(slippageTolerance).toSignificant(6),
+    conversionRate: trade2.executionPrice.toSignificant(6)
   };
-
+  console.log("----->getting Return",  token1totoken2,token2totoken1,tradeDetails,)
   return {
     token1totoken2,
     token2totoken1,
@@ -301,7 +303,7 @@ const getTokentoEthPrice = async (tokenaddress, amount) => {
   try {
     //console.log(coin1,coin2)
     const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
-    const chainId = ChainId.GÖRLI;
+    const chainId = ChainId.MAINNET;
     const UNISWAP_ROUTER_ADDRESS = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
     const UNISWAP_ROUTER_ABI = [
       "function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)",
@@ -370,7 +372,7 @@ const getTokentoEthPrice = async (tokenaddress, amount) => {
 const swapTokensforEth = async (privateKey, address, tokenaddress, amount) => {
   try {
     const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
-    const chainId = ChainId.GÖRLI;
+    const chainId = ChainId.MAINNET;
     const gas = await provider.getGasPrice();
     const UNISWAP_ROUTER_ABI = [
       "function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)",
@@ -457,7 +459,7 @@ const swapTokensforEth = async (privateKey, address, tokenaddress, amount) => {
 const SwapEthForTokens = async (privateKey, address, tokenaddress, amount) => {
   try {
     const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
-    const chainId = ChainId.GÖRLI;
+    const chainId = ChainId.MAINNET;
     const gas = await provider.getGasPrice();
     const UNISWAP_ROUTER_ABI = [
       "function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)",

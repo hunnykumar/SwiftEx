@@ -40,9 +40,13 @@ import {
 } from "../utilities/utilities";
 import Icon from "../icon";
 import { GetPrivateKeyModal } from "./Modals/getPrivateKeyModal";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
+import BackupWallet from "./exchange/crypto-exchange-front-end-main/src/components/BackupWallet";
 const { StorageAccessFramework } = FileSystem;
 
 const MyWallet = (props) => {
+  const navigation=useNavigation();
   const state = useSelector((state) => state);
   const User = useSelector((state) => state.user);
   const dispatch = useDispatch();
@@ -56,6 +60,7 @@ const MyWallet = (props) => {
   const [bnbPrice, setBnbPrice] = useState(0);
   const [ethPrice, setEthPrice] = useState(0);
   const [visible, setVisible] = useState(false);
+  const [backupVisible, setbackupVisible] = useState(false);
   let LeftContent = (props) => (
     <Avatar.Image
       {...props}
@@ -155,6 +160,7 @@ const MyWallet = (props) => {
 
   return (
     <View style={[styles.mainView,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
+       <Wallet_screen_header title="Wallet" onLeftIconPress={() => navigation.goBack()} />
       <View style={[styles.labelInputContainer,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
         <Text style={[styles.label,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>Name</Text>
       
@@ -181,6 +187,26 @@ const MyWallet = (props) => {
           </View>
         </View>
       </TouchableOpacity>
+
+      <TouchableOpacity onPress={async() => {
+            setbackupVisible(!backupVisible);
+            }}  style={[styles.mainContainer,{marginTop: hp(1), paddingVertical: hp(1.5),}]}>
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => {
+              setbackupVisible(!backupVisible);
+            }}
+          >
+            <Icon name="document-text-sharp" type={"ionicon"} size={20} color={state.THEME.THEME===false?"black":"#fff"} />
+            <Text style={[styles.secretText,{color:state.THEME.THEME===false?"black":"#fff"}]}>Backup Secrets</Text>
+          </TouchableOpacity>
+          <View style={styles.rightIcon}>
+            <Icon name="cloud-download-outline" type={"materialCommunity"} color={state.THEME.THEME===false?"black":"#fff"} size={24} onPress={() => {
+              setbackupVisible(!backupVisible);
+            }}/>
+        </View>
+      </TouchableOpacity>
+
       <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>
         If you lose access to this device,your funds will be lost,unless you
         back up!
@@ -192,6 +218,7 @@ const MyWallet = (props) => {
           setVisible(false);
         }}
       />
+      <BackupWallet open={backupVisible} close={() => setbackupVisible(false)}/>
     </View>
   
   );

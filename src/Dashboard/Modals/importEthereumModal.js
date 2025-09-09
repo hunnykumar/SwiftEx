@@ -36,6 +36,7 @@ import { alert } from "../reusables/Toasts";
 import { Paste } from "../../utilities/utilities";
 import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../../icon";
+import * as StellarSdk from '@stellar/stellar-sdk';
 
 const ImportEthereumModal = ({
   props,
@@ -102,6 +103,16 @@ const ImportEthereumModal = ({
         valid = ethers.utils.isHexString(privateKey, 32);
         if (!valid) {
           setMessage("Please enter a valid private key");
+        } else {
+          setMessage("");
+        }
+      }
+      if (label === 'JSON') {
+        const phrase = mnemonic.trimStart();
+        const trimmedPhrase = phrase.trimEnd();
+        valid = ethers.utils.isValidMnemonic(trimmedPhrase);
+        if (!valid) {
+          setMessage("Please enter a valid mnemonic");
         } else {
           setMessage("");
         }
@@ -210,10 +221,11 @@ const ImportEthereumModal = ({
             <Text style={style.label}>Name</Text>
             <TextInput
               value={accountName}
+              maxLength={20}
               onChangeText={(text) => {
                 setAccountName(text);
               }}
-              style={{ width: wp("78%") }}
+              style={{ width: wp("78%"),color:"black" }}
               placeholder={accountName ? accountName : "Wallet 1"}
               placeholderTextColor={"gary"}
             />
@@ -223,7 +235,7 @@ const ImportEthereumModal = ({
             <TouchableOpacity
               onPress={async () => {
                 // setText('abc')
-                const text = await Clipboard.getStringAsync();
+                const text = await Clipboard.getString();
                 // console.log(text)
                 // setText(text)
                 // setText('abc')
@@ -245,9 +257,9 @@ const ImportEthereumModal = ({
             >
               <Text style={style.paste}>Paste</Text>
             </TouchableOpacity>
-            <Text>Phrase</Text>
+            <Text style={{color:"#4CA6EA"}}>Phrase</Text>
             <TextInput
-              style={style.input}
+              style={[style.input,{color:"black"}]}
               value={text}
               onChangeText={(text) => {
                 if (label === "privateKey") {
@@ -259,6 +271,7 @@ const ImportEthereumModal = ({
                 } else if (label === "JSON") {
                   setText(text);
                   setJson(text);
+                  setMnemonic(text);
                 } else {
                   return alert(`please input ${label} to proceed `);
                 }
@@ -275,10 +288,11 @@ const ImportEthereumModal = ({
 
           {optionVisible ? (
             <View style={style.labelInputContainer}>
-              {optionVisible ? <Text style={style.label}>Name</Text> : null}
+              {optionVisible ? <Text style={style.label}>Password</Text> : null}
               <TextInput
                 style={{
                   display: optionVisible === false ? "none" : "flex",
+                  color:"black"
                 }}
                 value={jsonKey}
                 onChangeText={(text) => {
@@ -425,7 +439,8 @@ const ImportEthereumModal = ({
                   );
                 }
                 const user = await AsyncStorageLib.getItem("user");
-
+                const pair =await StellarSdk.Keypair.random();
+                console.log("StellaeKeys-using-private keys:---",pair.publicKey(),"privat--",pair.secret())
                 const walletPrivateKey = new ethers.Wallet(privateKey);
                 console.log(walletPrivateKey);
                 const Keys = walletPrivateKey._signingKey();
@@ -433,6 +448,14 @@ const ImportEthereumModal = ({
                 const wallet = {
                   address: walletPrivateKey.address,
                   privateKey: privatekey,
+                  xrp: {
+                    address: "000000000",
+                    privateKey: "000000000",
+                  },
+                  stellarWallet: {
+                    publicKey: pair.publicKey(),
+                    secretKey: pair.secret()
+                  },
                 };
               
                 let wallets = [];
@@ -456,6 +479,14 @@ const ImportEthereumModal = ({
                     address: wallet.address,
                     privateKey: wallet.privateKey,
                     name: accountName,
+                    xrp: {
+                      address: "000000000",
+                      privateKey: "000000000",
+                    },
+                    stellarWallet: {
+                      publicKey: wallet.stellarWallet.publicKey,
+                      secretKey: wallet.stellarWallet.secretKey
+                    },
                     walletType: "Ethereum",
                     wallets: wallets,
                   },
@@ -483,88 +514,106 @@ const ImportEthereumModal = ({
                     }
                   }
                 });
-              } else {
-                try {
-                  const user = await AsyncStorageLib.getItem("user");
+              } if (label === "JSON") {
+                const user = await AsyncStorageLib.getItem("user");
 
-                  ethers.Wallet.fromEncryptedJson(json, jsonKey)
-                    .then(async (wallet) => {
-                      console.log("Address: " + wallet.address);
-                      const Wallet = {
-                        address: wallet.address,
-                        privateKey: wallet.privateKey,
-                      };
-                      setWallet(wallet);
-
-
-                      let wallets = [];
-                      const data = await AsyncStorageLib.getItem(
-                        `${user}-wallets`
-                      )
-                        .then((response) => {
-                          console.log(response);
-                          JSON.parse(response).map((item) => {
-                            wallets.push(item);
-                          });
-                        })
-                        .catch((e) => {
-                          setWalletVisible(false);
-                          setVisible(false);
-                          setModalVisible(false);
-                          console.log(e);
-                        });
-
-                      //wallets.push(accounts)
-                      const allWallets = [
-                        {
-                          address: wallet.address,
-                          privateKey: wallet.privateKey,
-                          name: accountName,
-                          walletType: "Ethereum",
-                          wallets: wallets,
-                        },
-                      ];
-                      // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
-
-                      dispatch(AddToAllWallets(allWallets, user)).then(
-                        (response) => {
-                          if (response) {
-                            if (response.status === "Already Exists") {
-                              alert(
-                                "error",
-                                "Account with same name already exists"
-                              );
-                              setLoading(false);
-                              return;
-                            } else if (response.status === "success") {
-                              setTimeout(() => {
-                                setLoading(false);
-                                setWalletVisible(false);
-                                setVisible(false);
-                                setModalVisible(false);
-
-                                navigation.navigate("AllWallets");
-                              }, 0);
-                            } else {
-                              alert("error", "failed please try again");
-                              return;
-                            }
-                          }
-                        }
-                      );
-                    })
-                    .catch((e) => {
-                      console.log(e);
-                      setLoading(false);
-                      setWalletVisible(false);
-                      setVisible(false);
-                      setModalVisible(false);
-                    });
+                const phrase = mnemonic.trimStart();
+                const trimmedPhrase = phrase.trimEnd();
+                const check = ethers.utils.isValidMnemonic(trimmedPhrase);
+                if (!check) {
                   setLoading(false);
-                } catch (e) {
-                  console.log(e);
-                  alert("error", e);
+
+                  return alert(
+                    "error",
+                    "Incorrect Mnemonic. Please provide a valid Mnemonic"
+                  );
                 }
+                const accountFromMnemonic = new ethers.Wallet.fromMnemonic(
+                  trimmedPhrase
+                );
+                const Keys = accountFromMnemonic._signingKey();
+                const privateKey = Keys.privateKey;
+                const wallet = {
+                  address: accountFromMnemonic.address,
+                  privateKey: privateKey,
+                };
+                /*const response = saveUserDetails(accountFromMnemonic.address).then(async(response)=>{
+                
+                  if(response===400){
+                    return 
+                  }
+                 else if(response===401){
+                    return 
+                  }
+                })
+                .catch((e)=>{
+                    console.log(e)
+                    setLoading(false)
+                    setWalletVisible(false)
+                    setVisible(false)
+                    setModalVisible(false)
+
+
+                  })*/
+                const accounts = {
+                  address: wallet.address,
+                  privateKey: wallet.privateKey,
+                  name: accountName,
+                  wallets: [],
+                };
+                let wallets = [];
+                const data = await AsyncStorageLib.getItem(`${user}-wallets`)
+                  .then((response) => {
+                    console.log(response);
+                    JSON.parse(response).map((item) => {
+                      wallets.push(item);
+                    });
+                  })
+                  .catch((e) => {
+                    setWalletVisible(false);
+                    setVisible(false);
+                    setModalVisible(false);
+                    console.log(e);
+                  });
+
+                //wallets.push(accounts)
+                const allWallets = [
+                  {
+                    address: wallet.address,
+                    privateKey: wallet.privateKey,
+                    mnemonic: trimmedPhrase,
+                    name: accountName,
+                    walletType: "Ethereum",
+                    wallets: wallets,
+                  },
+                ];
+                // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
+
+                dispatch(AddToAllWallets(allWallets, user)).then((response) => {
+                  if (response) {
+                    if (response.status === "Already Exists") {
+                      alert("error", "Account with same name already exists");
+                      setLoading(false);
+                      return;
+                    } else if (response.status === "success") {
+                      setTimeout(() => {
+                        setLoading(false);
+                        setWalletVisible(false);
+                        setVisible(false);
+                        setModalVisible(false);
+
+                        navigation.navigate("AllWallets");
+                      }, 0);
+                    } else {
+                      alert("error", "failed please try again");
+                      return;
+                    }
+                  }
+                });
+
+                // dispatch(getBalance(wallet.address))
+                // dispatch(setToken(token))
+                //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
               }
 
               setWalletVisible(false);
@@ -730,7 +779,8 @@ const style = StyleSheet.create({
     textAlign: "center",
     marginTop: hp(1),
     fontSize: 15,
-    fontWeight: "700"
+    fontWeight: "700",
+    color:"black"
   },
   crossIcon: {
     alignSelf: "flex-end",

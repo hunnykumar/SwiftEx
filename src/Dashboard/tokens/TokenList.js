@@ -38,6 +38,7 @@ import chooseSwap from "../tokens/chooseSwap.json";
 import "react-native-get-random-values";
 import "@ethersproject/shims";
 import { SwapHeader, WalletHeader } from "../header";
+import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 var ethers = require("ethers");
 const xrpl = require("xrpl");
 const { ChainId, Fetcher, WETH, Route } = require("@uniswap/sdk");
@@ -111,7 +112,7 @@ const TokenList = ({
       if (item.symbol === "WBTC") {
         address = "0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05";
       } else if (item.symbol === "USDC") {
-        address = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
+        address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
       } else if (item.symbol === "DAI") {
         //0xdf1742fe5b0bfc12331d8eaec6b478dfdbd31464
         address = "0xDF1742fE5b0bFc12331D8EAec6b478DfDbD31464";
@@ -147,11 +148,11 @@ const TokenList = ({
         if (item.symbol === "WBTC") {
           address = "0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05";
         } else if (item.symbol === "USDC") {
-          address = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
+          address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
         } else if (item.symbol === "DAI") {
           address = "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60";
         } else if (item.symbol === "USDT") {
-          address = "0x7016353707A91BA5c9bd4D3098DBb730236df68c";
+          address = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
         } else if (item.symbol === "WETH") {
           address = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6";
         } else if (item.symbol === "UNI") {
@@ -247,8 +248,8 @@ const TokenList = ({
   }, []);
 
   return (
-    <View style={{ width: wp(100),height:hp(100) }}>
-      <SwapHeader title='Tokens' setVisible={setVisible}/>
+    <View style={{ width: wp(100),height:hp(100),marginTop:hp(2.3) }}>
+      <Wallet_screen_header title="Tokens" onLeftIconPress={() => {setVisible(false)}} />
       {/* <TokenHeader setVisible={setVisible} name={name} /> */}
       <View style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
         <SearchComponent

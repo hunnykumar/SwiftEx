@@ -1,6 +1,8 @@
 import PushNotification from "react-native-push-notification";
 import { useNavigation } from '@react-navigation/native'
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import { Alert } from "react-native";
+import { SaveTransaction } from "../../utilities/utilities";
 //import notifee from '@notifee/react-native';
 
 
@@ -55,7 +57,7 @@ export default function PushNotifications(){
               notification.finish(PushNotificationIOS.FetchResult.NoData);
             },
             // Android only
-            senderID: "1090501687137",
+            senderID: "121537912071",
             // iOS only
             permissions: {
               alert: true,
@@ -99,21 +101,45 @@ export default function PushNotifications(){
 // =======
 // >>>>>>> 82f128721a5a5b21099fa7fb22b426127b2a24a6
 
-  export const firebaseNotification = (title,appName,submessage,message) => {
+  export const firebaseNotification = (title,appName,submessage,message,imageUrl,data) => {
     
+    console.log("-------------------------start-----------------------------------------")
+    // let {from, txHash, type,coinType}  =   JSON.parse(data);
+    // console.log("-------",from, txHash, type,coinType)
+    // SaveTransaction(type, txHash, "App", coinType, "Multi-coin", coinType);
+    
+    // console.log("------------------------------end------------------------------------")
+    // PushNotification.localNotification({
+    //   channelId: "1",
+    //   autoCancel: true,
+    //   bigText:submessage,
+    //   bigPictureUrl: imageUrl,
+    //   subText: appName,
+    //   title: title,
+    //   message: message,
+    //   vibrate: true,
+    //   priority: 'high',
+    //   vibration: 300,
+    //   playSound: true,
+    //   soundName: 'default',
+    //   // actions: ["Yes", "No"],
+    //   invokeApp:false
+    // })
     PushNotification.localNotification({
-        channelId: "1",
-      autoCancel: true,
-      bigText:
-        submessage,
+      channelId: "1",
+      // autoCancel: true,
+      bigText: submessage,
+      bigPictureUrl: imageUrl,
       subText: appName,
       title: title,
       message: message,
       vibrate: true,
       vibration: 300,
+      priority: "max",
+      importance: "max",
       playSound: true,
-      soundName: 'default',
-      actions: ["Yes", "No"],
-      invokeApp:false
-    })
+      soundName: "default",
+      allowWhileIdle: true,
+      invokeApp: true 
+    });
   }

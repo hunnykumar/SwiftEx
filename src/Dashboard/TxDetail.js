@@ -1,90 +1,67 @@
-import React, { useEffect,  useState } from "react";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
-import { WebView } from "react-native-webview";
-import {  useSelector } from "react-redux";
-import AsyncStorageLib from "@react-native-async-storage/async-storage";
 
-export const TxDetail = (props) => {
-  const type = useSelector((state) => state.walletType);
-  const [walletType, setWalletType] = useState();
-  const url = `https://testnet.bscscan.com/tx/${props?.route?.params?.data?.hash}`;
-  const etherUrl = `https://sepolia.etherscan.io/tx/${props?.route?.params?.data?.hash}`;
-  const MaticUrl = `https://mumbai.polygonscan.com/tx/${props?.route?.params?.data?.hash}`;
-  const XrpUrl = `https://test.bithomp.com/explorer/${props?.route?.params?.data?.hash}`;
-  const XLMUrl = `https://stellar.expert/explorer/testnet/tx/${props?.route?.params?.data?.hash}`;
-  console.log(props?.route?.params?.data?.hash);
-  useEffect(() => {
-    const fetch_wallets=async()=>{
-      try {
-        AsyncStorageLib.getItem("walletType").then(async (Type) => {
-          if (JSON.parse(Type) == "Ethereum") {
-            setWalletType("Ethereum");
-          } else if (JSON.parse(Type) == "Matic") {
-            setWalletType("Matic");
-          } else if (JSON.parse(Type) == "Xrp") {
-            setWalletType("Xrp");
-          } else if (JSON.parse(Type) == "BSC") {
-            setWalletType("BSC");
-          } else if (JSON.parse(Type) == "Multi-coin") {
-            if (props?.route?.params?.data?.chainType === "Eth") {
-              setWalletType("Ethereum");
-            }else if (props?.route?.params?.data?.chainType === "eth") {
-              setWalletType("Ethereum");
-            } else if (props?.route?.params?.data?.chainType === "BSC") {
-              setWalletType("BSC");
-            } else if (props?.route?.params?.data?.chainType === "Matic") {
-              setWalletType("Matic");
-            } else if (props?.route?.params?.data?.chainType === "Xrp") {
-              setWalletType("Xrp");
-            } else if (props?.route?.params?.data?.chainType === "XLM") {
-              setWalletType("XLM");
-            } else {
-              return alert(
-                "no chainType found in multi-coin transaction. Error 404"
-              );
-            }
-          }
-        });
-      } catch (error) {
-        console.log("{--=",error)
-      }
-    }
-    fetch_wallets()
-  }, []);
-  return (
-    <View style={styles.container}>
-      <WebView
-        source={{
-          uri:
-            walletType == "Ethereum"
-              ? etherUrl
-              : walletType == "Matic"
-              ? MaticUrl
-              : walletType == "Xrp"
-              ? XrpUrl
-              :walletType=='BSC'
-              ?url
-              :walletType==="XLM"?XLMUrl: url,
-        }}
-      /> 
-    </View>
-  );
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Linking, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { WebView } from 'react-native-webview';
+import { Wallet_screen_header } from './reusables/ExchangeHeader';
+import { useSelector } from 'react-redux';
+
+
+export const TxDetail = ({route}) => {
+    const state = useSelector((state) => state);
+    const navigation = useNavigation();
+    const { transactionPath } = route.params || {};
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        if (!transactionPath) {
+            navigation.goBack();
+            Alert.alert("Error", "invalid url");
+            setLoading(false);
+        }
+    }, [transactionPath]);
+
+
+    return (
+        <View style={[styles.container,{backgroundColor:state?.THEME?.THEME === true?"black":"white"}]}>
+        <Wallet_screen_header title="Transactions" onLeftIconPress={() => navigation.goBack()} />
+            <WebView
+                source={{ uri: `${transactionPath}` }}
+                style={styles.webview}
+                onLoad={() => setLoading(false)}
+                onError={() => {
+                    setLoading(false);
+                }}
+            />
+
+            {loading && (
+                <View style={[styles.loadingContainer,{backgroundColor:state?.THEME?.THEME === true?"black":"white"}]}>
+                    <ActivityIndicator size="large" color="green" />
+                    <Text style={[styles.loadingText,{color:state?.THEME?.THEME === true?"white":"black"}]}>Collecting Transaction Details...</Text>
+                </View>
+            )}
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    // marginTop:2,
-    // height: 100,
-  },
-  content: {
-    padding: 40,
-  },
-  list: {
-    marginTop: 30,
-  },
+    container: {
+        flex: 1,
+    },
+    webview: {
+        flex: 1,
+    },
+    loadingContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize:16,
+        color:"#fff"
+    },
 });

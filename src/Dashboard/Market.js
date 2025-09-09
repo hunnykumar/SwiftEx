@@ -21,6 +21,11 @@ import Icon from "../icon";
 import { alert } from "./reusables/Toasts";
 import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import { useSelector } from "react-redux";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { Wallet_market_loading } from "./reusables/Exchange_loading";
+import monkey from "../../assets/monkey.png"
+import apiHelper from "./exchange/crypto-exchange-front-end-main/src/apiHelper";
+
 
 const Market = (props) => {
   const state=useSelector((state)=>state);
@@ -33,6 +38,7 @@ const Market = (props) => {
   const [refreshing, setRefreshing] = useState(false);
   const [updatedData, setUpdatedData] = useState([])
   const [searchItem, setSearchItem] = useState('')
+  const [Load_new_data,setLoad_new_data]=useState(true);
   const navigation = useNavigation();
   const fetchKline = async (
     setData,
@@ -42,33 +48,22 @@ const Market = (props) => {
     setTrades,
     setImageUrl
   ) => {
-    try {
-const raw = "";
-const requestOptions = {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json",
-  },
-};
-     await fetch(REACT_APP_HOST+"/market-data/getcryptodata", requestOptions)
-      .then((response) => response.json())
-      .then((responseJson) => {
-         setLoading(false);
-         setData(responseJson[0].MarketData);
-          setUpdatedData(responseJson[0].MarketData)
-          setTrades(responseJson[0].MarketData[0].trades)
-          setPrice(responseJson[0].MarketData[0].current_price);
-          setPercent(responseJson[0].MarketData[0].price_change_percentage_24h);
-          setImageUrl(responseJson[0].MarketData[0].image);
-    })
-      .catch((error) =>{ 
-       setLoading(false);
-        console.error(error);
+      setLoad_new_data(true)
+      const result = await apiHelper.get(REACT_APP_HOST+"/v1/market-data");
+      if (result.success) {
+        setLoading(false);
+        setData(result.data.marketData);
+         setUpdatedData(result.data.marketData)
+         setTrades(result.data.marketData[0].trades)
+         setPrice(result.data.marketData[0].currentPrice);
+         setPercent(result.data.marketData[0].priceChangePercentage24h);
+         setImageUrl(result.data.marketData[0].image);
+         setLoad_new_data(false)
+      } else {
+        setLoading(false);
+        console.log(error);
         alert("error", error);
-      });
-    } catch (error) {
-      console.log(error);
-    }
+      }
   };
 
   const onRefresh = () => {
@@ -89,6 +84,7 @@ const requestOptions = {
   useEffect(() => {
    const fetch_token_data=async()=>{
     try {
+      setLoad_new_data(true)
       await fetchKline(
         setData,
         setLoading,
@@ -107,14 +103,15 @@ const requestOptions = {
 
   return (
     <View style={{ backgroundColor: state.THEME.THEME===false?"#fff":"black" }}>
+    <Wallet_screen_header title="Market" onLeftIconPress={() => navigation.goBack()} />
     {Platform.OS === 'ios' &&  <StatusBar hidden={true} />}
       <View style={{ height: hp(100) }}>
         <View style={Styles.searchContainer}>
-          <Icon name="search1" type="antDesign" size={hp(2.4)} />
+          <Icon name="search1" type="antDesign" size={25} color={"black"} />
           <TextInput
             placeholder="Search Crypto"
             placeholderTextColor={"gray"}
-            style={Styles.input}
+            style={[Styles.input,{width:wp(80),fontSize:18}]}
             onChangeText={(input) => {
               setSearchItem(input)
               let UpdatedData = []
@@ -131,27 +128,28 @@ const requestOptions = {
             }}
           />
         </View>
-        <View style={Styles.iconwithTextContainer1}>
-          <Text style={{ color: "gray" }}>New DApps</Text>
+        {/* <View style={Styles.iconwithTextContainer1}> */}
+          {/* <Text style={{ color: "gray" }}>New DApps</Text> */}
           {/* <Icon
             name={"arrowright"}
             type={"antDesign"}
             size={hp(3)}
             color={"gray"}
           /> */}
-        </View>
-        <View style={{height:hp(63)}}>
+        {/* </View> */}
+        {Load_new_data?<Wallet_market_loading/>:
+        <View style={{height:hp(75),paddingBottom: hp(5)}}>
         <ScrollView
           alwaysBounceVertical={true}
           contentContainerStyle={{ marginBottom: hp(2) }}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl tintColor={"#4CA6EA"} refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {data ? (
+          {data.length>0 ? (
             data.map((item,index) => {
               const image = item.image;
-              const color = item.price_change_24h > 0 ? "green" : "red";
+              const color = item.priceChange24h > 0 ? "green" : "red";
               let data = item
               return (
                   <View key={index}>
@@ -163,16 +161,27 @@ const requestOptions = {
                       props.navigation.navigate("CoinDetails", { data: data });
                     }}
                   >
-                    <Image source={{ uri: image }} style={Styles.img} />
-                    <View style={Styles.flatContainerText}>
-                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>{item.name}</Text>
-                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>{`$ ${item.current_price ? item.current_price.toFixed(2) : "0"
+                      <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        <View style={[Styles.imgCon,{backgroundColor: state.THEME.THEME === false ?"#F2F0EF":"#171616"}]}>
+                          <Image source={{ uri: image }} style={Styles.img} />
+                        </View>
+                        <View style={Styles.flatContainerText}>
+                          <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff" }}>{item.name}</Text>
+                          <Text style={{ color: "gray", fontSize: 12, marginTop: hp(0.4) }}>{item?.symbol?.toUpperCase()}</Text>
+                        </View>
+                      </View>
+                      <View style={Styles.flatContainerPrice}>
+                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>{`$ ${item.currentPrice ? item.currentPrice.toFixed(2) : "0"
                         }`}</Text>
-                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>{`Last 24h: ${item.price_change_percentage_24h
-                          ? item.price_change_percentage_24h.toFixed(1)
+                        <View style={{flexDirection:"row",alignItems:"center"}}>
+                          {/* Number.isSafeInteger(item.priceChangePercentage24h) */}
+                          <Icon name={Number.isSafeInteger(item.priceChangePercentage24h)?"menu-down":"menu-down"} type="materialCommunity" size={20} color={Number.isSafeInteger(item.priceChangePercentage24h)?"green":"red"} />
+<Text style={{color:Number.isSafeInteger(item.priceChangePercentage24h)?"green":"red",fontSize:13}}>{`${item.priceChangePercentage24h
+                          ? item.priceChangePercentage24h.toFixed(3)
                           : "0"
                         }%`}</Text>
-                    </View>
+                        </View>
+                        </View>
                   </TouchableOpacity>
                 </ScrollView>
                   </View>
@@ -180,11 +189,12 @@ const requestOptions = {
             })
           ) : (
             <View>
-              <ActivityIndicator size="large" color="blue"/>
+                <Image source={monkey} style={Styles.monkey_img}/>
+                <Text style={{color:state.THEME.THEME===false?"black":"#fff",alignSelf:"center",fontSize:18,marginTop:hp(2)}}>No results found.</Text>
             </View>
           )}
         </ScrollView>
-        </View>
+        </View>}
       </View>
     </View>
   );
@@ -204,14 +214,31 @@ const Styles = StyleSheet.create({
     marginTop: hp(3),
     alignItems: "center",
     flexDirection: "row",
+    justifyContent:"space-between"
 
   },
   flatContainerText: {
-    marginHorizontal: wp(4),
+    marginHorizontal: wp(2),
+  },
+  flatContainerPrice: {
+    alignItems:"flex-end"
   },
   img: {
     height: hp(5),
-    width: wp(10),
+    width: wp(11),
+  },
+  imgCon: {
+    height: hp(6),
+    width: wp(13),
+    justifyContent:"center",
+    alignItems:"center",
+    borderRadius:10
+  },
+  monkey_img:{
+    width:hp(20),
+    height:hp(20),
+    alignSelf:"center",
+    marginTop:hp(13)
   },
   searchContainer: {
     flexDirection: "row",

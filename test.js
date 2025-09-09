@@ -34,10 +34,10 @@ import { REACT_APP_HOST } from "../ExchangeConstants";
 import darkBlue from "../../../../../../assets/darkBlue.png";
 import { STELLAR_URL } from "./src/Dashboard/constants";
 const Web3 = require('web3');
-const StellarSdk = require('stellar-sdk');
-StellarSdk.Network.useTestNetwork();
+import * as StellarSdk from '@stellar/stellar-sdk';
+StellarSdk.Networks.PUBLIC
 const alchemyUrl = RPC.ETHRPC;
-const server = new StellarSdk.Server(STELLAR_URL.URL);
+const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 export const NewOfferModal = () => {
   const back_data=useRoute();
   const { user, open, setOpen, getOffersData, onCrossPress }=back_data.params;
@@ -77,7 +77,7 @@ const [info_price,setinfo_price]=useState(false);
 const [info_,setinfo_]=useState(false);
 const getAccountDetails = async () => {
     try {
-      const { res, err } = await authRequest("/users/getUserDetails", GET);
+      const { res, err } = await authRequest("/users/:id", GET);
       // console.log("_+++++++",res.email)
       setemail(res.email);
       if (err) return setMessage(` ${err.message} please log in again!`);
@@ -149,7 +149,7 @@ const getAccountDetails = async () => {
       const counter_asset_buy = new StellarSdk.Asset(selectedValue === "XETH" ? "XUSD" : "XETH", AssetIssuerPublicKey);
       const transaction = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
       const offer = StellarSdk.Operation.manageOffer({
         selling: base_asset_sell,
@@ -161,7 +161,7 @@ const getAccountDetails = async () => {
 
       const offerTx = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
         .addOperation(offer)
         .setTimeout(30)
@@ -191,7 +191,7 @@ const getAccountDetails = async () => {
       const counter_asset_buy = new StellarSdk.Asset(selectedValue, AssetIssuerPublicKey);
       const transaction = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
       const offer = StellarSdk.Operation.manageOffer({
         selling: base_asset_sell,
@@ -203,7 +203,7 @@ const getAccountDetails = async () => {
 
       const offerTx = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
-        networkPassphrase: StellarSdk.Networks.TESTNET
+        networkPassphrase: StellarSdk.Networks.PUBLIC
       })
         .addOperation(offer)
         .setTimeout(30)
@@ -269,8 +269,8 @@ const getAccountDetails = async () => {
           setbalance("");
           setshow(true)
           console.log("<><", PublicKey)
-          StellarSdk.Network.useTestNetwork();
-          const server = new StellarSdk.Server(STELLAR_URL.URL);
+          StellarSdk.Networks.PUBLIC
+          const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
           server.loadAccount(PublicKey)
             .then(account => {
               console.log('Balances for account:', PublicKey);
@@ -493,7 +493,6 @@ const getAccountDetails = async () => {
   //           value: web3.utils.toHex(valueInWei)
   //     };
   
-  //     // const signedTx = await web3.eth.accounts.signTransaction(txObject, "9d9e1e7a8fdb0ed51a40a4c6b3e32c91f64615e37281150932fa1011d1a59daf");
   //     const signedTx = await web3.eth.accounts.signTransaction(txObject, state.wallet.privateKey);
 
   

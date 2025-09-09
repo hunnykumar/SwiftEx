@@ -5,6 +5,7 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -17,8 +18,11 @@ import Modal from "react-native-modal";
 import { alert } from "../reusables/Toasts";
 import { Paste } from "../../utilities/utilities";
 import Icon from "../../icon";
-import { useSelector } from "react-redux";
-const StellarSdk = require('stellar-sdk');
+import { useDispatch, useSelector } from "react-redux";
+import { STELLAR_URL } from "../constants";
+import { RAPID_STELLAR, SET_ASSET_DATA } from "../../components/Redux/actions/type";
+import { getEthBalance } from "../../components/Redux/actions/auth";
+import * as StellarSdk from '@stellar/stellar-sdk';
 const ImportStellarModal = ({
   setWalletVisible,
   Visible,
@@ -27,8 +31,9 @@ const ImportStellarModal = ({
   const state = useSelector((state) => state);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [secretkey, setsecretkey] = useState("");
+  const [loadingAccount, setloadingAccount] = useState(false);
   const navigation = useNavigation();
-
+  const dispatch = useDispatch()
 
 const add_wallet=()=>{
     if(!secretkey)
@@ -42,6 +47,7 @@ const add_wallet=()=>{
 const storeData = async (secretKey) => {
         
     try {
+      setloadingAccount(true);
       const data_1=await AsyncStorageLib.getItem('myDataKey');
       console.log('Data ',data_1);
       try {
@@ -54,10 +60,12 @@ const storeData = async (secretKey) => {
           };
           await storeData_marge(data.key1,data.key2,data.Ether_address)
       } catch (error) {
+        setloadingAccount(false);
         console.error('Error storing data:', error);
         alert('error', "Account Not import yet.");
       }
     } catch (error) {
+      setloadingAccount(false);
       console.error('Error clearing data:', error);
     }
    
@@ -96,11 +104,58 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
     console.log('Updated userTransactions:', userTransactions);
     alert('success', "Account Imported.");
     setWalletVisible(false);
-    setTimeout(() => {
-      navigation.navigate("Home");
-    }, 2000);
+    try {
+      StellarSdk.Networks.PUBLIC
+      const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
+      server.loadAccount(publicKey)
+        .then(account => {
+          dispatch({
+            type: SET_ASSET_DATA,
+            payload: account.balances,
+          })
+          account.balances.forEach(balance => {
+          dispatch({
+            type: RAPID_STELLAR,
+            payload: {
+              ETH_KEY:Ether_address,
+              STELLAR_PUBLICK_KEY:publicKey,
+              STELLAR_SECRET_KEY:secretKey,
+              STELLAR_ADDRESS_STATUS:true
+            },
+          })
+          dispatch(getEthBalance(Ether_address))
+          console.log("==Dispacthed+Waller+success==")
+          setloadingAccount(false);
+          setTimeout(() => {
+            navigation.navigate("Home");
+          }, 1000);
+          });
+        })
+        .catch(error => {
+          console.log('Error +loading +account:', error);
+          dispatch({
+            type: RAPID_STELLAR,
+            payload: {
+              ETH_KEY:Ether_address,
+              STELLAR_PUBLICK_KEY:publicKey,
+              STELLAR_SECRET_KEY:secretKey,
+              STELLAR_ADDRESS_STATUS:false
+            },
+          })
+          console.log("==Dispacthed+success==")
+          console.log(':===ERROR +STELLER ACCOUNT NEED TO ACTIVATE===:');
+          setloadingAccount(false);
+          setTimeout(() => {
+            navigation.navigate("Home");
+          }, 1000);
+        });
+    } catch (error) {
+      setloadingAccount(false);
+      console.log("Error in +get_stellar")
+    }
   } catch (error) {
-    console.error('Error saving payout:', error);
+    setloadingAccount(false);
+    console.error('Error saving +payout:', error);
     throw error;
   }
 };
@@ -162,18 +217,19 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
             >
               <Text style={style.paste}>Paste</Text>
             </TouchableOpacity>
-            <Text>Secret Key</Text>
+            <Text style={{color:"#4CA6EA"}}>Secret Key</Text>
             <TextInput
               placeholder={"Enter your secret Key here"}
-              style={style.input}
+              placeholderTextColor={"gray"}
+              style={[style.input,{color:"black"}]}
               value={secretkey}
               onChangeText={(text) => {
                 setsecretkey(text)
               }}
             />
           </View>
-          <TouchableOpacity style={style.btn} onPress={()=>{add_wallet()}}>
-            <Text style={{ color: "white" }}>Import</Text>
+          <TouchableOpacity style={[style.btn,{backgroundColor:loadingAccount?"gray":"#4CA6EA"}]} disabled={loadingAccount} onPress={()=>{add_wallet()}}>
+            {loadingAccount?<ActivityIndicator color={"#4CA6EA"} size={"small"}/>:<Text style={{ color: "white" }}>Import</Text>}
           </TouchableOpacity>
         </View>
       </Modal>
@@ -224,7 +280,8 @@ const style = StyleSheet.create({
     textAlign: "center",
     marginTop: hp(1.5),
     fontSize: 15,
-    fontWeight: "700"
+    fontWeight: "700",
+    color:"black"
   },
   inputView: {
     borderWidth: 1,

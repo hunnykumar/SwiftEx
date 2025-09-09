@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "121537912071",
+    "project_id": "proxy-server-99cc2",
+    "storage_bucket": "proxy-server-99cc2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:121537912071:android:d6bf276bdf492730e3b9a2",
+        "android_client_info": {
+          "package_name": "com.swiftex.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQ1ACIJOONkGqzQ8g8ZNUPoUsSjZFVLFM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:121537912071:android:93a902ddfa283639e3b9a2",
+        "android_client_info": {
+          "package_name": "com.app.swiftEx.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQ1ACIJOONkGqzQ8g8ZNUPoUsSjZFVLFM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

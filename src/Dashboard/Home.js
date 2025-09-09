@@ -16,10 +16,12 @@ import { REACT_APP_LOCAL_TOKEN } from "./exchange/crypto-exchange-front-end-main
 import { ExchangeNavigation } from "./exchange/crypto-exchange-front-end-main/src/Navigation";
 import { ExchangeLogin } from "./exchange/crypto-exchange-front-end-main/src/pages/auth/ExchangeLogin";
 import { AppHeader } from "./reusables/AppHeader";
+import { useIsFocused } from "@react-navigation/native";
 
 const Tab = createBottomTabNavigator();
 
 const Dashboard = ({ navigation }) => {
+  const Focused_screen=useIsFocused()
   const statee = useSelector((state) => state);
   const extend = useSelector((state) => state.extended);
   const dispatch = useDispatch();
@@ -59,7 +61,7 @@ const Dashboard = ({ navigation }) => {
     };
 
     fetchToken();
-  }, []);
+  }, [Focused_screen]);
 
   const Header1 = (title, state) => (
     <MyHeader
@@ -129,9 +131,10 @@ const Dashboard = ({ navigation }) => {
             <Text
               style={{
                 color: iconColor,
-                fontSize: 18,
+                fontSize: 16,
                 textAlign: "center",
                 marginBottom: Platform.OS === "android" ? 10 : 1,
+                marginHorizontal:1
               }}
             >
               {route.name}
@@ -169,8 +172,7 @@ const Dashboard = ({ navigation }) => {
         name="Wallet"
         component={Wallet}
         options={{
-          header: () => Header3("Wallet"),
-          headerShown: true,
+          headerShown: false,
           unmountOnBlur: true,
         }}
       />
@@ -178,25 +180,34 @@ const Dashboard = ({ navigation }) => {
         name="Market"
         component={Market}
         options={{
-          header: () => Header3("Market"),
-          headerShown: true,
+          headerShown: false,
           unmountOnBlur: true,
         }}
       />
-      <Tab.Screen
-        name="Exchange"
-        component={token ? ExchangeNavigation : ExchangeLogin}
-        options={{
-          headerShown: false,
-          tabBarStyle: { display: token ? "flex" : "none" },
-        }}
-      />
+      {token ? (
+        <Tab.Screen
+          name="Exchange"
+          component={ExchangeNavigation}
+          options={{
+            headerShown: false,
+            tabBarStyle: { display: "none" },
+          }}
+        />
+      ) : (
+        <Tab.Screen
+          name="Exchange"
+          component={ExchangeLogin}
+          options={{
+            headerShown: false,
+            tabBarStyle: { display: "none" },
+          }}
+        />
+      )}
       <Tab.Screen
         name="Settings"
         component={Settings}
         options={{
-          header: () => Header3("Settings"),
-          headerShown: true,
+          headerShown: false,
         }}
       />
     </Tab.Navigator>

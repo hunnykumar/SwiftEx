@@ -34,9 +34,12 @@ import IconWithCircle from "../Screens/iconwithCircle";
 import Icon from "../icon";
 import { Area, Chart, HorizontalAxis, Line, Tooltip, VerticalAxis } from "react-native-responsive-linechart";
 import { delay } from "lodash";
+import { useNavigation } from "@react-navigation/native";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { LineChart } from "react-native-gifted-charts";
 
 export const CoinDetails = (props) => {
-
+  const navigation=useNavigation();
   const [load,setload]=useState(false);
   const [trades, setTrades] = useState();
   const [percent, setPercent] = useState(1);
@@ -45,8 +48,12 @@ export const CoinDetails = (props) => {
   // const data = props?.route?.params?.data?.name;
   const state = useSelector((state) => state);
   const [Data, setData] = useState();
+  const [chartData, setchartData] = useState([]);
   const [timeFrame, setTimeFrame] = useState("30m");
-  const [pressed, setPressed] = useState();
+  const [pressed, setPressed] = useState(0);
+  const [lineColor, setlineColor] = useState();
+  const [points_data,setpoints_data]=useState();
+  const [points_data_time,setpoints_data_time]=useState();
   const [timeData, setTimeData] = useState([
     "5m",
     "10m",
@@ -69,6 +76,11 @@ export const CoinDetails = (props) => {
 
     return setStyle("rgba(0,153,51,0.8)");
   }
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp);
+    return `${date.getHours()}:${date.getMinutes()}`;  // Format as HH:mm
+  };
+   
   useEffect(() => {
     const fetch = async () => {
       try {
@@ -93,6 +105,19 @@ export const CoinDetails = (props) => {
    }
    time_fetch()
   }, [timeFrame]);
+  useEffect(()=>{
+    const fetch_color=async()=>{
+     try {
+      const last_Value = Data[Data.length - 1].value;
+      const second_LastValue = Data[Data.length - 2].value;
+      const line_Color = last_Value > second_LastValue ? "green" : "red";
+      setlineColor(line_Color)
+     } catch (error) {
+      console.log("*----",error)
+     }
+    }
+    fetch_color()
+  },[Data])
 
   // useEffect(()=>{
   //   setTimeout(()=>{
@@ -108,7 +133,7 @@ export const CoinDetails = (props) => {
       }
 
       await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1h&limit=5`,
+        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1h&limit=35`,
         {
           method: "GET",
         }
@@ -127,7 +152,18 @@ export const CoinDetails = (props) => {
             x: new Date(item[0]), // Use the timestamp for x
             y: parseFloat(item[4]) // Use the closing price for y
         }));
-          setData(transformedData);
+        const ptData = transformedData.map(item => ({
+          value: item.y,
+          date: new Date(item.x).toLocaleTimeString()
+        })); 
+        const pt_Data = resp.map(item => ({
+          x: new Date(parseInt(item[0])).getTime(),
+          y: parseFloat(item[4])
+        }));
+        setData(ptData);
+          setchartData(pt_Data)
+        setpoints_data(ptData[ptData?.length-1]?.value);
+        setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("----1st---",transformedData)
           delay(()=>{
             setload("true");
@@ -144,7 +180,7 @@ export const CoinDetails = (props) => {
       }
 
       await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=12h&limit=5`,
+        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=12h&limit=35`,
         {
           method: "GET",
         }
@@ -164,7 +200,18 @@ export const CoinDetails = (props) => {
             x: new Date(item[0]), // Use the timestamp for x
             y: parseFloat(item[4]) // Use the closing price for y
         }));
-          setData(transformedData);
+        const ptData = transformedData.map(item => ({
+          value: item.y,
+          date: new Date(item.x).toLocaleTimeString()
+        })); 
+        const pt_Data = resp.map(item => ({
+          x: new Date(parseInt(item[0])).getTime(),
+          y: parseFloat(item[4])
+        }));
+        setData(ptData);
+          setchartData(pt_Data)
+          setpoints_data(ptData[ptData?.length-1]?.value);
+          setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("---2nd----",transformedData)
           delay(()=>{
             setload("true");
@@ -181,7 +228,7 @@ export const CoinDetails = (props) => {
       }
 
       await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1d&limit=5`,
+        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1d&limit=35`,
         {
           method: "GET",
         }
@@ -200,7 +247,18 @@ export const CoinDetails = (props) => {
             x: new Date(item[0]), // Use the timestamp for x
             y: parseFloat(item[4]) // Use the closing price for y
         }));
-          setData(transformedData);
+          const ptData = transformedData.map(item => ({
+            value: item.y,
+            date: new Date(item.x).toLocaleTimeString()
+          })); 
+          const pt_Data = resp.map(item => ({
+            x: new Date(parseInt(item[0])).getTime(),
+            y: parseFloat(item[4])
+          }));
+          setData(ptData);
+          setchartData(pt_Data)
+          setpoints_data(ptData[ptData?.length-1]?.value);
+          setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("----3rd---",transformedData)
           delay(()=>{
             setload("true");
@@ -217,7 +275,7 @@ export const CoinDetails = (props) => {
       }
 
       await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=30m&limit=5`,
+        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1m&limit=35`,
         {
           method: "GET",
         }
@@ -237,7 +295,18 @@ const transformedData = resp.map(item => ({
                     x: new Date(item[0]), // Use the timestamp for x
                     y: parseFloat(item[4]) // Use the closing price for y
                 }));
-          setData(transformedData);
+          const ptData = transformedData.map(item => ({
+            value: item.y,
+            date: new Date(item.x).toLocaleTimeString()
+          })); 
+          const pt_Data = resp.map(item => ({
+            x: new Date(parseInt(item[0])).getTime(),
+            y: parseFloat(item[4])
+          }));
+          setData(ptData);
+          setchartData(pt_Data)
+          setpoints_data(ptData[ptData?.length-1]?.value);
+          setpoints_data_time(ptData[ptData?.length-1]?.date);
           console.log("----4th---",transformedData)
           delay(()=>{
             setload("true");
@@ -309,26 +378,122 @@ const transformedData = resp.map(item => ({
 
 
   return (
-    <ScrollView style={{backgroundColor:state.THEME.THEME===false?"#fff":"black"}}>
-    {/* // <ScrollView
-    //   contentContainerStyle={{ backgroundColor: "white"}}
-    // > */}
-      {/* <View style={{flexDirection:"row",alignItems:"center",marginHorizontal:wp(7),marginTop:hp(2)}}>
-  <Image source={{uri: image}} style={{height:hp(3),width:wp(6)}}/>
-  <Avatar.Image {...props} source={{ uri: image }} />
-  <Text style={{marginHorizontal:wp(3)}}>wallet:{props?.route?.params?.data?.name}</Text>
-</View> */}
+    <View style={{backgroundColor:state.THEME.THEME===false?"#fff":"black"}}>
+    <Wallet_screen_header title="Coin-Detail" onLeftIconPress={() => navigation.goBack()} />
+   
+      <View style={{ alignItems: "flex-start", marginHorizontal: wp(7), marginTop: hp(2) }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Image source={{ uri: image }} style={{ height: hp(3), width: wp(6) }} />
+          <Text style={{ marginHorizontal: wp(1),color: state.THEME.THEME === false ? "black" : "#fff",fontSize:19,fontWeight:"400" }}>{props?.route?.params?.data?.name}</Text>
+        </View>
+        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 34, fontWeight: "600", marginVertical: hp(0.1) }}>$ {points_data} </Text>
+        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 13, fontWeight: "600", marginVertical: hp(0.1) }}>{points_data_time} </Text>
+        <View style={{flexDirection:"row",alignItems:"center"}}>
+          <Icon name={props?.route?.params?.data?.priceChangePercentage24h.toFixed(1) > 0 ?"trending-up":"trending-down"} type={"materialCommunity"} size={20} color={props?.route?.params?.data?.priceChangePercentage24h.toFixed(1) > 0 ? "green" : "red"} />
+          <Text style={{ color: props?.route?.params?.data?.priceChangePercentage24h.toFixed(1) > 0 ? "green" : "red", fontSize: 13, fontWeight: "600", marginVertical: hp(0.1) }}> {props?.route?.params?.data?.priceChangePercentage24h.toFixed(1)}%</Text>
+        </View>
 
+      </View>
 
-
-      <View style={styles.btnView}>
+  
+    <View style={{
+          height: hp(30),
+          width: wp(70),
+          marginLeft:hp(-13),
+          alignSelf: "center",
+        }}>
+{load===false?<ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} style={{marginTop:hp(13),marginLeft:110}}/>:
+    <View
+    style={{ height: hp(28), width: wp(95), padding: 1 ,backgroundColor: state.THEME.THEME===false?"#fff":"black",justifyContent:"center"
+    }}>
+            {/* <LineChart
+              hideRules
+              data={Data}
+              hideDataPoints
+              adjustToWidth
+              spacing={wp(90) / Data.length-1}
+              isAnimated={true}
+              curved
+              color={lineColor}
+              xAxisLabelsHeight={-15}
+              hideYAxisText
+              yAxisOffset={Data[0].value}
+              height={50}
+              yAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
+              xAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
+              pointerConfig={{
+                pointerStripColor: lineColor,
+                pointerColor: lineColor,
+                pointerLabelComponent: item => {
+                  setpoints_data(item[0].value)
+                  setpoints_data_time(item[0].date)
+                }
+              }}
+            /> */}
+              <Chart
+                                style={{ width: wp(98), height: 230 }}
+                                data={chartData}
+                                padding={{ left: 10, bottom: 30, right: 20, top: 30 }}
+                                xDomain={{
+                                    min: Math.min(...chartData.map(d => d.x)),
+                                    max: Math.max(...chartData.map(d => d.x))
+                                }}
+                                yDomain={{
+                                    min: Math.min(...chartData.map(d => d.y)) - (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))), // 10% padding below
+                                    max: Math.max(...chartData.map(d => d.y)) + (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))) // 10% padding above
+                                }}
+                            >
+                                <Line
+                                    tooltipComponent={
+                                        <Tooltip theme={{
+                                            formatter: ({ y, x }) => {
+                                                setpoints_data(y), setpoints_data_time(x)
+                                                setpoints_data_time(new Date(parseInt(x)).toLocaleString())
+                                            },
+                                            shape: {
+                                                width: 0,
+                                                height: 0,
+                                                dx: 0,
+                                                dy: 0,
+                                                color: 'black',
+                                            }
+                                        }} />
+                                    }
+                                    theme={{
+                                        stroke: { color: lineColor || '#44bd32', width: 2 },
+                                        scatter: {
+                                            selected: { width: 10, height: 11, rx: 5, color: '#2F7DFF' }
+                                        }
+                                    }}
+                                    smoothing="bezier"
+                                />
+                            </Chart>
+    </View>}
+    </View>
+    <View style={styles.btnView}>
+    <TouchableOpacity
+          style={
+            pressed == "0"
+              ? {
+                ...styles.tabBtns,
+                backgroundColor: "#2164C1",
+              }
+              : styles.tabBtns
+          }
+          onPress={() => {
+            setPressed("0");
+            setTimeData(["10m", "20m", "30m", "40m", "50m", "60m"]);
+            setTimeFrame("1m");
+          }}
+        >
+          <Text style={{ color: pressed == "0" ? "#fff" : "grey",fontWeight:"bold" }}>1m</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={
             pressed == "1"
               ? {
                 ...styles.tabBtns,
-                borderColor: "#4CA6EA",
-                backgroundColor: "#4CA6EA",
+                backgroundColor: "#2164C1",
               }
               : styles.tabBtns
           }
@@ -339,7 +504,7 @@ const transformedData = resp.map(item => ({
             setTimeFrame("1h");
           }}
         >
-          <Text style={{ color: pressed == "1" ? "#fff" : "grey" }}>1h</Text>
+          <Text style={{ color: pressed == "1" ? "#fff" : "grey",fontWeight:"bold" }}>1h</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -347,8 +512,7 @@ const transformedData = resp.map(item => ({
             pressed == "2"
               ? {
                 ...styles.tabBtns,
-                borderColor: "#4CA6EA",
-                backgroundColor: "#4CA6EA",
+                backgroundColor: "#2164C1",
               }
               : styles.tabBtns
           }
@@ -360,7 +524,7 @@ const transformedData = resp.map(item => ({
             setTimeFrame("12h");
           }}
         >
-          <Text style={{ color: pressed == "2" ? "#fff" : "grey" }}>12h</Text>
+          <Text style={{ color: pressed == "2" ? "#fff" : "grey",fontWeight:"bold" }}>12h</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -368,8 +532,7 @@ const transformedData = resp.map(item => ({
             pressed == "3"
               ? {
                 ...styles.tabBtns,
-                borderColor: "#4CA6EA",
-                backgroundColor: "#4CA6EA",
+                backgroundColor: "#2164C1",
               }
               : styles.tabBtns
           }
@@ -381,112 +544,9 @@ const transformedData = resp.map(item => ({
             setTimeFrame("1d");
           }}
         >
-          <Text style={{ color: pressed == "3" ? "#fff" : "grey" }}>3d</Text>
+          <Text style={{ color: pressed == "3" ? "#fff" : "grey",fontWeight:"bold" }}>3d</Text>
         </TouchableOpacity>
       </View>
-      {/* <YAxis
-        data={Data ? Data : data}
-        style={{
-          // marginRight: wp(59),
-          // marginLeft: wp(-4),
-          height: hp(36),
-          width: wp(15),
-          marginTop: hp(9),
-          position: "absolute",
-          zIndex: 10,
-          marginLeft:wp(3),
-        }}
-        contentInset={{ top: 10,bottom:20 }}
-        // contentInset={contentInset}
-        svg={{
-          fill: "gray",
-          fontSize: 12,
-          fontWeight: "500"
-        }}
-        numberOfTicks={8}
-        formatLabel={(value) => `${value}`}
-      />
-
-      <XAxis
-        data={Data ? Data : data}
-
-        style={styles.xAxis}
-        formatLabel={(value, index) => timeData[index]}
-        contentInset={{ left: 18, right: 18 }}
-        svg={{
-          fill: "gray",
-          fontSize: 12,
-          fontWeight: "500"
-        }}
-      /> */}
-    <View style={{
-          height: hp(30),
-          width: wp(70),
-          marginLeft:hp(-13),
-          alignSelf: "center",
-        }}>
-           {/* <LineChart
-        style={{
-          height: hp(30),
-          width: wp(70),
-          alignSelf: "center",
-        }}
-        data={Data ? Data : data}
-        svg={{ stroke: "rgb(134, 65, 244)" }}
-        contentInset={{ top: 10, bottom: 10 }}
-      /> */}
-
-{load===false?<ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} style={{marginTop:hp(13),marginLeft:110}}/>:
-    //   <LineChart
-    //   style={{ flex: 1 }}
-    //   data={Data ? Data : data}
-    //   svg={{ stroke: 'rgb(134, 65, 244)' }}
-    //   contentInset={{ top: 10, bottom: 10 }}
-    //   >
-    //   <Grid />
-    // </LineChart>
-    <Chart
-                        style={{ height: hp(39), width: wp(95), padding: 1 }}
-                        data={Data}
-                        padding={{ left: 45, bottom: 30, right: 20, top: 30 }}
-                        xDomain={{ min: new Date(Data[0].x).getTime(), max: new Date(Data[Data.length - 1].x).getTime() }}
-                        yDomain={{ min: Math.min(...Data.map(d => d.y)), max: Math.max(...Data.map(d => d.y)) }}
-                    >
-                        <VerticalAxis tickCount={10} theme={{ labels: { formatter: (v) => v.toFixed(0) ,label: { color:state.THEME.THEME===false?"black":"#fff" }} }} />
-                        <HorizontalAxis  tickCount={10} theme={{
-                          labels: {
-                            formatter: (v) => {
-                              const date = new Date(v);
-                              return `${date.getHours()}:${date.getMinutes()}`;
-                            },
-                            label: { color:state.THEME.THEME===false?"black":"#fff" }
-                          },
-                        }} />
-                        <Area theme={{ gradient: { from: { color: '#44bd32' }, to: { color: '#44bd32', opacity: 0.2 } } }} />
-                        <Line
-                            tooltipComponent={<Tooltip theme={{ label: {
-                              color: 'white',
-                              fontSize: 12,
-                              fontWeight: 700,
-                              textAnchor: 'middle',
-                              opacity: 1,
-                              dx: 0,
-                              dy: 16.5,
-                            },
-                            shape: {
-                              width: 70,
-                              height: 20,
-                              dx: 0,
-                              dy: 20,
-                              rx: 4,
-                              color: 'black',
-                            },
-                            }}/>}
-                            theme={{ stroke: { color: '#44bd32', width: 5 }, scatter: { default: { width: 8, height: 8, rx: 4, color: '#44ad32' }, selected: { color: 'red' } } }}
-                        />
-                    </Chart>
-}
-          </View>
       {/* <AreaChart
         style={{
           height: hp(30),
@@ -502,51 +562,76 @@ const transformedData = resp.map(item => ({
       >
         <Grid />
       </AreaChart> */}
-    <View style={{ marginTop: hp(9) }}>
-    <View style={[styles.iconText,{backgroundColor:state.THEME.THEME===false?"#f2f2f2":"black"}]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}> Last 24h :</Text>
-          <View style={styles.arrowText}>
-            <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>
-              {props?.route?.params?.data?.price_change_percentage_24h}%
-            </Text>
-            <Icon name="arrow-up-right" type={"feather"} size={20}  color={state.THEME.THEME===false?"black":"#fff"} />
-          </View>
-        </View>
+      <View style={{height:hp(40),marginTop:8}}>
+      <ScrollView style={{paddingBottom:hp(10),backgroundColor: state.THEME.THEME === false ? "#F4F4F4" : "black" }}>
+      <View style={[styles.market_data,{borderColor:state.THEME.THEME === false ? "#F4F4F4" : "black",borderTopColor:state.THEME.THEME === false ? "#F4F4F4" : "black"}]}>
+        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 17,paddingBottom:hp(1.6),fontWeight:"600" }}>{props?.route?.params?.data?.name} Price (24H) </Text>
+        <View style={{flexDirection:"row"}}>
         <View style={[styles.iconText]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>USD :</Text>
+          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Price USD</Text>
+            <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.current_price}</Text>
           <View style={styles.arrowText}>
-            <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>$ {props?.route?.params?.data?.current_price}</Text>
-            <Icon name="arrow-up-right" type={"feather"} size={20} color={state.THEME.THEME===false?"black":"#fff"} />
           </View>
         </View>
 
-        <View style={[styles.iconText,{backgroundColor:state.THEME.THEME===false?"#f2f2f2":"black"}]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>Market Cap : </Text>
-          <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}> ${props?.route?.params?.data?.market_cap}</Text>
-        </View>
-
         <View style={[styles.iconText]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>Total Supply :</Text>
-          <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>${props?.route?.params?.data?.total_supply}</Text>
+          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>24H high </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.high_24h}
+          <Icon name="arrow-up-right" type={"feather"} size={20} color={state.THEME.THEME===false?"black":"#fff"} /></Text>
+        </View>
         </View>
 
-        <View style={[styles.iconText,{backgroundColor:state.THEME.THEME===false?"#f2f2f2":"black"}]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}> 24H high :</Text>
-          <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>${props?.route?.params?.data?.high_24h} </Text>
+        <View style={{flexDirection:"row"}}>
+          <View style={[styles.iconText]}>
+           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>24H low </Text>
+           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.low_24h}
+           <Icon name="arrow-down-left" type={"feather"} size={20} color={state.THEME.THEME===false?"black":"#fff"} /></Text>
+          </View>
+          <View style={[styles.iconText]}>
+           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Price change 24H </Text>
+           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff",color:Number.isSafeInteger(props?.route?.params?.data?.priceChangePercentage24h)?"green":"red"}]}>{props?.route?.params?.data?.priceChangePercentage24h}%</Text>
+          </View>
         </View>
         <View style={[styles.iconText]}>
-
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}> 24H low :</Text>
-          <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>${props?.route?.params?.data?.low_24h}</Text>
+          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>All Time High </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.ath}</Text>
         </View>
-        <View style={[styles.iconText,{backgroundColor:state.THEME.THEME===false?"#f2f2f2":"black"}]}>
-          <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}> All Time High :</Text>
-          <Text style={[styles.heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>${props?.route?.params?.data?.ath}</Text>
-        </View>
+       
       </View>
 
+      <View style={[styles.market_data, { marginTop:hp(1),marginBottom:hp(2),borderColor:state.THEME.THEME === false ? "#F4F4F4" : "black"}]}>
+        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 17,paddingBottom:hp(1.6),fontWeight:"600" }}>Market stats</Text>
+        
+        <View style={{flexDirection:"row"}}>
+         <View style={[styles.iconText]}>
+          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Market Cap Rank </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>{props?.route?.params?.data?.market_cap_rank}</Text>
+         </View>
+         <View style={[styles.iconText]}>
+          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Market Cap </Text>
+          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}> ${props?.route?.params?.data?.market_cap}</Text>
+          </View>
+        </View>
+
+        <View style={{flexDirection:"row"}}>
+          <View style={[styles.iconText]}>
+           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Volume </Text>
+           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.total_volume}</Text>
+          </View>
+          <View style={[styles.iconText]}>
+           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Total Supply </Text>
+           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.total_supply}</Text>
+          </View>
+        </View>
+
+        </View>
+      </ScrollView>
+      </View>
+
+
+
   {/* </ScrollView> */}
-  </ScrollView>
+  </View>
   );
 };
 
@@ -562,13 +647,9 @@ const styles = StyleSheet.create({
     marginTop: hp(5),
   },
   iconText: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignSelf: "center",
-    width: wp(88),
-    marginTop: hp(1),
-    // backgroundColor:"gray",
-    padding:10
+    alignSelf: "flex-start",
+    width: wp(50),
+    marginVertical:hp(0.6)
   },
   arrowText: {
     flexDirection: "row",
@@ -584,7 +665,7 @@ const styles = StyleSheet.create({
   tabBtns: {
     borderColor: "gray",
     paddingVertical: hp(1),
-    width: wp(23),
+    width: wp(18),
     alignItems: "center",
     borderRadius: hp(2),
   },
@@ -594,12 +675,18 @@ const styles = StyleSheet.create({
     alignContent: "center",
     alignItems: "center",
     alignSelf: "center",
-    width: wp(85),
-    backgroundColor: "#dadadada",
-    borderRadius: hp(2),
-    marginTop: hp(2),
-    // paddingVertical: hp(0.6),
+    width: wp(90),
+    marginTop: hp(-2),
     justifyContent: "space-between",
   },
-  heading: { color: "black", fontSize: 14, fontWeight: "700" }
+  heading: { color: "black", fontSize: 14, fontWeight: "600" },
+  market_data: {
+    marginTop: hp(1),
+    paddingHorizontal: wp(1),
+    paddingVertical:hp(1),
+    borderTopColor: "#75747433",
+    borderWidth: 1.8,
+    width: wp(95),
+    alignSelf: "center"
+  }
 });

@@ -7,6 +7,8 @@ import {
   TextInput,
   ActivityIndicator,
   TouchableOpacity,
+  NativeModules,
+  Platform,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -28,6 +30,10 @@ import { alert } from "../reusables/Toasts";
 import { Paste } from "../../utilities/utilities";
 import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../../icon";
+import { recoverMultiChainWallet } from "../../utilities/WalletManager";
+import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
+const { EthereumWallet } = NativeModules;
 
 const xrpl = require("xrpl");
 
@@ -148,7 +154,11 @@ const ImportMultiCoinWalletModal = ({
     }
   }, [mnemonic, accountName])
 
-
+  const handleUsernameChange = (text) => {
+    // Remove whitespace from the username
+    const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
+    setAccountName(formattedUsername);
+  };
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
@@ -174,8 +184,9 @@ const ImportMultiCoinWalletModal = ({
             <Text style={style.label}>Name</Text>
             <TextInput
               value={accountName}
-              onChangeText={(text) => setAccountName(text)}
-              style={{ width: wp("78%") }}
+              maxLength={20}
+              onChangeText={(text) =>{handleUsernameChange(text)}}
+              style={{ width: wp("78%"),color:"black" }}
               placeholder={accountName ? accountName : "Wallet 1"}
               placeholderTextColor={"gray"}
             />
@@ -192,10 +203,10 @@ const ImportMultiCoinWalletModal = ({
             >
               <Text style={style.paste}>Paste</Text>
             </TouchableOpacity>
-            <Text>Phrase</Text>
+            <Text style={{color:"#4CA6EA"}}>Phrase</Text>
             <TextInput
               placeholder={"Please enter your mnemonic phrase here"}
-              style={style.input}
+              style={[style.input,{color:"black"}]}
               value={mnemonic}
               onChangeText={(text) => {
                 setMnemonic(text);
@@ -239,28 +250,22 @@ const ImportMultiCoinWalletModal = ({
                     "Incorrect Mnemonic. Please provide a valid Mnemonic"
                   );
                 }
-                const xrpWalletFromM = xrpl.Wallet.fromMnemonic(trimmedPhrase);
-                const entropy = ethers.utils.mnemonicToEntropy(trimmedPhrase);
-                console.log(
-                  "\t===> seed Created from mnemonic",
-                  entropy.split("x")[1]
-                );
-                const xrpWallet = xrpl.Wallet.fromEntropy(
-                  entropy.split("x")[1]
-                ); // This is suggested because we will get seeds also
-                console.log(xrpWallet); // Produces different addresses
-
-                const accountFromMnemonic =
-                  ethers.Wallet.fromMnemonic(trimmedPhrase);
-                const Keys = accountFromMnemonic._signingKey();
-                const privateKey = Keys.privateKey;
+                // const xrpWalletFromM = xrpl.Wallet.fromMnemonic(trimmedPhrase); // UNCOMMENT
+                const accountFromMnemonic = Platform.OS==="android"?await EthereumWallet.recoverMultiChainWallet(trimmedPhrase):await recoverMultiChainWallet(trimmedPhrase);
                 const wallet = {
-                  address: accountFromMnemonic.address,
-                  privateKey: privateKey,
+                  address: accountFromMnemonic.ethereum.address,
+                  privateKey: accountFromMnemonic.ethereum.privateKey,
                   xrp: {
-                    address: xrpWallet.classicAddress,
-                    privateKey: xrpWallet.seed,
+                    // address: xrpWallet.classicAddress, // UNCOMMENT
+                    // privateKey: xrpWallet.seed, // UNCOMMENT
+                    address: "000000000",
+                    privateKey: "000000000",
                   },
+                  stellarWallet: {
+                    publicKey: accountFromMnemonic.stellar.publicKey,
+                    secretKey: accountFromMnemonic.stellar.secretKey
+                  },
+
                 };
                 /* const response = saveUserDetails(accountFromMnemonic.address).then(async (response)=>{
                 if(response===400){
@@ -278,12 +283,6 @@ const ImportMultiCoinWalletModal = ({
 
 
               })*/
-                const accounts = {
-                  address: wallet.address,
-                  privateKey: wallet.privateKey,
-                  name: accountName,
-                  wallets: [],
-                };
                 let wallets = [];
                 const data = await AsyncStorageLib.getItem(`${user}-wallets`)
                   .then((response) => {
@@ -307,13 +306,32 @@ const ImportMultiCoinWalletModal = ({
                     mnemonic: trimmedPhrase,
                     name: accountName,
                     xrp: {
-                      address: xrpWallet.classicAddress,
-                      privateKey: xrpWallet.seed,
+                      // address: xrpWallet.classicAddress, // UNCOMMENT
+                      // privateKey: xrpWallet.seed,  // UNCOMMENT
+                      address: "000000000",
+                      privateKey: "000000000",
+                    },
+                    stellarWallet: {
+                      publicKey: wallet.stellarWallet.publicKey,
+                      secretKey: wallet.stellarWallet.secretKey
                     },
                     walletType: "Multi-coin",
                     wallets: wallets,
                   },
                 ];
+                const resultApi =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
+                  "multiChainAddress":wallet.address,
+                  "stellarAddress": wallet.stellarWallet.publicKey,
+                  "isPrimary": true
+                });
+                console.log("result---result",resultApi)
+                
+                if (resultApi.success) {
+                   alert("success","wallet synced!");
+                } else {
+                  alert("error","unable to sync wallet.");
+                  console.log('Error:', resultApi.error, 'Status:', resultApi.status);
+                }
                 // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
 
                 dispatch(AddToAllWallets(allWallets, user)).then((response) => {
@@ -351,6 +369,7 @@ const ImportMultiCoinWalletModal = ({
 
                 let result = [];
               } catch (e) {
+                console.log("--====000---",e)
                 alert("error", e);
                 setLoading(false);
                 setWalletVisible(false);
@@ -496,7 +515,8 @@ const style = StyleSheet.create({
     textAlign: "center",
     marginTop: hp(1.5),
     fontSize: 15,
-    fontWeight: "700"
+    fontWeight: "700",
+    color:"black"
   },
   inputView: {
     borderWidth: 1,

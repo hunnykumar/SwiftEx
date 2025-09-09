@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   FlatList,
   TouchableOpacity,
+  SafeAreaView,
 } from "react-native";
 import { TextInput, Checkbox } from "react-native-paper";
 import {
@@ -26,6 +27,9 @@ import { useNavigation } from "@react-navigation/native";
 import ModalHeader from "../reusables/ModalHeader";
 import { alert } from "../reusables/Toasts";
 import Icon from "../../icon";
+import Snackbar from "react-native-snackbar";
+import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 const CheckNewWalletMnemonic = ({
   Wallet,
   Visible,
@@ -203,17 +207,17 @@ const CheckNewWalletMnemonic = ({
           SetVisible(false);
         }}
       >
-        <View style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
+        <SafeAreaView style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
           {/* <ModalHeader Function={closeModal} name={'Check Mnemonic'}/> */}
-          <Icon type={'ionicon'} name='close-outline' color={'#fff'} size={24} style={style.crossIcon} onPress={onCrossPress}/>
+          <Icon name={"arrow-left"} type={"materialCommunity"} color={'#fff'} size={24} style={style.crossIcon} onPress={onCrossPress}/>
           <Text style={style.verifyText}>Verify Secret Phrase</Text>
           <Text style={style.wordText}>
            Please top on the correct answer of the below seed phrases.
           </Text>
           {shuffledQuestions.map((q, index) => (
             <View key={index} style={{ marginVertical: 5 }}>
-              <Text style={{marginLeft:wp(3),color:"#fff"}}>{q.question}</Text>
-             <View style={{flexDirection:"row",marginLeft:wp(19)}}>
+              <Text style={{ marginHorizontal: wp(5),color:"#fff"}}>{q.question}</Text>
+             <View style={{flexDirection:"row",marginHorizontal: wp(5)}}>
              {q.options.map((option, optIndex) => (
                 <TouchableOpacity
                   key={optIndex}
@@ -223,14 +227,15 @@ const CheckNewWalletMnemonic = ({
                     borderColor:"#4CA6EA",
                     borderWidth:0.6,
                     marginHorizontal:wp(1.5),
-                    width:wp(20),
+                    width:wp(26),
                     height:hp(5),
+                    marginVertical:hp(0.5),
                     alignItems:"center",
                     justifyContent:"center"
                   }}
                   onPress={() => handleAnswer(index, option)}
                 >
-                  <Text>{option}</Text>
+                  <Text style={{color:"black"}}>{option}</Text>
                 </TouchableOpacity>
               ))}
              </View>
@@ -238,11 +243,11 @@ const CheckNewWalletMnemonic = ({
           ))}
       
 
-          {loading ? (
+          {loading ?
+            <View style={[style.ButtonView,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
             <ActivityIndicator size="large" color="green" />
-          ) : (
-            <Text> </Text>
-          )}
+            </View>
+         :
           <View
             style={{
               display: "flex",
@@ -288,13 +293,17 @@ const CheckNewWalletMnemonic = ({
                             address: Wallet.xrp.address,
                             privateKey: Wallet.xrp.privateKey,
                           },
+                          stellarWallet: {
+                            publicKey: Wallet.stellarWallet.publicKey,
+                            secretKey: Wallet.stellarWallet.secretKey
+                          },
                           wallets: wallets,
                         },
                       ];
                       // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
   
                       dispatch(AddToAllWallets(allWallets, user)).then(
-                        (response) => {
+                        async(response) => {
                           if (response) {
                             if (response.status === "Already Exists") {
                               alert(
@@ -304,6 +313,19 @@ const CheckNewWalletMnemonic = ({
                               setLoading(false);
                               return;
                             } else if (response.status === "success") {
+                              const result =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
+                                "multiChainAddress":Wallet.address,
+                                "stellarAddress": Wallet.stellarWallet.publicKey,
+                                "isPrimary": true
+                              });
+                              console.log("result---result",result)
+                              
+                              if (result.success) {
+                                 alert("success","wallet synced!");
+                              } else {
+                                alert("error","unable to sync wallet.");
+                                console.log('Error:', result.error, 'Status:', result.status);
+                              }
                               AsyncStorageLib.setItem("currentWallet",Wallet?.accountName)
                               dispatch(
                                 setCurrentWallet(
@@ -340,16 +362,34 @@ const CheckNewWalletMnemonic = ({
                     alert("error", "Failed to import wallet. Please try again");
                   }
                 } else {
-                  alert("error","Incorrect Answers, please try again");
-                  setAnswers(Array(4).fill(null));
-                  shuffleQuestions();
+                  const hasNull = answers.some((answer) => answer === null);
+                  if (hasNull) {
+                    Snackbar.show({
+                      text: 'Please provide all answers before submitting.',
+                      duration: Snackbar.LENGTH_SHORT,
+                      backgroundColor: 'red',
+                    });
+                    setAnswers(Array(4).fill(null));
+                    shuffleQuestions();
+                  }
+                  else{
+
+                    Snackbar.show({
+                      text: 'Incorrect Answers, please try again',
+                      duration: Snackbar.LENGTH_SHORT,
+                      backgroundColor:'red',
+                    });
+                    setAnswers(Array(4).fill(null));
+                    shuffleQuestions();
+                  }
                 }
               }}
             >
               <Text style={{ color: "white" }}>Import</Text>
             </TouchableOpacity>
           </View>
-        </View>
+          }
+        </SafeAreaView>
       </Modal>
     </Animated.View>
   );
@@ -359,13 +399,10 @@ export default CheckNewWalletMnemonic;
 
 const style = StyleSheet.create({
   Body: {
-    backgroundColor: "white",
-    height: hp(85),
-    width: wp(95),
-    borderRadius: 20,
-    alignSelf: "center",
-    borderColor:"#145DA0",
-    borderWidth:0.9,
+    width: wp(100),
+    height:hp(95),
+    alignSelf:"center",
+    textAlign: "center",
   },
   welcomeText: {
     fontSize: 15,
@@ -445,15 +482,17 @@ const style = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "600",
-    textAlign: "center",
+    textAlign: "left",
     marginTop: hp(1),
+    marginHorizontal: wp(5),
   },
   wordText: {
     color: "#fff",
-    textAlign: "center",
-    marginTop: hp(1),
+    textAlign: "left",
+    marginTop: hp(2),
     width: wp(88),
     marginHorizontal: wp(5),
+    marginBottom:hp(2)
   },
   itemText: {
     textAlign: "left",
@@ -461,18 +500,17 @@ const style = StyleSheet.create({
     marginHorizontal: wp(1.5),
   },
   ButtonView: {
-    backgroundColor:"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
+    backgroundColor:"#2164C1",
     width: wp(85),
     alignSelf: "center",
     alignItems: "center",
     padding: 10,
-    borderRadius: 10,
+    borderRadius: 50,
     marginTop: hp(3),
-    borderColor:"#145DA0",
-    borderWidth:0.9,
+    paddingVertical: hp(1.7),
   },
   crossIcon:{
-    alignSelf:"flex-end",
+    alignSelf:"flex-start",
     padding:hp(1.5)
   }
 });

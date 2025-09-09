@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
-import { Alert } from 'react-native'
-// import messaging from '@react-native-firebase/messaging'
+import { Alert, PermissionsAndroid, Platform } from 'react-native'
+import messaging from '@react-native-firebase/messaging'
 //import { useNavigation } from '@react-navigation/native'
 //import { firebaseNotification } from './firebasePushMessages'
 //import { useAsyncStorage } from '@react-native-community/async-storage'
@@ -9,6 +9,7 @@ import {SendNotification} from "./pushController"
 import AsyncStorageLib from '@react-native-async-storage/async-storage'
 import  Clipboard from "@react-native-clipboard/clipboard";
 import { firebaseNotification } from './firebasePushMessages'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 
 const copyToClipboard = (text) => {
@@ -37,7 +38,8 @@ const useFirebaseCloudMessaging = (navigation) => {
 
           if(token){
             AsyncStorageLib.setItem('fcmtoken',JSON.stringify(token))
-            //Alert.alert('firebase Token', token, [ {text: `copy`, onPress: () => copyToClipboard(token), style: 'cancel'}, {text: 'close alert', onPress: () => console.log('closed')}, ], { cancelable: true});
+            // copyToClipboard(token)
+            // Alert.alert('firebase Token', token, [ {text: `copy`, onPress: () => copyToClipboard(token), style: 'cancel'}, {text: 'close alert', onPress: () => console.log('closed')}, ], { cancelable: true});
           }
 
           //saveFcmToken(token)
@@ -45,15 +47,49 @@ const useFirebaseCloudMessaging = (navigation) => {
     }
   }
 
-  const requestUserPermission = async () => {
-    const authStatus = await messaging().requestPermission()
-    const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL
-
-    if (enabled) {
-      console.log('Authorization status:', authStatus)
+  const FCM_getToken = async () => {
+    try {
+      const token = await messaging().getToken();
+      // Save token to AsyncStorage for future use
+      if (token) {
+        await AsyncStorageLib.setItem('fcmtoken',JSON.stringify(token))
+      }
+  
+      return token;
+    } catch (error) {
+      console.error("Error fetching Firebase Token:", error);
+      return null; // Return null in case of an error
     }
+  };
+
+  const usergetToken = async () => {
+    const token = null //await getFcmToken()
+    if (!token) {
+      messaging()
+        .getToken()
+        .then(token => {
+          if(token){
+            copyToClipboard(token)
+          }
+        })
+    }
+  }
+  
+  const requestUserPermission = async () => {
+    if (Platform.OS === 'android' && Platform.Version >= 33) {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+      );
+  
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('Notification permission granted ');
+      } else {
+        console.log('Notification permission denied');
+      }
+    } else {
+      console.log('No need to request notification permission');
+    }
+  
   }
 
   useEffect(() => {
@@ -74,21 +110,20 @@ const useFirebaseCloudMessaging = (navigation) => {
   }, [])
 
   useEffect(() => {
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
      // Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage))
       console.log(remoteMessage.notification.body)
       console.log(remoteMessage.notification.title)
-
       //SendNotification(remoteMessage.notification.title,remoteMessage.notification.body)
-     firebaseNotification(remoteMessage.notification.title,'SwiftEx','You have new Exchange updates',remoteMessage.notification.body)
+    //  await firebaseNotification(remoteMessage.notification.title,'SwiftEx','You have new Exchange updates',remoteMessage.notification.body)
     })
-    messaging().setBackgroundMessageHandler(async remoteMessage => {
-      console.log('Message handled in the background!', remoteMessage);
-      firebaseNotification(remoteMessage.notification.title,'SwiftEx','You have new Exchange updates',remoteMessage.notification.body)
-      //SendNotification(remoteMessage.notification.title,remoteMessage.notification.body)
+    // messaging().setBackgroundMessageHandler(async remoteMessage => {
+    //   console.log('Message handled in the background!', remoteMessage);
+    //   // firebaseNotification(remoteMessage.notification.title,'SwiftEx','You have new Exchange updates',remoteMessage.notification.body)
+    //   //SendNotification(remoteMessage.notification.title,remoteMessage.notification.body)
 
 
-    });
+    // });
 
     return unsubscribe
   }, [])
@@ -122,7 +157,9 @@ const useFirebaseCloudMessaging = (navigation) => {
   return {
     fcmToken,
     getToken,
-    requestUserPermission
+    requestUserPermission,
+    FCM_getToken,
+    usergetToken
   }
 }
 

@@ -28,7 +28,9 @@ import "react-native-get-random-values";
 import "@ethersproject/shims";
 import NewWalletModal from "./Modals/newWallet";
 import Icon from "react-native-vector-icons/FontAwesome";
+import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useIsFocused } from "@react-navigation/native";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 var ethers = require("ethers");
 const xrpl = require("xrpl");
 
@@ -52,20 +54,22 @@ const Wallet = ({ navigation }) => {
   return (
     <Animated.View>
       {Platform.OS === 'ios' &&  <StatusBar hidden={true}/>}
+      <Wallet_screen_header title="Wallet" onLeftIconPress={() => navigation.goBack()} />
       <View
         style={{
-          height: hp(95),
+          height: hp(100),
           marginTop: "auto",
           backgroundColor: state.THEME.THEME===false?"#fff":"black",
-          borderRadius: 20,
+          borderRadius: 0,
         }}
       >
+        <View style={{height:hp(38)}}>
         <Animated.Image
           style={{
             width: wp("70"),
-            height: hp("30"),
+            height: hp(26),
             padding: 30,
-            marginTop: hp(13),
+            marginTop: hp(4),
             marginLeft: wp(15),
             borderRadius: wp(10),
           }}
@@ -73,90 +77,96 @@ const Wallet = ({ navigation }) => {
         />
         <View
           style={{
-            marginTop: hp(10),
+            marginTop: hp(0.1),
             display: "flex",
             alignContent: "center",
             alignItems: "center",
           }}
         >
-          <Text style={{ fontSize: 20, color: state.THEME.THEME===false?"black":"#fff",fontWeight:"700"}}>
-            Private and secure
+          <Text style={{ fontSize: 20, color: state.THEME.THEME===false?"black":"#fff",fontWeight:"600"}}>
+            Private and Secure
           </Text>
-          <Text style={{ color: state.THEME.THEME===false?"black":"#fff",fontWeight:"400" }}>
+          <Text style={{ color: state.THEME.THEME===false?"black":"#fff",fontWeight:"500" }}>
             Private Keys never leave your device
           </Text>
         </View>
-        <TouchableOpacity onPress={() => {
-              navigation.navigate("MyWallet");
-            }}>
-        <View style={styles.wallet}>
-          <Pressable onPress={() => {
-              navigation.navigate("MyWallet");
-            }}>
-            <Text style={{color:"white",fontWeight:"700"}}>My Wallet</Text>
-          </Pressable>
+        </View>
+        <TouchableOpacity onPress={() => {navigation.navigate("MyWallet")}}>
+        <View style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#18181C"}]}>
+            <View style={styles.ConHeading}>
+              <View style={styles.iconCon}>
+              <MaterialCommunityIcon name="wallet-outline" size={hp("3")} color={"#2164C1"}/>
+              </View>
+            <View>
+            <Text style={[styles.Heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>My Wallet</Text>
+            <Text style={styles.subHeadinng}>View and manage your wallet</Text>
+            </View>
+            </View>
           <Icon
-          onPress={() => {
-            navigation.navigate("MyWallet");
-          }}
             name="chevron-right"
             size={hp("2")}
-            color="white"
+            color={state.THEME.THEME===false?"black":"#fff"}
           />
         </View>
         </TouchableOpacity>
-       
-       <View style={{flexDirection:"row",justifyContent:"center",marginTop:hp(5),width:wp(80),alignSelf:"center",}}> 
-       <View style={styles.Button}>
-          {/* <LinearGradient
-            start={[1, 0]}
-            end={[0, 1]}
-            colors={["rgba(70, 169, 234, 1)", "rgba(185, 116, 235, 1)"]}
-            style={styles.PresssableBtn}
-          > */}
-            <TouchableOpacity
-            // style={{width:wp(30),alignItems:"center",backgroundColor:"black"}}
-            style={styles.PresssableBtn}
-              onPress={() => {
-                setNewWalletModal(true);
-              }}
-            >
-              <Text style={{color:"white",fontWeight:"700"}}>Create Wallet</Text>
-            </TouchableOpacity>
-          {/* </LinearGradient> */}
-          {/* <Button
-            title="Create wallet"
-            color={"green"}
-            onPress={() => {
-              setNewWalletModal(true);
-            }}
-          ></Button> */}
-
+        <View>
+        <TouchableOpacity onPress={() => {setNewWalletModal(true)}}>
+        <View style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#18181C"}]}>
+            <View style={styles.ConHeading}>
+              <View style={styles.iconCon}>
+              <MaterialCommunityIcon name="plus" size={hp("3")} color={"#2164C1"}/>
+              </View>
+            <View>
+            <Text style={[styles.Heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Create Wallet</Text>
+            <Text style={styles.subHeadinng}>Start fresh with new wallet</Text>
+            </View>
+            </View>
+          <Icon
+            name="chevron-right"
+            size={hp("2")}
+            color={state.THEME.THEME===false?"black":"#fff"}
+          />
         </View>
-        <View style={styles.Button}>
-            <TouchableOpacity
-            style={[styles.PresssableBtn,{marginLeft:wp(1.9)}]}
-              onPress={() => {
-                setVisible(true);
-              }}
-            >
-              <Text style={{color:"white",fontWeight:"700"}}>Import Wallet</Text>
-            </TouchableOpacity>
-        </View>
-        <View style={styles.Button}>
-            <TouchableOpacity
-            style={[styles.PresssableBtn,{marginLeft:wp(1.9)}]}
-              onPress={() => {
-                navigation.navigate("AllWallets")
-              }}
-            >
-              <Text style={{color:"white",fontWeight:"700",textAlign:"center"}}>Choose Wallet</Text>
-            </TouchableOpacity>
-        </View>
-        
+        </TouchableOpacity>
 
-       </View>
+        <TouchableOpacity onPress={() => {setVisible(true)}}>
+        <View style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#18181C"}]}>
+            <View style={styles.ConHeading}>
+              <View style={styles.iconCon}>
+              <MaterialCommunityIcon name="cloud-download-outline" size={hp("3")} color={"#2164C1"}/>
+              </View>
+            <View>
+            <Text style={[styles.Heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Import Wallet</Text>
+            <Text style={styles.subHeadinng}>Restore from seed or private key</Text>
+            </View>
+            </View>
+          <Icon
+            name="chevron-right"
+            size={hp("2")}
+            color={state.THEME.THEME===false?"black":"#fff"}
+          />
+        </View>
+        </TouchableOpacity>
 
+        <TouchableOpacity onPress={() => {navigation.navigate("AllWallets")}}>
+        <View style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#18181C"}]}>
+            <View style={styles.ConHeading}>
+              <View style={styles.iconCon}>
+              <MaterialCommunityIcon name="swap-horizontal" size={hp("3")} color={"#2164C1"}/>
+              </View>
+            <View>
+            <Text style={[styles.Heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Choose Wallet</Text>
+            <Text style={styles.subHeadinng}>Select an existing wallet</Text>
+            </View>
+            </View>
+          <Icon
+            name="chevron-right"
+            size={hp("2")}
+            color={state.THEME.THEME===false?"black":"#fff"}
+          />
+        </View>
+        </TouchableOpacity>
+        </View>
       </View>
       <SelectWallet
         visible={visible}
@@ -248,14 +258,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   wallet:{
-    backgroundColor:"#4CA6EA",
+    backgroundColor:"#F4F4F4",
     borderRadius:hp(1),
     flexDirection:"row",
     alignSelf:"center",
     alignItems:"center",
     justifyContent:"space-between",
-    marginTop:hp(2),
-    width:wp(75),
+    marginTop:hp(0.9),
+    width:wp(90),
     padding:hp(2)
+  },
+  ConHeading:{
+    flexDirection:"row",
+    alignItems:"center"
+  },
+  iconCon:{
+    backgroundColor:"#2164C140",
+    marginRight:wp(1.5),
+    borderRadius:50,
+    alignItems:"center",
+    justifyContent:"center",
+    padding:10
+  },
+  Heading:{
+    fontWeight:"600",
+    fontSize:16
+  },
+  subHeadinng:{
+    color:"gray",
+    fontWeight:"400",
+    fontSize:14
   }
 });

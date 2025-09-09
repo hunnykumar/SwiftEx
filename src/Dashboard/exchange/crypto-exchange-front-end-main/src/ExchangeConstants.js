@@ -1,9 +1,10 @@
-// export const REACT_APP_HOST='https://devapi.swiftexwallet.com'
-export const REACT_APP_HOST='https://swiftexchange.io/api' //new dev
-// export const REACT_APP_HOST='http://localhost:3001/api'
-export const REACT_APP_GOOGLE_VPID_KEY='BCisLxbvZfjn42TqqZT5Apb2poUSpWMOeozdk9NmbHjqrkiokmZU-i-DV6esbiZfYxvj_YQ9GFsvWPajPmhc6WA'
-export const REACT_APP_LOCAL_TOKEN='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZU51bWJlciI6Iis5MTkzNDAwNzk5ODIiLCJfaWQiOiI2M2M4ZTMwYjRlOGY1ZDUxYmM0MWI1NjEiLCJpYXQiOjE2NzUwNzE3MTIsImV4cCI6MTY3NTMzMDkxMn0._25RbrukLpTCU7sdcNsRzEY9ji_wsmfstKf0AUtFa4I'
-export const REACT_APP_FCM_TOKEN_KEY='FCM.NOTIFICATION.TOKEN'
-export const REACT_APP_ETH_RPC_URL = 'https://goerli.infura.io/v3/ec1767083c2b46b49cdb9ed2fb6152f9'
-export const REACT_APP_COIN_GECKO_SIMPLE_PRICE_URL = "https://api.coingecko.com/api/v3/simple/price"
-export const ETH_PROVIDER_NEW="https://eth-mainnet.g.alchemy.com/v2/favrOyEWGeWQfG-rjh2KkqhJyUriu72j"
+import { SERVER_BACKEND_URL,PROXY_BACKEND_URL,VPID_KEY,APP_LOCAL_TOKEN,FCM_TOKEN_KEY,INFURA_RPC,COIN_GECKO_PRICE_URL,ETH_RPC_MAIN_NET} from '@env';
+
+export const REACT_APP_HOST=SERVER_BACKEND_URL
+export const REACT_PROXY_HOST=PROXY_BACKEND_URL
+export const REACT_APP_GOOGLE_VPID_KEY=VPID_KEY
+export const REACT_APP_LOCAL_TOKEN=APP_LOCAL_TOKEN
+export const REACT_APP_FCM_TOKEN_KEY=FCM_TOKEN_KEY
+export const REACT_APP_ETH_RPC_URL = INFURA_RPC
+export const REACT_APP_COIN_GECKO_SIMPLE_PRICE_URL = COIN_GECKO_PRICE_URL
+export const ETH_PROVIDER_NEW=ETH_RPC_MAIN_NET

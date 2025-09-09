@@ -40,8 +40,11 @@ import ImportXrpWalletModal from "./importXrpWalletModal";
 import ModalHeader from "../reusables/ModalHeader";
 import { WalletHeader } from "../header";
 import ImportStellarModal from "./importStellarModal";
+import { Wallet_screen_header } from "../reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
 //'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1644979850'
 const SelectWallet = ({ props, visible, setVisible, setModalVisible }) => {
+  const navi=useNavigation();
   const state=useSelector((state)=>state);
   const [MultiCoinModal, setMultiCoinMoodal] = useState(false);
   const [BscWallet, setBscWalletVisible] = useState(false);
@@ -122,8 +125,8 @@ const SelectWallet = ({ props, visible, setVisible, setModalVisible }) => {
     >
       <View style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
         {/* <ModalHeader Function={closeModal}  name={'Import'}/> */}
-        <View style={{marginTop:5}}>
-        <WalletHeader title="Select Wallet" IconType="Wallet"/>
+        <View style={{marginTop:hp(3)}}>
+        <Wallet_screen_header title="Select Wallet" onLeftIconPress={() => navi.goBack()} />
         </View>
         <TouchableOpacity
           style={style.Box2}

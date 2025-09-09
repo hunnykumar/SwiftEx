@@ -48,6 +48,7 @@ import { RPC, WSS } from "../constants";
 import { alert } from "../reusables/Toasts";
 import Icon from "../../icon";
 import { delay } from "lodash";
+import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 
 const xrpl = require("xrpl");
 
@@ -274,6 +275,7 @@ const AllWallets = (props) => {
 
   return (
     <ScrollView contentContainerStyle={[style.body,{backgroundColor: state.THEME.THEME===false?"#fff":"black"}]}>
+    <Wallet_screen_header title="All Wallets" onLeftIconPress={() => navigation.goBack()} />
       {Wallets[0] ? (
         Wallets[0].map((item,index) => {
           if (item.walletType === "BSC") {
@@ -439,9 +441,11 @@ const AllWallets = (props) => {
                     flexDirection: "row",
                     alignItems: "center"
                   }}>
-                  <Text style={{ textAlign:"center",marginRight:wp(2),backgroundColor:"green",padding:wp(0.9),color:"#fff",borderRadius:5 }} left={LeftContent}>
+                   <View style={{backgroundColor:"green",padding:wp(1),marginRight:wp(2),borderRadius:8}}>
+                 <Text style={{color:"#fff",fontSize:17 }}>
                     Active
                   </Text>
+                 </View>
                   <Icon
                     name="check-decagram"
                     type={"materialCommunity"}

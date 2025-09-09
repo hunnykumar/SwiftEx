@@ -7,6 +7,8 @@ import {
   Button,
   ActivityIndicator,
   TouchableOpacity,
+  NativeModules,
+  Platform,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -34,9 +36,14 @@ import { ethers } from "ethers";
 import { genrateAuthToken, genUsrToken } from "./Auth/jwtHandler";
 import { alert } from "./reusables/Toasts";
 import styles from "../Screens/splash/style";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
+import { recoverMultiChainWallet } from "../utilities/WalletManager";
 const xrpl = require("xrpl");
+const { EthereumWallet } = NativeModules;
 
 const ImportMunziWallet = (props) => {
+  const navi=useNavigation();
   const [loading, setLoading] = useState(false);
   const [accountName, setAccountName] = useState("");
   const [mnemonic, setMnemonic] = useState("");
@@ -90,18 +97,25 @@ const ImportMunziWallet = (props) => {
     }
   }, [mnemonic]);
 
+  const handleUsernameChange = (text) => {
+    // Remove whitespace from the username
+    const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
+    setAccountName(formattedUsername);
+  };
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
+      <Wallet_screen_header title="Multi-Chain Wallet" onLeftIconPress={() => navi.goBack()} />
       <View style={style.Body}>
         <View style={style.labelInputContainer}>
           <Text style={style.label}>Name</Text>
           <TextInput
             value={accountName}
-            onChangeText={(text) => setAccountName(text)}
-            style={{ width: wp("78%") }}
-            placeholder={accountName?accountName: "Wallet 1"}
+            maxLength={20}
+            onChangeText={(text) => {handleUsernameChange(text)}}
+            style={{ width: wp("78%"),color:"black" }}
+            placeholder={accountName?accountName: "Wallet"}
             placeholderTextColor={"gray"}
           />
         </View>
@@ -115,9 +129,9 @@ const ImportMunziWallet = (props) => {
           }}>
           <Text style={style.paste}>Paste</Text>
           </TouchableOpacity>
-          <Text>Phrase</Text>
+          <Text style={{color: "#4CA6EA"}}>Phrase</Text>
           <TextInput
-            style={style.input}
+            style={[style.input,{color:"black"}]}
             value={mnemonic}
             placeholder="Please enter your mnemonic phrase here"
             placeholderTextColor={"gray"}
@@ -168,28 +182,31 @@ const ImportMunziWallet = (props) => {
                     );
                   }
 
-                  const xrpWalletFromM =
-                    xrpl.Wallet.fromMnemonic(trimmedPhrase);
-                  const entropy = ethers.utils.mnemonicToEntropy(trimmedPhrase);
-                  console.log(
-                    "\t===> seed Created from mnemonic",
-                    entropy.split("x")[1]
-                  );
-                  const xrpWallet = xrpl.Wallet.fromEntropy(
-                    entropy.split("x")[1]
-                  ); // This is suggested because we will get seeds also
-                  console.log(xrpWallet); // Produces different addresses
+                  // const xrpWalletFromM = // UNCOMMENT
+                  //   xrpl.Wallet.fromMnemonic(trimmedPhrase); // UNCOMMENT
+                  // const entropy = ethers.utils.mnemonicToEntropy(trimmedPhrase); // UNCOMMENT
+                  // console.log( // UNCOMMENT
+                  //   "\t===> seed Created from mnemonic", // UNCOMMENT
+                  //   entropy.split("x")[1] // UNCOMMENT
+                  // ); // UNCOMMENT
+                  // const xrpWallet = xrpl.Wallet.fromEntropy( // UNCOMMENT
+                  //   entropy.split("x")[1] // UNCOMMENT
+                  // ); // This is suggested because we will get seeds also // UNCOMMENT
+                  // console.log(xrpWallet); // Produces different addresses // UNCOMMENT
 
-                  const accountFromMnemonic =
-                    ethers.Wallet.fromMnemonic(trimmedPhrase);
-                  const Keys = accountFromMnemonic._signingKey();
-                  const privateKey = Keys.privateKey;
+                  const accountFromMnemonic = Platform.OS==="android"?await EthereumWallet.recoverMultiChainWallet(trimmedPhrase):await recoverMultiChainWallet(trimmedPhrase);
                   const wallet = {
-                    address: accountFromMnemonic.address,
-                    privateKey: privateKey,
+                    address: accountFromMnemonic.ethereum.address,
+                    privateKey: accountFromMnemonic.ethereum.privateKey,
                     xrp: {
-                      address: xrpWallet.classicAddress,
-                      privateKey: xrpWallet.seed,
+                     // address: xrpWallet.classicAddress, // UNCOMMENT
+                    // privateKey: xrpWallet.seed, // UNCOMMENT
+                    address: "000000000",
+                    privateKey: "000000000",
+                    },
+                    stellarWallet: {
+                      publicKey: accountFromMnemonic.stellar.publicKey,
+                      secretKey: accountFromMnemonic.stellar.secretKey
                     },
                   };
                   /* const response = saveUserDetails(accountFromMnemonic.address).then((response)=>{
@@ -218,8 +235,14 @@ const ImportMunziWallet = (props) => {
                     mnemonic: trimmedPhrase,
                     name: accountName,
                     xrp: {
-                      address: xrpWallet.classicAddress,
-                      privateKey: xrpWallet.seed,
+                     // address: xrpWallet.classicAddress, // UNCOMMENT
+                    // privateKey: xrpWallet.seed, // UNCOMMENT
+                    address: "000000000",
+                    privateKey: "000000000",
+                    },
+                    stellarWallet: {
+                      publicKey: wallet.stellarWallet.publicKey,
+                      secretKey: wallet.stellarWallet.secretKey
                     },
                     walletType: "Multi-coin",
                     wallets: [],
@@ -233,8 +256,14 @@ const ImportMunziWallet = (props) => {
                       mnemonic: trimmedPhrase,
                       name: accountName,
                       xrp: {
-                        address: xrpWallet.classicAddress,
-                        privateKey: xrpWallet.seed,
+                       // address: xrpWallet.classicAddress, // UNCOMMENT
+                       // privateKey: xrpWallet.seed, // UNCOMMENT
+                       address: "000000000",
+                       privateKey: "000000000",
+                      },
+                      stellarWallet: {
+                        publicKey: wallet.stellarWallet.publicKey,
+                        secretKey: wallet.stellarWallet.secretKey
                       },
                       walletType: "Multi-coin",
                     },
@@ -258,8 +287,10 @@ const ImportMunziWallet = (props) => {
                       accountName,
                       wallet.privateKey,
                       trimmedPhrase,
-                      xrpWallet.classicAddress,
-                      xrpWallet.seed,
+                      // xrpWallet.classicAddress,// UNCOMMENT
+                      // xrpWallet.seed,// UNCOMMENT
+                      "000000000",
+                      "000000000",
                       (walletType = "Multi-coin")
                     )
                   );

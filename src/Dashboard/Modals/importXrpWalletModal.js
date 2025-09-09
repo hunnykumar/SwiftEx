@@ -237,6 +237,7 @@ const ImportXrpWalletModal = ({
 
             <TextInput
               value={accountName}
+              maxLength={20}
               onChangeText={(text) => {
                 setAccountName(text);
               }}

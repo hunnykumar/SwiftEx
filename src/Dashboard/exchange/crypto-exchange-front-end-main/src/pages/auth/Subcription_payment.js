@@ -103,7 +103,7 @@ const Subcription_payment = ({ route }) => {
                             <TouchableOpacity style={styles.payment_method_selection} onPress={() => { setselected(index) }}>
                                 {list.id === 4 ? <Icon name={"add-circle-outline"} type={"ionicon"} size={26} color={"white"} /> : <Image source={list.url_img} style={{ height: hp(4), width: list.id === 1 ? wp(26) : wp(10), marginLeft: list.id === 1 && wp(-5) }} />}
                                 <Text style={[styles.comman_text_1, { fontSize: 13, fontWeight: "600", marginLeft: list.id === 1 && wp(-8) }]}>{list.text_upi}</Text>
-                                <TouchableOpacity style={{ height: hp(2), width: wp(4.5), borderColor: "#fff", borderWidth: wp(0.5), borderRadius: 10, backgroundColor: selected === index ? "green" : "#011434" }} onPress={() => { setselected(index) }} />
+                                <TouchableOpacity style={{ height: 18, width: 18, borderColor: "#fff", borderWidth: wp(0.5), borderRadius: 10, backgroundColor: selected === index ? "green" : "#011434" }} onPress={() => { setselected(index) }} />
                             </TouchableOpacity>
                         )
                     })}
@@ -114,7 +114,7 @@ const Subcription_payment = ({ route }) => {
                 <TouchableOpacity style={styles.cards_con_add} onPress={() => { setselected(4) }}>
                     <Icon name={"card-outline"} type={"ionicon"} size={26} color={"white"} />
                     <Text style={[styles.comman_text_1, { fontSize: 13, fontWeight: "600", paddingHorizontal: wp(10) }]}>credit/Debit/ATM Card</Text>
-                    <TouchableOpacity style={{ height: hp(2), width: wp(4.5), borderColor: "#fff", borderWidth: wp(0.5), borderRadius: 10, backgroundColor: selected === 4 ? "green" : "#011434" }} onPress={() => { setselected(4) }} />
+                    <TouchableOpacity style={{ height: 18, width: 18, borderColor: "#fff", borderWidth: wp(0.5), borderRadius: 10, backgroundColor: selected === 4 ? "green" : "#011434" }} onPress={() => { setselected(4) }} />
                 </TouchableOpacity>
                 <View style={styles.cards_ads_con}>
                     <Image source={visa} style={{ height: hp(3), width: wp(20) }} />
@@ -238,12 +238,14 @@ const styles = StyleSheet.create({
         paddingBottom: hp(1.5)
     },
     bottom_pay_con:{
+        position:"absolute",
+        zIndex:10,
+        bottom:1,
         width:wp(98),
         alignSelf:"center",
         flexDirection:"row",
         paddingHorizontal:wp(-1),
         justifyContent:"space-around",
-        top:hp(13)
     },
     bottom_pay_price_con:{
         justifyContent:"center",
@@ -258,7 +260,7 @@ const styles = StyleSheet.create({
        backgroundColor: "rgba(47, 125, 255, 1)rgba(0, 77, 206, 1)",
        paddingHorizontal: wp(9),
        paddingVertical: 19,
-       borderRadius: 20
+       borderRadius: 20,
     },
     btn_txt: {
        fontSize: 17,

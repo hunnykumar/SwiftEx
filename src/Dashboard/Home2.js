@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -47,6 +47,7 @@ import { reject } from "lodash";
 import store from "././../../src/components/Redux/Store"
 import PushNotification from 'react-native-push-notification';
 import { WSS_TEST } from "./constants";
+import useFirebaseCloudMessaging from "./notifications/firebaseNotifications";
  
   const handleLocalNotification = (msg) => {
     PushNotification.localNotification({
@@ -56,6 +57,13 @@ import { WSS_TEST } from "./constants";
       playSound: true,
       soundName: 'default',
       vibration: 300,
+      vibrate: true,
+      priority: "high",
+      importance: "high",
+      playSound: true,
+      soundName: "default",
+      allowWhileIdle: true,
+      invokeApp: true 
     });
   };
 function listion(addressToMonitor) {
@@ -79,17 +87,17 @@ function listion(addressToMonitor) {
             });
           })
           .catch((err) => {
-            console.error('Error fetching block:', err);
+            console.log('Error fetching block:', err);
           });
       } catch (e) {
         console.log(e)
       }
     } else {
-      console.error('Error:', error);
+      console.log('Error:', error);
     }
   })
     .on('error', (err) => {
-      console.error('Error:', err);
+      console.log('Error:', err);
     });
 
   async function setDelay(time) {
@@ -115,10 +123,10 @@ const Home2 = ({ navigation }) => {
   const [visible, setVisible] = useState(false)
   const [routes] = useState([
     { key: "first", title: "Assets" },
-    { key: "second", title: "Tokens" },
+    { key: "second", title: "Add Assets" },
   ]);
   const Navigation = useNavigation();
-  // const { getToken, requestUserPermission } = useFirebaseCloudMessaging();
+  const { getToken, requestUserPermission } = useFirebaseCloudMessaging();
   const isFocused = useIsFocused();
   const getAllBalance = async () => {
     try {
@@ -303,20 +311,20 @@ const Home2 = ({ navigation }) => {
       try {
         await getAllBalance();
       } catch (e) {
-        console.error(e);
+        console.log(e);
       }
     };
   
     fetchBalances();
 
-    const timeoutId = setTimeout(() => {
-      const addressToMonitor = store.getState().wallet.address;
-      console.log('><<<<', addressToMonitor);
-      listion(addressToMonitor);
-    }, 6000);
-    return () => {
-      clearTimeout(timeoutId);
-    };
+    // const timeoutId = setTimeout(() => {
+    //   const addressToMonitor = store.getState().wallet.address;
+    //   console.log('><<<<', addressToMonitor);
+    //   listion(addressToMonitor);
+    // }, 6000);
+    // return () => {
+    //   clearTimeout(timeoutId);
+    // };
   }, []); 
   
   // useEffect(() => {
@@ -330,17 +338,29 @@ const Home2 = ({ navigation }) => {
   //    },6000)
   // }, [])
 
-  const renderTabBar = (props) => (
-    <TabBar
-      {...props}
-      indicatorStyle={{ backgroundColor: "#4CA6EA" }}
-      style={ {backgroundColor:state.THEME.THEME===false?"#fff":"black"} }
-      activeColor={"#4CA6EA"}
-      inactiveColor={state.THEME.THEME===false?"black":"#fff"}
-      pressColor={"black"}
-
-    />
-  );
+  const renderTabBar = (props) => {
+    return (
+      <View style={[Styles.tabCon,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#23262F99"}]}>
+        {props.navigationState.routes.map((route, i) => {
+          const isActive = index === i;
+          return (
+            <TouchableOpacity
+              key={i}
+              style={[
+                Styles.tabCard,
+                { backgroundColor: isActive ? "#2164C1" : "#23262F99" }
+              ]}
+              onPress={() => setIndex(i)}
+            >
+              <Text style={Styles.tabCardText}>
+                {route.title}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
 
   const FirstRoute = () => (
     <ScrollView style={{ flex: 1 }}>
@@ -486,8 +506,8 @@ const Home2 = ({ navigation }) => {
   );
 
   useEffect(() => {
-    // requestUserPermission();
-    // getToken();
+    requestUserPermission();
+    getToken();
   }, []);
   useEffect(() => {
     
@@ -506,10 +526,14 @@ const Home2 = ({ navigation }) => {
       }
     }, [])
   );*/
-
+  useFocusEffect(
+    useCallback(() => {
+      setIndex(0);
+    }, [])
+  );
   return (
-    <View style={{ backgroundColor: "#000C66" }}>
-      <View style={Styles.container}>
+    <View style={{backgroundColor:state.THEME.THEME===false?"#fff":"black"}}>
+      <View style={[Styles.container,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
         <TabView
           swipeEnabled={true}
           navigationState={{ index, routes }}
@@ -517,19 +541,42 @@ const Home2 = ({ navigation }) => {
           renderScene={renderScene}
           onIndexChange={setIndex}
           initialLayout={{ width: Dimensions.get('window').width }}
-        // style={{ borderTopRightRadius: 20, borderTopLeftRadius: 20 }}
         />
-        <LockAppModal pinViewVisible={visible} setPinViewVisible={setVisible} />
       </View>
+        <LockAppModal pinViewVisible={visible} setPinViewVisible={setVisible} />
     </View>
   );
 };
 
 export default Home2;
 const Styles = StyleSheet.create({
+  tabCon: {
+    marginVertical: "8%",
+    flexDirection: "row",
+    width: "90%",
+    height: "6%",
+    alignSelf: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#23262F99",
+    borderRadius: 13,
+    padding: 2,
+  },
+  tabCard: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: "99%",
+    width: "49%",
+    padding: 10,
+    borderRadius: 13,
+  },
+  tabCardText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    fontWeight: "600"
+  },
   container: {
     // display: "flex",
-    backgroundColor: "white",
+    backgroundColor:"black",
     height: hp("100"),
     width: wp("100"),
     borderTopRightRadius: 20,

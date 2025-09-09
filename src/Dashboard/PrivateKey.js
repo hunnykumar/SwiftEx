@@ -9,6 +9,7 @@ import {
   FlatList,
   Pressable,
   ScrollView,
+  Keyboard,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -21,7 +22,11 @@ import { alert } from "./reusables/Toasts";
 import  Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../icon";
 import { Button } from "native-base";
+import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import { useNavigation } from "@react-navigation/native";
 const PrivateKey = (props) => {
+  const navi=useNavigation();
+  const [text_input_up,settext_input_up]=useState(false);
   const [accountName, setAccountName] = useState("");
   const [visible, setVisible] = useState(false);
   const[ mnemonic,setMnemonic]= useState()
@@ -41,6 +46,7 @@ const PrivateKey = (props) => {
   };
 
   useEffect( () => {
+    setAccountName('')
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,
@@ -54,6 +60,20 @@ const PrivateKey = (props) => {
    }
    fetch_new()
   }, []);
+
+  useEffect(()=>{
+    const  Keybord_state_cls=Keyboard.addListener('keyboardDidHide',()=>{
+      settext_input_up(false);
+    });
+    const  Keybord_state_opn=Keyboard.addListener('keyboardDidShow',()=>{
+      settext_input_up(true);
+    });
+    
+    return ()=>{
+      Keybord_state_cls.remove();
+      Keybord_state_opn.remove();
+    }
+  },[]);
   
   const RenderItem = ({ item, index }) => {
     console.log("-------------", item);
@@ -61,15 +81,20 @@ const PrivateKey = (props) => {
       <Pressable style={style.pressable} onPress={()=>{
         console.log("Hello World")
       }}>
-        <Text style={style.pressText}>{index + 1}</Text>
+        <Text style={[style.pressText,{color:"black"}]}>{index + 1}</Text>
 
-        <Text style={style.itemText}>{item}</Text>
+        <Text style={[style.itemText,{color:"black"}]}>{item}</Text>
       </Pressable>
     );
   };
-
+  const handleUsernameChange = (text) => {
+    // Remove whitespace from the username
+    const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
+    setAccountName(formattedUsername);
+  };
   return (
-    <ScrollView>
+    <>
+    <Wallet_screen_header title="Private Key" onLeftIconPress={() => navi.goBack()} />
     <View style={{ backgroundColor: "white", height: hp(100),marginBottom:hp(15) }}>
       <Animated.View // Special animatable View
         style={{ opacity: fadeAnim }}
@@ -84,7 +109,19 @@ const PrivateKey = (props) => {
           }}
           source={title_icon}
         /> */}
-          <Text style={style.backupText}>Backup Mnemonic Phrase</Text>
+        <View style={{marginTop:10,alignItems:"flex-start"}}>
+        <Text style={style.accountText}> Account Name</Text>
+        <TextInput
+          style={[style.input,{color:"black"}]}
+          placeholder="Enter your account name"
+          value={accountName}
+          onChangeText={(text) => {handleUsernameChange(text)}}
+          placeholderTextColor="gray"
+          autoCapitalize={"none"}
+          maxLength={20}
+          />
+          </View>
+          <Text style={style.backupText}> Backup Mnemonic Phrase</Text>
           <Text style={style.welcomeText1}>
             Please select the Mnemonic in order to ensure the backup is
             correct.
@@ -111,40 +148,30 @@ const PrivateKey = (props) => {
         <View style={style.dotView}>
           <Icon name="dot-single" type={"entypo"} size={20} />
           <Text style={{ color: "black" }}>
-            Keep your Mnemonic in a safe place isolated from any network
+          Keep your mnemonic in a safe place, isolated from any network.
           </Text>
         </View>
         <View style={style.dotView1}>
           <Icon name="dot-single" type={"entypo"} size={20} />
           <Text style={style.welcomeText}>
-            Don't share such as email,photo,social apps,etc
+          Do not share it through email, photos, social media, apps, etc.
           </Text>
         </View>
 
         {/* <Text selectable={true} style={style.welcomeText2}>
           {props.route.params.wallet.wallet.mnemonic}
         </Text> */}
-
-        <Text style={style.accountText}> Account Name</Text>
-
-        <TextInput
-          style={style.input}
-          placeholder="Enter your account name"
-          value={accountName}
-          onChangeText={(text) => setAccountName(text)}
-          placeholderTextColor="gray"
-          autoCapitalize={"none"}
-          maxLength={20}
-        />
+        
         <TouchableOpacity
           style={{alignSelf: "center",
           alignItems: "center",
           // backgroundColor:accountName && !/\s/.test(accountName) ?'green':"grey",
           backgroundColor:!accountName || !/\S/.test(accountName)?"gray":"green",
           marginTop: hp(2),
-         width: wp(60),
+         width: wp(89),
           padding: 10,
-          borderRadius: 10,
+          paddingVertical: hp(1.7),
+          borderRadius: 50,
         }}
           // disabled={accountName && !/\s/.test(accountName)  ? false : true}
           disabled={!accountName || !/\S/.test(accountName)}
@@ -164,7 +191,7 @@ const PrivateKey = (props) => {
             });
           }}
         >
-          <Text style={{color:'white'}}>Next</Text>
+          <Text style={{color:'white',fontSize:18}}>Next</Text>
         </TouchableOpacity>
 
         {/* <View style={style.Button}> */}
@@ -172,7 +199,7 @@ const PrivateKey = (props) => {
         {/* </View> */}
       </Animated.View>
     </View>
-    </ScrollView>
+    </>
   );
 };
 
@@ -181,16 +208,16 @@ export default PrivateKey;
 const style = StyleSheet.create({
   Body: {
     width: wp(100),
-    alignItems: "center",
+    alignItems: "flex-start",
     textAlign: "center",
+    marginLeft: wp(4.7),
   },
   welcomeText: {
     color: "black",
   },
   welcomeText1: {
-    marginLeft: wp(4.7),
     color: "gray",
-    marginLeft: wp(4),
+    marginLeft: wp(1),
     width: wp(90),
   },
   welcomeText2: {
@@ -218,9 +245,9 @@ const style = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal:wp(3),
     borderRadius: 10,
-    width: wp(80),
+    width: wp(90),
     height: hp(5),
-    marginTop: hp(2),
+    marginTop: hp(1),
     alignSelf: "center",
   },
   pressable: {
@@ -245,12 +272,11 @@ const style = StyleSheet.create({
     marginHorizontal: wp(1.5),
   },
   backupText: {
-    fontWeight: "bold",
+    fontWeight: "400",
     fontSize: 17,
     color: "black",
-    marginLeft: 20,
-    marginTop: hp(3),
-    marginBottom: hp(2),
+    marginTop: hp(2),
+    marginBottom: hp(1),
   },
   dotView: {
     flexDirection: "row",
@@ -262,11 +288,11 @@ const style = StyleSheet.create({
   dotView1: {
     flexDirection: "row",
     alignItems: "center",
-    width: wp(90),
+    width: wp(80),
     marginLeft: 18,
     marginTop: hp(2),
   },
-  accountText: { color: "black", marginHorizontal: wp(9), marginTop: hp(1) },
+  accountText: { color: "black", marginTop: hp(1) },
   nextButton: {
     alignSelf: "center",
     alignItems: "center",

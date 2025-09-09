@@ -6,7 +6,12 @@ import { ethers } from "ethers";
 import { saveFile, encryptFile } from "../../../utilities/utilities";
 import { urls, RPC, WSS } from "../../../Dashboard/constants";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
-const StellarSdk = require('stellar-sdk');
+import { NativeModules, Platform } from 'react-native';
+import { PGET, PPOST, proxyRequest } from '../../../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
+import { createWallet } from '../../../utilities/WalletManager';
+import * as StellarSdk from '@stellar/stellar-sdk';
+import { getWalletBalance } from '../../../Dashboard/exchange/crypto-exchange-front-end-main/src/utils/getWalletInfo/EtherWalletService';
+const { EthereumWallet } = NativeModules;
 
 const xrpl = require("xrpl");
 
@@ -158,17 +163,13 @@ const getBalance = async (address) => {
   console.log(address);
   try {
     if (address) {
-      const provider = new ethers.providers.JsonRpcProvider(RPC.BSCRPC);
-      const balancee = await provider.getBalance(address);
-      const balanceInEth = ethers.utils.formatEther(balancee);
-      console.log(balanceInEth);
-      // AsyncStorage.setItem('balance', balance);
-
-      AsyncStorage.setItem("balance", balanceInEth);
+      const bscBal=await getWalletBalance(address,"BSC");
+      if(bscBal.status){
+      AsyncStorage.setItem("balance", bscBal.balance);
       return {
         status: "success",
         message: "Balance fetched",
-        walletBalance: balanceInEth,
+        walletBalance: bscBal.balance,
       };
     } else {
       return {
@@ -177,6 +178,7 @@ const getBalance = async (address) => {
         walletBalance: 0,
       };
     }
+  }
   } catch (e) {
     console.log(e);
   }
@@ -236,24 +238,21 @@ const getBalance = async (address) => {
 const getEthBalance = async (address) => {
   try {
     if (address) {
-      const provider = ethers.getDefaultProvider("sepolia");
-      const EthBalance = await provider.getBalance(address);
-      const balanceInEth = ethers.utils.formatEther(EthBalance);
-
-      console.log(balanceInEth);
-      AsyncStorage.setItem("EthBalance", balanceInEth);
-
-      return {
-        status: "success",
-        message: "Eth Balance fetched",
-        EthBalance: balanceInEth,
-      };
-    } else {
-      return {
-        status: "error",
-        message: "Eth Balance fetched",
-        EthBalance: 0,
-      };
+      const ethBal=await getWalletBalance(address,"ETH");
+      if(ethBal.status){
+        AsyncStorage.setItem("EthBalance", ethBal.balance);
+        return {
+          status: "success",
+          message: "Eth Balance fetched",
+          EthBalance: ethBal.balance,
+        };
+      } else {
+        return {
+          status: "error",
+          message: "Eth Balance fetched",
+          EthBalance: 0,
+        };
+      }
     }
   } catch (error) {
     return {
@@ -411,24 +410,36 @@ const Generate_Wallet = async (
 // };
 
 const Generate_Wallet2 = async () => {
+  if(Platform.OS==="android"){
   console.log("starting");
-  const wallet = ethers.Wallet.createRandom();
-  const words = wallet.mnemonic.phrase;
-  const entropy = ethers.utils.mnemonicToEntropy(words);
-  const xrpWallet = xrpl.Wallet.fromEntropy(entropy.split("x")[1]);
-  let node = ethers.utils.HDNode.fromMnemonic(words);
-  let account1 = node.derivePath("m/44'/60'/0'/0/0");
+  // const wallet = ethers.Wallet.createRandom();
+  // const words = wallet.mnemonic.phrase;
+  // const entropy = ethers.utils.mnemonicToEntropy(words);// UNCOMMENT
+  // const xrpWallet = xrpl.Wallet.fromEntropy(entropy.split("x")[1]);// UNCOMMENT
+
+  // let node = ethers.utils.HDNode.fromMnemonic(words);
+  // let account1 = node.derivePath("m/44'/60'/0'/0/0");
+  const result = await EthereumWallet.createWallet();
+  console.log("result--------")
+  console.log("result: ",result)
+  console.log("result--------End")
   const Wallet = {
-    address: account1.address,
-    privateKey: account1.privateKey,
-    mnemonic: account1.mnemonic.phrase,
+    address: result.ethereum.address,
+    privateKey: result.ethereum.privateKey,
+    mnemonic: result.mnemonic,
     xrp:{
-      address:xrpWallet.classicAddress,
-      privateKey:xrpWallet.seed
+      // address:xrpWallet.classicAddress, // UNCOMMENT
+      // privateKey:xrpWallet.seed // UNCOMMENT
+      address: "000000000",
+      privateKey: "000000000",
+    },
+    stellarWallet: {
+        publicKey: result.stellar.publicKey,
+        secretKey: result.stellar.secretKey
     },
     walletType: "Multi-coin",
   };
-  if (wallet) {
+  if (Wallet) {
     // AsyncStorage.setItem("Wallet", JSON.stringify(Wallet));
 
     return {
@@ -437,6 +448,39 @@ const Generate_Wallet2 = async () => {
       wallet: Wallet,
     };
   }
+}
+else{
+  console.log("starting");
+  const result = await createWallet();
+  console.log("result--------")
+  console.log("result: ",result)
+  console.log("result--------End")
+  const Wallet = {
+    address: result.ethereum.address,
+    privateKey: result.ethereum.privateKey,
+    mnemonic: result.mnemonic,
+    xrp:{
+      // address:xrpWallet.classicAddress, // UNCOMMENT
+      // privateKey:xrpWallet.seed // UNCOMMENT
+      address: "000000000",
+      privateKey: "000000000",
+    },
+    stellarWallet: {
+        publicKey: result.stellar.publicKey,
+        secretKey: result.stellar.secretKey
+    },
+    walletType: "Multi-coin",
+  };
+  if (Wallet) {
+    // AsyncStorage.setItem("Wallet", JSON.stringify(Wallet));
+
+    return {
+      status: "success",
+      message: "Wallet generation successful",
+      wallet: Wallet,
+    };
+  }
+}
 };
 
 async function ImportWallet(privatekey, mnemonic, name, wallets, user) {
@@ -624,9 +668,8 @@ async function AddToAllWallets(wallets, user) {
         },
       });
          const Ether_address= wallets[0].address;
-        const pair = StellarSdk.Keypair.random();
-        const publicKey = pair.publicKey();
-        const secretKey = pair.secret();
+        const publicKey = wallets[0].stellarWallet.publicKey;
+        const secretKey = wallets[0].stellarWallet.secretKey;
         console.log('G-Public Key:-', publicKey);
         console.log('G-Secret Key:-', secretKey);
       
@@ -690,12 +733,11 @@ async function AddToAllWallets(wallets, user) {
     
     AsyncStorage.setItem(`${user}-wallets`, JSON.stringify(allWallets));
     try {
-    const Ether_address= wallets[0].address;
-    const pair = StellarSdk.Keypair.random();
-    const publicKey = pair.publicKey();
-    const secretKey = pair.secret();
-    console.log('G-Public Key:-', publicKey);
-    console.log('G-Secret Key:-', secretKey);
+      const Ether_address= wallets[0].address;
+      const publicKey = wallets[0].stellarWallet.publicKey;
+      const secretKey = wallets[0].stellarWallet.secretKey;
+      console.log('G-Public Key:-', publicKey);
+      console.log('G-Secret Key:-', secretKey);
       let userTransactions = [];
       const transactions = await AsyncStorageLib.getItem('myDataKey');
       if (transactions) {
