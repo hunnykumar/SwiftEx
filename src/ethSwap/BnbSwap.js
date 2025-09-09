@@ -16,6 +16,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { useSelector } from 'react-redux';
 import { Wallet_screen_header } from '../Dashboard/reusables/ExchangeHeader';
 import { PGET, PPOST, proxyRequest } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
+import { getTokenBalancesUsingAddress } from '../utilities/getWalletInfo/multiiChainHelper';
 
 const TOKENS = [
   {
@@ -70,12 +71,12 @@ const initializeWallet = async () => {
 // Update BNB and USDT balances
 const updateBalances = async (address) => {
   try {
-    const {res,err} = await proxyRequest(`/v1/bsc/${address}/token/${toToken.address}/balance`, PGET);
-    if (err?.status === 500) {
+    const balanceIn=await getTokenBalancesUsingAddress(toToken.address,address,"BSC");
+    if (!balanceIn.status) {
       Alert.alert("Balance fetch","somthing went wrong...")
     }
-    const tokenBal=await ethers.utils.formatEther(res?.tokenBalance);
-    const walletBal=await ethers.utils.formatEther(res?.walletBalance);
+    const tokenBal=balanceIn.tokenInfo[0].tokenBalance;
+    const walletBal=balanceIn.tokenInfo[0].walletBalance;
     setBnbBalance(walletBal);
     setUsdtBalance(tokenBal);
   } catch (error) {

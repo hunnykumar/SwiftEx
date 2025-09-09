@@ -51,7 +51,7 @@ const getTokens = async () => {
 
 const getPair = async () => {
   const provider = new ethers.providers.JsonRpcProvider(
-    "https://1rpc.io/eth"
+    "https://1rpc.io/sepolia"
   );
   const poolAddress = "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8";
   const poolImmutablesAbi = [

@@ -120,7 +120,7 @@ const TokenSend = ({ route }) => {
         gasLimit: ethers.BigNumber.from(60000),
         gasPrice: ethers.BigNumber.from(preInfo.res.gasFeeData.gasPrice),
         nonce: preInfo.res.transactionCount,
-        chainId: 1,
+        chainId: 11155111,
         value: ethers.BigNumber.from(0)
       };
       const signedTx = await wallet.signTransaction(upgradedTx);

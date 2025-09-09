@@ -105,7 +105,7 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
     alert('success', "Account Imported.");
     setWalletVisible(false);
     try {
-      StellarSdk.Networks.PUBLIC
+      StellarSdk.Networks.TESTNET
       const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
       server.loadAccount(publicKey)
         .then(account => {

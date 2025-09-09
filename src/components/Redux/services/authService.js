@@ -163,13 +163,15 @@ const getBalance = async (address) => {
   console.log(address);
   try {
     if (address) {
-      const bscBal=await getWalletBalance(address,"BSC");
-      if(bscBal.status){
-      AsyncStorage.setItem("balance", bscBal.balance);
+      const balanceInEth=await getWalletBalance(address,"BSC");
+      console.log("---ae",balanceInEth.balance)
+      // AsyncStorage.setItem('balance', balance);
+      const bscBal=balanceInEth.balance;
+      AsyncStorage.setItem("balance", bscBal);
       return {
         status: "success",
         message: "Balance fetched",
-        walletBalance: bscBal.balance,
+        walletBalance: bscBal,
       };
     } else {
       return {
@@ -178,7 +180,6 @@ const getBalance = async (address) => {
         walletBalance: 0,
       };
     }
-  }
   } catch (e) {
     console.log(e);
   }
@@ -238,21 +239,23 @@ const getBalance = async (address) => {
 const getEthBalance = async (address) => {
   try {
     if (address) {
-      const ethBal=await getWalletBalance(address,"ETH");
-      if(ethBal.status){
-        AsyncStorage.setItem("EthBalance", ethBal.balance);
-        return {
-          status: "success",
-          message: "Eth Balance fetched",
-          EthBalance: ethBal.balance,
-        };
-      } else {
-        return {
-          status: "error",
-          message: "Eth Balance fetched",
-          EthBalance: 0,
-        };
-      }
+      const balanceInEth=await getWalletBalance(address,"ETH");
+      console.log("---ae",balanceInEth.balance)
+
+      const ethBal=balanceInEth.balance;
+      AsyncStorage.setItem("EthBalance", ethBal);
+
+      return {
+        status: "success",
+        message: "Eth Balance fetched",
+        EthBalance: ethBal,
+      };
+    } else {
+      return {
+        status: "error",
+        message: "Eth Balance fetched",
+        EthBalance: 0,
+      };
     }
   } catch (error) {
     return {

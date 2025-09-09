@@ -53,7 +53,7 @@ import { getTokenBalancesUsingAddress } from './exchange/crypto-exchange-front-e
       symbol: "USDT",
       network: "ETH",
       imgUrl: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
-      address: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      address: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0",
       status: true
     },
     {
@@ -84,12 +84,9 @@ import { getTokenBalancesUsingAddress } from './exchange/crypto-exchange-front-e
     const fetchTokenInfo = async (address) => {
       
       try {
-        if (address && WALLET_ADDRESS) {
-          const fetchedTokens = await getTokenBalancesUsingAddress(address, WALLET_ADDRESS, "ETH")
-          console.log("walleetREspo--", fetchedTokens)
-          if (fetchedTokens.status) {
-            return fetchedTokens.tokenInfo[0]
-          }
+        if(address&&WALLET_ADDRESS){
+          const fetched = await getTokenBalancesUsingAddress(address, WALLET_ADDRESS, "ETH");
+          return fetched.tokenInfo[0];
         }
       } catch (error) {
         console.error(`Error fetching token info for ${address}:`, error);
@@ -101,11 +98,8 @@ import { getTokenBalancesUsingAddress } from './exchange/crypto-exchange-front-e
     const fetchBNBTokenInfo = async (address) => {
       try {
         if(address&&WALLET_ADDRESS){
-          const fetchedTokens = await getTokenBalancesUsingAddress(address, WALLET_ADDRESS, "BSC")
-          console.log("walleetREspo--", fetchedTokens)
-          if (fetchedTokens.status) {
-            return fetchedTokens.tokenInfo[0]
-          }
+          const fetched = await getTokenBalancesUsingAddress(address, WALLET_ADDRESS, "BSC");
+          return fetched.tokenInfo[0];
         }
       } catch (error) {
         console.log(`Error fetching token info for ${address}:`, error);

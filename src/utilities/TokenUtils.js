@@ -1,8 +1,7 @@
 const TokenList = require("../Dashboard/tokens/tokenList.json");
 const PancakeList = require("../Dashboard/tokens/pancakeSwap/PancakeList.json");
-const { getTokenBalancesUsingAddress } = require(
-  "../Dashboard/exchange/crypto-exchange-front-end-main/src/utils/getWalletInfo/EtherWalletService"
-);
+const { getTokenBalancesUsingAddress } = require("./getWalletInfo/multiiChainHelper");
+
 const AsyncStorage = require("@react-native-async-storage/async-storage").default;
 
 async function getStoredAddresses(key) {
@@ -94,7 +93,7 @@ async function fetchAllTokensData(WALLET_ADDRESS) {
     {
       symbol: "USDT",
       img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
-      address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+      address: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0" 
     },
     {
       symbol: "UNI",
@@ -102,17 +101,17 @@ async function fetchAllTokensData(WALLET_ADDRESS) {
       address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
     },
     {
-      symbol: "1INCH",
-      img_url: "https://assets.coingecko.com/coins/images/13469/thumb/1inch-token.png?1608803028",
-      address: "0x111111111117dC0aa78b770fA6A738034120C302"
+      symbol: "USDC",
+      img_url: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png", 
+      address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
     }
   ];
 
   const DEFAULT_BNB_TOKENS = [
     {
       symbol: "USDT",
-      img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
-      address: "0x55d398326f99059fF775485246999027B3197955"
+      img_url: "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png", 
+      address: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
     }
   ];
 

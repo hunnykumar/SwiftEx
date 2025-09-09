@@ -119,7 +119,7 @@ useEffect(()=>{
             setACTIVATION_MODAL_PROD(true)
         }
 
-      const usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+      const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
       if (usdtAddress && addresses) {
          const resposeBalance = await fetchTokenInfo(usdtAddress, addresses)
         const balance = resposeBalance[0].tokenBalance;
@@ -251,15 +251,42 @@ const getOffersData = async () => {
 
   const sendEthToContract = async () => {
     try {
+      const usdtAbi = [
+        "function transfer(address to, uint256 value) public returns (bool)"
+      ];
+      // Load wallet with private key
       const wallet = new ethers.Wallet(state?.wallet?.privateKey);
-      const respoExe = await swap_prepare(state?.wallet?.privateKey, wallet.address, state.STELLAR_PUBLICK_KEY, amount, "USDT", "USDC", "ETH")
-      console.log("classic last ui res ---->", respoExe)
-      if (respoExe?.status_task) {
-        setfianl_modal_text("Transaction Successful");
+      const usdtAddress = OneTapUSDCAddress.Address;
+      // Load ERC-20 contract
+      const tokenContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
+      // Convert amount to correct format
+      const formattedAmount = ethers.utils.parseUnits(amount, 6);
+      const unsigned = await tokenContract.populateTransaction.transfer(usdtAddress, formattedAmount);
+      // Send transaction
+      const preInfo = await proxyRequest("/v1/eth/transaction/prepare", PPOST, { unsignedTx: unsigned, walletAddress: wallet.address });
+      if (preInfo?.err) {
+        setfianl_modal_text("Transaction Failed");
+        console.log("Transaction Failed", preInfo);
         setfianl_modal_loading(false);
         setfianl_modal_error(true);
       }
-      if (!respoExe.status_task) {
+      const upgradedTx = {
+        ...unsigned,
+        nonce: preInfo.res.nonce,
+        gasLimit: ethers.BigNumber.from(preInfo.res.gasLimit),
+        gasPrice: ethers.BigNumber.from(preInfo.res.gasPrice),
+        value: preInfo.res.value ? ethers.BigNumber.from(preInfo.res.value) : ethers.BigNumber.from(0),
+        chainId: Number(preInfo.res.chainId),
+      };
+      const signedTx = await wallet.signTransaction(upgradedTx);
+      const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});
+      if (respoExe?.res?.txHash) {
+        console.log("Transaction Sent", `Tx Hash: ${respoExe?.res?.txHash}`);
+      setfianl_modal_text("Transaction Successful");
+        setfianl_modal_loading(false);
+        setfianl_modal_error(true);
+      }
+      if (respoExe?.err) {
         setfianl_modal_text("Transaction Failed");
         console.log("Transaction Failed", respoExe);
         setfianl_modal_loading(false);
@@ -401,7 +428,7 @@ const getOffersData = async () => {
                    onClose={()=>{handleClose()}}
                    tokenChain={"ETH"}
                    tokenName={"WETH"}
-                   tokenAddress={"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"}
+                   tokenAddress={"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"}
                    ACTIVATED={state?.STELLAR_ADDRESS_STATUS}
                  /> */}
       <ScrollView style={{marginBottom:hp(5)}}>
