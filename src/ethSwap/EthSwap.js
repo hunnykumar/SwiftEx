@@ -338,7 +338,7 @@ const EthSwap = () => {
   }
   return (
     <>
-      <Wallet_screen_header title="Swap" onLeftIconPress={() => {navigation.goBack()}} />
+      <Wallet_screen_header title="Swap" onLeftIconPress={() => {navigation.goBack()}} elementestID="back button"/>
       <ErrorComponet
           isVisible={ErroVisible}
           onClose={() => setErroVisible(false)}
@@ -370,7 +370,7 @@ const EthSwap = () => {
          <View style={styles.swapButton}>
 
         <View style={[styles.divider,{backgroundColor:state?.THEME?.THEME===false?"#c7c5c5":"#080a0a"}]} />
-          <TouchableOpacity style={styles.swapButtonCircle} onPress={()=>{tokenHande()}}>
+          <TouchableOpacity style={styles.swapButtonCircle} onPress={()=>{tokenHande()}} testID='crypto swapper'>
           <Icon
             name={"swap-vertical"}
             size={23}

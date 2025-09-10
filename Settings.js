@@ -23,7 +23,7 @@
 //   const dispatch = useDispatch();
 //   return (
 //     <View style={styles.container}>
-//       <View style={styles.accountBox}>
+//       <View style={[styles.accountBox,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}>
 //         <TouchableOpacity
 //           onPress={() => {
 //             props.navigation.navigate("AllWallets");
@@ -262,25 +262,25 @@ const Settings = (props) => {
         onPress={() => {
           props.navigation.navigate("AllWallets");
         }}
-        style={styles.accountBox}
+        style={[styles.accountBox,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}
       >
         <Icon
           name="wallet-outline"
           type={"materialCommunity"}
           size={hp(2)}
           color={state.THEME.THEME===false?"black":"#fff"}
+          style={styles.iconCon} 
         />
         <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Choose Wallet</Text>
       </TouchableOpacity>
-      <View style={styles.bottomBorder}>
         <TouchableOpacity
           // onPress={() => {
           //   props.navigation.navigate("Transactions");
           // }}
-          style={styles.accountBox1}
+          style={[styles.accountBox1,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}
         >
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Icon name="moon-o" type={"fa"} size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} />
+            <Icon name="moon-o" type={"fa"} size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
             <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Dark Mode</Text>
           </View>
           <View style={Platform.OS == "android" ? { paddingRight: wp(2) } : { paddingRight: wp(3.5) }}>
@@ -298,22 +298,14 @@ const Settings = (props) => {
                 });
                 
               }}
-              // onToggle={(isOff) => console.log("changed to : ", isOff)}
             />
           </View>
 
-          {/* <View style={styles.switchContainer}>
-            <Switch            
-              value={Checked}
-              onValueChange={() => setCheckBox(!Checked)}
-              style={styles.Switchbtn}
-            />
-          </View> */}
+         
         </TouchableOpacity>
-      </View>
 
       <TouchableOpacity
-        style={styles.accountBox}
+        style={[styles.accountBox,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}
         onPress={async () => {
           const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
           const token = await AsyncStorageLib.getItem(LOCAL_TOKEN);
@@ -326,107 +318,47 @@ const Settings = (props) => {
           }
         }}
       >
-        <Icon type={"fa"} name="exchange" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} />
+        <Icon type={"fa"} name="exchange" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
         <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Exchange</Text>
       </TouchableOpacity>
-      {/* <TouchableOpacity
-        style={styles.accountBox}
-        onPress={() => {
-          //alert("coming soon");
-          // props.navigation.navigate("Biometric");
-        }}
-      >
-        <Icon
-          type={"material"}
-          name="person-outline"
-          size={hp(2)}
-          color="black"
-        />
-        <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Contacts</Text>
-      </TouchableOpacity> */}
-      {/* <TouchableOpacity
-        style={styles.accountBox}
-        onPress={() => {
-          //alert("coming soon");
-          props.navigation.navigate("Biometric");
-        }}
-      >
-        <Icon type={"ionicon"} name="finger-print" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} />
-        <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Biometric Authenticaton</Text>
-      </TouchableOpacity> */}
-
+      
       <TouchableOpacity
-        style={styles.accountBox}
+        style={[styles.accountBox,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}
         onPress={() => {
           props.navigation.navigate("Transactions");
-          //alert("coming soon");
         }}
       >
-        <Icon type={"fa"} name="dollar" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} />
+        <Icon type={"fa"} name="dollar" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
         <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Transactions</Text>
       </TouchableOpacity>
 
 <TouchableOpacity
-        style={styles.accountBox}
+        style={[styles.accountBox,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}
         onPress={() => {
           //alert("coming soon");
           props.navigation.navigate("Biometric");
         }}
       >
-        {/* <Icon type={"ionicon"} name="finger-print" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} /> */}
-        {Platform.OS === 'android' ?<Icon type={"ionicon"} name="finger-print" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} />: <Icon type={"material"} name="lock-outline" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} />}
+        {/* <Icon type={"ionicon"} name="finger-print" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} /> */}
+        {Platform.OS === 'android' ?<Icon type={"ionicon"} name="finger-print" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />: <Icon type={"material"} name="lock-outline" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />}
         {Platform.OS === 'android' ? <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Biometric Authenticaton</Text>:<Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Authenticaton</Text>}
       </TouchableOpacity>
-
-      <View style={styles.bottomBorder}></View>
       
       <TouchableOpacity
-        style={styles.accountBox}
+        style={[styles.accountBox,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}
         onPress={() => {
           //props.navigation.navigate('ImportWallet')
           alert("Coming soon.")
         }}
       >
-        <Icon type={"antDesign"} name="setting" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} />
+        <Icon type={"antDesign"} name="setting" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
         <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Preference</Text>
       </TouchableOpacity>
-      {/* <TouchableOpacity
-        style={styles.accountBox}
-        onPress={() => {
-          //props.navigation.navigate('ImportWallet')
-            alert("Coming soon.")      
-        }}
-      >
-        <Icon
-          type={"material"}
-          name="lock-outline"
-          size={hp(2)}
-          color="black"
-        />
-        <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Security</Text>
-      </TouchableOpacity> */}
-      <View style={styles.bottomBorder}>
-        {/* <TouchableOpacity
-          style={styles.accountBox}
-          onPress={() => {
-            //props.navigation.navigate('ImportWallet')
-            // alert("coming soon");
-          }}
-        >
-          <Icon
-            type={"materialCommunity"}
-            name="bell-outline"
-            size={hp(2)}
-            color="black"
-          />
-          <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Push Notification</Text>
-        </TouchableOpacity> */}
 
-        {/* NEW CODE FOR PUSH NOTIFICATION */}
      
-         <View style={styles.accountBox1}>
+         <View style={[styles.accountBox1,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Icon type={"materialCommunity"} name="bell-outline" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"}/>
+          <Icon type={"materialCommunity"} name="bell-outline" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon}/>
             <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Push Notification</Text>
           </View>
           <View style={Platform.OS == "android" ? { paddingRight: wp(2) } : { paddingRight: wp(3.5) }}>
@@ -439,16 +371,12 @@ const Settings = (props) => {
               onToggle={() => {
                 setPUSH_NOTIFICATION(!PUSH_NOTIFICATION);
               }}
-              // onToggle={(isOff) => console.log("changed to : ", isOff)}
             />
           </View>
 
         </View>
-
-      </View>
-
       <TouchableOpacity
-        style={styles.accountBox}
+        style={[styles.accountBox,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}
         onPress={() => {
           //props.navigation.navigate('ImportWallet')
           alert("Coming soon.")
@@ -457,14 +385,14 @@ const Settings = (props) => {
           usergetToken()
         }}
       >
-        <Icon type={"feather"} name="help-circle" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} />
+        <Icon type={"feather"} name="help-circle" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
         <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Help Center</Text>
       </TouchableOpacity>
       
       <TouchableOpacity
-          style={styles.accountBox}
+          style={[styles.accountBox,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}
           onPress={() => {logout_from_app()}}>
-          <Icon name="chevron-right" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} />
+          <Icon name="chevron-right" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
           <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Log Out</Text>
         </TouchableOpacity>
     </ScrollView>
@@ -495,30 +423,33 @@ const styles = StyleSheet.create({
     marginHorizontal: wp(3),
   },
   accountBox: {
-    width: wp(95),
+    width: wp(93),
     flexDirection: "row",
-    marginHorizontal: wp(6),
+    alignSelf:"center",
     borderRadius: 20,
-    marginTop: hp(5),
+    marginTop: hp(1.5),
     textAlign: "center",
     display: "flex",
     alignItems: "center",
+    paddingVertical:"4.5%",
+    paddingHorizontal:10,
   },
   accountBox1: {
-    width: wp(90),
+    paddingHorizontal:10,
+    width: wp(93),
     flexDirection: "row",
-    marginHorizontal: wp(6),
+    alignSelf:"center",
     justifyContent: "space-between",
     borderRadius: 20,
-    marginTop: hp(5),
+    marginTop: hp(1.5),
     textAlign: "center",
     display: "flex",
     alignItems: "center",
+    paddingVertical:"4.5%"
   },
   bottomBorder: {
     borderBottomWidth: 1,
     borderColor: "gray",
-    paddingBottom: hp(3),
   },
   switchContainer: {
     marginHorizontal: hp(24),
@@ -530,4 +461,7 @@ const styles = StyleSheet.create({
   Switchbtn: {
     height: hp(4.5),
   },
+  iconCon:{
+    marginLeft:10
+  }
 });

@@ -258,9 +258,9 @@ const getOffersData = async () => {
       const wallet = new ethers.Wallet(state?.wallet?.privateKey);
       const usdtAddress = OneTapUSDCAddress.Address;
       // Load ERC-20 contract
-      const tokenContract = new ethers.Contract(usdtAddress, usdtAbi, wallet);
+      const tokenContract = new ethers.Contract("0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0", usdtAbi, wallet);
       // Convert amount to correct format
-      const formattedAmount = ethers.utils.parseUnits(amount, 6);
+      const formattedAmount = ethers.utils.parseUnits(resQuotes.minimumAmountOut, 6);
       const unsigned = await tokenContract.populateTransaction.transfer(usdtAddress, formattedAmount);
       // Send transaction
       const preInfo = await proxyRequest("/v1/eth/transaction/prepare", PPOST, { unsignedTx: unsigned, walletAddress: wallet.address });

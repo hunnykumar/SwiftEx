@@ -106,12 +106,12 @@ const Market = (props) => {
     <Wallet_screen_header title="Market" onLeftIconPress={() => navigation.goBack()} />
     {Platform.OS === 'ios' &&  <StatusBar hidden={true} />}
       <View style={{ height: hp(100) }}>
-        <View style={Styles.searchContainer}>
-          <Icon name="search1" type="antDesign" size={25} color={"black"} />
+        <View style={[Styles.searchContainer,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}>
+          <Icon name="search1" type="antDesign" size={25} color={state.THEME.THEME===false?"black":"gray"} />
           <TextInput
             placeholder="Search Crypto"
             placeholderTextColor={"gray"}
-            style={[Styles.input,{width:wp(80),fontSize:18}]}
+            style={[Styles.input,{width:wp(80),fontSize:18,color:state.THEME.THEME===false?"black":"#fff"}]}
             onChangeText={(input) => {
               setSearchItem(input)
               let UpdatedData = []
@@ -155,14 +155,14 @@ const Market = (props) => {
                   <View key={index}>
                 <ScrollView>
                   <TouchableOpacity
-                    style={Styles.Container}
+                    style={[Styles.Container,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616"}]}
                     key={item.id}
                     onPress={() => {
                       props.navigation.navigate("CoinDetails", { data: data });
                     }}
                   >
                       <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <View style={[Styles.imgCon,{backgroundColor: state.THEME.THEME === false ?"#F2F0EF":"#171616"}]}>
+                        <View style={[Styles.imgCon,{backgroundColor: state.THEME.THEME === false ?"#F2F0EF":"#23262F1A"}]}>
                           <Image source={{ uri: image }} style={Styles.img} />
                         </View>
                         <View style={Styles.flatContainerText}>
@@ -210,12 +210,14 @@ const Styles = StyleSheet.create({
   Container: {
     width: wp(90),
     paddingHorizontal: wp(2),
+    paddingVertical:hp(1),
     alignSelf: "center",
-    marginTop: hp(3),
+    marginTop: hp(1),
     alignItems: "center",
     flexDirection: "row",
-    justifyContent:"space-between"
-
+    justifyContent:"space-between",
+    borderRadius:10,
+    borderColor:"rgba(255, 255, 255, 0.2)"
   },
   flatContainerText: {
     marginHorizontal: wp(2),
@@ -250,7 +252,6 @@ const Styles = StyleSheet.create({
     alignSelf: "center",
     marginTop: hp(2),
     paddingVertical: hp(1),
-    backgroundColor: "#D9D5F2",
     marginVertical: hp(2),
   },
   input: {

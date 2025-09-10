@@ -880,7 +880,7 @@ export const CustomQuotes = ({
                        </View>
                        
                        <Text style={[styles.title, { color: theme.text }]}>
-                       Activate and Trust USDT
+                       Activate and Trust USDC
                        </Text>
                        
                        <Text style={[styles.description, { color: theme.secondaryText }]}>

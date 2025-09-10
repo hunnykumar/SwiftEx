@@ -163,7 +163,7 @@ const ExportUSDC = () => {
         shouldNavigateBack={true}
       />
       <ScrollView style={styles.scrollCon}>
-        <Text style={styles.headingText}>Import USDC on Trade Wallet</Text>
+        <Text style={styles.headingText}>Export USDC on Wallet</Text>
         {/* Select network */}
         <TouchableOpacity style={styles.modalOpen} onPress={() => { setchooseNetwork(true); }}>
           <View style={{ flexDirection: "row" }}>

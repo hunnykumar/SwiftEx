@@ -490,7 +490,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                 <View style={styles.walletNameandBal}>
                 <View style={{flexDirection:"row",alignItems:"center"}}>
                 <Text style={[styles.walletNameandBal.walletNamefontText,{ color:state.THEME.THEME === false ? "black":"#fff"}]}>{user.slice(0, 11)} </Text>
-                  <TouchableOpacity onPress={() => { setWallet_modal(true) }}>
+                  <TouchableOpacity onPress={() => { setWallet_modal(true) }} testID="drop down">
                     <Icon name="chevron-down-outline" type={"ionicon"} size={21} color={state.THEME.THEME === false ? "black":"#fff"} />
                   </TouchableOpacity>
                 </View>
@@ -498,10 +498,12 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                     <View style={{width:"60%"}}>
                     <Text lineBreakMode={"tail"} style={[styles.walletNameandBal.walletNamefontBal,{color:state.THEME.THEME === false ? "black":"#fff"}]}>{balanceVisible ? "$ " + balanceUsd? "$ "+balanceUsd:"$ 0.0"  : "$ X.XX"} </Text>
                     </View>
+                    <TouchableOpacity testID="eye ball icon" onPress={()=>{balanceVisible?setbalanceVisible(balanceVisible ? false : true):setbalanceVisible(balanceVisible ? false : true)}}>
                     {balanceVisible ?
-                        <Icon name="eye-off-outline" type={"ionicon"} size={26} color={"gray"} onPress={() => { setbalanceVisible(balanceVisible ? false : true) }} />:
-                        <Icon name="eye-outline" type={"ionicon"} size={26} color={"gray"} onPress={() => { setbalanceVisible(balanceVisible ? false : true) }}/>
-                       }
+                        <Icon name="eye-off-outline" type={"ionicon"} size={26} color={"gray"}/>:
+                        <Icon name="eye-outline" type={"ionicon"} size={26} color={"gray"}/>
+                      }
+                      </TouchableOpacity>
                   </View>
                 </View>
                 <TouchableOpacity style={[styles.bellCon,{backgroundColor:state.THEME.THEME === false ? "#F4F4F4":"#18181C"}]} onPress={() => alert("Notifications will be added soon")}>
