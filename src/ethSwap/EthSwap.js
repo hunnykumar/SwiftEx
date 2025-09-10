@@ -525,17 +525,17 @@ const EthSwap = () => {
           message: "Swap failed",
           details: "faild to swap"
         };
-      } if (res?.[0]?.status === 1) {
+      } if (res?.[0]?.receipt.status === 1) {
         console.log("=====execute0-----", res)
         return {
           status: true,
           message: "Swap completed successfully",
           inputAmount: `${amount} ETH`,
-          outputAmount: `${QuotedAmountOutRes?.res?.outputAmount}`,
+          // outputAmount: `${QuotedAmountOutRes?.res?.outputAmount}`,
           transactions: {
-            approve: res?.[0].transactionHash
+            approve: res?.[0]?.receipt.hash
           },
-          swap: res?.[1].transactionHash,
+          swap: res?.[1]?.receipt.hash,
         }
       }
     } catch (error) {
