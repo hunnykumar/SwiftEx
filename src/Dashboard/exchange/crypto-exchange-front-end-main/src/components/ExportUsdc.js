@@ -9,9 +9,14 @@ import {
 } from "react-native-responsive-screen";
 import WalletActivationComponent from '../utils/WalletActivationComponent';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
-import { useEffect, useState } from 'react';
-import { GetStellarUSDCAvilabelBalance } from '../../../../../utilities/StellarUtils';
+import { useCallback, useEffect, useState } from 'react';
+import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from '../../../../../utilities/StellarUtils';
 import { alert } from '../../../../reusables/Toasts';
+import { getChainTokenData, swapPepare } from '../../../../../utilities/AllbridgeUtil';
+import { Keypair } from '@stellar/stellar-sdk';
+import Snackbar from 'react-native-snackbar';
+import { debounce } from 'lodash';
+
 const ExportUSDC = () => {
   const Focused = useIsFocused();
   const navigation = useNavigation();
@@ -23,7 +28,8 @@ const ExportUSDC = () => {
   const [selectedAssetDetils, setselectedAssetDetils] = useState({
     name: "USDC",
     image: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
-    type:"sendAsset"
+    type:"sendAsset",
+    symbole:"USDC"
   });
   const [selectedReciveNetworkDetils,setselectedReciveNetworkDetils]=useState(null);
   const [selectedReciveAssetDetils,setselectedReciveAssetDetils]=useState(null);
@@ -32,44 +38,54 @@ const ExportUSDC = () => {
   const [chooseReciveAsset,setchooseReciveAsset]=useState(null);
   const [chooseReciveNetwork,setchooseReciveNetwork]=useState(null);
   const [amount,setamount] = useState('0.00');
+  const [getInfo,setgetInfo]=useState(false);
+  const [resQuotes,setresQuotes]=useState(null);
+  const [btnLoading,setbtnLoading]=useState(false);
+  const [XLMAvlBal,setXLMAvlBal]=useState("0");
 
 
   const sendNetworks = [
     {
       name: "Stellar",
       image: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq",
-      type:"sendNetworks"
+      type:"sendNetworks",
+      symbole:"SRB"
     }
   ];
   const sendAseets = [
     {
       name: "USDC",
       image: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
-      type:"sendAsset"
+      type:"sendAsset",
+      symbole:"USDC"
     }
   ];
   const reciveNetwork = [
     {
       name: "Ethereum",
       image: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-      type:"reciveNetwork"
+      type:"reciveNetwork",
+      symbole:"ETH"
     },
     {
       name: "BNB",
       image: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png",
-      type:"reciveNetwork"
+      type:"reciveNetwork",
+      symbole:"BSC"
     },
   ];
   const reciveAsset = [
     {
       name: "USDT",
       image: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
-      type:"reciveAsset"
+      type:"reciveAsset",
+      symbole:"USDT"
     },
     {
       name: "USDC",
       image: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
-      type:"reciveAsset"
+      type:"reciveAsset",
+      symbole:"USDC"
     }
   ];
 
@@ -79,7 +95,7 @@ const ExportUSDC = () => {
     setbasicProccesing(true);
     fetchStellarWalletdetails();
     setwalletBalance("0.00");
-    setamount("0.00");
+    setamount("");
     setselectedNetworkDetils(null);
     setselectedReciveNetworkDetils(null);
     setselectedReciveAssetDetils(null);
@@ -87,6 +103,10 @@ const ExportUSDC = () => {
     setchooseNetwork(null);
     setchooseReciveAsset(null);
     setchooseReciveNetwork(null);
+    setgetInfo(false);
+    setresQuotes(null);
+    setbtnLoading(false);
+    setXLMAvlBal("0.0");
   }, [Focused])
 
   const fetchStellarWalletdetails = async () => {
@@ -95,13 +115,20 @@ const ExportUSDC = () => {
         setstellarWalletActivated(true);
         setbasicProccesing(false);
       }
-      const fetchedUSDCBala = await GetStellarUSDCAvilabelBalance(state && state.STELLAR_PUBLICK_KEY, "USDC", "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID");
-      if (fetchedUSDCBala.status) {
+      const fetchedUSDCBala = await GetStellarUSDCAvilabelBalance(state && state.STELLAR_PUBLICK_KEY, "USDC", "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN");
+      if (!fetchedUSDCBala.status) {
         setwalletBalance(fetchedUSDCBala?.availableBalance);
         setbasicProccesing(false);
       }
       else {
         setbasicProccesing(false);
+      }
+      const fetchedXLMBal = await GetStellarAvilabelBalance(state && state.STELLAR_PUBLICK_KEY);
+      if(fetchedXLMBal.availableBalance)
+      {
+        setXLMAvlBal(fetchedXLMBal.availableBalance);
+      }else{
+        setXLMAvlBal("0");
       }
     } catch (error) {
       console.log("Error fetching balance:", error);
@@ -147,9 +174,76 @@ const ExportUSDC = () => {
       )
     };
 
-   const handleInputChange=async(value)=>{
-    setamount(value)
-   }
+  const handleInputChange = async (value) => {
+    setgetInfo(true)
+    const numericText = value.replace(/[^0-9.]/g, '');
+    setamount(numericText)
+    getQuote(!selectedNetworkDetils ? sendNetworks[0].symbole : selectedNetworkDetils.symbole, !selectedReciveNetworkDetils ? reciveNetwork[0].symbole : selectedReciveNetworkDetils.symbole, !selectedAssetDetils ? sendAseets[0].symbole : selectedAssetDetils.symbole, !selectedReciveAssetDetils ? reciveAsset[0].symbole : selectedReciveAssetDetils.symbole,numericText);
+  }
+
+  const getQuote = useCallback(
+    debounce(async (sourceChain,destChain,sourceToken,destToken,value) => {
+      const qoutesRep = await getChainTokenData(sourceChain,destChain,sourceToken,destToken,value);
+      if (qoutesRep.success) {
+        setgetInfo(false);
+        setresQuotes(qoutesRep.info);
+        setgetInfo(false);
+      } else {
+        Keyboard.dismiss();
+        alert("error", qoutesRep.error)
+        setresQuotes(null);
+        setgetInfo(false);
+      }
+    }, 500),
+    []
+  );
+
+  const swapExecute = async () => {
+    try {
+      setbtnLoading(true);
+      Keyboard.dismiss();
+      const stellarWallet = {
+        publicKey: state && state.STELLAR_PUBLICK_KEY,
+        secretKey: state && state.STELLAR_SECRET_KEY
+      };
+      const result = await swapPepare(
+        !selectedNetworkDetils ? sendNetworks[0].symbole : selectedNetworkDetils.symbole,
+        !selectedReciveNetworkDetils ? reciveNetwork[0].symbole : selectedReciveNetworkDetils.symbole,
+        !selectedAssetDetils ? sendAseets[0].symbole : selectedAssetDetils.symbole,
+        !selectedReciveAssetDetils ? reciveAsset[0].symbole : selectedReciveAssetDetils.symbole,
+        amount,
+        state && state.wallet && state.wallet.address,
+        stellarWallet
+      );
+      console.log("swap-result----", result)
+      if (result.success) {
+        Snackbar.show({
+          text: "USDC Exported successfully.",
+          duration: Snackbar.LENGTH_SHORT,
+          backgroundColor: 'green',
+        });
+        console.log("USDC Exported:-", result);
+        setbtnLoading(false);
+      } else {
+        Snackbar.show({
+          text: "USDC Exported Faild.",
+          duration: Snackbar.LENGTH_SHORT,
+          backgroundColor: 'red',
+        });
+        console.log("USDC Exported Faild:-", result);
+        setbtnLoading(false);
+      }
+    } catch (error) {
+      setbtnLoading(false);
+      console.log("error in allbridge swap execute:", error)
+      Snackbar.show({
+        text: "USDC Exported Faild.",
+        duration: Snackbar.LENGTH_SHORT,
+        backgroundColor: 'red',
+      });
+      console.log("USDC Exported Faild:-", result);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -163,7 +257,7 @@ const ExportUSDC = () => {
         shouldNavigateBack={true}
       />
       <ScrollView style={styles.scrollCon}>
-        <Text style={styles.headingText}>Import USDC on Trade Wallet</Text>
+        <Text style={styles.headingText}>Export USDC to Wallet</Text>
         {/* Select network */}
         <TouchableOpacity style={styles.modalOpen} onPress={() => { setchooseNetwork(true); }}>
           <View style={{ flexDirection: "row" }}>
@@ -239,15 +333,13 @@ const ExportUSDC = () => {
           <Icon name={"chevron-right"} type={"materialCommunity"} color={"#fff"} size={30} />
         </TouchableOpacity>
 
-        {/* perfect Quotes details fetching componet
         {getInfo && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#0066cc" />
             <Text style={styles.loadingText}>Getting best quote...</Text>
           </View>
-        )} */}
+        )}
 
-        {/* perfect Quotes details componet
         {resQuotes !== null && <View style={styles.modalQoutesCon}>
           <Text style={styles.quoteTitle}>Quote Details</Text>
           <View style={[styles.quoteDetailsContainer]}>
@@ -259,7 +351,7 @@ const ExportUSDC = () => {
             <View style={styles.quoteRow}>
               <Text style={styles.quoteLabel}>Rate</Text>
               <Text style={styles.quoteValue}>
-                1 USDT = {resQuotes.conversionRate} USDC
+                1 {!selectedAssetDetils?sendAseets[0].symbole:selectedAssetDetils.symbole} = {resQuotes.conversionRate} {!selectedReciveAssetDetils?reciveAsset[0].symbole:selectedReciveAssetDetils.symbole}
               </Text>
             </View>
 
@@ -276,18 +368,40 @@ const ExportUSDC = () => {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <Text style={styles.quoteValue}>{resQuotes.minimumAmountOut}</Text>
                 </ScrollView>
-                <Text style={styles.quoteValue}>USDC</Text>
+                <Text style={styles.quoteValue}>{!selectedReciveAssetDetils?reciveAsset[0].symbole:selectedReciveAssetDetils.symbole}</Text>
               </View>
             </View>
           </View>
+
+          <View style={styles.quoteRow}>
+            <Text style={styles.quoteLabel}>Fee</Text>
+            <Text style={styles.quoteValue}>
+              {resQuotes.fee?.native ?? resQuotes.fee?.stablecoin}
+            </Text>
+          </View>
+
+          <View style={styles.quoteRow}>
+            <Text style={styles.quoteLabel}>Time</Text>
+            <Text style={styles.quoteValue}>
+              ~ {resQuotes?.completionTime}
+            </Text>
+          </View>
+
           <View style={styles.quoteTextCon}>
             <Text style={styles.quoteText}>≈</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <Text style={styles.quoteText}>{resQuotes.minimumAmountOut}</Text>
             </ScrollView>
-            <Text style={styles.quoteText}>USDC</Text>
+            <Text style={styles.quoteText}>{!selectedReciveAssetDetils?reciveAsset[0].symbole:selectedReciveAssetDetils.symbole}</Text>
           </View>
-        </View>} */}
+        </View>}
+
+          <TouchableOpacity
+              style={[styles.confirmButton, { backgroundColor: !amount || isNaN(Number(amount))||basicProccesing||btnLoading||getInfo||resQuotes!==null&&parseFloat(resQuotes?.fee?.native)>parseFloat(XLMAvlBal)||parseFloat(amount)>parseFloat(walletBalance)?"gray":'#2F7DFF' }]}
+            disabled={!amount || isNaN(Number(amount))||btnLoading||basicProccesing||getInfo||resQuotes!==null&&parseFloat(resQuotes?.fee?.native)>parseFloat(XLMAvlBal)||parseFloat(amount)>parseFloat(walletBalance)} onPress={() => {swapExecute()}}
+            >
+              {btnLoading||getInfo?<ActivityIndicator color={"white"}/>:<Text style={styles.confirmButtonText}>{resQuotes!==null&&parseFloat(resQuotes?.fee?.native)>parseFloat(XLMAvlBal)?`Insufficient XLM to cover the fee`:parseFloat(amount)>parseFloat(walletBalance)?"Insufficient Funds":"Confirm Transaction"}</Text>}
+            </TouchableOpacity>
 
 
         {/* perfect network selection */}
@@ -502,6 +616,22 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 8,
     color: 'silver',
+  },
+  confirmButton: {
+    width: wp(93),
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+    marginTop: 20,
+    alignSelf: "center",
+    height:hp(6.4),
+    marginTop:hp(1.6)
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight:"bold"
   },
 });
 export default ExportUSDC;
