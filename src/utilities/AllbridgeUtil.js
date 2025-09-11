@@ -4,6 +4,8 @@ import {
     Messenger,
     FeePaymentMethod,
     AmountFormat,
+    nodeRpcUrlsDefault,
+    mainnet,
 } from "@allbridge/bridge-core-sdk";
 import * as StellarSdk from '@stellar/stellar-sdk';
 
@@ -75,8 +77,10 @@ export async function swapPepare(
       if (!recipientAddress) throw new Error("Recipient address is required.");
   
       const sdk = new AllbridgeCoreSdk({
-        SRB: STELLAR_URL.URL,
+        ...nodeRpcUrlsDefault,
+        SRB: "https://rpc.ankr.com/stellar_soroban",
         BNB: RPC.BSCRPC,
+        ETH: RPC.ETHRPC
       });
   
       const chainDetailsMap = await sdk.chainDetailsMap();
@@ -103,21 +107,39 @@ export async function swapPepare(
         extraGasFormat: AmountFormat.FLOAT,
         gasFeePaymentMethod: FeePaymentMethod.WITH_NATIVE_CURRENCY,
       })
-         console.log("xdrTx",xdrTx)
-        const keypair = StellarSdk.Keypair.fromSecret(stellarWallet.secretKey);
-        const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(xdrTx, "base64");
-        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.PUBLIC);
-        tx.sign(keypair);
-        const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
-        const result = await server.submitTransaction(tx);
+      const keypair = StellarSdk.Keypair.fromSecret(stellarWallet.secretKey);
+      let tx = StellarSdk.TransactionBuilder.fromXDR(xdrTx, mainnet.sorobanNetworkPassphrase);
+      tx.sign(keypair);
+      let signedTx = tx.toXDR();
   
-      console.log("Submitted Stellar transaction. Hash:", result);
+      const restoreXdrTx = await sdk.utils.srb.simulateAndCheckRestoreTxRequiredSoroban(signedTx, stellarWallet.publicKey);
+      if (restoreXdrTx) {
+        const restoreTx = StellarSdk.TransactionBuilder.fromXDR(restoreXdrTx, mainnet.sorobanNetworkPassphrase);
+        restoreTx.sign(keypair);
+        const signedRestoreXdrTx = restoreTx.toXDR();
+        const sentRestore = await sdk.utils.srb.sendTransactionSoroban(signedRestoreXdrTx);
+        const confirmRestore = await sdk.utils.srb.confirmTx(sentRestore.hash);
+        console.log("Restore TX status:", confirmRestore.status);
+    
+        const xdrTx2 = await sdk.bridge.rawTxBuilder.send(sendParams);
+        let tx = StellarSdk.TransactionBuilder.fromXDR(xdrTx, mainnet.sorobanNetworkPassphrase);
+        tx.sign(keypair);
+        
+        signedTx = tx.toXDR();
+      }
+    
+      const sent = await sdk.utils.srb.sendTransactionSoroban(signedTx);
+      console.log("Response of execute tx:", sent);
+      if(sent.status==="ERROR"){
+        return { success: false};
+      }
+
       return {
         success: true,
-        txHash: submit.hash,
+        txHash: sent.hash,
       };
     } catch (err) {
-      console.error("Error in allbridge swap:", err.message || err);
+      console.log("Error in allbridge swap:", err.message || err);
       return { success: false, error: err.message || "Unknown error occurred." };
     }
   }
