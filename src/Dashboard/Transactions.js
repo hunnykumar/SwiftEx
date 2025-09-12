@@ -140,7 +140,7 @@ const TransactionHistory = () => {
       setLoading(true);
        const {res,err} = await proxyRequest(`/v1/transaction-history/${walletAddress}/eth`, PGET);
       if (err?.status === 500) {
-        console.error('Error fetching transactions:', err);
+        console.log('Error fetching transactions:', err);
         setLoading(false);
         setRefreshing(false);
       }      
@@ -148,7 +148,7 @@ const TransactionHistory = () => {
       setLoading(false);
       setRefreshing(false);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.log('Error fetching transactions:', error);
       setLoading(false);
       setRefreshing(false);
     }
@@ -159,7 +159,7 @@ const TransactionHistory = () => {
       setLoading(true);
        const {res,err} = await proxyRequest(`/v1/transaction-history/${walletAddress}/bsc`, PGET);
       if (err?.status === 500) {
-        console.error('Error fetching transactions:', err);
+        console.log('Error fetching transactions:', err);
         setLoading(false);
         setRefreshing(false);
       }      
@@ -167,7 +167,7 @@ const TransactionHistory = () => {
       setLoading(false);
       setRefreshing(false);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.log('Error fetching transactions:', error);
       setLoading(false);
       setRefreshing(false);
     }
@@ -271,7 +271,7 @@ const TransactionHistory = () => {
              <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
               <Text style={[styles.amountText, { color: statusColor }]}>
                 {txType === 'Send' ? '-' : '+'}
-                {formatNumber(item.value || 0,item?.rawContract?.decimal)}
+                {formatNumber(item.value ||item?.formattedAmount || 0,item?.rawContract?.decimal)}
               </Text>
               </ScrollView>
              </View>
