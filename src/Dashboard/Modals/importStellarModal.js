@@ -23,6 +23,8 @@ import { STELLAR_URL } from "../constants";
 import { RAPID_STELLAR, SET_ASSET_DATA } from "../../components/Redux/actions/type";
 import { getEthBalance } from "../../components/Redux/actions/auth";
 import * as StellarSdk from '@stellar/stellar-sdk';
+import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 const ImportStellarModal = ({
   setWalletVisible,
   Visible,
@@ -70,6 +72,22 @@ const storeData = async (secretKey) => {
     }
    
 };
+
+const updateWallet=async(stellarAdd,WalletAdd)=>{
+  const resultApi =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
+    "multiChainAddress":WalletAdd,
+    "stellarAddress": stellarAdd,
+    "isPrimary": true
+  });
+  console.log("result---result",resultApi)
+  
+  if (resultApi.success) {
+     alert("success","wallet synced!");
+  } else {
+    alert("error","unable to sync wallet.");
+    console.log('Error:', resultApi.error, 'Status:', resultApi.status);
+  }
+}
 
 const storeData_marge = async (publicKey, secretKey, Ether_address) => {
   try {
@@ -126,9 +144,10 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
           dispatch(getEthBalance(Ether_address))
           console.log("==Dispacthed+Waller+success==")
           setloadingAccount(false);
-          setTimeout(() => {
+          updateWallet(publicKey, Ether_address)
+          // setTimeout(() => {
             navigation.navigate("Home");
-          }, 1000);
+          // }, 1000);
           });
         })
         .catch(error => {

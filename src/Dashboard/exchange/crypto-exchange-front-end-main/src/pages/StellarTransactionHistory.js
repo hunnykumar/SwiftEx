@@ -175,7 +175,7 @@ console.log(operation)
   } else if (operation.type === 'create_account') {
     amountText = operation.starting_balance;
   }  else if (operation.type === 'invoke_host_function') {
-    const resBal= operation.asset_balance_changes?.find(resObj => resObj.to === userPublicKey && resObj.type === 'transfer') || null;
+    const resBal= operation.asset_balance_changes?.find(resObj => resObj.to === userPublicKey || resObj.from === userPublicKey && resObj.type === 'transfer') || null;
     amountText = resBal?resBal.amount:'0'
   } else if (operation.type === 'manage_sell_offer' || operation.type === 'manage_buy_offer') {
     amountText = operation.amount;
@@ -287,9 +287,16 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
                     amount = firstOp.starting_balance;
                     isReceived = true; 
                 } else if (firstOp.type === 'invoke_host_function') {
-                    const resBal= firstOp.asset_balance_changes?.find(resObj => resObj.to === publicKey && resObj.type === 'transfer') || null;
-                    amount = resBal?resBal.amount:'0'
-                    isReceived = true; 
+                    const resBal = firstOp.asset_balance_changes?.find(resObj => (resObj.to === publicKey || resObj.from === publicKey) && resObj.type === 'transfer') || null;
+                    if (resBal) {
+                      if (resBal.to === publicKey) {
+                        amount = resBal?resBal.amount:'0'
+                        isReceived = true; 
+                      } else if (resBal.from === publicKey) {
+                        amount = resBal?resBal.amount:'0'
+                        isReceived = false;
+                      }
+                    }
                 } else if (['change_trust', 'change_trust', 'create_account','invoke_host_function'].includes(firstOp.type)) {
                     isReceived = true;
                 } else if (firstOp.type === 'manage_sell_offer' || firstOp.type === 'manage_buy_offer') {
