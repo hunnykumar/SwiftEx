@@ -54,7 +54,7 @@ const Wallet = ({ navigation }) => {
   return (
     <Animated.View>
       {Platform.OS === 'ios' &&  <StatusBar hidden={true}/>}
-      <Wallet_screen_header title="Wallet" onLeftIconPress={() => navigation.goBack()} />
+      <Wallet_screen_header elementestID={"wallet_info_back"} title="Wallet" onLeftIconPress={() => navigation.goBack()} />
       <View
         style={{
           height: hp(100),

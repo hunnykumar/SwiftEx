@@ -414,7 +414,7 @@ const getOffersData = async () => {
 
   return (
     <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
-     <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
+     <Exchange_screen_header elemetId={"bridge_back"} elemetMenuId={"bridge_menu"} title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
      <WalletActivationComponent
          isVisible={ACTIVATION_MODAL_PROD}
          onClose={() => {ActivateModal}}

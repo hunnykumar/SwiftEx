@@ -379,7 +379,7 @@ const transformedData = resp.map(item => ({
 
   return (
     <View style={{backgroundColor:state.THEME.THEME===false?"#fff":"black"}}>
-    <Wallet_screen_header title="Coin-Detail" onLeftIconPress={() => navigation.goBack()} />
+    <Wallet_screen_header elementestID={"coin_detail_back"} title="Coin-Detail" onLeftIconPress={() => navigation.goBack()} />
    
       <View style={{ alignItems: "flex-start", marginHorizontal: wp(7), marginTop: hp(2) }}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>

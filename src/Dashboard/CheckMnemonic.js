@@ -537,7 +537,7 @@ const CheckMnemonic = (props) => {
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
-    <Wallet_screen_header title="Check Mnemonic" onLeftIconPress={() => navi.goBack()} />
+    <Wallet_screen_header elementestID={"check_mnemonic_back"} title="Check Mnemonic" onLeftIconPress={() => navi.goBack()} />
       <View style={style.Body}>
         <Text style={style.verifyText}>Verify Secret Phrase</Text>
         <Text style={style.wordText}>

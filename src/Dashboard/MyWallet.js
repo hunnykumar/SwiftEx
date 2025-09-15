@@ -160,7 +160,7 @@ const MyWallet = (props) => {
 
   return (
     <View style={[styles.mainView,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-       <Wallet_screen_header title="Wallet" onLeftIconPress={() => navigation.goBack()} />
+       <Wallet_screen_header elementestID={"wallet_back"} title="Wallet" onLeftIconPress={() => navigation.goBack()} />
       <View style={[styles.labelInputContainer,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
         <Text style={[styles.label,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>Name</Text>
       

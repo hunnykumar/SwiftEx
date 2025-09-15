@@ -193,7 +193,7 @@ const Payout = () => {
   }
   return (
     <View style={styles.main}>
-    <Exchange_screen_header title="Deposit/Withdrawal" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+    <Exchange_screen_header elemetId={"Deposit/Withdrawal_back"} elemetMenuId={"Deposit/Withdrawal_menu"} title="Deposit/Withdrawal" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
 
       {/* Anchors View */}
       {show_anchors && <View style={[styles.select_asset_modal]}>

@@ -21,7 +21,7 @@ const StellarTransactionViewer = ({ route }) => {
 
     return (
         <View style={styles.container}>
-            <Exchange_screen_header title="Transactions" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+            <Exchange_screen_header elemetId={"transactions_back"} elemetMenuId={"transactions_menu"} title="Transactions" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
             <WebView
                 source={{ uri: `${STELLAR_URL.EXPERT_URL}/tx/${transactionPath}` }}
                 style={styles.webview}

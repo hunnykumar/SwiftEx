@@ -153,7 +153,7 @@ const ExportUSDC = () => {
 
   return (
     <View style={styles.container}>
-      <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
+      <Exchange_screen_header elemetId={"bridge_back"} elemetMenuId={"bridge_menu"} title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
       <WalletActivationComponent
         isVisible={stellarWalletActivated}
         onClose={() => { handleWalletActivationComponent }}

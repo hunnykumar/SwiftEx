@@ -106,7 +106,7 @@ const ImportMunziWallet = (props) => {
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
-      <Wallet_screen_header title="Multi-Chain Wallet" onLeftIconPress={() => navi.goBack()} />
+      <Wallet_screen_header elementestID={"multi_chain_wallet_back"} title="Multi-Chain Wallet" onLeftIconPress={() => navi.goBack()} />
       <View style={style.Body}>
         <View style={style.labelInputContainer}>
           <Text style={style.label}>Name</Text>

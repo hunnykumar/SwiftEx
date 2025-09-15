@@ -815,7 +815,7 @@ const handleCloseModal = () => {
     
     <View style={styles.scrollView0}>
        {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={"#011434"}/>}
-      <Exchange_screen_header title="Trade" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+      <Exchange_screen_header elemetId={"trade_back"} elemetMenuId={"trade_menu"} title="Trade" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
         
       <View style={styles.tradeContainer}>
         <TouchableOpacity

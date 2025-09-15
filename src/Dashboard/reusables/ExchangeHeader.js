@@ -78,7 +78,7 @@ export const ExchangeHeaderIcon = () => {
   );
 };
 
-export const Exchange_screen_header = ({ title, onLeftIconPress, onRightIconPress }) => {
+export const Exchange_screen_header = ({ title, onLeftIconPress, onRightIconPress,elemetId="null",elemetMenuId="null" }) => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
 
   const toggleDrawer = () => {
@@ -98,7 +98,7 @@ export const Exchange_screen_header = ({ title, onLeftIconPress, onRightIconPres
   return (
     <>
       <View style={[styles.exchangeheaderContainer, { height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
-        <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
+        <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]} accessibilityLabel={elemetId}>
           <Icon
             name={"arrow-left"}
             type={"materialCommunity"}
@@ -107,7 +107,7 @@ export const Exchange_screen_header = ({ title, onLeftIconPress, onRightIconPres
           />
         </TouchableOpacity>
         <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4) }]}>{title}</Text>
-        <TouchableOpacity onPress={toggleDrawer} style={[styles.exchangerightIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
+        <TouchableOpacity onPress={toggleDrawer} style={[styles.exchangerightIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]} accessibilityLabel={elemetMenuId}>
           <Icon name={"menu"} type={"materialCommunity"} size={30} color={"#fff"} />
         </TouchableOpacity>
       </View>
@@ -146,7 +146,7 @@ const CustomDrawer = ({ isVisible, onClose }) => {
     }
   }
   return (
-    <TouchableWithoutFeedback onPress={onClose}>
+    <TouchableWithoutFeedback onPress={onClose} accessibilityLabel="exchange_header_hamburger">
     <Animated.View style={{
         position: 'absolute',
         right: 0,
@@ -159,7 +159,7 @@ const CustomDrawer = ({ isVisible, onClose }) => {
       }}>
       <TouchableWithoutFeedback>
         <Animated.View style={[styles.exchangedrawerContainer, { transform: [{ translateX }] }]}>
-          <TouchableOpacity onPress={onClose} style={[styles.exchangecloseButton, { alignSelf: Platform.OS === "ios" ? "flex-end" : "flex-start" }]}>
+          <TouchableOpacity onPress={onClose} style={[styles.exchangecloseButton, { alignSelf: Platform.OS === "ios" ? "flex-end" : "flex-start" }]} accessibilityLabel="exchange_header_close">
             <Icon name={"arrow-right-circle-outline"} type={"materialCommunity"} size={33} color={"#fff"} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.exchangetextcont}>
@@ -192,7 +192,7 @@ export const Wallet_screen_header = ({ title, onLeftIconPress, elementestID="nul
   return (
     <>
       <View style={[styles.exchangeheaderContainer, { backgroundColor:state.THEME.THEME===false?"#fff":"black",height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
-        <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]} testID={elementestID}>
+        <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]} accessibilityLabel={elementestID}>
           <Icon
             name={"arrow-left"}
             type={"materialCommunity"}

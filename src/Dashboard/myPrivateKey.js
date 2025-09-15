@@ -132,7 +132,7 @@ const MyPrivateKey = (props) => {
 }
   return (
     <View style={{ backgroundColor:state.THEME.THEME===false?"#fff":"black", height: hp(100) }}>
-          <Wallet_screen_header title="Secret Key" onLeftIconPress={() => navi.goBack()} />
+          <Wallet_screen_header elementestID={"secret_key_back"} title="Secret Key" onLeftIconPress={() => navi.goBack()} />
       <Animated.View // Special animatable View
         style={{ opacity: fadeAnim }}
       >

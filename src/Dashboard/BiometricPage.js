@@ -38,7 +38,7 @@ export default function BiometricPage()
 
     return(
         <View style={{backgroundColor:state.THEME.THEME===false?"#fff":"black", height:heightPercentageToDP(100)}}>
-          <Wallet_screen_header title="Authentication" onLeftIconPress={() => navigation.goBack()} />
+          <Wallet_screen_header elementestID={"authentication_back"} title="Authentication" onLeftIconPress={() => navigation.goBack()} />
 
             <View style={{  display:'flex', flexDirection:'row', justifyContent:'space-evenly', marginTop:50}}>
              <View>

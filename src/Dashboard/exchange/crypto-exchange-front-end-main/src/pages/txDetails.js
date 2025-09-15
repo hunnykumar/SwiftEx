@@ -22,7 +22,7 @@ const TxDetails = ({ route,showWebView }) => {
 
     return (
         <View style={styles.container}>
-            {/* <Exchange_screen_header title="Info" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} /> */}
+            {/* <Exchange_screen_header elemetId={} elemetMenuId={} title="Info" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} /> */}
             {/* <WebView
                 source={{ uri: userKycUrl }}
                 style={styles.webview}

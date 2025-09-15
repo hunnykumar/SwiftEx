@@ -126,7 +126,7 @@ const ImportOtherWallets = (props) => {
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
-      <Wallet_screen_header title="Ethereum Wallet" onLeftIconPress={() => navi.goBack()} />
+      <Wallet_screen_header elementestID={"ethereum_wallet_back"} title="Ethereum Wallet" onLeftIconPress={() => navi.goBack()} />
       <View style={style.Body}>
         <View style={style.Button}>
           <TouchableOpacity

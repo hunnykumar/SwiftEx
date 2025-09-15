@@ -417,7 +417,7 @@ export const ProfileView = (props) => {
   ]);
   return (
     <>
-    <Exchange_screen_header title="Profile" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+    <Exchange_screen_header elemetId={"profile_back"} elemetMenuId={"profile_menu"} title="Profile" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
     <View>
       <View style={styles.content}>
         <View style={styles.profileContainer}>

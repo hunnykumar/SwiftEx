@@ -94,7 +94,7 @@ const PrivateKey = (props) => {
   };
   return (
     <>
-    <Wallet_screen_header title="Private Key" onLeftIconPress={() => navi.goBack()} />
+    <Wallet_screen_header elementestID={"private_Key_back"} title="Private Key" onLeftIconPress={() => navi.goBack()} />
     <View style={{ backgroundColor: "white", height: hp(100),marginBottom:hp(15) }}>
       <Animated.View // Special animatable View
         style={{ opacity: fadeAnim }}

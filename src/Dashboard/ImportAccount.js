@@ -93,7 +93,7 @@ const ImportAccount = (props) => {
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
-      <Wallet_screen_header title="Import Wallet" onLeftIconPress={() => navi.goBack()} />
+      <Wallet_screen_header elementestID={"import_wallet_back"} title="Import Wallet" onLeftIconPress={() => navi.goBack()} />
       <View style={style.Body}>
         <TouchableOpacity
           style={style.Box1}

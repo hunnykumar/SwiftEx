@@ -314,7 +314,7 @@ const TokenSend = ({ route }) => {
   }, [isModalVisible]);
   return (
     <>
-      <Wallet_screen_header title="Send" onLeftIconPress={() => navigation.goBack()} />
+      <Wallet_screen_header elementestID={"send_back"} title="Send" onLeftIconPress={() => navigation.goBack()} />
       <ErrorComponet
         isVisible={ErroVisible}
         onClose={() => setErroVisible(false)}

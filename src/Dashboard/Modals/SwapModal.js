@@ -1431,7 +1431,7 @@ fetchData();
         }}
       >
         <View style={[styles.mainContainermodal,{backgroundColor:state.THEME.THEME===false?"white":"black"}]}>
-         <Wallet_screen_header title="Send" onLeftIconPress={() => {setModalVisible(false)}} />
+         <Wallet_screen_header elementestID={"send_bal_back"} title="Send" onLeftIconPress={() => {setModalVisible(false)}} />
           <View style={[styles.cardBoxContainer,{backgroundColor:state?.THEME?.THEME===false?"#ebebeb":"#171616"}]}>
              <Text style={styles.labelCon}>From</Text>
             <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: state?.THEME?.THEME === false ? "#f8f9fa" : "#080a0a" }]} onPress={()=>{setCoinType("0"),setOpenChain(true)}}>

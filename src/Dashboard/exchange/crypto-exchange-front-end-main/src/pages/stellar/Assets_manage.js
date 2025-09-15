@@ -158,7 +158,7 @@ const Assets_manage = ({route}) => {
     }, [FOCUSED])
     return (
         <>
-     <Exchange_screen_header title="Assets" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+     <Exchange_screen_header elemetId={"assets_back"} elemetMenuId={"assets_menu"} title="Assets" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
 
             <View style={[styles.main_con]}>
                 <Text style={styles.mode_text}>My Assets</Text>

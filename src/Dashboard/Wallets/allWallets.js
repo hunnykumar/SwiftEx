@@ -275,7 +275,7 @@ const AllWallets = (props) => {
 
   return (
     <ScrollView contentContainerStyle={[style.body,{backgroundColor: state.THEME.THEME===false?"#fff":"black"}]}>
-    <Wallet_screen_header title="All Wallets" onLeftIconPress={() => navigation.goBack()} />
+    <Wallet_screen_header elementestID={"all_wallets_back"} title="All Wallets" onLeftIconPress={() => navigation.goBack()} />
       {Wallets[0] ? (
         Wallets[0].map((item,index) => {
           if (item.walletType === "BSC") {

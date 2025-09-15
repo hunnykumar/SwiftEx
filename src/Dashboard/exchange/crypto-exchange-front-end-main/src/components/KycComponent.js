@@ -358,7 +358,7 @@ const KycComponent = ({ route }) => {
           style={{ flex: 1 }}
           keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
         >
-          <Exchange_screen_header 
+          <Exchange_screen_header elemetId={"buy_back"} elemetMenuId={"buy_menu"} 
             title={route?.params?.tabName??"Buy"} 
             onLeftIconPress={() => navigation.goBack()} 
             onRightIconPress={() => console.log('Pressed')} 

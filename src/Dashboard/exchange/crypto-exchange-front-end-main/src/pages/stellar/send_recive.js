@@ -281,7 +281,7 @@ const send_recive = ({route}) => {
   };
     return (
         <>
-     <Exchange_screen_header title="Transaction" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+     <Exchange_screen_header elemetId={"Transaction_back"} elemetMenuId={"Transaction_menu"} title="Transaction" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
      <ErrorComponet
           isVisible={ErroVisible}
           onClose={() => setErroVisible(false)}

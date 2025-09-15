@@ -30,6 +30,7 @@ import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/Ex
 import * as StellarSdk from '@stellar/stellar-sdk';
 const Welcome = (props) => {
   const [Loading,setLoading]=useState(false)
+  const [enableUserAccess,setenableUserAccess]=useState(false);
   const dispatch = useDispatch();
   const navigation=useNavigation();
   const images = [W4, W2, W3, W1];
@@ -55,11 +56,31 @@ const Welcome = (props) => {
     }).start();
   }, [fadeAnim, Spin]);
 
-  useEffect(()=>{
-    setLoading(false)
-    createGuestUser()
-  },[]);
-
+  useEffect(() => {
+    setenableUserAccess(false);
+    let isMounted = true;
+    const initGuestUser = async () => {
+      try {
+        setLoading(true);
+        const userStatus=await createGuestUser();
+        console.log("userStatus:-",userStatus.status)
+        if(userStatus.status)
+        {
+          setenableUserAccess(true);
+        }else{
+          setenableUserAccess(false);
+        }
+      } catch (error) {
+        console.error("Failed to create guest user:", error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    initGuestUser();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   const defaultWalletGenration=async()=>{
     try {
       const response=await dispatch(Generate_Wallet2())
@@ -232,14 +253,19 @@ const Welcome = (props) => {
         >
           <Text style={styles.btnText}>CREATE A NEW WALLET</Text>
         </TouchableOpacity>} */}
+        {enableUserAccess ? <>
+          <TouchableOpacity style={styles.createView} onPress={() => { setLoading(true), defaultWalletGenration() }} disabled={Loading} accessibilityLabel="create_new_wallet_btn">
+            {Loading ? <ActivityIndicator color={"green"} size={"large"} /> : <Text style={styles.btnText}>CREATE A NEW WALLET</Text>}
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.createView} onPress={() => {setLoading(true),defaultWalletGenration()}} disabled={Loading}>
-          {Loading?<ActivityIndicator color={"green"} size={"large"}/>:<Text style={styles.btnText}>CREATE A NEW WALLET</Text>}
-        </TouchableOpacity>
-
-        {Loading?null:<TouchableOpacity style={styles.importWalletView} onPress={() => props.navigation.navigate("Import")} disabled={Loading}>
-          <Text style={styles.importText}>Import Wallet</Text>
-        </TouchableOpacity>}
+          {Loading ? null : <TouchableOpacity style={styles.importWalletView} onPress={() => props.navigation.navigate("Import")} disabled={Loading} accessibilityLabel="import_wallet_btn">
+            <Text style={styles.importText}>Import Wallet</Text>
+          </TouchableOpacity>}
+        </> :
+          <View style={styles.waitCom}>
+            <ActivityIndicator color={"green"} size={"large"} />
+          </View>
+        }
 
       </Animated.View>
     </View>
@@ -289,6 +315,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     color: "black",
+  },
+  waitCom: {
+    justifyContent: "center",
+    alignSelf: "center",
+    marginBottom: hp(1),
   },
 });
 

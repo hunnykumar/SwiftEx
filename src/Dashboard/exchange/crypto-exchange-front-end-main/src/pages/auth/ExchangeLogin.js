@@ -134,18 +134,30 @@ const FOCUSED=useIsFocused();
       setLoading(false)
      }
      else{
+      const formattedEmail = Email.replace(/\s/g, '');
+      const fromattedPass= login_Passcode.replace(/\s/g, '');
       const result = await apiHelper.post(REACT_APP_HOST + "/v1/auth/login", {
-        "username": Email.toLowerCase(),
-        "password": login_Passcode
+        "username": formattedEmail.toLowerCase(),
+        "password": fromattedPass
       });
       console.log("result",result)
       if (result.success&&result.data.token) {
         setLoading(false);
        await save_token_inlocal(result.data.token)
       }
-      else{
-        alert("error",result?.data?.message||"somthing went wrong..");
-        setLoading(false);
+      else {
+        if (result?.data?.user?.isEmailVerified===false) {
+          setLoading(false);
+          alert("success","Account verification is required.");
+          navigation.navigate("Exchange_otp", {
+            Email: formattedEmail.toLowerCase(),
+            type: "OP_FUG"
+          });
+        }
+        else {
+          alert("error",result?.data?.message||"somthing went wrong..");
+          setLoading(false);
+        }
       }
     }
 
@@ -201,12 +213,14 @@ const FOCUSED=useIsFocused();
       //  {
         const result = passcode === con_passcode;
         if (result === true) {
+          const formattedEmail = Email.replace(/\s/g, '');
+          const fromattedPass= con_passcode.replace(/\s/g, '');
           const myHeaders = new Headers();
           myHeaders.append("Content-Type", "application/json");
           myHeaders.append("Authorization", "Bearer " + token);
           const raw = JSON.stringify({
-            "email": Email.toLowerCase(),
-            "passcode": con_passcode
+            "email": formattedEmail.toLowerCase(),
+            "passcode": fromattedPass
           });
           const requestOptions = {
             method: "POST",
@@ -281,8 +295,9 @@ const FOCUSED=useIsFocused();
       setVERFIY_OTP(false);
     } else {
       try {
+      const formattedEmail = Email.replace(/\s/g, '');
         const result = await apiHelper.post(REACT_APP_HOST + "/v1/auth/forgot-password", {
-          "email": Email.toLowerCase()
+          "email": formattedEmail.toLowerCase()
         });
         console.log("result:--",result)
         if (result.data.success) {

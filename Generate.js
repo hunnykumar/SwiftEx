@@ -20,7 +20,7 @@ export default function Generate() {
   const navigation=useNavigation();
   return (
     <View style={[styles.container,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-      <Wallet_screen_header title="Buy" onLeftIconPress={() => navigation.goBack()} />
+      <Wallet_screen_header elementestID={"buy_back"} title="Buy" onLeftIconPress={() => navigation.goBack()} />
       {loading&&<View style={{justifyContent:"center",alignSelf:"center",height:"100%",width:"100%"}}>
         <ActivityIndicator size="large" color={"green"} />
       </View>}

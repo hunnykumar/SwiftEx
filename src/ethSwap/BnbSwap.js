@@ -184,7 +184,7 @@ const tokenHande=()=>{
 }
   return (
     <View style={[styles.container,{backgroundColor:state?.THEME?.THEME===false?"#fff":"black"}]}>
-      <Wallet_screen_header title="Swap" onLeftIconPress={() => {navigation.navigate("Home")}} />
+      <Wallet_screen_header elementestID={"bnb_swap_back"} title="Swap" onLeftIconPress={() => {navigation.navigate("Home")}} />
 
       <View style={[styles.swapCard,{backgroundColor:state?.THEME?.THEME===false?"#ebebeb":"#171616"}]}>
         <Text style={styles.labelText}>From</Text>

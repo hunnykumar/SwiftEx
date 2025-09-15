@@ -103,7 +103,7 @@ const Market = (props) => {
 
   return (
     <View style={{ backgroundColor: state.THEME.THEME===false?"#fff":"black" }}>
-    <Wallet_screen_header title="Market" onLeftIconPress={() => navigation.goBack()} />
+    <Wallet_screen_header elementestID={"market_back"} title="Market" onLeftIconPress={() => navigation.goBack()} />
     {Platform.OS === 'ios' &&  <StatusBar hidden={true} />}
       <View style={{ height: hp(100) }}>
         <View style={[Styles.searchContainer,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}>

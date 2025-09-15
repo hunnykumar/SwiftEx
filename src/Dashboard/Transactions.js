@@ -300,7 +300,7 @@ const TransactionHistory = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
 
       {selectedTab==="ETH"||selectedTab==="BSC"?<>
-      <Wallet_screen_header title="Transactions" onLeftIconPress={() => navigation.goBack()} />
+      <Wallet_screen_header elementestID={"transactions_back"} title="Transactions" onLeftIconPress={() => navigation.goBack()} />
       <HeaderComponent />
       {loading && !refreshing ? (
         <View style={styles.loaderContainer}>

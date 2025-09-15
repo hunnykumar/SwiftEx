@@ -338,7 +338,7 @@ const EthSwap = () => {
   }
   return (
     <>
-      <Wallet_screen_header title="Swap" onLeftIconPress={() => {navigation.goBack()}} elementestID="back button"/>
+      <Wallet_screen_header elementestID={"eth_swap_back"} title="Swap" onLeftIconPress={() => {navigation.goBack()}}/>
       <ErrorComponet
           isVisible={ErroVisible}
           onClose={() => setErroVisible(false)}

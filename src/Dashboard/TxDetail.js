@@ -23,7 +23,7 @@ export const TxDetail = ({route}) => {
 
     return (
         <View style={[styles.container,{backgroundColor:state?.THEME?.THEME === true?"black":"white"}]}>
-        <Wallet_screen_header title="Transactions" onLeftIconPress={() => navigation.goBack()} />
+        <Wallet_screen_header elementestID={"tx_back"} title="Transactions" onLeftIconPress={() => navigation.goBack()} />
             <WebView
                 source={{ uri: `${transactionPath}` }}
                 style={styles.webview}

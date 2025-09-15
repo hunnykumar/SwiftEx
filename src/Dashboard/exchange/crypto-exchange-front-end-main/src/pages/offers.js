@@ -309,7 +309,7 @@ export const OfferView = () => {
   return (
     <>
  
- <Exchange_screen_header title="Offers" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+ <Exchange_screen_header elemetId={"offer_back"} elemetMenuId={"offer_menu"} title="Offers" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
       <View style={{ height: hp(100), backgroundColor: "#011434",paddingBottom:hp(15) }}>
          {/* enableComponent Buttons */}
      <Offers_manages/>

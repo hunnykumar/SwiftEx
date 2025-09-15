@@ -187,14 +187,15 @@ const NewWalletPrivateKey = ({
 
         <SafeAreaView style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
           {/* <ModalHeader Function={closeModal} name={'Private Key'}/> */}
+          <TouchableOpacity accessibilityLabel={"wallet_setup_back"} onPress={onCrossPress}>
           <Icon
             name={"arrow-left"} 
             type={"materialCommunity"}
             color={"#fff"}
             size={24}
             style={style.croosIcon}
-            onPress={onCrossPress}
           />
+          </TouchableOpacity>
             <View style={{marginTop:hp(1)}}>
             <Text style={style.label}>Account Name</Text>
             <TextInput
@@ -207,6 +208,7 @@ const NewWalletPrivateKey = ({
               placeholder={user ? user : "Enter your account name"}
               placeholderTextColor={"gray"}
               maxLength={20}
+              accessibilityLabel={"account_Name"}
             />
           </View>
 

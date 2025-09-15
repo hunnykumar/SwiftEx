@@ -307,7 +307,7 @@ const Asset_info = ({ route }) => {
       }
     return (
         <>
-        <Wallet_screen_header title={asset_type?.symbol?.toUpperCase()||asset_type?.symbole} onLeftIconPress={() => navigation.goBack()} />
+        <Wallet_screen_header elementestID={"asset_info_back"} title={asset_type?.symbol?.toUpperCase()||asset_type?.symbole} onLeftIconPress={() => navigation.goBack()} />
             <View style={[styles.main_con,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
                <View style={{flexDirection:"row",paddingHorizontal:wp(4),paddingVertical:hp(0.3),alignItems:"center"}}>
                <Image source={asset_type?.symbol?.toUpperCase()||asset_type?.symbole!=="XLM"?{ uri: asset_type?.img||asset_type?.img_url }:Stellar_image} style={{width:wp(6.6),height:hp(3.5)}}/>

@@ -126,7 +126,7 @@ const SelectWallet = ({ props, visible, setVisible, setModalVisible }) => {
       <View style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
         {/* <ModalHeader Function={closeModal}  name={'Import'}/> */}
         <View style={{marginTop:hp(3)}}>
-        <Wallet_screen_header title="Select Wallet" onLeftIconPress={() => navi.goBack()} />
+        <Wallet_screen_header elementestID={"select_wallet_back"} title="Select Wallet" onLeftIconPress={() => navi.goBack()} />
         </View>
         <TouchableOpacity
           style={style.Box2}

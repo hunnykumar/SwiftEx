@@ -255,7 +255,7 @@ const Settings = (props) => {
   }
   return (
     <>
-    <Wallet_screen_header title="Settings" onLeftIconPress={() => navi.goBack()} />
+    <Wallet_screen_header elementestID={"setting_back"} title="Settings" onLeftIconPress={() => navi.goBack()} />
     <ScrollView contentContainerStyle={[styles.container,{backgroundColor:state.THEME.THEME===false?"white":"black"}]}>
       {/* <Text style={[styles.setHeading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Settings</Text> */}
       <TouchableOpacity
@@ -267,8 +267,8 @@ const Settings = (props) => {
         <Icon
           name="wallet-outline"
           type={"materialCommunity"}
-          size={hp(2)}
-          color={state.THEME.THEME===false?"black":"#fff"}
+          size={hp("2")}
+          color={"#2164C1"}
           style={styles.iconCon} 
         />
         <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Choose Wallet</Text>
@@ -280,7 +280,7 @@ const Settings = (props) => {
           style={[styles.accountBox1,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}
         >
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Icon name="moon-o" type={"fa"} size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
+            <Icon name="moon-o" type={"fa"} size={hp("2")} color={"#2164C1"} style={styles.iconCon} />
             <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Dark Mode</Text>
           </View>
           <View style={Platform.OS == "android" ? { paddingRight: wp(2) } : { paddingRight: wp(3.5) }}>
@@ -318,7 +318,7 @@ const Settings = (props) => {
           }
         }}
       >
-        <Icon type={"fa"} name="exchange" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
+        <Icon type={"fa"} name="exchange" size={hp("2")} color={"#2164C1"} style={styles.iconCon} />
         <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Exchange</Text>
       </TouchableOpacity>
       
@@ -328,7 +328,7 @@ const Settings = (props) => {
           props.navigation.navigate("Transactions");
         }}
       >
-        <Icon type={"fa"} name="dollar" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
+        <Icon type={"fa"} name="dollar" size={hp("2")} color={"#2164C1"} style={styles.iconCon} />
         <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Transactions</Text>
       </TouchableOpacity>
 
@@ -339,8 +339,8 @@ const Settings = (props) => {
           props.navigation.navigate("Biometric");
         }}
       >
-        {/* <Icon type={"ionicon"} name="finger-print" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} /> */}
-        {Platform.OS === 'android' ?<Icon type={"ionicon"} name="finger-print" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />: <Icon type={"material"} name="lock-outline" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />}
+        {/* <Icon type={"ionicon"} name="finger-print" size={hp("2")} color={"#2164C1"} style={styles.iconCon} /> */}
+        {Platform.OS === 'android' ?<Icon type={"ionicon"} name="finger-print" size={hp("2")} color={"#2164C1"} style={styles.iconCon} />: <Icon type={"material"} name="lock-outline" size={hp("2")} color={"#2164C1"} style={styles.iconCon} />}
         {Platform.OS === 'android' ? <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Biometric Authenticaton</Text>:<Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Authenticaton</Text>}
       </TouchableOpacity>
       
@@ -351,14 +351,14 @@ const Settings = (props) => {
           alert("Coming soon.")
         }}
       >
-        <Icon type={"antDesign"} name="setting" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
+        <Icon type={"antDesign"} name="setting" size={hp("2")} color={"#2164C1"} style={styles.iconCon} />
         <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Preference</Text>
       </TouchableOpacity>
 
      
          <View style={[styles.accountBox1,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Icon type={"materialCommunity"} name="bell-outline" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon}/>
+          <Icon type={"materialCommunity"} name="bell-outline" size={hp("2")} color={"#2164C1"} style={styles.iconCon}/>
             <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Push Notification</Text>
           </View>
           <View style={Platform.OS == "android" ? { paddingRight: wp(2) } : { paddingRight: wp(3.5) }}>
@@ -385,14 +385,14 @@ const Settings = (props) => {
           usergetToken()
         }}
       >
-        <Icon type={"feather"} name="help-circle" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
+        <Icon type={"feather"} name="help-circle" size={hp("2")} color={"#2164C1"} style={styles.iconCon} />
         <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Help Center</Text>
       </TouchableOpacity>
       
       <TouchableOpacity
           style={[styles.accountBox,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}
           onPress={() => {logout_from_app()}}>
-          <Icon name="chevron-right" size={hp(2)} color={state.THEME.THEME===false?"black":"#fff"} style={styles.iconCon} />
+          <Icon name="chevron-right" size={hp("2")} color={"#2164C1"} style={styles.iconCon} />
           <Text style={[styles.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Log Out</Text>
         </TouchableOpacity>
     </ScrollView>
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     fontSize: hp("2"),
     fontWeight: "600",
     // fontFamily:"",
-    marginHorizontal: wp(3),
+    marginHorizontal: wp(1.5),
   },
   accountBox: {
     width: wp(93),
@@ -461,7 +461,15 @@ const styles = StyleSheet.create({
   Switchbtn: {
     height: hp(4.5),
   },
-  iconCon:{
-    marginLeft:10
+  iconCon: {
+    width:50,
+    marginLeft: 10,
+    marginRight: wp(1.5),
+    borderRadius: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    backgroundColor: "#2164C140",
   }
 });

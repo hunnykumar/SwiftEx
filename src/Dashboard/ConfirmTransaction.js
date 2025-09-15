@@ -207,7 +207,7 @@ const ConfirmTransaction = (props) => {
 
   return (
     <>
-    <Wallet_screen_header title="Confirm Transaction" onLeftIconPress={() => navigation.goBack()} />
+    <Wallet_screen_header elementestID={"confirm_transaction_back"} title="Confirm Transaction" onLeftIconPress={() => navigation.goBack()} />
 
       <View style={[style.mainContainer, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black" }]}>
         <View style={{ borderColor: "gray", borderWidth: 1, marginHorizontal: 10, borderRadius: 10,marginTop:40 }}>
