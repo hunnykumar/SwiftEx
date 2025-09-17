@@ -598,7 +598,9 @@ const getOffersData = async () => {
               AsyncStorageLib.removeItem(LOCAL_TOKEN);
               setmodalContainer_menu(false)
               nav.navigate('exchangeLogin');
-            }}>
+            }}
+            accessibilityLabel={"logout_btn"}
+            >
               <Icon
                 name={"logout"}
                 type={"materialCommunity"}

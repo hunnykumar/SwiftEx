@@ -34,7 +34,9 @@ export const ExchangeHeader = (props) => {
           const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
           AsyncStorage.removeItem(LOCAL_TOKEN);
           navigation.navigate("exchangeLogin");
-        }}>
+        }}
+        accessibilityLabel={"logout_btn"}
+        >
           <Icon
             name={"logout"}
             type={"materialCommunity"}

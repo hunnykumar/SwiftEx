@@ -18,7 +18,7 @@ export const ExchangeHeaderApp = () => {
   return (
     <View style={styles.headerContainer}>
       <Text style={{ color: "#fff", fontWeight: "700" }}>Exchange</Text>
-      <View style={{ alignItems: "center" }}>
+      <View style={{ alignItems: "center" }} accessibilityLabel={"logout_btn"}>
         <Icon
           name={"logout"}
           type={"materialCommunity"}
@@ -60,7 +60,7 @@ export const ExchangeHeaderIcon = () => {
         <Image source={darkBlue} style={styles.logoImg} />
       </View>
       <Text style={styles.text}>Exchange</Text>
-      <View style={{ alignItems: "center" }}>
+      <View style={{ alignItems: "center" }} accessibilityLabel={"logout_btn"}>
         <Icon
           name={"logout"}
           type={"materialCommunity"}
@@ -174,7 +174,7 @@ const CustomDrawer = ({ isVisible, onClose }) => {
           <Icon name={"wallet"} type={"materialCommunity"} size={28} color={"#fff"} />
             <Text style={styles.exchangedrawerText}>Wallet</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.exchangetextcont} onPress={() => {handle_logout()}}>
+          <TouchableOpacity style={styles.exchangetextcont} onPress={() => {handle_logout()}} accessibilityLabel={"logout_btn"}>
         <Icon name={"logout"} type={"materialCommunity"} size={28} color={"#fff"} />
         <Text style={styles.exchangedrawerText}>Logout</Text>
       </TouchableOpacity>

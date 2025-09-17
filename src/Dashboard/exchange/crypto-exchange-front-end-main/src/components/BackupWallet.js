@@ -14,9 +14,10 @@ const BackupWallet = ({ open, close }) => {
   },[])
   
   const backupNowExe = async (fileName) => {
+    const walletIdGenrate=Math.floor(100000 + Math.random() * 900000);
     setbackupLoading(true)
     try {
-      const filePath = `/storage/emulated/0/Download/${fileName}.txt`;
+      const filePath = `/storage/emulated/0/Download/${fileName+walletIdGenrate}.txt`;
       const content = JSON.stringify({
         "Multi Coin Name":state.wallet.name,
         "Multi Coin Address":state.wallet.address,

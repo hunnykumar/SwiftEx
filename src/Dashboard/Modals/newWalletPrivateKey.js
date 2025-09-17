@@ -151,7 +151,7 @@ const NewWalletPrivateKey = ({
     console.log("============------------", item);
     setData(data);
     return (
-      <TouchableOpacity style={[style.flatBtn,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
+      <TouchableOpacity style={[style.flatBtn,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]} accessibilityLabel={"word_"+parseFloat(index+1)}>
         <Text style={{ textAlign: "right",color:"#fff" }}>{index + 1}</Text>
         <Text style={{ color:"#fff" }}>{item}</Text>
       </TouchableOpacity>

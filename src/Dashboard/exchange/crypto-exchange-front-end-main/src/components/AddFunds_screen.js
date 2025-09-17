@@ -406,7 +406,9 @@ fetch(REACT_APP_HOST+"/users/SendXETH", requestOptions)
         AsyncStorage.removeItem(LOCAL_TOKEN);
         setmodalContainer_menu(false)
         navigation.navigate('exchangeLogin');
-      }}>
+      }}
+      accessibilityLabel={"logout_btn"}
+      >
       <Icon
         name={"logout"}
         type={"materialCommunity"}

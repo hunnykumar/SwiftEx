@@ -446,12 +446,14 @@ const AllWallets = (props) => {
                     Active
                   </Text>
                  </View>
-                  <Icon
+                 <View accessibilityLabel={"check_decagram"}>
+                 <Icon
                     name="check-decagram"
                     type={"materialCommunity"}
                     size={hp(3)}
                     color="green"
                   />
+                 </View>
                   </View>}
                 </View>
 

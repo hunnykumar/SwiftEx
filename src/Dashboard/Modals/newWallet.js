@@ -83,7 +83,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
         }}
       >
         <SafeAreaView style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
-          <TouchableOpacity disabled={loading} onPress={()=>{onCrossPress(),setCheckBox2(false),setCheckBox(false)}}>
+          <TouchableOpacity disabled={loading} onPress={()=>{onCrossPress(),setCheckBox2(false),setCheckBox(false)}} accessibilityLabel={"backup_wallet_back_btn"}>
           <Icon name={"arrow-left"} type={"materialCommunity"} size={29} color={"white"} style={style.crossIcon} />
           </TouchableOpacity>
           <View style={{alignSelf:"center",alignItems:"center"}}>
