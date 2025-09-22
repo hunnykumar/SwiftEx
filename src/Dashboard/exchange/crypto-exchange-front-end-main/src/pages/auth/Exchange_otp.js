@@ -74,11 +74,11 @@ const Exchange_otp = (props) => {
       const submitOtpWithPassCode = async () => {
         try {
             setLoading(true);
-          if (!otp) {
+          if (!otp&&!rePassword) {
 
             setLoading(false);
               Snackbar.show({
-                text: "Otp required.",
+                text: "Otp and Paassword both required.",
                 duration: Snackbar.LENGTH_SHORT,
                 backgroundColor: 'red',
               });
@@ -101,7 +101,7 @@ const Exchange_otp = (props) => {
                 // navigation.navigate("ExchangeDetailsSubmittion");
             } else {
                 setLoading(false);
-                ShowErrotoast(toast,result.error);
+                ShowErrotoast(toast,result?.error[0]||"Something went wrong.");
                 setOtp(null);
             }
           }

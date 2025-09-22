@@ -76,38 +76,89 @@ useEffect(()=>{
     password: "",
   })
 },[FOCUSED])
+const validateForm = () => {
+  const { firstName, lastName, email } = formContent;
+
+  if (!firstName || firstName.trim() === "") {
+    Snackbar.show({
+      text: "First name is required",
+      duration: Snackbar.LENGTH_SHORT,
+      backgroundColor: 'red',
+    });
+    return false;
+  }
+
+  if (!lastName || lastName.trim() === "") {
+    Snackbar.show({
+      text: "Last name is required",
+      duration: Snackbar.LENGTH_SHORT,
+      backgroundColor: 'red',
+    });
+    return false;
+  }
+
+  if (!email || email.trim() === "") {
+    Snackbar.show({
+      text: "Email is required",
+      duration: Snackbar.LENGTH_SHORT,
+      backgroundColor: 'red',
+    });
+    return false;
+  }
+
+  if (!password || password.trim() === "") {
+    Snackbar.show({
+      text: "Password is required",
+      duration: Snackbar.LENGTH_SHORT,
+      backgroundColor: 'red',
+    });
+    return false;
+  }
+  if (!rePassword || rePassword.trim() === "") {
+    Snackbar.show({
+      text: "Re-Password is required",
+      duration: Snackbar.LENGTH_SHORT,
+      backgroundColor: 'red',
+    });
+    return false;
+  }
+
+  return true;
+};
 
   const handleSubmit = async () => {
-    setLoading(true);
-    
-    try {
-      const result = await apiHelper.post(REACT_APP_HOST+"/v1/auth/signup",{
-        "firstName": formContent.firstName,
-        "lastName": formContent.lastName,
-        "email": formContent.email.toLowerCase(),
-        "password": rePassword
-    });
-      console.log("result:--",result)
-      if (result.data.success) {
-        navigation.navigate("Exchange_otp", {
-          Email: formContent.email.toLowerCase(),
-          type: "new_res",
+    if (validateForm()) {
+      setLoading(true);
+      const formattedEmail = formContent.email.replace(/\s/g, '');
+      try {
+        const result = await apiHelper.post(REACT_APP_HOST + "/v1/auth/signup", {
+          "firstName": formContent.firstName,
+          "lastName": formContent.lastName,
+          "email": formattedEmail.toLowerCase(),
+          "password": rePassword
         });
+        console.log("result:--", result)
+        if (result.data.success) {
+          navigation.navigate("Exchange_otp", {
+            Email: formattedEmail.toLowerCase(),
+            type: "new_res",
+          });
 
-      }
-      if (!result.data.success) {
+        }
+        if (!result.data.success) {
+          setLoading(false);
+          handleErrorMessage(result.data || result.error);
+        }
+
+      } catch (error) {
         setLoading(false);
-        handleErrorMessage(result.data||result.error);
+        console.log('Error during signup:', error);
+        Snackbar.show({
+          text: "An unexpected error occurred.",
+          duration: Snackbar.LENGTH_SHORT,
+          backgroundColor: 'red',
+        });
       }
-  
-    } catch (error) {
-      setLoading(false);
-      console.log('Error during signup:', error);
-      Snackbar.show({
-        text: "An unexpected error occurred.",
-        duration: Snackbar.LENGTH_SHORT,
-        backgroundColor: 'red',
-      });
     }
   };
   

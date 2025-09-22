@@ -310,7 +310,7 @@ const FOCUSED=useIsFocused();
           setVERFIY_OTP(false);
           setLoading(false);
           navigation.navigate("Exchange_otp", {
-            Email: Email.toLowerCase(),
+            Email: formattedEmail.toLowerCase(),
             type: "OP_FUG"
           });
 
