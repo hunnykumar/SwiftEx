@@ -211,6 +211,12 @@ const EthSwap = () => {
     </Modal>
   );
   const handleChange = (text,decimals) => {
+    if (text.startsWith(".")) {
+      text = "0" + text;
+    }
+    if ((text.match(/\./g) || []).length > 1) {
+      return;
+    }
     const regex = new RegExp(`^\\d*(\\.\\d{0,${decimals}})?$`);
     if (regex.test(text)) {
       setAmount(text);

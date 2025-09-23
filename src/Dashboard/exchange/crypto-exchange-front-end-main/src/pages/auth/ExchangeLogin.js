@@ -319,7 +319,7 @@ const FOCUSED=useIsFocused();
           setLoading(false);
           setLoading_fog(false);
           setVERFIY_OTP(false);
-          if (Array.isArray(result?.data?.error?.message)) {
+          if (Array.isArray(result?.data?.message)) {
             Snackbar.show({
               text: result?.data?.message[0] === "email must be an email" ? "Email must be an email" : result?.message[0],
               duration: Snackbar.LENGTH_SHORT,
@@ -332,7 +332,7 @@ const FOCUSED=useIsFocused();
             setVERFIY_OTP(false);
             setLoading(false);
           } else {
-            ShowErrotoast(toast, result.message);
+            ShowErrotoast(toast, result?.message||"Something went wrong.");
             setlodaing_ver(false);
             setLoading_fog(true);
             setEmail("");

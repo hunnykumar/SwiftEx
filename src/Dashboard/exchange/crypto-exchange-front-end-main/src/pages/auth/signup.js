@@ -123,6 +123,15 @@ const validateForm = () => {
     return false;
   }
 
+  if (password !== rePassword) {
+    Snackbar.show({
+      text: "Password and Re-Password must be the same",
+      duration: Snackbar.LENGTH_SHORT,
+      backgroundColor: 'red',
+    });
+    return false;
+  }
+
   return true;
 };
 
@@ -196,12 +205,14 @@ const validateForm = () => {
 
   const onChangename = (input) => {
     const formattedInput = input.replace(/\s/g, '')
-    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
+    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '')
+    .replace(/[^a-zA-Z0-9]/g, '');
     setFormContent({ ...formContent, firstName: formattedInput })
   };
   const onChangelast = (input) => {
     const formattedInput = input.replace(/\s/g, '')
-    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '');
+    .replace(/[\p{Emoji}\u200d\uFE0F]+/gu, '')
+    .replace(/[^a-zA-Z0-9]/g, '');
     setFormContent({ ...formContent, lastName: formattedInput })
   };
   const onChangelmail = (input) => {
