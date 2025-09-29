@@ -30,6 +30,7 @@ import Snackbar from 'react-native-snackbar';
 import { swapETHtoUSDC } from './MutiStepSwap';
 import { SaveTransaction } from '../utilities/utilities';
 import { PPOST, proxyRequest } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
+import { getWalletBalance } from '../utilities/getWalletInfo/multiiChainHelper';
 
 // Token List
 const TOKENS = [
@@ -123,13 +124,17 @@ const EthSwap = () => {
     const fetchBalance=async()=>{
      try{
       const addresses = ["0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14", "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"];
-      const WALLET_ADDRESS = state?.wallet?.address;
+      const WALLET_ADDRESS = state&&state.wallet && state.wallet.address;
+      const balance=await getWalletBalance(WALLET_ADDRESS,"ETH")
 
       const resposeBalance = await fetchTokenInfo(addresses, WALLET_ADDRESS)
       const usdcBalance = resposeBalance.find(item => item.symbol === "USDC")?.balance || "0.0";
-      const wethBalance = resposeBalance.find(item => item.symbol === "WETH")?.balance || "0.0";
       setUSDCBAL(parseFloat(usdcBalance).toFixed(5));
-      setWETHBAL(parseFloat(state?.EthBalance)?.toFixed(5));
+      if(balance.status){
+        setWETHBAL(parseFloat(balance.balance)?.toFixed(5));
+      }else{
+      setWETHBAL(parseFloat(state&&state.EthBalance)?.toFixed(5));
+      }
       setallblnLoading(false);
       setShowTokenList(false);
     } catch (error) {

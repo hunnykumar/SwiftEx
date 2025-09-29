@@ -286,11 +286,11 @@ const FOCUSED=useIsFocused();
     Keyboard.dismiss()
     setlodaing_ver(true);
     setLoading_fog(true);
-    if (Email.length<0) {
+    if (!Email) {
       setlodaing_ver(false);
        setLoading_fog(false);
        setTimeout(()=>{
-        ShowErrotoast(toast,"Email reqired.");
+        ShowErrotoast(toast,"Email address reqired.");
        },400)
       setVERFIY_OTP(false);
     } else {
@@ -321,7 +321,7 @@ const FOCUSED=useIsFocused();
           setVERFIY_OTP(false);
           if (Array.isArray(result?.data?.message)) {
             Snackbar.show({
-              text: result?.data?.message[0] === "email must be an email" ? "Email must be an email" : result?.message[0],
+              text: result?.data?.message[0] === "email must be an email"||"email should not be empty" ? "Email must be an email" : result?.message[0],
               duration: Snackbar.LENGTH_SHORT,
               backgroundColor: 'red',
             });
@@ -485,7 +485,7 @@ testID="keybordDismissBtn" onPress={()=>{Keyboard.dismiss()}}
                     marginBottom: hp(3),
                   }}
                 >
-                  {active_forgot===true?"Recover to your account":"Login to your account"}
+                  {active_forgot===true?"Recover your account":"Login to your account"}
                 </Text>
                <Text style={{
                     color: "#FFFFFF",
@@ -494,7 +494,7 @@ testID="keybordDismissBtn" onPress={()=>{Keyboard.dismiss()}}
                     paddingVertical:5,
                     fontWeight:"500"
                   }}>Email</Text>
-                <TextInput id="emailLoginInput" testID="emailLoginInput" accessibilityLabel="textInputId" autoCapitalize="none" textContentType="emailAddress" placeholder={"Email Adderss"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,color:"black" }} value={Email} onChangeText={(text) => { onChangelmail(text) }} />
+                <TextInput id="emailLoginInput" testID="emailLoginInput" accessibilityLabel="textInputId" autoCapitalize="none" textContentType="emailAddress" placeholder={"Email Address"} placeholderTextColor={"gray"} style={{ backgroundColor: "white", padding: 16, borderRadius: 5, fontSize: 16,color:"black" }} value={Email} onChangeText={(text) => { onChangelmail(text) }} />
                 {active_forgot===false?
                 <>
                  <Text style={{fontWeight:"500",color: "#FFFFFF",fontSize: 16,textAlign: 'left',paddingVertical:5,marginTop:10}}>Password</Text>
