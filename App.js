@@ -15,6 +15,7 @@ import {
 import Moralis from "moralis"
 import { API_KEYS, MORALIS_API_KEY } from "./src/Dashboard/constants";
 import Network_Checker from "./src/utilities/Network_Checker";
+import CustomInfoProvider from "./src/Dashboard/exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 
 LogBox.ignoreLogs(["Setting a timer"]);
 
@@ -76,6 +77,7 @@ export default function App() {
             </View>
         </PaperProvider>
       </NativeBaseProvider>
+      <CustomInfoProvider/>
     </StoreProvider>
   );
 }

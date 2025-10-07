@@ -46,6 +46,7 @@ import { NavigationActions } from "react-navigation";
 import darkBlue from "../../../assets/darkBlue.png"
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 import ErrorComponet from "../../utilities/ErrorComponet";
+import CustomInfoProvider from "../exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 var ethers = require("ethers");
 const xrpl = require("xrpl");
 //'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1644979850'
@@ -95,7 +96,7 @@ const SendTokens = (props) => {
   const handleCameraStatus = (status) => {
     if (status === "NOT_AUTHORIZED") {
       setModalVisible(false);
-      Alert.alert(
+     CustomInfoProvider.show(
         "Camera Permissions Required.",
         "Please enable camera permissions in settings to scan QR code.",
         [

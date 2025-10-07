@@ -28,6 +28,7 @@ import {
 import { checkWalletValidity } from "../utilities/utilities";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { urls } from "./constants";
+import CustomInfoProvider from "./exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 const CreateWallet = () => {
   const [address, setAddress] = useState("");
   const [Loading, setLoading] = useState(false);
@@ -107,11 +108,11 @@ const CreateWallet = () => {
     let privatekey;
     if (!name) {
       setLoading(false);
-      return Alert.alert("Please select an account name to proceed");
+      return CustomInfoProvider.show("Please select an account name to proceed");
     }
     if (!password) {
       setLoading(false);
-      return Alert.alert("You must select a password to proceed furthur");
+      return CustomInfoProvider.show("You must select a password to proceed furthur");
     }
     const accName = await state.user; //AsyncStorageLib.getItem('user')
 

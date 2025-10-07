@@ -13,6 +13,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { STELLAR_URL } from '../../../../constants';
 import { useNavigation } from '@react-navigation/native';
 import { authRequest, POST } from '../api';
+import AllbridgeTxTrack from '../components/AllbridgeTxTrack';
 
 const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
@@ -71,6 +72,8 @@ const getTransactionType = (operation) => {
           return `Buy ${operation?.cryptoName||""}`;
       case 'sellCry':
           return `Sell ${operation?.cryptoName||""}`;
+      case 'create_claimable_balance':
+          return `${operation?.asset?.split(":")[0]||"Claimable Asset"}`;
       default:
           return operation.type.replace(/([A-Z])/g, ' $1').trim();
   }
@@ -101,6 +104,8 @@ const getTransactionIcon = (type) => {
       return 'bank-transfer-in';
     case 'buyCry':
       return 'cash-fast';
+    case 'create_claimable_balance':
+      return 'family-tree'
     default:
       return 'bank-transfer';
   }
@@ -151,6 +156,9 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode }) => {
   const navigation=useNavigation();
   const colors = getThemeColors(isDarkMode);
   const operation = item.operations.records[0];
+  const [showTx,setshowTx]=useState(false);
+  const [showTxHash,setshowTxHash]=useState([]);
+
 console.log(operation)
  
   const isReceived = 
@@ -170,7 +178,9 @@ console.log(operation)
 
  
   let amountText = '0';
-  if (operation.type === 'payment') {
+  if (operation.type === 'create_claimable_balance') {
+    amountText = operation.amount;
+  } else if (operation.type === 'payment') {
     amountText = operation.amount;
   } else if (operation.type === 'create_account') {
     amountText = operation.starting_balance;
@@ -196,14 +206,27 @@ console.log(operation)
     amountTo = operation.amount;
   }
 
+  const txViewrManager = (txId, txType) => {
+    console.log("txId, txType",txId, txType)
+    if (txType === "invoke_host_function") {
+      setshowTxHash([{ chain: "SRB", hash: txId }])
+      setshowTx(true);
+    }
+    else{
+      navigation.navigate('StellarTransactionViewer', { transactionPath: txId })
+    }
+  }
+  
   return (
-    <TouchableOpacity 
+    <>
+
+<TouchableOpacity 
       style={[
         styles.transactionCard,
         { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }
       ]}
       disabled={operation.type === 'sellCry' || operation.type === 'buyCry'}
-      onPress={()=>{navigation.navigate('StellarTransactionViewer',{transactionPath: item?.operations?.records[0]?.transaction_hash})}}
+      onPress={()=>{txViewrManager(item?.operations?.records[0]?.transaction_hash,operation.type)}}
     >
       <View style={[styles.iconContainer, { backgroundColor: colors.iconBackground }]}>
         <Icon
@@ -223,7 +246,7 @@ console.log(operation)
             { backgroundColor: item.success ? colors.success : colors.error }
           ]}>
             <Text style={styles.statusText}>
-              {item.success ? 'Success' : typeof item.success === "string" ? item.success : 'Failed'}
+              {item.success ? operation.type==="create_claimable_balance"?"Claimable":'Success' : typeof item.success === "string" ? item.success : 'Failed'}
             </Text>
           </View>
         </View>
@@ -242,7 +265,7 @@ console.log(operation)
             styles.amount,
             { color: isReceived ? colors.received : colors.sent }
           ]}>
-            {isReceived||operation.type === 'manage_sell_offer'||operation.type === 'manage_buy_offer'||operation.type === 'sellCry' || operation.type === 'buyCry' ? '' : '-'}{amountText}
+            {isReceived||operation.type === 'manage_sell_offer'||operation.type === 'manage_buy_offer'||operation.type === 'sellCry' || operation.type === 'buyCry'|| operation.type === 'create_claimable_balance' ? '' : '-'}{amountText}
           </Text>
         </View>}
 
@@ -254,6 +277,10 @@ console.log(operation)
         )}
       </View>
     </TouchableOpacity>
+      <View style={styles.allBridgeTxCon}>
+        <AllbridgeTxTrack txs={showTxHash} isDarkMode={true} showTx={showTx} closeTx={() => { setshowTx(false) }} />
+      </View>
+    </>
   );
 };
 
@@ -569,6 +596,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     color:"#fff"
   },
+  allBridgeTxCon:{
+    zIndex:20,
+    position:"absolute",
+    width:"100%",
+    maxHeight:"50%",
+    bottom:25
+  }
 });
 
 export default StellarTransactionHistory;

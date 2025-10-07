@@ -16,6 +16,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { useSelector } from 'react-redux';
 import { Wallet_screen_header } from '../Dashboard/reusables/ExchangeHeader';
 import { PGET, PPOST, proxyRequest } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
+import CustomInfoProvider from '../Dashboard/exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
 
 const TOKENS = [
   {
@@ -62,7 +63,7 @@ const initializeWallet = async () => {
     
     await updateBalances(wallet.address);
   } catch (error) {
-    Alert.alert('Error', 'Failed to initialize wallet');
+    CustomInfoProvider.show('error', 'Failed to initialize wallet');
     console.log(error);
   }
 };
@@ -72,7 +73,7 @@ const updateBalances = async (address) => {
   try {
     const {res,err} = await proxyRequest(`/v1/bsc/${address}/token/${toToken.address}/balance`, PGET);
     if (err?.status === 500) {
-      Alert.alert("Balance fetch","somthing went wrong...")
+     CustomInfoProvider.show("Balance fetch","somthing went wrong...")
     }
     const tokenBal=await ethers.utils.formatEther(res?.tokenBalance);
     const walletBal=await ethers.utils.formatEther(res?.walletBalance);
@@ -109,7 +110,7 @@ const getQuote = async (inputAmount) => {
 // Execute swap
 const executeSwap = async () => {
   if (!bnbAmount || isNaN(bnbAmount)) {
-    Alert.alert('Error', 'Please enter a valid amount');
+    CustomInfoProvider.show('error', 'Please enter a valid amount');
     return;
   }
 
@@ -119,7 +120,7 @@ const executeSwap = async () => {
     const {res,err} = await proxyRequest("/v1/bsc/swap-transaction/prepare", PPOST, {address:userAddress,bnbAmount:bnbAmount,tokenIn:fromToken,tokenOut:toToken});
     console.log(res)
     if (err?.status === 500) {
-      Alert.alert('Error', 'Swap failed');
+      CustomInfoProvider.show('error', 'Swap failed');
     }
     const wallet = new ethers.Wallet(state?.wallet?.privateKey);
     const txObj = {
@@ -135,18 +136,18 @@ const executeSwap = async () => {
     const signedTxs = await wallet.signTransaction(txObj);
     const respo = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {signedTx:signedTxs});
     if (respo?.err?.status === 500) {
-      Alert.alert('Error', 'Swap failed');
+      CustomInfoProvider.show('error', 'Swap failed');
     }
     console.log("respo",respo?.res?.swapInfo)
     if(respo?.res?.txHash)
     {
-      Alert.alert('Success', 'Swap completed successfully!');
+     CustomInfoProvider.show('Success', 'Swap completed successfully!');
     }
     
     // Update balances
     await updateBalances(userAddress);
   } catch (error) {
-    Alert.alert('Error', 'Swap failed: ' + error.message);
+    CustomInfoProvider.show('error', 'Swap failed: ' + error.message);
     console.error(error);
   } finally {
     setLoading(false);

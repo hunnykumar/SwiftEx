@@ -18,6 +18,7 @@ import { PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/s
 import { FAB } from 'react-native-paper';
 import Icon from '../icon';
 import { getTokenBalancesUsingAddress } from './exchange/crypto-exchange-front-end-main/src/utils/getWalletInfo/EtherWalletService';
+import CustomInfoProvider from './exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
 
   
   const Token_Import = () => {
@@ -179,21 +180,21 @@ import { getTokenBalancesUsingAddress } from './exchange/crypto-exchange-front-e
       if (!newTokenAddress) {
         setNewTokenAddress('');
         setLoadingForImport(null);
-        Alert.alert('Error', 'Please enter a token contract address.');
+        CustomInfoProvider.show('error', 'Please enter a token contract address.');
         return;
       }
   
       if (!ethers.utils.isAddress(newTokenAddress)) {
         setNewTokenAddress('');
         setLoadingForImport(null);
-        Alert.alert('Error', 'Invalid Ethereum address.');
+        CustomInfoProvider.show('error', 'Invalid Ethereum address.');
         return;
       }
   
       if (tokenInfoList.some((token) => token.address === newTokenAddress)) {
         setNewTokenAddress('');
         setLoadingForImport(null);
-        Alert.alert('Error', 'Token already added.');
+        CustomInfoProvider.show('error', 'Token already added.');
         return;
       }
       
@@ -213,10 +214,10 @@ import { getTokenBalancesUsingAddress } from './exchange/crypto-exchange-front-e
         setNewTokenAddress('');
         setLoadingForImport(null);
         await checkAddedList();
-        Alert.alert("Info","Token Adding completed.")
+       CustomInfoProvider.show("Info","Token Adding completed.")
         setIsLoading(false);
       } catch (error) {
-        Alert.alert('Error', 'Please check the token address.');
+        CustomInfoProvider.show('error', 'Please check the token address.');
         console.log("-----",error)
         setLoadingForImport(null);
         setNewTokenAddress('');
@@ -232,21 +233,21 @@ import { getTokenBalancesUsingAddress } from './exchange/crypto-exchange-front-e
       if (!newTokenAddress||newTokenAddress.length !== 42) {
         setNewTokenAddress('');
         setLoadingForImport(null);
-        Alert.alert('Error', 'Please enter a valid token contract address.');
+        CustomInfoProvider.show('error', 'Please enter a valid token contract address.');
         return;
       }
   
       if (!ethers.utils.isAddress(newTokenAddress)) {
         setNewTokenAddress('');
         setLoadingForImport(null);
-        Alert.alert('Error', 'Invalid Binance address.');
+        CustomInfoProvider.show('error', 'Invalid Binance address.');
         return;
       }
   
       if (tokenInfoList.some((token) => token.address === newTokenAddress)) {
         setNewTokenAddress('');
         setLoadingForImport(null);
-        Alert.alert('Error', 'Token already added.');
+        CustomInfoProvider.show('error', 'Token already added.');
         return;
       }
       
@@ -265,11 +266,11 @@ import { getTokenBalancesUsingAddress } from './exchange/crypto-exchange-front-e
   
         setNewTokenAddress('');
         await checkAddedList();
-        Alert.alert("Info","Token Adding completed.")
+       CustomInfoProvider.show("Info","Token Adding completed.")
         setLoadingForImport(null);
         setIsLoading(false);
       } catch (error) {
-        Alert.alert('Error', 'Please check the token address.');
+        CustomInfoProvider.show('error', 'Please check the token address.');
         setLoadingForImport(null);
         setNewTokenAddress('');
         setIsLoading(false);
@@ -343,7 +344,7 @@ import { getTokenBalancesUsingAddress } from './exchange/crypto-exchange-front-e
         settokenListed(updatedTokenListed);
         setcheckTokenStatus(false);
       } catch (e) {
-        Alert.alert("info","Unable to get tokens Info...");
+       CustomInfoProvider.show("info","Unable to get tokens Info...");
         console.log("Error reading Wallets tokens from storage:", e);
       }
     }

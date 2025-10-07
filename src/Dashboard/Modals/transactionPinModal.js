@@ -35,6 +35,7 @@ import { useToast } from "native-base";
 import { alert, ShowToast } from "../reusables/Toasts";
 import { getAllBalances } from "../../utilities/web3utilities";
 import { PPOST, proxyRequest } from "../exchange/crypto-exchange-front-end-main/src/api";
+import CustomInfoProvider from "../exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 
 const TransactionPinModal = ({
   pinViewVisible,
@@ -145,7 +146,7 @@ const TransactionPinModal = ({
             if (err) {
               console.log(err);
               setLoading(false);
-              Alert.alert("Error", err.message||"Something went wrong");
+             CustomInfoProvider.show("Error", err.message||"Something went wrong");
             }
   
             if (res.txHash) {

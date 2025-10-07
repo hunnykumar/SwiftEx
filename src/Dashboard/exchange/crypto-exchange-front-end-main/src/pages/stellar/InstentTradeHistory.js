@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import CustomInfoProvider from '../../components/CustomInfoProvider';
 
 // API Functions
 function getCanonicalAsset(code, issuer) {
@@ -211,7 +212,7 @@ const InstentTradeHistory = () => {
       setTrades(resTrades);
     } catch (err) {
       setError(err.message);
-      Alert.alert(
+     CustomInfoProvider.show(
         'Error',
         `Failed to fetch trade data: ${err.message}`,
         [{ text: 'OK' }]

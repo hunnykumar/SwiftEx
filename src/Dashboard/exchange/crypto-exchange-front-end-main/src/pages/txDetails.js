@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
+import CustomInfoProvider from '../components/CustomInfoProvider';
 
 const TxDetails = ({ route,showWebView }) => {
     const navigation = useNavigation();
@@ -12,7 +13,7 @@ const TxDetails = ({ route,showWebView }) => {
     useEffect(() => {
         if (!userKycUrl) {
             navigation.goBack();
-            Alert.alert("Error", "invalid url");
+           CustomInfoProvider.show("Error", "invalid url");
             setLoading(false);
         }
         showWebView(userKycUrl)

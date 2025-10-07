@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, Linking, TouchableOpacity, ActivityIndicator, A
 import { WebView } from 'react-native-webview';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
 import { STELLAR_URL } from '../../../../constants';
+import CustomInfoProvider from '../components/CustomInfoProvider';
 
 const StellarTransactionViewer = ({ route }) => {
     const navigation = useNavigation();
@@ -13,7 +14,7 @@ const StellarTransactionViewer = ({ route }) => {
     useEffect(() => {
         if (!transactionPath) {
             navigation.goBack();
-            Alert.alert("Error", "invalid url");
+           CustomInfoProvider.show("Error", "invalid url");
             setLoading(false);
         }
     }, [transactionPath]);

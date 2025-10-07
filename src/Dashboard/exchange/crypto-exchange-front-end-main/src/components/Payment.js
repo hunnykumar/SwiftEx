@@ -114,7 +114,7 @@ const Payment = () => {
     />
   </View>)
   )
-  // Alert.alert("Card Info","Use this 4242 4242 4242 4242 Card Number Test for Payments")
+  //CustomInfoProvider.show("Card Info","Use this 4242 4242 4242 4242 Card Number Test for Payments")
   // return (
   //   <View style={styles.container}>
   //     <WebView

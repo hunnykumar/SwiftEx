@@ -1,6 +1,7 @@
 import { Alert } from "react-native";
 import { PPOST, proxyRequest } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/api";
 import { getTokenBalancesUsingAddress } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/utils/getWalletInfo/EtherWalletService";
+import CustomInfoProvider from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 export async function fetchTokenInfo(addresses, walletAddress) {
     try {
       const fetchedTokens=await getTokenBalancesUsingAddress(addresses,walletAddress,"ETH")
@@ -9,7 +10,7 @@ export async function fetchTokenInfo(addresses, walletAddress) {
         return fetchedTokens.tokenInfo
       }
       else{
-        Alert.alert('Error', 'Failed to fetch tokens info.');
+        CustomInfoProvider.show('error', 'Failed to fetch tokens info.');
         return null;
       }
     } catch (error) {
@@ -26,7 +27,7 @@ export async function fetchBSCTokenInfo(addresses, walletAddress) {
       return fetchedTokens.tokenInfo
     }
     else{
-      Alert.alert('Error', 'Failed to fetch tokens info.');
+      CustomInfoProvider.show('error', 'Failed to fetch tokens info.');
       return null;
     }
   } catch (error) {

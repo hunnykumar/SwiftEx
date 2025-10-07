@@ -23,6 +23,7 @@ import ErrorComponet from "../../../../../../utilities/ErrorComponet";
 import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../../utilities/StellarUtils";
 import WalletActivationComponent from "../../utils/WalletActivationComponent";
 import * as StellarSdk from '@stellar/stellar-sdk';
+import CustomInfoProvider from "../../components/CustomInfoProvider";
 StellarSdk.Networks.PUBLIC
 
 const send_recive = ({route}) => {
@@ -67,7 +68,7 @@ const send_recive = ({route}) => {
   const handleCameraStatus = (status) => {
     if (status === "NOT_AUTHORIZED") {
       setModalVisible(false);
-      Alert.alert(
+     CustomInfoProvider.show(
         "Camera Permissions Required.",
         "Please enable camera permissions in settings to scan QR code.",
         [

@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
+import CustomInfoProvider from '../../components/CustomInfoProvider';
 
 const ExchangeDetailsSubmittion = ({ navigation }) => {
   const [formData, setFormData] = useState({
@@ -101,7 +102,7 @@ const ExchangeDetailsSubmittion = ({ navigation }) => {
   // Handle form submission
   const handleSubmit = async () => {
     if (!validateAllFields()) {
-      Alert.alert('Validation Error', 'Please fix all errors before submitting');
+     CustomInfoProvider.show('Validation Error', 'Please fix all errors before submitting');
       return;
     }
 
@@ -122,7 +123,7 @@ const ExchangeDetailsSubmittion = ({ navigation }) => {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Show success message
-      Alert.alert(
+     CustomInfoProvider.show(
         'Success!',
         'Profile information has been saved successfully.',
         [
@@ -135,7 +136,7 @@ const ExchangeDetailsSubmittion = ({ navigation }) => {
 
     } catch (error) {
       console.log('Error submitting form:', error);
-      Alert.alert('Error', 'Failed to save profile information. Please try again.');
+      CustomInfoProvider.show('error', 'Failed to save profile information. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -143,7 +144,7 @@ const ExchangeDetailsSubmittion = ({ navigation }) => {
 
   // Handle skip
   const handleSkip = () => {
-    Alert.alert(
+   CustomInfoProvider.show(
       'Skip Profile Setup',
       'You can complete your profile later from settings. Continue?',
       [

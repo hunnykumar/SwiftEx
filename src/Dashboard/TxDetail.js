@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, Linking, TouchableOpacity, ActivityIndicator, A
 import { WebView } from 'react-native-webview';
 import { Wallet_screen_header } from './reusables/ExchangeHeader';
 import { useSelector } from 'react-redux';
+import CustomInfoProvider from './exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
 
 
 export const TxDetail = ({route}) => {
@@ -15,7 +16,7 @@ export const TxDetail = ({route}) => {
     useEffect(() => {
         if (!transactionPath) {
             navigation.goBack();
-            Alert.alert("Error", "invalid url");
+           CustomInfoProvider.show("Error", "invalid url");
             setLoading(false);
         }
     }, [transactionPath]);
