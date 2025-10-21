@@ -39,7 +39,7 @@ const useFirebaseCloudMessaging = (navigation) => {
           if(token){
             AsyncStorageLib.setItem('fcmtoken',JSON.stringify(token))
             // copyToClipboard(token)
-            // Alert.alert('firebase Token', token, [ {text: `copy`, onPress: () => copyToClipboard(token), style: 'cancel'}, {text: 'close alert', onPress: () => console.log('closed')}, ], { cancelable: true});
+            //CustomInfoProvider.show('firebase Token', token, [ {text: `copy`, onPress: () => copyToClipboard(token), style: 'cancel'}, {text: 'close alert', onPress: () => console.log('closed')}, ], { cancelable: true});
           }
 
           //saveFcmToken(token)
@@ -111,7 +111,7 @@ const useFirebaseCloudMessaging = (navigation) => {
 
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async (remoteMessage) => {
-     // Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage))
+     //CustomInfoProvider.show('A new FCM message arrived!', JSON.stringify(remoteMessage))
       console.log(remoteMessage.notification.body)
       console.log(remoteMessage.notification.title)
       //SendNotification(remoteMessage.notification.title,remoteMessage.notification.body)

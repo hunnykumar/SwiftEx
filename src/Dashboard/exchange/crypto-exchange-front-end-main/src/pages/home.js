@@ -595,7 +595,7 @@ const Offer_condition=(data,para)=>{
     }
   // }
   // else{
-    // Alert.alert("Account","Add Bank Account from Profile Tab.");
+    //CustomInfoProvider.show("Account","Add Bank Account from Profile Tab.");
   // }
   }
 }

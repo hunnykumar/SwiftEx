@@ -197,21 +197,28 @@ export const createGuestUser=async()=>{
     redirect: "follow"
   };
   
-  fetch(REACT_APP_HOST+"/v1/device", requestOptions)
-    .then((response) => response.json())
-    .then(async(result) => {
-      console.log("--Guest auth --",result)
-      if(result?.deviceToken)
-      {
-        await saveToken(result?.deviceToken)
-      }
-    })
-    .catch((error) => {
-      console.log("--Guest auth Error--",error)
-    });
-  } catch (error) {
-    console.log("--Guest Auth Creation Faild--",error)
+  const response = await fetch(REACT_APP_HOST+"/v1/device", requestOptions);
+  if (!response.ok) {
+    return {
+      status: false,
+      error: `HTTP error: ${response.status}`,
+    };
   }
+  const result = await response.json();
+  console.log("--Guest auth --", result);
+  if (result?.deviceToken) {
+    await saveToken(result.deviceToken);
+  }
+  return {
+    status: true,
+    res: result,
+  };
+} catch (error) {
+  console.error("--Guest auth Error--", error);
+  return {
+    status: false
+  };
+}
 }
 
 

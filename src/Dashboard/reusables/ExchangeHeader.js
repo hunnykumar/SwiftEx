@@ -11,6 +11,7 @@ import darkBlue from "../../../assets/darkBlue.png";
 import { REACT_APP_LOCAL_TOKEN } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import { useSelector } from "react-redux";
 import { createGuestUser } from "../exchange/crypto-exchange-front-end-main/src/api";
+import CustomInfoProvider from "../exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 
 export const ExchangeHeaderApp = () => {
   const navigation = useNavigation();
@@ -139,7 +140,7 @@ const CustomDrawer = ({ isVisible, onClose }) => {
       onClose()
       await AsyncStorage.removeItem("UserAuthID");
       // createGuestUser()
-      Alert.alert("You're in Guest Mode.");
+     CustomInfoProvider.show("You're in Guest Mode.");
       // naviagtion.navigate("Home");
     } catch (error) {
       console.log("--===9",error)

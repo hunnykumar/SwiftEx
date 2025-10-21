@@ -19,6 +19,7 @@ import {
     heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import Icon from '../src/icon';
+import CustomInfoProvider from '../src/Dashboard/exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
 
 const FloatingScreen = ({ uri, visible, onClose }) => {
     const [isMinimized, setIsMinimized] = useState(false);
@@ -33,7 +34,7 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
         if (visible) {
             backHandler.current = BackHandler.addEventListener('hardwareBackPress', () => {
                 if (isMinimized) {
-                    Alert.alert("Info", "Do you want to exit?", [
+                   CustomInfoProvider.show("Info", "Do you want to exit?", [
                         { text: "Cancel", style: "cancel" },
                         { text: "Yes", onPress: onClose },
                     ]);
@@ -104,7 +105,7 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
     const toggleSize = () => setIsMinimized(prev => !prev);
 
     const handleHeaderBack = () => {
-        Alert.alert("Info", "Do you want to minimise this screen?", [
+       CustomInfoProvider.show("Info", "Do you want to minimise this screen?", [
             { text: "Exit", onPress: onClose, style: "cancel" },
             { text: "Yes", onPress: () => { setIsMinimized(true), setShowControls(true) } },
             { text: "Cancel", style: "cancel" },
@@ -112,7 +113,7 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
     };
 
     const handleClosePress = () => {
-        Alert.alert("Info", "Do you want to Exit?", [
+       CustomInfoProvider.show("Info", "Do you want to Exit?", [
             { text: "Cancel", style: "cancel" },
             { text: "Yes", onPress: onClose },
         ]);

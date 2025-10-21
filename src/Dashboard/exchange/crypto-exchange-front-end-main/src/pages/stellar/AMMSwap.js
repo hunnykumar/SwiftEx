@@ -25,6 +25,7 @@ import { AMMSWAPTESTNET } from './AMMSwapTestNetUtil';
 import { useNavigation } from '@react-navigation/native';
 import { STELLAR_URL } from '../../../../../constants';
 import * as StellarSdk from '@stellar/stellar-sdk';
+import CustomInfoProvider from '../../components/CustomInfoProvider';
 
 const AMMSwap = () => {
   const state=useSelector((state)=>state);
@@ -118,7 +119,7 @@ const AMMSwap = () => {
       } if (assetCode !== "native") {
         const nonNativeBal = await GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY, assetCode, assetCodeIssuer);
         if (nonNativeBal.status === false&&nonNativeBal.error) {
-          Alert.alert("Info", nonNativeBal.error);
+         CustomInfoProvider.show("Info", nonNativeBal.error);
           return { "balance": "0.00" }
         }
         if (nonNativeBal.availableBalance) {
@@ -301,7 +302,7 @@ const AMMSwap = () => {
         setIsLoading(false);
       }
       else{
-        Alert.alert("Info","To and From asset tokens can be the same.")
+       CustomInfoProvider.show("Info","To and From asset tokens can be the same.")
       }
     }
     if (tokenTypeSelection === 1) {
@@ -313,7 +314,7 @@ const AMMSwap = () => {
         setexchangeRes(null);
         setIsLoading(false);
       } else {
-        Alert.alert("Info", "From and To asset tokens can be the same.")
+       CustomInfoProvider.show("Info", "From and To asset tokens can be the same.")
       }
     }
   }

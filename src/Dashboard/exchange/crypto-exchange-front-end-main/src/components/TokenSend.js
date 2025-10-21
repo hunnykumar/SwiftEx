@@ -33,6 +33,7 @@ import { isAddress } from "ethers/lib/utils";
 import { ethers } from "ethers";
 import { PGET, PPOST, proxyRequest } from "../api";
 import { getTokenBalancesUsingAddress } from "../utils/getWalletInfo/EtherWalletService";
+import CustomInfoProvider from "./CustomInfoProvider";
 const TokenSend = ({ route }) => {
   const toast = useToast();
   const FOCUSED = useIsFocused()
@@ -132,7 +133,7 @@ const TokenSend = ({ route }) => {
       }
     } catch (error) {
       console.error("Transaction Error:", error);
-      Alert.alert("Error", "Transaction failed. Check logs.");
+     CustomInfoProvider.show("Error", "Transaction failed. Check logs.");
     } finally {
       setAddress();
       setAmount();
@@ -166,7 +167,7 @@ const TokenSend = ({ route }) => {
   const handleCameraStatus = (status) => {
     if (status === "NOT_AUTHORIZED") {
       setModalVisible(false);
-      Alert.alert(
+     CustomInfoProvider.show(
         "Camera Permissions Required.",
         "Please enable camera permissions in settings to scan QR code.",
         [

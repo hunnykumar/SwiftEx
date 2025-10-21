@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useEffect, useState } from 'react';
 import RNFS from 'react-native-fs';
+import CustomInfoProvider from './CustomInfoProvider';
 
 const BackupWallet = ({ open, close }) => {
   const state=useSelector((state)=>state);
@@ -29,7 +30,7 @@ const BackupWallet = ({ open, close }) => {
       setbackupLoading(false)
       setbackupStatus(true)
     } catch (err) {
-      Alert.alert("info","Faild to backup file");
+     CustomInfoProvider.show("info","Faild to backup file");
       setbackupLoading(false)
       setbackupStatus(false)
     }

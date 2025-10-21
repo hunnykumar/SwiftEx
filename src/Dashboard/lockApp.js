@@ -25,6 +25,7 @@ import { setPlatform } from "../components/Redux/actions/auth";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useBiometricsForAppLock } from "../biometrics/biometric";
 import { alert } from "./reusables/Toasts";
+import CustomInfoProvider from "./exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 const LockApp = (props) => {
   const [pin, setPin] = useState();
   const [status, setStatus] = useState("pinset");
@@ -50,10 +51,10 @@ const LockApp = (props) => {
   useFocusEffect(
     React.useCallback(() => {
       const backAction = () => {
-        Alert.alert("Hold on!", "Are you sure you want to exit?", [
-          { text: "Cancel" },
+        CustomInfoProvider.show("Hold on!", "Are you sure you want to exit?", [
+          { text: "Cancel", style: "cancel" },
           { text: "Yes", onPress: () => BackHandler.exitApp() },
-        ]);
+        ])
         return true;
       };
 

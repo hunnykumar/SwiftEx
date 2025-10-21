@@ -21,6 +21,7 @@ import { REACT_APP_HOST } from '../ExchangeConstants';
 import { getToken } from '../api';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../../../../../icon';
+import CustomInfoProvider from '../components/CustomInfoProvider';
 
 export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
 
@@ -296,7 +297,7 @@ export const QuoteModalBottomSheet = ({
         else {
           setusdcResLoading(false)
           setusdcRes(null)
-          Alert.alert("Info", "An error occurred. Please try again later.")
+         CustomInfoProvider.show("Info", "An error occurred. Please try again later.")
         }
       })
       .catch((error) => console.error(error));

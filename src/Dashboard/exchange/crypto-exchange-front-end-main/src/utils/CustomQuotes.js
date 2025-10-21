@@ -37,7 +37,8 @@ import apiHelper from '../apiHelper';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { swap_prepare } from '../../../../../../All_bridge';
 import { getTokenBalancesUsingAddress, getWalletBalance } from './getWalletInfo/EtherWalletService';
-export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider }) => {
+import CustomInfoProvider from '../components/CustomInfoProvider';
+export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider,feetype }) => {
 
   const styles = StyleSheet.create({
     quoteTextCon: {
@@ -122,6 +123,19 @@ export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationTo
               <Text style={styles.quoteValue}>{destinationToken}</Text>
             </View>
           </View>
+          {feetype&&<>
+            <View style={styles.quoteRow}>
+            <Text style={styles.quoteLabel}>Fee</Text>
+            <Text style={styles.quoteValue}>
+              {feetype==="native"?quoteInfo?.fee?.native?.amount +" "+quoteInfo?.fee?.native?.symbol : quoteInfo?.fee?.stablecoin?.amount+" "+quoteInfo?.fee?.stablecoin?.symbol}
+            </Text>
+          </View>
+          <View style={styles.quoteRow}>
+            <Text style={styles.quoteLabel}>Time</Text>
+            <Text style={styles.quoteValue}>
+              {quoteInfo.completionTime?(quoteInfo.completionTime / (1000 * 60)+" Min"):"getting.."}
+            </Text>
+          </View></>}
         </View>
       )}
       {hideQuote ? (quoteInfo !== null && (
@@ -221,6 +235,7 @@ export const CustomQuotes = ({
       'USDT→USDC': 'default',
       'USDC→Wallet': 'default'
     });
+    const [feePayType,setfeePayType]=useState("native");
   const { FCM_getToken } = useFirebaseCloudMessaging();
    useEffect(()=>{
     setStatusMap({
@@ -239,12 +254,19 @@ export const CustomQuotes = ({
     setusdcRes(null)
     setusdcResLoading(null)
     setmessageError(null)
+    setfeePayType("native")
     fetchUSDTBAL()
     if(ACTIVATED)
     {
       BridgeUSDCValidation()
     }
    },[isVisible])
+
+   useEffect(()=>{
+    if(feePayType==="stable"&&usdcRes?.fee?.stablecoin?.amount){
+      fetchUSDTBAL(usdcRes?.fee?.stablecoin?.amount)
+    }
+   })
 
    function isAssetData(state) {
     return state?.assetData !== undefined && state?.assetData !== null;
@@ -375,7 +397,7 @@ export const CustomQuotes = ({
       marginBottom: 15,
     },
     inputContainer: {
-      marginBottom: 15,
+      marginBottom: 0.5,
     },
     inputLabel: {
       color: 'white',
@@ -472,6 +494,45 @@ export const CustomQuotes = ({
       marginBottom: 12,
       color: '#fff',
     },
+    feeCon: {
+      marginBottom: 10,
+      flexDirection:"row",
+      alignContent:"center",
+      justifyContent:"space-between",
+      borderRadius:10,
+      borderWidth:0.9,
+      paddingVertical:10,
+      paddingHorizontal:8,
+      borderColor: '#333333',
+      backgroundColor: '#111111',
+    },
+    feeIconCon: {
+      flexDirection:"row",
+      alignContent:"center",
+      justifyContent:"flex-start"
+    },
+    payCon:{
+      flexDirection:"row",
+      alignContent:"center",
+      justifyContent:"space-between",
+    },
+    paybtnCon:{
+      flexDirection:"row",
+      alignContent:"center",
+      justifyContent:"space-around",
+      marginLeft:10,
+      borderColor:"gray",
+      borderWidth:0.6,
+      borderRadius:19,
+      paddingVertical:6,
+      paddingHorizontal:10
+    },
+    payBtnLabel:{
+      textAlign:"center",
+      fontSize:15,
+      fontWeight:"400",
+      color:"#fff"
+    }
   });
   
   const handleUSDTBNB = async (value,address,token) => {
@@ -479,14 +540,14 @@ export const CustomQuotes = ({
     {
       setusdtRes(null)
       setusdtResLoading(false)
-      await handleUSDC(value,"BSC")
+      await handleUSDC(value,"BSC","USDT")
     }else{
       const res=await getBNBTokenQuoteToUSDT(address,value)
       if(res.status)
         {
           setusdtRes(res)
           setusdtResLoading(false)
-          await handleUSDC(res?.minimumAmountOut?.toFixed(6)?.toString(),"BSC")
+          await handleUSDC(res?.minimumAmountOut?.toFixed(6)?.toString(),"BSC","USDT")
         }
     }
   }
@@ -497,7 +558,7 @@ export const CustomQuotes = ({
       fetchUSDTBAL(value)
       setusdtRes(null)
       setusdtResLoading(false)
-      await handleUSDC(value,"ETH")
+      await handleUSDC(value,"ETH","USDT")
     }else{
       const res=await getTokenQuoteToUSDT(address,value,token)
       if(res.status)
@@ -515,12 +576,12 @@ export const CustomQuotes = ({
             }
           setusdtRes(res)
           setusdtResLoading(false)
-          await handleUSDC(res?.minimumAmountOut,"ETH")
+          await handleUSDC(res?.minimumAmountOut,"ETH","USDT")
         }
     }
   }
 
-  const handleUSDC = async (value,typeOfchain) => {
+  const handleUSDC = async (value,typeOfchain,sourceToken) => {
     const deviceToken = await getToken();
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
@@ -529,7 +590,8 @@ export const CustomQuotes = ({
 
     const raw = JSON.stringify({
       "amount": value,
-      "chainType":typeOfchain
+      "chainType":typeOfchain,
+      "sourceToken":sourceToken
     });
 
     const requestOptions = {
@@ -551,7 +613,7 @@ export const CustomQuotes = ({
           setusdcResLoading(false)
           setusdcRes(null)
           console.log("--Info-err->",result)
-          Alert.alert("Info", "An error occurred. Please try again later.")
+         CustomInfoProvider.show("Info", "An error occurred. Please try again later.")
         }
       })
       .catch((error) => console.log(error));
@@ -622,7 +684,7 @@ export const CustomQuotes = ({
       handleStepUpdate("WETH→USDT","error")
       handleStepUpdate("USDT→USDC","error")
       handleStepUpdate("USDC→Wallet","error")
-        Alert.alert("Info", res.message,[{text:"Okay",onPress:()=>{onClose()}}],{cancelable:false})
+       CustomInfoProvider.show("Info", res.message,[{text:"Okay",onPress:()=>{onClose()}}],{cancelable:false})
         setisDone(false)
       }
     }
@@ -631,7 +693,7 @@ export const CustomQuotes = ({
    const sendEthToContract = async (amount) => {
      try {
        handleStepUpdate("USDT→USDC", "pending")
-       const ressult_swap = await swap_prepare(state.wallet.privateKey, state.wallet.address, state.STELLAR_PUBLICK_KEY, amount, "USDT", "USDC", "ETH")
+       const ressult_swap = await swap_prepare(state.wallet.privateKey, state.wallet.address, state.STELLAR_PUBLICK_KEY, amount, "USDT", "USDC", "ETH",feePayType)
        console.log("last ui res ---->", ressult_swap)
        if (ressult_swap.status_task) {
          setisDone(false)
@@ -641,7 +703,7 @@ export const CustomQuotes = ({
          }, 2000);
        }
        if (!ressult_swap.status_task) {
-         Alert.alert(
+        CustomInfoProvider.show(
            "Info",
            ressult_swap?.res||"Swap Faild",
            [
@@ -800,6 +862,34 @@ export const CustomQuotes = ({
     await active_account()
   }
 
+  const GasPayOption = ({ type, label, selected, onPress }) => {
+    const isSelected = selected === type;
+    return (
+      <TouchableOpacity
+        style={[
+          styles.paybtnCon,
+          { borderColor: isSelected ? "#2164C1" : "gray", borderWidth: isSelected ? 1.3 : 0.9 }
+        ]}
+        onPress={() => onPress(type)}
+      >
+        <Icon
+          name="fire-circle"
+          type="materialCommunity"
+          size={20}
+          color={isSelected ? "#2164C1" : "#fff"}
+        />
+        <Text
+          style={[
+            styles.payBtnLabel,
+            { color: isSelected ? "#2164C1" : "#fff" }
+          ]}
+        >
+          {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <Modal
       transparent={true}
@@ -912,6 +1002,16 @@ export const CustomQuotes = ({
                 />
                 <Text style={{ color: "red" }}>{messageError}</Text>
               </View>
+              <View style={styles.feeCon}>
+                <View style={[styles.feeIconCon,{marginTop:6}]}>
+                   <Icon name={"fire-circle"} type={"materialCommunity"} size={21} color={"#fff"} />
+                   <Text style={[styles.inputLabel,{fontSize:15}]}> Relayer fee</Text>
+                </View>
+                <View style={styles.payCon}>
+                <GasPayOption type="native" label="Native" selected={feePayType} onPress={setfeePayType} />
+                <GasPayOption type="stable" label="Stable-Coin" selected={feePayType} onPress={setfeePayType} />
+                </View>
+              </View>
                 </>}
 
                   <View style={{
@@ -938,6 +1038,7 @@ export const CustomQuotes = ({
                 destinationToken={"USDC"}
                 hideQuote={false}
                 typeProvider={"Allbridge"}
+                feetype={feePayType}
               />
               </View>
               <QuotesResComponent 
@@ -947,7 +1048,7 @@ export const CustomQuotes = ({
                 destinationToken={"USDC"}
               />
               {!ACTIVATED?null:not_avilable?null:
-              <TouchableOpacity disabled={usdcResLoading || usdtResLoading || !usdcRes||completTransaction||isDone } style={[styles.approveCon, { backgroundColor: usdcResLoading || usdtResLoading || !usdcRes||completTransaction||isDone  ? "gray" : Approved ? "green" : "#3574B6" }]} onPress={() => { handlleMultiProcces(tokenName,usdcRes?.minimumAmountOut) }}>
+              <TouchableOpacity disabled={usdcResLoading || usdtResLoading || !usdcRes||completTransaction||isDone} style={[styles.approveCon, { backgroundColor: usdcResLoading || usdtResLoading || !usdcRes||completTransaction||isDone  ? "gray" : Approved ? "green" : "#3574B6" }]} onPress={() => { handlleMultiProcces(tokenName,usdcRes?.minimumAmountOut) }}>
                 {Approved ? <Icon name={"check-circle-outline"} type={"materialCommunity"} size={25} color={"white"} /> : isDone?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={styles.approveConText}>{ usdcResLoading?"Getting best quote...":completTransaction?inputAmount!==null?"Insufficient balance":"Approve":"Approve"}</Text>}
               </TouchableOpacity>}
               </>

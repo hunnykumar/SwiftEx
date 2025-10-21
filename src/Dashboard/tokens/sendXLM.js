@@ -42,6 +42,7 @@ import StellarAccountReserve from "../exchange/crypto-exchange-front-end-main/sr
 import WalletActivationComponent from "../exchange/crypto-exchange-front-end-main/src/utils/WalletActivationComponent";
 // const StellarSdK = require('stellar-base');
 import * as StellarSdk from '@stellar/stellar-sdk';
+import CustomInfoProvider from "../exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 StellarSdk.Networks.PUBLIC
 const SendXLM = (props) => {
     const toast=useToast();
@@ -93,7 +94,7 @@ const SendXLM = (props) => {
     const handleCameraStatus = (status) => {
       if (status === "NOT_AUTHORIZED") {
         setModalVisible(false);
-        Alert.alert(
+       CustomInfoProvider.show(
           "Camera Permissions Required.",
           "Please enable camera permissions in settings to scan QR code.",
           [

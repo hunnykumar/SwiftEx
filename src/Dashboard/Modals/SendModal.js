@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
        }
        else{
         //setVisible(false)
-        return Alert.alert(
+        returnCustomInfoProvider.show(
          "No privateKey found",
          "Do you want to enter private key manually?",
          [

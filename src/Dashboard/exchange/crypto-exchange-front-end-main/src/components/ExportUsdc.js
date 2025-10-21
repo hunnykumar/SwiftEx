@@ -16,6 +16,8 @@ import { getChainTokenData, swapPepare } from '../../../../../utilities/Allbridg
 import { Keypair } from '@stellar/stellar-sdk';
 import Snackbar from 'react-native-snackbar';
 import { debounce } from 'lodash';
+import AllbridgeTxTrack from './AllbridgeTxTrack';
+import CustomInfoProvider from './CustomInfoProvider';
 
 const ExportUSDC = () => {
   const Focused = useIsFocused();
@@ -42,6 +44,9 @@ const ExportUSDC = () => {
   const [resQuotes,setresQuotes]=useState(null);
   const [btnLoading,setbtnLoading]=useState(false);
   const [XLMAvlBal,setXLMAvlBal]=useState("0");
+  const [payFeeType,setPayFeeType]=useState("native");
+  const [showTx,setshowTx]=useState(false);
+  const [showTxHash,setshowTxHash]=useState([]);
 
 
   const sendNetworks = [
@@ -91,6 +96,8 @@ const ExportUSDC = () => {
 
 
   useEffect(() => {
+    setshowTx(false);
+    setshowTxHash([]);
     setstellarWalletActivated(false);
     setbasicProccesing(true);
     fetchStellarWalletdetails();
@@ -107,6 +114,7 @@ const ExportUSDC = () => {
     setresQuotes(null);
     setbtnLoading(false);
     setXLMAvlBal("0.0");
+    setPayFeeType("native")
   }, [Focused])
 
   const fetchStellarWalletdetails = async () => {
@@ -213,10 +221,13 @@ const ExportUSDC = () => {
         !selectedReciveAssetDetils ? reciveAsset[0].symbole : selectedReciveAssetDetils.symbole,
         amount,
         state && state.wallet && state.wallet.address,
-        stellarWallet
+        stellarWallet,
+        payFeeType
       );
       console.log("swap-result----", result)
       if (result.success) {
+        setshowTxHash([{ chain: "SRB", hash: showTxHash }]);
+        setshowTx(true);
         Snackbar.show({
           text: "USDC Exported successfully.",
           duration: Snackbar.LENGTH_SHORT,
@@ -225,6 +236,7 @@ const ExportUSDC = () => {
         console.log("USDC Exported:-", result);
         setbtnLoading(false);
       } else {
+        setshowTx(false);
         Snackbar.show({
           text: "USDC Exported Faild.",
           duration: Snackbar.LENGTH_SHORT,
@@ -234,6 +246,7 @@ const ExportUSDC = () => {
         setbtnLoading(false);
       }
     } catch (error) {
+      setshowTx(false);
       setbtnLoading(false);
       console.log("error in allbridge swap execute:", error)
       Snackbar.show({
@@ -244,7 +257,7 @@ const ExportUSDC = () => {
       console.log("USDC Exported Faild:-", result);
     }
   }
-
+console.log("resQuotes-",resQuotes)
   return (
     <View style={styles.container}>
       <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
@@ -279,7 +292,7 @@ const ExportUSDC = () => {
           </View>
           <TouchableOpacity style={styles.maxCon} onPress={() => {
             if (parseFloat(walletBalance) === 0) {
-              Alert.alert("Info", "Insuficint Balance.")
+             CustomInfoProvider.show("Info", "Insuficint Balance.")
               setamount(null)
             } else {
               setamount(walletBalance)
@@ -308,6 +321,24 @@ const ExportUSDC = () => {
             </ScrollView>
           </View>
         </View>
+
+        <View style={[styles.modalOpen, { paddingVertical: hp(1.5), marginTop: hp(0.5) }]}>
+          <View style={{ flexDirection: "row" }}>
+            <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={"#fff"} />
+            <Text style={[styles.subInputText, { marginTop: hp(0), fontSize: 19 }]}> Relayer Fee</Text>
+          </View>
+          <View style={{ flexDirection: "row" }}>
+            <TouchableOpacity style={[styles.feePayCon,{borderColor:payFeeType==="native"?"#2164C1":"#fff"}]} onPress={()=>{setPayFeeType("native")}}>
+              <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={payFeeType==="native"?"#2164C1":"#fff"} />
+              <Text style={[styles.feePayTx,{color: payFeeType==="native"?"#2164C1":"#fff"}]}> Native</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.feePayCon,{borderColor:payFeeType==="stable"?"#2164C1":"#fff"}]} onPress={()=>{setPayFeeType("stable")}}>
+              <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={payFeeType==="stable"?"#2164C1":"#fff"} />
+              <Text style={[styles.feePayTx,{color: payFeeType==="stable"?"#2164C1":"#fff"}]}> Stable-Coin</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
 
         {/* Select recive network */}
         <TouchableOpacity style={styles.modalOpen} onPress={() => { setchooseReciveNetwork(true); }}>
@@ -376,7 +407,7 @@ const ExportUSDC = () => {
           <View style={styles.quoteRow}>
             <Text style={styles.quoteLabel}>Fee</Text>
             <Text style={styles.quoteValue}>
-              {resQuotes.fee?.native ?? resQuotes.fee?.stablecoin}
+              {payFeeType==="native"?resQuotes.fee?.native.amount+" "+resQuotes.fee?.native.symbole:resQuotes.fee?.stablecoin.amount+" "+resQuotes.fee?.stablecoin.symbole}
             </Text>
           </View>
 
@@ -397,10 +428,10 @@ const ExportUSDC = () => {
         </View>}
 
           <TouchableOpacity
-              style={[styles.confirmButton, { backgroundColor: !amount || isNaN(Number(amount))||basicProccesing||btnLoading||getInfo||resQuotes!==null&&parseFloat(resQuotes?.fee?.native)>parseFloat(XLMAvlBal)||parseFloat(amount)>parseFloat(walletBalance)?"gray":'#2F7DFF' }]}
-            disabled={!amount || isNaN(Number(amount))||btnLoading||basicProccesing||getInfo||resQuotes!==null&&parseFloat(resQuotes?.fee?.native)>parseFloat(XLMAvlBal)||parseFloat(amount)>parseFloat(walletBalance)} onPress={() => {swapExecute()}}
+              style={[styles.confirmButton, { backgroundColor: !amount || isNaN(Number(amount))||basicProccesing||btnLoading||getInfo||resQuotes!==null&&parseFloat(resQuotes?.fee?.native.amount)>parseFloat(XLMAvlBal)||parseFloat(amount)>parseFloat(walletBalance)?"gray":'#2F7DFF' }]}
+            disabled={!amount || isNaN(Number(amount))||btnLoading||basicProccesing||getInfo||resQuotes!==null&&parseFloat(resQuotes?.fee?.native.amount)>parseFloat(XLMAvlBal)||parseFloat(amount)>parseFloat(walletBalance)} onPress={() => {swapExecute()}}
             >
-              {btnLoading||getInfo?<ActivityIndicator color={"white"}/>:<Text style={styles.confirmButtonText}>{resQuotes!==null&&parseFloat(resQuotes?.fee?.native)>parseFloat(XLMAvlBal)?`Insufficient XLM to cover the fee`:parseFloat(amount)>parseFloat(walletBalance)?"Insufficient Funds":"Confirm Transaction"}</Text>}
+              {btnLoading||getInfo?<ActivityIndicator color={"white"}/>:<Text style={styles.confirmButtonText}>{resQuotes!==null&&parseFloat(resQuotes?.fee?.native.amount)>parseFloat(XLMAvlBal)||parseFloat(resQuotes?.fee?.stablecoin.amount)>parseFloat(walletBalance)?`Insufficient ${payFeeType==="stable"?"USDC":"XLM"} to cover the fee`:parseFloat(amount)>parseFloat(walletBalance)?"Insufficient Funds":"Confirm Transaction"}</Text>}
             </TouchableOpacity>
 
 
@@ -457,8 +488,10 @@ const ExportUSDC = () => {
             </View>
           </TouchableOpacity>
         </Modal>
-
-      </ScrollView>
+        </ScrollView>
+      <View style={styles.allBridgeTxCon}>
+        <AllbridgeTxTrack txs={showTxHash} isDarkMode={state?.THEME?.THEME} showTx={showTx} closeTx={()=>{setshowTx(false)}} />
+      </View>
     </View>
   );
 };
@@ -483,6 +516,10 @@ const styles = StyleSheet.create({
     marginTop: hp(1),
     color: "#94A3B8",
     fontSize: 16,
+  },
+  feePayTx: {
+    fontSize: 16,
+    fontWeight:"600"
   },
   maxBtn: {
     color: "#FFF",
@@ -633,5 +670,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight:"bold"
   },
+  feePayCon:{
+   flexDirection: "row",
+   marginLeft:10,
+   borderColor:"#fff",
+   borderWidth:1,
+   paddingHorizontal:10,
+   paddingVertical:4,
+   borderRadius:10
+  },
+  allBridgeTxCon:{
+    zIndex:20,
+    position:"absolute",
+    width:"100%",
+    maxHeight:"50%",
+    bottom:25
+  }
 });
 export default ExportUSDC;

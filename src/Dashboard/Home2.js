@@ -48,6 +48,7 @@ import store from "././../../src/components/Redux/Store"
 import PushNotification from 'react-native-push-notification';
 import { WSS_TEST } from "./constants";
 import useFirebaseCloudMessaging from "./notifications/firebaseNotifications";
+import CustomInfoProvider from "./exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
  
   const handleLocalNotification = (msg) => {
     PushNotification.localNotification({
@@ -489,10 +490,10 @@ const Home2 = ({ navigation }) => {
   useFocusEffect(
     React.useCallback(() => {
       const backAction = () => {
-        Alert.alert("Hold on!", "Are you sure you want to exit?", [
-          { text: "Cancel" },
+        CustomInfoProvider.show("Hold on!", "Are you sure you want to exit?", [
+          { text: "Cancel", style: "cancel" },
           { text: "Yes", onPress: () => BackHandler.exitApp() },
-        ]);
+        ])
         return true;
       };
 

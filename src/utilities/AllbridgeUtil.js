@@ -8,6 +8,7 @@ import {
     mainnet,
 } from "@allbridge/bridge-core-sdk";
 import * as StellarSdk from '@stellar/stellar-sdk';
+import CustomInfoProvider from '../Dashboard/exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
 
 export async function getChainTokenData(sourceChain, destChain, sourceToken, destToken, amount) {
     console.log("Allbridge-Info--", sourceChain, destChain, sourceToken, destToken, amount)
@@ -44,8 +45,14 @@ export async function getChainTokenData(sourceChain, destChain, sourceToken, des
             Messenger.ALLBRIDGE
         );
         const feeObj = {
-            native: `${gasFeeOptions.native.float} ${srcChain.nativeCurrencySymbol || "Native"}`,
-            stablecoin: `${gasFeeOptions.stablecoin.float} ${srcToken.symbol}`
+          native: {
+            amount: gasFeeOptions.native.float,
+            symbole: srcChain.nativeCurrencySymbol || "Native"
+          },
+          stablecoin: {
+            amount: gasFeeOptions.stablecoin.float,
+            symbole: srcToken.symbol
+          },
         };
         const trasTMinSec = sdk.getAverageTransferTime(srcToken, dstToken, Messenger.ALLBRIDGE);
         const trasTM = trasTMinSec !== null ? (trasTMinSec / 1000 / 60).toFixed(2) : null;
@@ -68,7 +75,8 @@ export async function swapPepare(
     destTokenSymbol,
     amount,
     recipientAddress,
-    stellarWallet
+    stellarWallet,
+    payFeeMode
   ) {
     console.log("Allbridge-swap--", sourceChain, destChain, sourceTokenSymbol, destTokenSymbol, amount, recipientAddress);
   
@@ -105,7 +113,7 @@ export async function swapPepare(
         messenger:Messenger.ALLBRIDGE,
         extraGas: "1.15",
         extraGasFormat: AmountFormat.FLOAT,
-        gasFeePaymentMethod: FeePaymentMethod.WITH_NATIVE_CURRENCY,
+        gasFeePaymentMethod: payFeeMode==="native"?FeePaymentMethod.WITH_NATIVE_CURRENCY:FeePaymentMethod.WITH_STABLECOIN,
       })
       const keypair = StellarSdk.Keypair.fromSecret(stellarWallet.secretKey);
       let tx = StellarSdk.TransactionBuilder.fromXDR(xdrTx, mainnet.sorobanNetworkPassphrase);
@@ -130,14 +138,29 @@ export async function swapPepare(
     
       const sent = await sdk.utils.srb.sendTransactionSoroban(signedTx);
       console.log("Response of execute tx:", sent);
-      if(sent.status==="ERROR"){
-        return { success: false};
+      if (sent.status === "ERROR") {
+        CustomInfoProvider.show("error", "Transaction failed try again.");
+        return { success: false };
       }
-
-      return {
-        success: true,
-        txHash: sent.hash,
-      };
+      if (sent.status === "TRY_AGAIN_LATER") {
+        CustomInfoProvider.show("error", "Transaction failed try again.");
+        return { success: false };
+      }
+      if (sent.status === "DUPLICATE") {
+        CustomInfoProvider.show("Info", "Duplicate transaction found.");
+        return { success: false };
+      }
+      if (sent.status === "PENDING") {
+        const matchedTx = await sdk.getTransferStatus("SRB", sent.hash);
+        if (matchedTx.txId) {
+          return {
+            success: true,
+            txHash: sent.hash,
+          };
+        } else {
+          return { success: false };
+        }
+      }
     } catch (err) {
       console.log("Error in allbridge swap:", err.message || err);
       return { success: false, error: err.message || "Unknown error occurred." };

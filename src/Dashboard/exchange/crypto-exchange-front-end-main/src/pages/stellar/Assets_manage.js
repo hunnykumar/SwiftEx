@@ -21,6 +21,7 @@ import { SET_ASSET_DATA } from "../../../../../../components/Redux/actions/type"
 import { STELLAR_URL } from "../../../../../constants";
 import { Exchange_screen_header } from "../../../../../reusables/ExchangeHeader";
 import * as StellarSdk from '@stellar/stellar-sdk';
+import ClaimableBalanceChecker from "./ClaimableBalanceChecker";
 const Assets_manage = ({route}) => {
     const FOCUSED = useIsFocused();
     const navigation = useNavigation();
@@ -234,7 +235,11 @@ const Assets_manage = ({route}) => {
                     })}
                 </View>
             </Modal>
-
+            <ClaimableBalanceChecker
+                publicKey={state.STELLAR_PUBLICK_KEY}
+                autoFetch={true}
+                isDark={true}
+            />
         </>
     )
 }

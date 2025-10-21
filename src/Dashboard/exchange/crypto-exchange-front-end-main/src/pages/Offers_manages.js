@@ -25,6 +25,7 @@ import {
 } from "react-native-responsive-screen";
 import BigNumber from 'bignumber.js';
 import { STELLAR_URL } from '../../../../constants';
+import CustomInfoProvider from '../components/CustomInfoProvider';
 
 const STELLAR_NETWORK = StellarSdk.Networks.PUBLIC;
 
@@ -136,7 +137,7 @@ const Offers_manages = () => {
 
   const handleDelete = (offerId,index) => {
     setSelectedIndex(index)
-    Alert.alert(
+   CustomInfoProvider.show(
       'Delete Offer',
       'Are you sure you want to delete this offer?',
       [
@@ -185,11 +186,11 @@ const Offers_manages = () => {
       console.log('Offer deleted:', response);
       setloading_del(false);
       fetchOffers(); 
-      Alert.alert('Success', 'Offer deleted successfully.');
+     CustomInfoProvider.show('Success', 'Offer deleted successfully.');
     } catch (error) {
       setloading_del(false);
       console.log("Error deleting offer:", error);
-      Alert.alert('Info', 'Failed to delete the offer');
+     CustomInfoProvider.show('Info', 'Failed to delete the offer');
     }
   };
 
@@ -268,12 +269,12 @@ const Offers_manages = () => {
   
       setloading_edi(false);
       fetchOffers();
-      Alert.alert('Success', 'Offer updated successfully.');
+     CustomInfoProvider.show('Success', 'Offer updated successfully.');
       setModalVisible(false);
     } catch (error) {
       setloading_edi(false);
       console.log("Error updating offer:", error.response?.data || error);
-      Alert.alert('Info', 'Failed to update the offer');
+     CustomInfoProvider.show('Info', 'Failed to update the offer');
     }
   };
   

@@ -14,6 +14,7 @@ import Web3 from 'web3';
 import { useNavigation } from '@react-navigation/native';
 import  Clipboard from "@react-native-clipboard/clipboard";
 import React from 'react';
+import CustomInfoProvider from '../Dashboard/exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
 var ethers = require('ethers');
 
 
@@ -194,7 +195,7 @@ export const saveFile = async (name,privateKey, mnemonic,password, emailId, disp
   
   let permission = false
   
- return Alert.alert(
+ return CustomInfoProvider.show(
     "Save PrivateKey",
     "Press ok to save your private key",
     [
@@ -623,7 +624,7 @@ data.forEach( async(element, index, accounts) => {
  let data =  await SendMoney(address, amount, decrypt, balance, setLoading)
      }
      else{
-      Alert.alert(
+     CustomInfoProvider.show(
         "Invalid Password",
         "Do you want to enter private key manually?",
         [

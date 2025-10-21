@@ -24,7 +24,7 @@ async function hasEnoughFunds(fromAddress, txMeta, value = "0") {
 }
 
 
-export async function swap_prepare(privateKey, fromAddress, toAddress, amount, sourceToken, destinationToken, walletType) {
+export async function swap_prepare(privateKey, fromAddress, toAddress, amount, sourceToken, destinationToken, walletType,feePayType) {
   try {
     const firstResponse = await proxyRequest("/v1/bridge/swap-transaction/prepare", PPOST, {
       "fromAddress": fromAddress,
@@ -32,7 +32,8 @@ export async function swap_prepare(privateKey, fromAddress, toAddress, amount, s
       "amount": amount,
       "sourceToken": sourceToken,
       "destinationToken": destinationToken,
-      "walletType": walletType
+      "walletType": walletType,
+      "feePayType":feePayType==="native"?"native":"stablecoin"
     });
 
     console.log("First API call response:", firstResponse);

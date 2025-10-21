@@ -28,7 +28,10 @@ import { QuoteModalBottomSheet } from '../utils/QuotesComponent';
 import { CustomQuotes } from '../utils/CustomQuotes';
 import Wallet_selection_bottom from '../../../../Wallets/Wallet_selection_bottom';
 import { debounce } from 'lodash';
-import { fetchTokenInfo } from '../../../../../ethSwap/tokenUtils';
+import { fetchBSCTokenInfo, fetchTokenInfo } from '../../../../../ethSwap/tokenUtils';
+import { SwapPepare } from '../../../../../utilities/AllbridgeBscUtil';
+import CustomInfoProvider from './CustomInfoProvider';
+import AllbridgeTxTrack from './AllbridgeTxTrack';
 const classic = ({ route }) => {
   const Focused=useIsFocused();
   const toast=useToast();
@@ -63,6 +66,10 @@ const classic = ({ route }) => {
   const [messageError,setmessageError]=useState(null);
   const [resQuotes,setresQuotes]=useState(null);
   const [getInfo,setgetInfo]=useState(false);
+  const [payFeeType,setPayFeeType]=useState("native");
+  const [errorMsg,seterrorMsg]=useState(null)
+  const [showTx,setshowTx]=useState(false);
+  const [showTxHash,setshowTxHash]=useState([]);
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
@@ -85,6 +92,8 @@ const ActivateModal = () => {
   navigation.goBack()
 };
 useEffect(()=>{
+  setshowTx(false);
+  setshowTxHash([]);
   setmessageError(null)
   setresQuotes(null)
   setgetInfo(false)
@@ -98,6 +107,8 @@ useEffect(()=>{
   setWALLETADDRESS(state&&state.wallet && state.wallet.address)
   setfianl_modal_loading(false)
   setamount('');
+  setPayFeeType('native')
+  seterrorMsg(null)
 },[])
 useEffect(()=>{
   setonTapFeature(false)
@@ -111,24 +122,56 @@ useEffect(()=>{
   setfianl_modal_loading(false)
   setamount('');
 },[state?.wallet?.address])
+
+useEffect(()=>{
+  setonTapFeature(false)
+  setACTIVATION_MODAL_PROD(false)
+  setbalanceLoading(false)
+  setErrorMessageUI(null);
+  fetchUSDCBalnce(state&&state.wallet && state.wallet.address)
+  setfianl_modal_error(false);
+  setWALLETBALANCE(state&&state.EthBalance)
+  setWALLETADDRESS(state&&state.wallet && state.wallet.address)
+  setfianl_modal_loading(false)
+  setamount('');
+},[chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho])
+
   const fetchUSDCBalnce = async (addresses) => {
     try {
       setbalanceLoading(true)
+      const activeAsset=chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho;
       if(state.STELLAR_ADDRESS_STATUS===false)
         {
             setACTIVATION_MODAL_PROD(true)
         }
-
-      const usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-      if (usdtAddress && addresses) {
-         const resposeBalance = await fetchTokenInfo(usdtAddress, addresses)
-        const balance = resposeBalance[0].tokenBalance;
-        console.log(`USDT Balance of ${addresses}: ${balance} USDT`);
-        
-        setWALLETBALANCE(balance);
+      const activeNetwork=chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
+      console.log("activeNetwork",activeNetwork)
+      if(activeNetwork==="Ethereum")
+      {
+        const usdtAddress = activeAsset==="USDT"?"0xdAC17F958D2ee523a2206206994597C13D831ec7":"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+        if (usdtAddress && addresses) {
+          const resposeBalance = await fetchTokenInfo(usdtAddress, addresses)
+          const balance = resposeBalance[0].tokenBalance;
+          console.log(`USDT Balance of ${addresses}: ${balance} USDT`);
+          
+          setWALLETBALANCE(balance);
+        }
+        setbalanceLoading(false)
+        BridgeUSDCValidation()
       }
-      setbalanceLoading(false)
-      BridgeUSDCValidation()
+      if(activeNetwork==="BNB")
+      {
+        const usdtAddress = activeAsset==="USDT"?"0x55d398326f99059fF775485246999027B3197955":"0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d";
+        if (usdtAddress && addresses) {
+          const resposeBalance = await fetchBSCTokenInfo(usdtAddress, addresses)
+          const balance = resposeBalance[0].tokenBalance;
+          console.log(`USDT Balance of ${addresses}: ${balance} USDT`);
+          
+          setWALLETBALANCE(balance);
+        }
+        setbalanceLoading(false)
+        BridgeUSDCValidation()
+      }
     } catch (error) {
       setWALLETBALANCE(0.00);
       setbalanceLoading(false)
@@ -251,13 +294,19 @@ const getOffersData = async () => {
 
   const sendEthToContract = async () => {
     try {
+      const activeNetwork=chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
+      const activeAsset=chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho;
+      console.log("active -",activeNetwork,activeAsset)
       const wallet = new ethers.Wallet(state?.wallet?.privateKey);
-      const respoExe = await swap_prepare(state?.wallet?.privateKey, wallet.address, state.STELLAR_PUBLICK_KEY, amount, "USDT", "USDC", "ETH")
+     if(activeNetwork==="Ethereum"){
+      const respoExe = await swap_prepare(state?.wallet?.privateKey, wallet.address, state.STELLAR_PUBLICK_KEY, amount, activeAsset, "USDC", "ETH",payFeeType)
       console.log("classic last ui res ---->", respoExe)
       if (respoExe?.status_task) {
         setfianl_modal_text("Transaction Successful");
         setfianl_modal_loading(false);
         setfianl_modal_error(true);
+        setshowTx(true)
+        setshowTxHash([{ chain: "ETH", hash: respoExe.res.transferTxHash }]);
       }
       if (!respoExe.status_task) {
         setfianl_modal_text("Transaction Failed");
@@ -265,6 +314,24 @@ const getOffersData = async () => {
         setfianl_modal_loading(false);
         setfianl_modal_error(true);
       }
+     }
+     if(activeNetwork==="BNB"){
+      const respoExe = await SwapPepare(state?.wallet?.privateKey, wallet.address, state.STELLAR_PUBLICK_KEY, amount, activeAsset, "USDC", "BNB",payFeeType)
+      console.log("bnb last ui response ---->", respoExe)
+      if (respoExe?.status_task) {
+        setfianl_modal_text("Transaction Successful");
+        setfianl_modal_loading(false);
+        setfianl_modal_error(true);
+        setshowTx(true)
+        setshowTxHash([{ chain: "BSC", hash: respoExe.res.transferTxHash }]);
+      }
+      if (!respoExe.status_task) {
+        setfianl_modal_text("Transaction Failed");
+        console.log("Transaction Failed", respoExe);
+        setfianl_modal_loading(false);
+        setfianl_modal_error(true);
+      }
+     }
 
     } catch (error) {
       setfianl_modal_text("Transaction Failed");
@@ -314,7 +381,7 @@ const getOffersData = async () => {
     return !isNaN(num) && num !== 0;
   };
   const getQuote = useCallback(
-    debounce((value,chaiType) => {
+    debounce((value,chaiType,inputToken) => {
       setmessageError(null);
       if (isValidNumber(value)&&value!=="null") {
         setmessageError(null);
@@ -323,12 +390,12 @@ const getOffersData = async () => {
         if(chaiType==="ETH")
         {
           setgetInfo(true);
-          collectQuotes(value,chaiType) 
+          collectQuotes(value,chaiType,inputToken) 
         }
-        if(chaiType==="BSC")
+        if(chaiType==="BNB")
           {
             setgetInfo(true);
-            collectQuotes(value,chaiType) 
+            collectQuotes(value,chaiType,inputToken) 
           }
       }
       else {
@@ -338,14 +405,14 @@ const getOffersData = async () => {
     []
   );
   
-  const handleInputChange = (text,tokenChain) => {
+  const handleInputChange = (text,tokenChain,inputToken) => {
     setresQuotes(null);
     const numericText = text.replace(/[^0-9.]/g, '');
     setamount(numericText)
-    getQuote(numericText,tokenChain==="BNB"?"BSC":"ETH");
+    getQuote(numericText,tokenChain==="BNB"?"BNB":"ETH",inputToken);
   };
   
-  const collectQuotes = async (value,typeOfchain) => {
+  const collectQuotes = async (value,typeOfchain,spendToken) => {
     const deviceToken = await getToken();
       const myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
@@ -353,7 +420,8 @@ const getOffersData = async () => {
       myHeaders.append("x-auth-device-token", deviceToken);
       const raw = JSON.stringify({
         "amount": value,
-        "chainType":typeOfchain
+        "chainType":typeOfchain,
+        "sourceToken":spendToken
       });
   
       const requestOptions = {
@@ -375,7 +443,7 @@ const getOffersData = async () => {
             setgetInfo(false)
             setresQuotes(null)
             console.log("---err->",result)
-            Alert.alert("Info", "An error occurred. Please try again later.")
+           CustomInfoProvider.show("Info", result?.message==="Amount must be greater than zero"?result?.message:"An error occurred. Please try again later.")
           }
         })
         .catch((error) => {
@@ -384,6 +452,23 @@ const getOffersData = async () => {
           console.log("--->errorClasic",error)
         });
     }
+
+    useEffect(() => {
+      if (!resQuotes) return;
+      const feeAmount = payFeeType === "native"
+        ? parseFloat(resQuotes?.fee?.native?.amount || "0")
+        : parseFloat(resQuotes?.fee?.stablecoin?.amount || "0");
+    
+      const minReceive = parseFloat(resQuotes?.minimumAmountOut || "0");
+      const netReceive = Math.max(0, minReceive - feeAmount);
+    
+      if (netReceive <= 0 || (payFeeType === "stable" && feeAmount > parseFloat(WALLETBALANCE))) {
+        seterrorMsg("Insufficient funds to pay gas.");
+      } else {
+        seterrorMsg(null);
+      }
+    }, [payFeeType, resQuotes, WALLETBALANCE]);
+    
 
   return (
     <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
@@ -435,7 +520,7 @@ const getOffersData = async () => {
           <View style={[styles.modalOpen,{paddingVertical: hp(0.5),}]}>
             <View>
             <Text style={styles.subInputText}>Amount</Text>
-            <TextInput maxLength={10} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" style={[ {width: wp(40),fontSize:18,color:"#fff",marginTop:hp(-0.9)}]} onChangeText={(value) => { handleInputChange(value,chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId) }} returnKeyType="done"/>
+            <TextInput maxLength={10} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" style={[ {width: wp(40),fontSize:18,color:"#fff",marginTop:hp(-0.9)}]} onChangeText={(value) => { handleInputChange(value,chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho) }} returnKeyType="done"/>
             </View>
             <TouchableOpacity style={styles.maxCon} onPress={()=>{setamount(parseFloat(WALLETBALANCE)===0?null:WALLETBALANCE)}}>
             <Text style={styles.maxBtn}>MAX</Text>
@@ -459,6 +544,23 @@ const getOffersData = async () => {
               </ScrollView>
             </View>
           </View>
+
+        <View style={[styles.modalOpen, { paddingVertical: hp(1.5), marginTop: hp(0.5) }]}>
+          <View style={{ flexDirection: "row" }}>
+            <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={"#fff"} />
+            <Text style={[styles.subInputText, { marginTop: hp(0), fontSize: 19 }]}> Relayer Fee</Text>
+          </View>
+          <View style={{ flexDirection: "row" }}>
+            <TouchableOpacity style={[styles.feePayCon, { borderColor: payFeeType === "native" ? "#2164C1" : "#fff" }]} onPress={() => { setPayFeeType("native") }}>
+              <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={payFeeType === "native" ? "#2164C1" : "#fff"} />
+              <Text style={[styles.feePayTx, { color: payFeeType === "native" ? "#2164C1" : "#fff" }]}> Native</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.feePayCon, { borderColor: payFeeType === "stable" ? "#2164C1" : "#fff" }]} onPress={() => { setPayFeeType("stable") }}>
+              <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={payFeeType === "stable" ? "#2164C1" : "#fff"} />
+              <Text style={[styles.feePayTx, { color: payFeeType === "stable" ? "#2164C1" : "#fff" }]}> Stable-Coin</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
       <View style={styles.modalOpen}>
         <View style={{ flexDirection: "row" }}>
@@ -509,12 +611,34 @@ const getOffersData = async () => {
               <Text style={styles.quoteValue}>USDC</Text>
             </View>
           </View>
+            <View style={styles.quoteRow}>
+              <Text style={styles.quoteLabel}>Fee</Text>
+              <View style={{ width: wp(25), flexDirection: 'row' }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <Text style={styles.quoteValue}>{payFeeType === "native" ? resQuotes?.fee?.native?.amount +" "+resQuotes?.fee?.native?.symbol : resQuotes?.fee?.stablecoin?.amount+" "+resQuotes?.fee?.stablecoin?.symbol}</Text>
+                </ScrollView>
+              </View>
+            </View>
+            <View style={styles.quoteRow}>
+              <Text style={styles.quoteLabel}>Time</Text>
+              <Text style={styles.quoteValue}>{resQuotes.completionTime?(resQuotes.completionTime / (1000 * 60)+" Min"):"getting.."}</Text>
+            </View>
         </View>
         <View style={styles.quoteTextCon}>
           <Text style={styles.quoteText}>≈</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <Text style={styles.quoteText}>{resQuotes.minimumAmountOut}</Text>
-          </ScrollView>
+              <Text style={styles.quoteText}>
+                {Math.max(
+                  0,
+                  parseFloat(resQuotes.minimumAmountOut || "0") -
+                  parseFloat(
+                    payFeeType === "native"
+                      ? resQuotes?.fee?.native?.amount || "0"
+                      : resQuotes?.fee?.stablecoin?.amount || "0"
+                  )
+                ).toFixed(6)}
+              </Text>
+            </ScrollView>
           <Text style={styles.quoteText}>USDC</Text>
         </View>
       </View>}
@@ -522,10 +646,10 @@ const getOffersData = async () => {
 
             <TouchableOpacity
               // disabled={chooseSelectedItemIdCho === null||chooseSelectedItemId === null} 
-              style={[styles.nextButton, { backgroundColor: !amount||balanceLoading||getInfo?"gray":'#2F7DFF' }]}
-            disabled={!amount||fianl_modal_loading||balanceLoading||getInfo} onPress={() => { Keyboard.dismiss(),manage_swap() }}
+              style={[styles.nextButton, { backgroundColor: !amount||balanceLoading||getInfo||errorMsg!==null?"gray":'#2F7DFF' }]}
+            disabled={!amount||fianl_modal_loading||balanceLoading||getInfo||errorMsg!==null} onPress={() => { Keyboard.dismiss(),manage_swap() }}
             >
-              {fianl_modal_loading||getInfo?<ActivityIndicator color={"white"}/>:<Text style={styles.nextButtonText}>Confirm Transaction</Text>}
+              {fianl_modal_loading||getInfo?<ActivityIndicator color={"white"}/>:<Text style={styles.nextButtonText}>{errorMsg!==null?errorMsg:"Confirm Transaction"}</Text>}
             </TouchableOpacity>
       <Modal
         animationType="fade"
@@ -674,14 +798,14 @@ const getOffersData = async () => {
           }}>
             
             <Icon
-              name={fianl_modal_text==="Transaction Faild"?"alert-circle-outline":"check-circle-outline"}
+              name={fianl_modal_text==="Transaction Failed"?"alert-circle-outline":"check-circle-outline"}
               type={"materialCommunity"}
               size={60}
-              color={fianl_modal_text==="Transaction Faild"?"red":"green"}
+              color={fianl_modal_text==="Transaction Failed"?"red":"green"}
               style={{marginTop:19}}
             />
             <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical: 19, color: "#fff" }}>{fianl_modal_text}</Text>
-            <TouchableOpacity style={styles.alertBtn} onPress={()=>{fianl_modal_text==="Transaction Faild"?setfianl_modal_error(false):[setfianl_modal_error(false),navigation.navigate("Assets_manage")]}}>
+            <TouchableOpacity style={styles.alertBtn} onPress={()=>{fianl_modal_text==="Transaction Failed"?setfianl_modal_error(false):[setfianl_modal_error(false),navigation.navigate("Assets_manage")]}}>
               <Text style={styles.alertBtnText}>Ok</Text>
             </TouchableOpacity>
           </View>
@@ -807,6 +931,9 @@ const getOffersData = async () => {
           </TouchableWithoutFeedback>
         </Modal>
       </ScrollView>
+      <View style={styles.allBridgeTxCon}>
+        <AllbridgeTxTrack txs={showTxHash} isDarkMode={state?.THEME?.THEME} showTx={showTx} closeTx={() => { setshowTx(false) }} />
+      </View>
     </View>
   );
 };
@@ -1197,5 +1324,25 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: 'silver',
   },
+  feePayCon:{
+    flexDirection: "row",
+    marginLeft:10,
+    borderColor:"#fff",
+    borderWidth:1,
+    paddingHorizontal:10,
+    paddingVertical:4,
+    borderRadius:10
+  },
+  feePayTx: {
+    fontSize: 16,
+    fontWeight:"600"
+  },
+  allBridgeTxCon:{
+    zIndex:20,
+    position:"absolute",
+    width:"100%",
+    maxHeight:"50%",
+    bottom:25
+  }
 });
 export default classic;

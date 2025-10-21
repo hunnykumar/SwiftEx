@@ -122,7 +122,7 @@ const EthSwap = () => {
         }
       } catch (error) {
         console.log(error);
-        // Alert.alert('Error', 'Failed to get quote');
+        // CustomInfoProvider.show('error', 'Failed to get quote');
         setErroVisible(true);
         setQuoteInfo(null);
       } finally {

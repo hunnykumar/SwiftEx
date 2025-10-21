@@ -33,6 +33,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import authApi from "../authApi";
 import { REACT_APP_HOST } from "../ExchangeConstants";
 import apiHelper from "../apiHelper";
+import CustomInfoProvider from "./CustomInfoProvider";
 
 
 const KycComponent = ({ route }) => {
@@ -99,7 +100,7 @@ const KycComponent = ({ route }) => {
       {
         setVisibleAlertLoading(false);
         setVisibleAlert(false);
-        Alert.alert("Oops!","Somthing went wrong.");
+       CustomInfoProvider.show("Oops!","Somthing went wrong.");
       }
       if(res.status&&respo.success)
       {
@@ -140,7 +141,7 @@ const KycComponent = ({ route }) => {
         }
       } catch (error) {
         console.log("error--",error)
-        Alert.alert("info", "Somthing went wrong");
+       CustomInfoProvider.show("info", "Somthing went wrong");
         setbtnLoading(false);
       }
   }
@@ -165,7 +166,7 @@ const KycComponent = ({ route }) => {
       console.log("alchemyQuotes Error---",respo)
       setqoutesLoading(false);
       setamountSend("");
-      Alert.alert("info",respo?.returnMsg||"Something went wrong..");
+     CustomInfoProvider.show("info",respo?.returnMsg||"Something went wrong..");
     }
 
   };
@@ -204,7 +205,7 @@ const KycComponent = ({ route }) => {
       // const respo = JSON.parse(res.res)
       // console.log(respo)
       // if (err) {
-      //   Alert.alert("info", "Somthing went wrong");
+      //  CustomInfoProvider.show("info", "Somthing went wrong");
       //   setbtnLoading(false);
       // }
       // if (!respo.success && respo.code === "2003" && respo.error||res.status && respo?.model?.kycStatus === 0) {
@@ -255,12 +256,12 @@ const KycComponent = ({ route }) => {
         navigation.navigate("TxDetails", { userKycUrl: respo.data.payUrl })
       } else {
         setbtnLoading(false);
-        Alert.alert("Oops!", "Somthing went wrong.");
+       CustomInfoProvider.show("Oops!", "Somthing went wrong.");
       }
     } catch (error) {
       setbtnLoading(false);
       console.log("proccedKyc Error", error)
-      Alert.alert("Oops!", "Somthing went wrong.");
+     CustomInfoProvider.show("Oops!", "Somthing went wrong.");
     }
   }
 
@@ -283,12 +284,12 @@ const KycComponent = ({ route }) => {
       }
       else{
         setbtnLoading(false);
-        Alert.alert("Oops!","Somthing went wrong.");
+       CustomInfoProvider.show("Oops!","Somthing went wrong.");
       }
     } catch (error) {
       setbtnLoading(false);
       console.log("proccedSell Error", error)
-      Alert.alert("Oops!","Somthing went wrong.");
+     CustomInfoProvider.show("Oops!","Somthing went wrong.");
     }
   }
 
