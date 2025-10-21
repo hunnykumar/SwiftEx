@@ -15,7 +15,8 @@ import {
   Image,
   Alert,
   PermissionsAndroid,
-  Linking
+  Linking,
+  Keyboard
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -47,6 +48,8 @@ import darkBlue from "../../../assets/darkBlue.png"
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 import ErrorComponet from "../../utilities/ErrorComponet";
 import CustomInfoProvider from "../exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
+import QRScannerComponent from "../Modals/QRScannerComponent";
+import LinearGradient from "react-native-linear-gradient";
 var ethers = require("ethers");
 const xrpl = require("xrpl");
 //'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1644979850'
@@ -389,55 +392,87 @@ const checkPermission = async () => {
       }
     }, [isModalVisible]);
   return (
-    <Animated.View // Special animatable View
-      style={{ opacity: fadeAnim }}
-    >
+<>
     <Wallet_screen_header title="Send" onLeftIconPress={() => navigation.goBack()} />
+      <View style={[style.Body,{ backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C"}]}>
     <ErrorComponet
           isVisible={ErroVisible}
           onClose={() => setErroVisible(false)}
           message="The scanned QR code contains an invalid public key. Please make sure you're scanning the correct QR code and try again."
         />
-      <View style={{ backgroundColor:state.THEME.THEME===false?"#fff":"black", height: hp(100) }}>
-        <View style={style.inputView}>
-          <TextInput
-          value={address}
-            onChangeText={(input) => {
-              if (input && address) { 
-                setDisable(false);
-              } else {
-                setDisable(true);
-              }
-              console.log(input);
-              setAddress(input);
-            }}
-            placeholder="Recipient Address"
-            placeholderTextColor={"gray"}
-            style={[style.input,{color:state.THEME.THEME===false?"black":"#fff"}]}
-          ></TextInput>
-          <TouchableOpacity onPress={()=>{
-            toggleModal()
-          }}>
-          <Icon name="scan" type={"ionicon"} size={20} color={"blue"}/>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={()=>{
-            Paste(setAddress)
-          }}>
-          <Text style={style.pasteText}>PASTE</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={{flexDirection:"row",width:wp(90)}}>
-        <Text style={[style.balance_heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Available balance :-{" "}</Text>
-        <View style={{width:wp(13)}}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{width:wp(11)}}>
-        <Text style={[style.balance,{color:state.THEME.THEME===false?"black":"#fff"}]}>
-          {balance ? balance : show===false?<Text style={{ color: "#C1BDBD" }}>0</Text>:<></>}
-        </Text>
+        <View style={[style.card, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}>
+         <View style={{
+          flexDirection:"row",
+          justifyContent:"space-between",
+          alignItems:"center",
+          marginBottom:4
+         }}>
+         <Text style={[style.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>
+            Recipient Address
+          </Text>
+          <TouchableOpacity onPress={() => {
+              Paste(setAddress)
+            }} style={[style.pasteButton]}>
+            <Icon name="content-copy" type={"materialCommunity"} size={20} color={'#5B65E1'} />
+              <Text style={style.pasteText}>PASTE</Text>
+            </TouchableOpacity>
+         </View>
+          <View style={[style.inputContainer, {
+            backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C",
+          }]}>
+            <TextInput
+              value={address}
+              onChangeText={(input) => {
+                if (input && address) {
+                  setDisable(false);
+                } else {
+                  setDisable(true);
+                }
+                console.log(input);
+                setAddress(input);
+              }}
+              placeholder="Recipient Address"
+              placeholderTextColor={"gray"}
+              style={[style.input, { color: state.THEME.THEME === false ? "black" : "#fff" }]}
+            ></TextInput>
+             <View style={style.inputActions}>
+            <TouchableOpacity onPress={() => {
+              toggleModal()
+            }} style={[style.iconButton,{ backgroundColor:state.THEME.THEME?"#242426":"#F4F4F8",}]}>
+              <Icon name="qr-code-scanner" type={"material"} size={20} color={state.THEME.THEME?"#fff":"#272729"} />
+            </TouchableOpacity>
+          </View>
+          </View>
+            <View style={{borderBottomColor:"gray", borderWidth:0.5,marginVertical:15}}/>
+            <View style={style.balanceHeader}>
+              <Text style={[style.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>
+                Available Balance
+              </Text>
+              {LoadingBal && <ActivityIndicator color="#4A90E2" size="small" />}
+            </View>
+            <View style={style.balanceDisplay}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <Text style={[style.balanceAmount, { color: state.THEME.THEME === false ? "#212529" : "#FFFFFF" }]}>
+                  {balance ? balance : show === false ? "0.00" : ""}
+                </Text>
               </ScrollView>
-        </View>
-        {LoadingBal===true?<ActivityIndicator color={"green"} style={{top:hp(1)}}/>:<></>}
-        </View>
-        <View style={style.inputView}>
+              <Text style={[style.currency, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>
+                {props?.route?.params?.tokenSymbol || 'Native'}
+              </Text>
+            </View>
+          </View>
+
+
+
+
+        <View>
+        <View style={[style.card, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}>
+          <Text style={[style.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>
+            Amount
+          </Text>
+          <View style={[style.inputContainer, {
+            backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C",
+          }]}>
           <TextInput
             value={amount}
             keyboardType="numeric"
@@ -461,26 +496,24 @@ const checkPermission = async () => {
               console.log("pressed", amount, balance);
               setAmount(balance);
             }}
+            style={[style.maxButton]}
           >
             <Text  onPress={()=>{console.log("pressed", amount, balance);
-              setAmount(balance)}} style={{ color: "blue" }}>MAX</Text>
+              setAmount(balance)}} style={style.maxButtonText}>MAX</Text>
           </Pressable>
         </View>
-        {Loading ? (
-          <View style={{ marginBottom: hp("-4") }}>
-            <ActivityIndicator size="small" color="blue" />
-          </View>
-        ) : (
-          <Text> </Text>
-        )}
+        </View>
+        </View>
 
         <Text style={style.msgText}>{message}</Text>
-
-        {/* <View style={style.btnView}> */}
+  
+       <View style={style.bottomContainer}>
           <TouchableOpacity
-            disabled={disable||LoadingBal}
-            style={[style.btnView,{backgroundColor:disable||LoadingBal?"gray":"#3574B6"}]}
+            disabled={disable||LoadingBal||Loading}
+            style={[style.sendButton, { opacity: disable||LoadingBal ? 0.5 : 1 }]}
             onPress={async () => {
+              setLoading(true)
+              Keyboard.dismiss();
               console.log(walletType);
               let privateKey;
               const myAddress = await state.wallet.address;
@@ -492,12 +525,14 @@ const checkPermission = async () => {
                 const xrpAddress = await state.wallet.xrp.address
                 if(address==xrpAddress)
                 {
+                  setLoading(false);
                   return alert('error','address cannot be same as your address')
 
                 }
               }
               if(address== myAddress)
               {
+                setLoading(false);
                 return alert('error','address cannot be same as your address')
               }
               if (amount && balance && Number(amount) > Number(balance)) {
@@ -518,11 +553,6 @@ const checkPermission = async () => {
                   ? await state.wallet.privateKey
                   : JSON.parse(wallet).privateKey;
               }
-              console.log(privateKey);
-              /* if(balance<amount){
-    console.log(balance,amount)
-    return alert('You dont have enough balance to do this transaction')
-  }*/
 
               if (
                 walletType &&
@@ -547,7 +577,19 @@ const checkPermission = async () => {
               }
             }}
           >
-            <Text style={{color:"#fff",fontSize:16}}>Send</Text>
+            <LinearGradient
+              colors={disable ? ['#6C757D', '#6C757D'] : ['#5B65E1', '#5B65E1']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={style.gradientButton}
+            >
+              {Loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (<View style={style.buttonContent}>
+                <Text style={style.sendButtonText}>Send Transaction</Text>
+                <Icon name="arrow-forward" type="ionicon" size={20} color="#FFFFFF" />
+              </View>)}
+            </LinearGradient>
           </TouchableOpacity>
         </View>
         <Modal
@@ -561,44 +603,13 @@ const checkPermission = async () => {
             style={style.preview}
             onBarCodeRead={onBarCodeRead}
             captureAudio={false}
-            onStatusChange={({ status }) => handleCameraStatus(status)} // Use onStatusChange
+            onStatusChange={({ status }) => handleCameraStatus(status)}
           >
-            <>
-              <View style={style.header}>
-                <TouchableOpacity onPress={() => { setModalVisible(false); }}>
-                  <Icon name="arrow-left" size={24} color="#fff" style={style.backIcon} />
-                </TouchableOpacity>
-                <Text style={[style.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
-              </View>
-              <View style={style.rectangleContainer}>
-                <View style={style.rectangle}>
-                  <View style={style.innerRectangle} />
-                </View>
-              </View>
-            </>
+           <QRScannerComponent setModalVisible={setModalVisible}/>
           </RNCamera>
-        {/* <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <View style={{ backgroundColor: '#145DA0', padding: 20, borderRadius: 10,width:"90%",height:"50%" }}>
-            <Text style={{color:"white",fontWeight:"700",alignSelf:"center",fontSize:19}} onPress={()=>{
-              toggleModal();
-            }}>Scan QR.</Text>
-              <View style={style.QR_con}>
-                <RNCamera
-                  ref={cameraRef}
-                  style={style.preview}
-                  onBarCodeRead={onBarCodeRead}
-                  captureAudio={false}
-                >
-                  <View style={style.rectangleContainer}>
-                    <View style={style.rectangle} />
-                  </View>
-                </RNCamera>
-              </View>
-          </View>
-        </View> */}
       </Modal>
-      {/* </View> */}
-    </Animated.View>
+          </View>
+</>
   );
 };
 
@@ -606,104 +617,126 @@ export default SendTokens;
 
 const style = StyleSheet.create({
   Body: {
-    display: "flex",
-    backgroundColor: "white",
-    height: hp(100),
-    width: wp(100),
-  },
-  Text: {
-    fontSize: 18,
-    color: "black",
-  },
-  welcomeText2: {
-    fontSize: 15,
-    fontWeight: "200",
-    color: "white",
-    marginTop: hp(1),
-  },
-  Button: {
-    marginTop: hp(10),
-  },
-
-  Text: {
-    marginTop: hp(5),
-    fontSize: 15,
-    fontWeight: "200",
-    color: "white",
-  },
-  textInput2: {
-    borderWidth: 1,
-    borderColor: "grey",
-    width: wp(90),
-    margin: 10,
-    borderRadius: 10,
-    shadowColor: "#000",
-    height: wp(8),
-    shadowOffset: {
-      width: 0,
-      height: 12,
-    },
-    shadowOpacity: 0.58,
-    shadowRadius: 16.0,
-
-    elevation: 24,
-  },
-  inputView: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    width: wp(93),
-    alignSelf: "center",
-    borderColor: "#C1BDBD",
-    marginTop: hp(3),
-    paddingVertical: hp(1.5),
-    borderRadius: hp(1),
-  },
-  pasteText: { color: "blue", marginHorizontal: wp(3) },
-  balance: { marginLeft: wp(1), marginTop: hp(2) },
-  balance_heading: { marginLeft: wp(5), marginTop: hp(2) },
-  input: {
-    width: wp(70),
-    alignSelf: "center",
     paddingHorizontal: wp(4),
+    paddingTop: hp(2),
+    height:hp(90)
+  },
+  pasteText: { color: "#5B65E1", marginHorizontal: wp(2),fontSize:16,fontWeight:"500" },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
   },
   msgText: { color: "red", textAlign: "center" },
-  btnView: { width: wp(40),height:hp(6.6),alignSelf: "center",alignItems:"center",justifyContent:"center", marginTop: hp(8),borderRadius:19 },
-  QR_con:{
-    width:wp(80),
-    height:hp(40),
-    borderRadius:5,
-    justifyContent:"center",
-    alignItems:"center"
+  btnView: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: "#4A90E2",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   preview: {
     flex:1
   },
-  rectangleContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  pasteButton: {
+    paddingHorizontal: wp(1),
+    paddingVertical: hp(1),
+    borderRadius: 8,
+    flexDirection:"row"
   },
-  rectangle: {
-    height: 250,
-    width: 250,
-    borderWidth: 2,
-    borderColor: 'white',
-    borderRadius: 10,
+  card: {
+    borderRadius: 16,
+    padding: wp(3),
+    marginBottom: hp(1.5)
   },
-  header: {
+  label: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: hp(1.5),
+    letterSpacing: 0.3,
+  },
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 16,
-    height: hp(10)
+    borderRadius: 12,
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(1),
   },
-  backIcon: {
-    marginRight:wp(28),
+  maxButton: {
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1),
+    borderRadius: 8,
+    marginLeft: wp(2),
+    backgroundColor:"#5B65E1"
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color:"#fff"
+  maxButtonText: {
+    color: '#E6E8EB',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  balanceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  balanceDisplay: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: wp(2),
+  },
+  balanceAmount: {
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  currency: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  inputActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(2),
+  },
+  iconButton: {
+    padding: wp(2),
+    borderRadius:10
+  },
+  bottomContainer: {
+    position: 'absolute',
+    bottom: 10,
+    left: 0,
+    right: 0,
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(2.5),
+    backgroundColor: 'transparent',
+  },
+  sendButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: "#4A90E2",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  gradientButton: {
+    paddingVertical: hp(2),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(2),
+  },
+  sendButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });

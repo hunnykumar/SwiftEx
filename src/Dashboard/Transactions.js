@@ -26,15 +26,15 @@ const ThemeContext = React.createContext();
 
 const themes = {
   light: {
-    background: '#FFFF',
-    cardBackground: '#ebe8e8',
+    background: '#FFFFFF',
+    cardBackground: '#F4F4F8',
     textPrimary: '#1A1A1A',
     textSecondary: '#666666',
     textTertiary: '#999999',
-    accent: '#3b82f6',
+    accent: '#5B65E1',
     tabInactive: '#F0F0F0',
     tabInactiveText: '#666666',
-    cardDark: '#F5F5F5',
+    cardDark: '#F4F4F8',
     iconContainer: '#FFFFFF',
     divider: '#E0E0E0',
     success: '#4ECB71',
@@ -43,12 +43,12 @@ const themes = {
     cardShadow: 'rgba(0, 0, 0, 0.05)',
   },
   dark: {
-    background: 'black',
-    cardBackground: '#1E1E1E',
+    background: '#1B1B1C',
+    cardBackground: '#242426',
     textPrimary: '#FFFFFF',
     textSecondary: '#BBBBBB',
     textTertiary: '#888888',
-    accent: '#3b82f6',
+    accent: '#5B65E1',
     tabInactive: '#333333',
     tabInactiveText: '#BBBBBB',
     cardDark: '#252525',
@@ -335,8 +335,8 @@ const TransactionHistory = () => {
       )}
       </>: 
       <>
-      <TransactionForStellar title="Transactions" onLeftIconPress={() => navigation.goBack()} />
-      <StellarTransactionHistory publicKey={state.STELLAR_PUBLICK_KEY} isDarkMode={true}/>
+      <TransactionForStellar title="Transactions" onLeftIconPress={() => navigation.goBack()} activeBackgroundColor={state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C"} activeTxColor={state.THEME.THEME === false ? "#1B1B1C":"#FFFFFF"}/>
+      <StellarTransactionHistory publicKey={state.STELLAR_PUBLICK_KEY} isDarkMode={state.THEME.THEME}/>
       </>}
       <Modal transparent animationType="slide" visible={selectChainOpen} onRequestClose={() => { setSelectChainOpen(false) }}>
         <View style={styles.chainSelectionContainer}>
@@ -390,10 +390,6 @@ const styles = StyleSheet.create({
     minWidth: 90,
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
   },
   tabButtonText: {
     fontSize: 14,
@@ -416,11 +412,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 12,
     overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     alignContent:"center"
   },
   leftSection: {
@@ -516,11 +507,6 @@ const styles = StyleSheet.create({
     minWidth: 90,
     justifyContent:"center",
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2
   },
   activeChainBtnTxt:{
     textAlign:"center",

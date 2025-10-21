@@ -3,97 +3,42 @@ import {
   StyleSheet,
   Text,
   View,
-  Button,
-  ActivityIndicator,
   TouchableOpacity,
   Image,
 } from "react-native";
-import { TextInput, Checkbox } from "react-native-paper";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { Animated } from "react-native";
 import darkBlue from "../../../assets/multicoin_wallet.png"
-import title_icon from "../../../assets/title_icon.png";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  Avatar,
-  Card,
-  Title,
-  Paragraph,
-  CardItem,
-  WebView,
-} from "react-native-paper";
+import { useSelector } from "react-redux";
 import Bnbimage from "../../../assets/bnb-icon2_2x.png";
 import Etherimage from "../../../assets/ethereum.png";
-import Xrpimage from "../../../assets/xrp.png";
-import Maticimage from "../../../assets/matic.png";
 import stellarImg from "../../../assets/Stellar_(XLM).png"
 import Modal from "react-native-modal";
 import ImportBinanceWallet from "./importBinance";
 import ImportEthereumModal from "./importEthereumModal";
 import ImportMultiCoinWalletModal from "./importMultiCoinWalletModal";
 import ImportPolygonWalletModal from "./ImportPolygonWalletModal";
-import ImportStellar from "./importStellarModal";
 import ImportXrpWalletModal from "./importXrpWalletModal";
-import ModalHeader from "../reusables/ModalHeader";
-import { WalletHeader } from "../header";
 import ImportStellarModal from "./importStellarModal";
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 import { useNavigation } from "@react-navigation/native";
-//'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1644979850'
 const SelectWallet = ({ props, visible, setVisible, setModalVisible }) => {
-  const navi=useNavigation();
-  const state=useSelector((state)=>state);
+  const navi = useNavigation();
+  const state = useSelector((state) => state);
   const [MultiCoinModal, setMultiCoinMoodal] = useState(false);
   const [BscWallet, setBscWalletVisible] = useState(false);
   const [EthereumWallet, setEthereumWallet] = useState(false);
   const [PolygonWallet, setPolygonwallet] = useState(false);
   const [XrpWallet, setXrpWallet] = useState(false);
-  const [Stellar_wallet,setStellar_wallet]=useState(false);
-  const [loading, setLoading] = useState(false);
+  const [Stellar_wallet, setStellar_wallet] = useState(false);
 
-  const dispatch = useDispatch();
-
-  let LeftContent = (props) => <Avatar.Image {...props} source={title_icon} />;
-  let EtherLeftContent = (props) => (
-    <Avatar.Image {...props} source={Etherimage} />
-  );
-  let BnbLeftContent = (props) => <Avatar.Image {...props} source={Bnbimage} />;
-  let XrpLeftContent = (props) => <Avatar.Image {...props} source={Xrpimage} />;
-  let MaticLeftContent = (props) => (
-    <Avatar.Image {...props} source={Maticimage} />
-  );
-
-  // const Wallets = [
-  //   {
-  //     name: "ethereum",
-  //   },
-  //   {
-  //     name: "Binance smart chain",
-  //     LeftContent: Bnbimage,
-  //   },
-  //   {
-  //     name: "Xrp",
-  //     LeftContent: Xrpimage,
-  //   },
-  //   {
-  //     name: "Polygon(Matic)",
-  //     LeftContent: Maticimage,
-  //   },
-  // ];
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const Spin = new Animated.Value(0);
-  const SpinValue = Spin.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
 
-  const closeModal = () => {
-    setVisible(false);
-  };
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -123,76 +68,57 @@ const SelectWallet = ({ props, visible, setVisible, setModalVisible }) => {
         setVisible(false);
       }}
     >
-      <View style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]}>
-        {/* <ModalHeader Function={closeModal}  name={'Import'}/> */}
-        <View style={{marginTop:hp(3)}}>
-        <Wallet_screen_header title="Select Wallet" onLeftIconPress={() => navi.goBack()} />
+      <View style={[style.body, { backgroundColor: state.THEME.THEME === false ? "#fff" : "#1B1B1C" }]}>
+        <View style={{ marginTop: hp(3) }}>
+          <Wallet_screen_header title="Select Wallet" onLeftIconPress={() => navi.goBack()} />
         </View>
         <TouchableOpacity
-          style={style.Box2}
+          style={[style.box, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}
           onPress={() => {
             setMultiCoinMoodal(true);
           }}
         >
-          <Image source={darkBlue} style={style.darkBlueimg}/>
-          <Text style={[style.text1,{color:state.THEME.THEME===false?"black":"#fff"}]}> Multi-Chain Wallet </Text>
+          <Image source={darkBlue} style={style.img} />
+          <Text style={[style.text, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>Multi Chain </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={style.Box}
+          style={[style.box, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}
           onPress={() => {
             setBscWalletVisible(true);
           }}
         >
           <Image source={Bnbimage} style={style.img} />
-          <Text style={[style.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Binance Smart Chain</Text>
+          <Text style={[style.text, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>Binance</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={style.Box}
+          style={[style.box, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}
           onPress={() => {
             setEthereumWallet(true);
           }}
         >
           <Image source={Etherimage} style={style.img} />
-          <Text style={[style.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Ethereum</Text>
-        </TouchableOpacity>
-        {/* <TouchableOpacity
-          style={style.Box}
-          onPress={() => {
-            setPolygonwallet(true);
-          }}
-        >
-          <Image source={Maticimage} style={style.img} />
-          <Text style={[style.text,{color:state.THEME.THEME===false?"black":"#fff"}]}>Polygon(Matic)</Text>
+          <Text style={[style.text, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>Ethereum</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={style.Box}
-          onPress={() => {
-            setXrpWallet(true);
-          }}
-        >
-          <Image source={Xrpimage} style={style.img} />
-          <Text style={[style.text,{color:state.THEME.THEME===false?"black":"#fff"}]}> Xrp</Text>
-        </TouchableOpacity> */}
-        <TouchableOpacity
-          style={style.Box}
+          style={[style.box, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}
           onPress={() => {
             setStellar_wallet(true);
           }}
         >
           <Image source={stellarImg} style={style.img} />
-          <Text style={[style.text,{color:state.THEME.THEME===false?"black":"#fff"}]}> Stellar</Text>
+          <Text style={[style.text, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>Stellar</Text>
         </TouchableOpacity>
       </View>
       <View>
         <ImportBinanceWallet
           Visible={BscWallet}
-          onCrossPress={()=>{setBscWalletVisible(false)}}
+          onCrossPress={() => { setBscWalletVisible(false) }}
           setWalletVisible={setBscWalletVisible}
           setModalVisible={setVisible}
           setVisible={setVisible}
         />
         <ImportEthereumModal
-        onCrossPress={()=>{setEthereumWallet(false)}}
+          onCrossPress={() => { setEthereumWallet(false) }}
           Visible={EthereumWallet}
           setWalletVisible={setEthereumWallet}
           setModalVisible={setVisible}
@@ -200,32 +126,32 @@ const SelectWallet = ({ props, visible, setVisible, setModalVisible }) => {
         />
         <ImportMultiCoinWalletModal
           Visible={MultiCoinModal}
-          onCrossPress={()=>{setMultiCoinMoodal(false)}}
+          onCrossPress={() => { setMultiCoinMoodal(false) }}
           setWalletVisible={setMultiCoinMoodal}
           setModalVisible={setVisible}
           setVisible={setVisible}
         />
         <ImportPolygonWalletModal
           Visible={PolygonWallet}
-          onCrossPress={()=>{setPolygonwallet(false)}}
+          onCrossPress={() => { setPolygonwallet(false) }}
           setWalletVisible={setPolygonwallet}
           setModalVisible={setVisible}
           setVisible={setVisible}
         />
         <ImportXrpWalletModal
           Visible={XrpWallet}
-          onCrossPress={()=>{setXrpWallet(false)}}
+          onCrossPress={() => { setXrpWallet(false) }}
           setWalletVisible={setXrpWallet}
           setModalVisible={setVisible}
           setVisible={setVisible}
         />
         <ImportStellarModal
-        Visible={Stellar_wallet}
-        onCrossPress={()=>{setStellar_wallet(false)}}
-        setWalletVisible={setStellar_wallet}
-        setModalVisible={setVisible}
-        setVisible={setVisible}
-      />
+          Visible={Stellar_wallet}
+          onCrossPress={() => { setStellar_wallet(false) }}
+          setWalletVisible={setStellar_wallet}
+          setModalVisible={setVisible}
+          setVisible={setVisible}
+        />
       </View>
     </Modal>
   );
@@ -234,83 +160,29 @@ const SelectWallet = ({ props, visible, setVisible, setModalVisible }) => {
 export default SelectWallet;
 
 const style = StyleSheet.create({
-  Body: {
-    backgroundColor: "white",
+  body: {
     height: hp(102.9),
     borderRadius: hp(1),
     width: wp(100),
-
     alignSelf: "center",
   },
-  welcomeText: {
-    fontSize: 20,
-    fontWeight: "200",
-    color: "black",
-    marginTop: hp(5),
-  },
-  welcomeText2: {
-    fontSize: 15,
-    fontWeight: "200",
-    color: "white",
-    marginTop: hp(1),
-  },
-  Button: {
-    marginTop: hp(10),
-  },
-  tinyLogo: {
-    width: wp("5"),
-    height: hp("5"),
-    padding: 30,
-    marginTop: hp(10),
-  },
-  Text: {
-    marginTop: hp(5),
-    fontSize: 15,
-    fontWeight: "200",
-    color: "white",
-  },
-  input: {
-    height: hp("5%"),
-    marginBottom: hp("2"),
-    color: "black",
-    marginTop: hp("2"),
-    width: wp("70"),
-    paddingRight: wp("7"),
-    backgroundColor: "white",
-  },
-  Box: {
+  box: {
     alignSelf: "center",
-    width: wp(90),
+    width: wp(93),
+    height:hp(9),
     flexDirection: "row",
     alignItems: "center",
-    borderBottomWidth: StyleSheet.hairlineWidth * 1,
-    borderColor: "#C1BDBD",
     padding: 10,
-    marginTop: hp(3),
-  },
-  Box2: {
-    alignSelf: "center",
-    width: wp(90),
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: StyleSheet.hairlineWidth * 1,
-    borderColor: "#C1BDBD",
-    // padding: 4,
-    marginTop: hp(3),
+    borderRadius:19,
+    marginTop:10,
   },
   img: {
-    height: hp(5),
-    width: wp(10),
+    height: hp(5.5),
+    width: wp(11),
   },
   text: {
-    marginHorizontal: wp(4),
+    marginHorizontal: wp(2),
+    fontSize: 16,
+    fontWeight:"500"
   },
-  text1: {
-    marginHorizontal: wp(0.5),
-  },
-  darkBlueimg:{
-    height: hp(7),
-    width: wp(14),
-    marginHorizontal:wp(0.7)
-  }
 });

@@ -34,6 +34,9 @@ import { ethers } from "ethers";
 import { PGET, PPOST, proxyRequest } from "../api";
 import { getTokenBalancesUsingAddress } from "../utils/getWalletInfo/EtherWalletService";
 import CustomInfoProvider from "./CustomInfoProvider";
+import QRScannerComponent from "../../../../Modals/QRScannerComponent";
+import TokenTxDetails from "./TokenTxDetails";
+import LinearGradient from "react-native-linear-gradient";
 const TokenSend = ({ route }) => {
   const toast = useToast();
   const FOCUSED = useIsFocused()
@@ -51,7 +54,7 @@ const TokenSend = ({ route }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [lastScannedData, setLastScannedData] = useState(null);
   const [ErroVisible, setErroVisible] = useState(false);
-
+  const [showTxInfo,setShowTxInfo]=useState(false);
 
 
 
@@ -82,11 +85,11 @@ const TokenSend = ({ route }) => {
       const respoExe = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {signedTx:signedTx});
       if(respoExe?.res?.txHash)
       {
-        alert("success", `Transaction successful!`);
+        CustomInfoProvider.show("Info", "Transaction successful!");
       }
     } catch (error) {
       console.log("Transaction Error:", error);
-      alert("error", "Transaction failed. Check logs.");
+      CustomInfoProvider.show("error", "Transaction failed try again.");
     } finally {
       setAddress();
       setAmount();
@@ -180,6 +183,7 @@ const TokenSend = ({ route }) => {
   useEffect(() => {
     const insilize = async () => {
       try {
+        setShowTxInfo(false);
         setErroVisible(false)
         setAddress()
         setAmount()
@@ -321,279 +325,376 @@ const TokenSend = ({ route }) => {
         onClose={() => setErroVisible(false)}
         message="The scanned QR code contains an invalid public key. Please make sure you're scanning the correct QR code and try again."
       />
-      <View style={{ backgroundColor: state.THEME.THEME === false ? "#fff" : "black", height: hp(100) }}>
-        <View style={style.inputView}>
-          <TextInput
-            value={address}
-            onChangeText={(input) => {
-              console.log(input);
-              handleUsernameChange(input);
-            }}
-            placeholder="Recipient Address"
-            placeholderTextColor={"gray"}
-            style={[style.input, { color: state.THEME.THEME === false ? "black" : "#fff" }]}
-          />
-          <TouchableOpacity onPress={() => { toggleModal() }}>
-            <Icon name="scan" type={"ionicon"} size={20} color={"blue"} />
-          </TouchableOpacity>
+      
+      <View style={[styles.container, { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C" }]}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          
+          {/* Recipient Address Card */}
+          <View style={[styles.card, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}>
+          <View style={{
+          flexDirection:"row",
+          justifyContent:"space-between",
+          alignItems:"center",
+          marginBottom:4
+         }}>
+         <Text style={[styles.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>
+            Recipient Address
+          </Text>
           <TouchableOpacity onPress={() => {
-            Paste(setAddress)
-          }}>
-            <Text style={style.pasteText}>PASTE</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={{ flexDirection: "row", width: wp(90) }}>
-          <Text style={[style.balance_heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>Available balance :-{" "}</Text>
-          <View style={{ width: wp(13), flexDirection: "row" }}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(11) }}>
-              <Text style={[style.balance, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>
-                {balance ? balance : show === false ? <Text style={{ color: "#C1BDBD" }}>0</Text> : <></>}
+              Paste(setAddress)
+            }} style={[styles.pasteButton]}>
+            <Icon name="content-copy" type={"materialCommunity"} size={20} color={'#5B65E1'} />
+              <Text style={styles.pasteText}>PASTE</Text>
+            </TouchableOpacity>
+         </View>
+            <View style={[styles.inputContainer, { 
+              backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C",
+            }]}>
+              <TextInput
+                value={address}
+                onChangeText={(input) => {
+                  console.log(input);
+                  handleUsernameChange(input);
+                }}
+                placeholder="Enter recipient address"
+                placeholderTextColor={state.THEME.THEME === false ? "#ADB5BD" : "#6C757D"}
+                style={[styles.input, { color: state.THEME.THEME === false ? "#212529" : "#FFFFFF" }]}
+              />
+              <View style={styles.inputActions}>
+              <TouchableOpacity onPress={() => {
+              toggleModal()
+            }} style={[styles.iconButton,{ backgroundColor:state.THEME.THEME?"#242426":"#F4F4F8",}]}>
+              <Icon name="qr-code-scanner" type={"material"} size={20} color={state.THEME.THEME?"#fff":"#272729"} />
+            </TouchableOpacity>
+              </View>
+            </View>
+              <View style={{borderBottomColor:"gray", borderWidth:0.5,marginVertical:15}}/>
+            <View style={styles.balanceHeader}>
+              <Text style={[styles.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>
+                Available Balance
               </Text>
-            </ScrollView>
+              {Loading && <ActivityIndicator color="#4A90E2" size="small" />}
+            </View>
+            <View style={styles.balanceDisplay}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <Text style={[styles.balanceAmount, { color: state.THEME.THEME === false ? "#212529" : "#FFFFFF" }]}>
+                  {balance ? balance : show === false ? "0.00" : ""}
+                </Text>
+              </ScrollView>
+              <Text style={[styles.currency, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>
+                {route?.params?.tokenSymbol || 'TOKEN'}
+              </Text>
+            </View>
           </View>
-          <View style={{ height: "100%" }}>
-            {Loading === true ? <ActivityIndicator color={"green"} style={{ marginTop: 15, marginLeft: 5 }} /> : <></>}
+
+          {/* Amount Card */}
+          <View style={[styles.card, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}>
+            <Text style={[styles.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>
+              Amount
+            </Text>
+            <View style={[styles.inputContainer, { 
+              backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C",
+            }]}>
+              <TextInput
+                value={amount}
+                keyboardType="numeric"
+                returnKeyType="done"
+                onChangeText={(input) => {
+                  console.log(input);
+                  setAmount(input);
+                }}
+                placeholder="0.00"
+                placeholderTextColor={state.THEME.THEME === false ? "#ADB5BD" : "#6C757D"}
+                style={[styles.input, { color: state.THEME.THEME === false ? "#212529" : "#FFFFFF" }]}
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  if (!balance || parseFloat(balance) === 0) {
+                    ShowErrotoast(toast, "Invalid Amount");
+                  } else {
+                    setAmount(balance);
+                  }
+                }}
+                style={[styles.maxButton]}
+              >
+                <Text style={styles.maxButtonText}>MAX</Text>
+              </TouchableOpacity>
+            </View>
+            {Message ? (
+              <Text style={styles.errorMessage}>{Message}</Text>
+            ) : null}
           </View>
-        </View>
-        <View style={style.inputView}>
-          <TextInput
-            value={amount}
-            keyboardType="numeric"
-            returnKeyType="done"
-            onChangeText={(input) => {
-              console.log(input);
-              setAmount(input);
-            }}
-            placeholder="Amount"
-            placeholderTextColor={"gray"}
-            style={[style.input, { color: state.THEME.THEME === false ? "black" : "#fff" }]}
-          ></TextInput>
+
+        </ScrollView>
+
+        {/* Send Button */}
+        <View style={styles.bottomContainer}>
           <TouchableOpacity
+            disabled={disable}
+            style={[styles.sendButton, { opacity: disable ? 0.5 : 1 }]}
             onPress={() => {
-              if (!balance || parseFloat(balance) === 0) {
+              Keyboard.dismiss();
+              setPayment_loading(true);
+              if (!amount || parseFloat(amount) === 0) {
                 ShowErrotoast(toast, "Invalid Amount");
+                setPayment_loading(false);
+                setAmount('');
               } else {
-                setAmount(balance);
+                if (!address || !amount) {
+                  ShowErrotoast(toast, "Recipient Address and Amount Required");
+                  setPayment_loading(false);
+                } else {
+                  setdisable(true);
+                  if (validateTokenAddress(address)) {
+                    setShowTxInfo(true);
+                  } else {
+                    console.log('Invalid token address');
+                    ShowErrotoast(toast, "Invalid recipient address");
+                    setAddress();
+                    setdisable(false);
+                    setPayment_loading(false);
+                  }
+                }
               }
             }}
           >
-            <Text style={{ color: "blue" }}>MAX</Text>
+            <LinearGradient
+              colors={disable ? ['#6C757D', '#6C757D'] : ['#4052D6', '#4052D6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradientButton}
+            >
+              {Payment_loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <View style={styles.buttonContent}>
+                  <Text style={styles.sendButtonText}>Send Transaction</Text>
+                  <Icon name="arrow-forward" type="ionicon" size={20} color="#FFFFFF" />
+                </View>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </View>
-        <Text style={style.msgText}>{Message}</Text>
-
-        <TouchableOpacity
-          disabled={disable}
-          style={[style.btnView, { backgroundColor: disable ? "gray" : "#3574B6" }]}
-          onPress={() => {
-            Keyboard.dismiss()
-            setPayment_loading(true);
-            if (!amount || parseFloat(amount) === 0) {
-              ShowErrotoast(toast, "Invalid Amount");
-              setPayment_loading(false);
-              setAmount('')
-            } else {
-              if (!address || !amount) {
-                ShowErrotoast(toast, "Recipient Address and Amount Required")
-                setPayment_loading(false);
-              }
-              else {
-                setdisable(true)
-                if (validateTokenAddress(address)) {
-                  Showsuccesstoast(toast, "Valid token address");
-                  // sendToken(walletPublickKey, address, amount) --TO DO
-                  if (route?.params?.tokenType === "Binance") {
-                    sendBNBToken(route?.params?.tokenAddress,route?.params?.tokenDecimals)
-                  }
-                  if (route?.params?.tokenType === "Ethereum") {
-                    sendEthTokens(route?.params?.tokenAddress,route?.params?.tokenDecimals)
-                  }
-                } else {
-                  console.log('Invalid token address');
-                  ShowErrotoast(toast, "Invalid token address");
-                  setAddress();
-                  setdisable(false);
-                  setPayment_loading(false);
-                }
-              }
-            }
-          }}
-        >
-          {Payment_loading === true ? <ActivityIndicator color={"#fff"} /> : <Text style={{ color: "#fff", fontSize: 16 }}>Send</Text>}
-        </TouchableOpacity>
       </View>
+
+      {/* QR Scanner Modal */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={isModalVisible}
         onRequestClose={toggleModal}
       >
-        <RNCamera
-          ref={cameraRef}
-          style={style.preview}
-          onBarCodeRead={onBarCodeRead}
-          captureAudio={false}
-          onStatusChange={({ status }) => handleCameraStatus(status)} // Use onStatusChange
-        >
-          <>
-            <View style={style.header}>
-              <TouchableOpacity onPress={() => { setModalVisible(false); }}>
-                <Icon name="arrow-left" size={24} color="#fff" style={style.backIcon} />
-              </TouchableOpacity>
-              <Text style={[style.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
-            </View>
-            <View style={style.rectangleContainer}>
-              <View style={style.rectangle}>
-                <View style={style.innerRectangle} />
-              </View>
-            </View>
-          </>
-        </RNCamera>
+        <View style={styles.modalContainer}>
+          <RNCamera
+            ref={cameraRef}
+            style={styles.camera}
+            onBarCodeRead={onBarCodeRead}
+            captureAudio={false}
+            onStatusChange={({ status }) => handleCameraStatus(status)}
+          >
+            <QRScannerComponent setModalVisible={setModalVisible}/>
+          </RNCamera>
+        </View>
       </Modal>
-    </>
 
+      {/* Transaction Details Modal */}
+      <TokenTxDetails
+        visible={showTxInfo}
+        onClose={() => { 
+          setShowTxInfo(false);
+          setPayment_loading(false);
+        }}
+        params={{
+          walletAddress: state?.wallet?.address,
+          tokenAddress: route?.params?.tokenAddress,
+          recipientAddress: address,
+          amount: amount,
+          network: route?.params?.tokenType === "Binance" ? "bsc" : "ethereum"
+        }}
+        theme={state.THEME.THEME === false ? "light" : "dark"}
+        onNextStep={() => {
+          setShowTxInfo(false);
+          if (route?.params?.tokenType === "Binance") {
+            sendBNBToken(route?.params?.tokenAddress, route?.params?.tokenDecimals);
+          }
+          if (route?.params?.tokenType === "Ethereum") {
+            sendEthTokens(route?.params?.tokenAddress, route?.params?.tokenDecimals);
+          }
+        }}
+      />
+    </>
   );
 };
 
 export default TokenSend;
 
-const style = StyleSheet.create({
-  Body: {
-    display: "flex",
-    backgroundColor: "white",
-    height: hp(100),
-    width: wp(100),
-  },
-  Text: {
-    fontSize: 18,
-    color: "black",
-  },
-  welcomeText2: {
-    fontSize: 15,
-    fontWeight: "200",
-    color: "white",
-    marginTop: hp(1),
-  },
-  Button: {
-    marginTop: hp(10),
-  },
-
-  Text: {
-    marginTop: hp(5),
-    fontSize: 15,
-    fontWeight: "200",
-    color: "white",
-  },
-  textInput2: {
-    borderWidth: 1,
-    borderColor: "grey",
-    width: wp(90),
-    margin: 10,
-    borderRadius: 10,
-    shadowColor: "#000",
-    height: wp(8),
-    shadowOffset: {
-      width: 0,
-      height: 12,
-    },
-    shadowOpacity: 0.58,
-    shadowRadius: 16.0,
-
-    elevation: 24,
-  },
-  inputView: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    width: wp(93),
-    alignSelf: "center",
-    borderColor: "#C1BDBD",
-    marginTop: hp(3),
-    paddingVertical: hp(1.5),
-    borderRadius: hp(1),
-  },
-  pasteText: { color: "blue", marginHorizontal: wp(3) },
-  balance: { marginLeft: wp(1), marginTop: hp(2) },
-  balance_heading: { marginLeft: wp(5), marginTop: hp(2) },
-  extraInfoCon: { flexDirection: "row", alignItems: "center", marginLeft: wp(5), marginTop: hp(1.5), marginBottom: wp(-3) },
-  input: {
-    width: wp(70),
-    alignSelf: "center",
-    paddingHorizontal: wp(4),
-  },
-  msgText: { color: "red", textAlign: "center" },
-  btnView: { width: wp(40), height: hp(6.6), alignSelf: "center", alignItems: "center", justifyContent: "center", marginTop: hp(8), backgroundColor: "blue", borderRadius: 19 },
-  QR_con: {
-    width: wp(80),
-    height: hp(40),
-    borderRadius: 5,
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  preview: {
-    flex: 1
-  },
-  rectangleContainer: {
+const styles = StyleSheet.create({
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    height: hp(100),
   },
-  rectangle: {
-    height: 250,
-    width: 250,
-    borderWidth: 2,
-    borderColor: 'white',
-    borderRadius: 10,
+  scrollContent: {
+    paddingHorizontal: wp(4),
+    paddingTop: hp(2),
+    paddingBottom: hp(12),
   },
-  header: {
+  card: {
+    borderRadius: 16,
+    padding: wp(3),
+    marginBottom: hp(1.5)
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: hp(1.5),
+    letterSpacing: 0.3,
+  },
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 16,
-    height: hp(10),
+    borderRadius: 12,
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(1),
   },
-  backIcon: {
-    marginRight: wp(28),
+  input: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: "#fff"
+  inputActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(2),
   },
-  AccountmodalContainer: {
+  iconButton: {
+    padding: wp(2),
+    borderRadius:10
+  },
+  pasteButton: {
+    paddingHorizontal: wp(1),
+    paddingVertical: hp(1),
+    borderRadius: 8,
+    flexDirection:"row"
+  },
+  pasteText: {
+    color: "#5B65E1",
+    marginHorizontal: wp(2),
+    fontSize:16,
+    fontWeight:"500"
+  },
+  balanceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  balanceDisplay: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: wp(2),
+  },
+  balanceAmount: {
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  currency: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  maxButton: {
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.4),
+    borderRadius: 8,
+    marginLeft: wp(2),
+    backgroundColor:"#4052D6"
+  },
+  maxButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  errorMessage: {
+    color: '#DC3545',
+    fontSize: 12,
+    marginTop: hp(1),
+    fontWeight: '500',
+  },
+  bottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(2.5),
+    backgroundColor: 'transparent',
+  },
+  sendButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  gradientButton: {
+    paddingVertical: hp(2),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(2),
+  },
+  sendButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  cameraHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: hp(6),
+    paddingHorizontal: wp(4),
+    paddingBottom: hp(2),
+  },
+  closeButton: {
+    padding: wp(2),
+  },
+  cameraTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginLeft: wp(4),
+  },
+  scannerFrame: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  AccounsubContainer: {
-    backgroundColor: "#131E3A",
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    width: "98%",
-    height: "29%",
-    justifyContent: "center"
+  scannerCorner: {
+    width: wp(70),
+    height: wp(70),
+    borderWidth: 3,
+    borderColor: '#4A90E2',
+    borderRadius: 20,
+    backgroundColor: 'transparent',
   },
-  AccounbtnContainer: {
-    width: wp(39),
-    height: hp(5),
-    backgroundColor: "rgba(33, 43, 83, 1)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 10,
-    borderColor: "#4CA6EA",
-    borderWidth: 1
+  scannerHint: {
+    textAlign: 'center',
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '500',
+    paddingVertical: hp(4),
+    paddingHorizontal: wp(8),
   },
-  Accounbtntext: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#fff"
-  },
-  AccounheadingContainer: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 10,
-    color: "#fff"
-  }
 });

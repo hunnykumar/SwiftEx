@@ -34,6 +34,10 @@ import authApi from "../authApi";
 import { REACT_APP_HOST } from "../ExchangeConstants";
 import apiHelper from "../apiHelper";
 import CustomInfoProvider from "./CustomInfoProvider";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 
 
 const KycComponent = ({ route }) => {
@@ -307,7 +311,7 @@ const KycComponent = ({ route }) => {
 
   const renderTokenItem = ({ item }) => (
     <TouchableOpacity 
-      style={styles.tokenItem} 
+      style={[styles.tokenItem,{backgroundColor:theme.cardBg}]} 
       onPress={() =>{tokenModalType===0?[setSelectedfiat(item),setTokenModalVisible(false)]:[setSelectedCrypto(item),setTokenModalVisible(false)],setFindResult("")}}
     >
       <Image
@@ -315,12 +319,12 @@ const KycComponent = ({ route }) => {
         style={styles.tokenIcon}
       />
       <View style={styles.tokenInfo}>
-        <Text style={styles.tokenSymbol}>{tokenModalType===0?item.payWayName:item.crypto}</Text>
-        <Text style={styles.tokenName}>{tokenModalType===0?`${item.countryName} (${item.currency})`:item.network}</Text>
+        <Text style={[styles.tokenSymbol,{color:theme.headingTx}]}>{tokenModalType===0?item.payWayName:item.crypto}</Text>
+        <Text style={[styles.tokenName,{color:theme.inactiveTx}]}>{tokenModalType===0?`${item.countryName} (${item.currency})`:item.network}</Text>
       </View>
       <View>
-        <Text style={styles.tokenName}>Max Buy</Text>
-        <Text style={styles.tokenName}>{tokenModalType === 0 ? item.payMax : item.maxPurchaseAmount}</Text>
+        <Text style={[styles.tokenName,{color:theme.inactiveTx}]}>Max Buy</Text>
+        <Text style={[styles.tokenName,{color:theme.inactiveTx}]}>{tokenModalType === 0 ? item.payMax : item.maxPurchaseAmount}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -351,8 +355,31 @@ const KycComponent = ({ route }) => {
     );
   }, [FindResult, listManager]);
 
+  const colors = {
+    light: {
+      bg: "#FFFFFF",
+      cardBg: "#F4F4F8",
+      headingTx: "#272729",
+      smallCardBorderColor: "black",
+      cardSubTx: "#272729",
+      inactiveTx: "#AAAAAA",
+      typeTX:"black"
+    },
+    dark: {
+      bg: "#1B1B1C",
+      cardBg: "#242426",
+      headingTx: "#E6E8EB",
+      smallCardBorderColor: "#9E9E9E",
+      cardSubTx: "#E6E8EB",
+      inactiveTx: "#AAAAAA",
+      typeTX:"#fff"
+    },
+  };
+
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
+
     return (
-      <View style={styles.mainCom}>
+      <View style={[styles.mainCom,{backgroundColor:theme.bg}]}>
         <TouchableWithoutFeedback onPress={()=>{Keyboard.dismiss()}}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -360,7 +387,7 @@ const KycComponent = ({ route }) => {
           keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
         >
           <Exchange_screen_header 
-            title={route?.params?.tabName??"Buy"} 
+            title={route?.params?.tabName??"Buy-Sell"} 
             onLeftIconPress={() => navigation.goBack()} 
             onRightIconPress={() => console.log('Pressed')} 
           />
@@ -382,178 +409,174 @@ const KycComponent = ({ route }) => {
             )}
 
             {/* Pair container */}
-            <View style={[styles.pariViewCon, { width: "100%",paddingHorizontal:6 }]}>
+            <View style={[styles.pariViewCon, { width: "100%",paddingHorizontal:6,backgroundColor:theme.cardBg }]}>
               <TouchableOpacity 
                 style={[
                   styles.pairNameCon, 
-                  { backgroundColor: operationType==="BUY"?"#2164C1":"#1F2937", width: getPairButtonWidth() }
+                  { backgroundColor: operationType==="BUY"?"#4052D6":theme.cardBg, width: getPairButtonWidth() }
                 ]}
                 onPress={()=>{setoperationType("BUY")}}
               >
-                <Text style={styles.pairNameText}>Buy</Text>
+                <Text style={[styles.pairNameText,{color:operationType==="BUY"?"#fff":theme.typeTX}]}>Buy</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.pairNameCon, { backgroundColor: operationType==="SELL"?"#2164C1":"#1F2937",width: getPairButtonWidth() }]}
+                style={[styles.pairNameCon, { backgroundColor: operationType==="SELL"?"#4052D6":theme.cardBg,width: getPairButtonWidth() }]}
                 onPress={()=>{setoperationType("SELL")}}
               >
-                <Text style={styles.pairNameText}>Sell</Text>
+                <Text style={[styles.pairNameText,{color:operationType==="SELL"?"#fff":theme.typeTX}]}>Sell</Text>
               </TouchableOpacity>
             </View>
 
-            {/* fiat and crypto selection */}
+              {/* First Amount Container */}
+              <View style={[styles.amountInfoCon,{backgroundColor:theme.cardBg}]}>
+                <View style={styles.amountInfoHeader}>
+                  <Text style={styles.amountInfoText}>You Pay</Text>
+                  <View style={styles.amountInputCon}>
+                    <View style={[styles.amountSubCon, { width: getContainerWidth() * 0.4 ,borderColor:theme.smallCardBorderColor}]}>
+                      <TextInput
+                        placeholder="0.00"
+                        placeholderTextColor="gray"
+                        value={amountSend}
+                        style={[styles.amountInput,{color:theme.headingTx}]}
+                        onChangeText={(text) => { setamountSend(text), handleChange(text) }}
+                        returnKeyType="done"
+                        keyboardType="decimal-pad"
+                      />
+                    </View>
+                  </View>
 
-              <View style={styles.typeSelection}>
-              {operationType==="BUY"? <View style={styles.amountFlagCon}>
-                  <View style={styles.currencySelector}>
-                    <View style={styles.downBoxCon}>
-                      <Icon name="currency-usd" type="materialCommunity" color="#fff" size={30} />
-                    </View>
-                    <Text style={styles.currencyText}>{selectedfiat?.currency||"Select fiat"}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.downBoxCon} onPress={()=>{settokenModalType(0),setTokenModalVisible(true)}}>
-                    <Icon name="chevron-down" type="materialCommunity" color="#fff" size={30} />
-                  </TouchableOpacity>
-                </View>:<View style={styles.amountFlagCon}>
-                  <View style={styles.currencySelector}>
-                    <View style={styles.downBoxCon}>
-                    {selectedCrypto?.icon?<Image source={{ uri: selectedCrypto?.icon }}style={styles.tokenIcon}/>:<Icon name="ethereum" type="materialCommunity" color="#fff" size={28} />}
-                    </View>
-                    <View style={{flexDirection:"column"}}>
-                    <Text style={styles.currencyText}>{selectedCrypto?.crypto||"Select crypto"}</Text>
-                    {selectedCrypto?.network&&<Text style={styles.currencySubText}>{selectedCrypto?.network}</Text>}
-                    </View>
-                  </View>
-                  <TouchableOpacity style={styles.downBoxCon} onPress={()=>{settokenModalType(1),setTokenModalVisible(true)}}>
-                    <Icon name="chevron-down" type="materialCommunity" color="#fff" size={28} />
-                  </TouchableOpacity>
-                </View>}
-
-                {operationType==="SELL"? <View style={styles.amountFlagCon}>
-                  <View style={styles.currencySelector}>
-                    <View style={styles.downBoxCon}>
-                      <Icon name="currency-usd" type="materialCommunity" color="#fff" size={30} />
-                    </View>
-                    <Text style={styles.currencyText}>{selectedfiat?.currency||"Select fiat"}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.downBoxCon} onPress={()=>{settokenModalType(0),setTokenModalVisible(true)}}>
-                    <Icon name="chevron-down" type="materialCommunity" color="#fff" size={30} />
-                  </TouchableOpacity>
-                </View>:
-                <View style={styles.amountFlagCon}>
-                  <View style={styles.currencySelector}>
-                    <View style={styles.downBoxCon}>
-                    {selectedCrypto?.icon?<Image source={{ uri: selectedCrypto?.icon }}style={styles.tokenIcon}/>:<Icon name="ethereum" type="materialCommunity" color="#fff" size={28} />}
-                    </View>
-                    <View style={{flexDirection:"column"}}>
-                    <Text style={styles.currencyText}>{selectedCrypto?.crypto||"Select crypto"}</Text>
-                    {selectedCrypto?.network&&<Text style={styles.currencySubText}>{selectedCrypto?.network}</Text>}
-                    </View>
-                  </View>
-                  <TouchableOpacity style={styles.downBoxCon} onPress={()=>{settokenModalType(1),setTokenModalVisible(true)}}>
-                    <Icon name="chevron-down" type="materialCommunity" color="#fff" size={28} />
-                  </TouchableOpacity>
-                </View>}
-              </View>
-
-            {/* First Amount Container */}
-            <View style={styles.amountInfoCon}>
-              <View style={styles.amountInfoHeader}>
-                <Text style={styles.amountInfoText}>You Send</Text>
-                <Text style={styles.amountInfoText}>Min:{operationType==="BUY"?selectedCrypto?.minPurchaseAmount||0.0:selectedCrypto?.minSellAmount||0.0}</Text>
-              </View>
-              <View style={styles.amountInputCon}>
-                <View style={[styles.amountSubCon, { width: getContainerWidth() * 0.4 }]}>
-                  <TextInput 
-                    placeholder="Amount" 
-                    placeholderTextColor="gray"
-                    value={amountSend}
-                    style={styles.amountInput}
-                    onChangeText={(text)=>{setamountSend(text),handleChange(text)}}
-                    returnKeyType="done"
-                    keyboardType="decimal-pad"
-                  />
                 </View>
+                {operationType === "BUY" ? 
+                <TouchableOpacity style={[styles.amountFlagCon,{backgroundColor:theme.bg}]} onPress={() => { settokenModalType(0), setTokenModalVisible(true) }}>
+                  <View style={styles.currencySelector}>
+                    <View style={styles.downBoxCon}>
+                      <Icon name="currency-usd" type="materialCommunity" color={theme.headingTx} size={25} />
+                    </View>
+                    <Text style={[styles.currencyText,{color:theme.headingTx}]}>{selectedfiat?.currency || "Fiat"}</Text>
+                  </View>
+                  <View style={[styles.downBoxCon]}>
+                    <Icon name="chevron-down" type="materialCommunity" color={theme.headingTx} size={25} />
+                  </View>
+                </TouchableOpacity> 
+                : 
+                <TouchableOpacity style={[styles.amountFlagCon,{backgroundColor:theme.bg}]} onPress={() => { settokenModalType(1), setTokenModalVisible(true) }}>
+                  <View style={styles.currencySelector}>
+                    <View style={styles.downBoxCon}>
+                      {selectedCrypto?.icon ? <Image source={{ uri: selectedCrypto?.icon }} style={styles.tokenIcon} /> : <Icon name="ethereum" type="materialCommunity" color={theme.headingTx} size={25} />}
+                    </View>
+                    <View style={{ flexDirection: "column" }}>
+                      <Text style={[styles.currencyText,{color:theme.headingTx}]}>{selectedCrypto?.crypto || "Crypto"}</Text>
+                      {selectedCrypto?.network && <Text style={styles.currencySubText}>{selectedCrypto?.network}</Text>}
+                    </View>
+                  </View>
+                  <View style={[styles.downBoxCon]}>
+                    <Icon name="chevron-down" type="materialCommunity" color={theme.headingTx} size={25} />
+                  </View>
+                </TouchableOpacity>}
               </View>
-            </View>
               {operationError!==null&&<Text style={styles.errorText}>{operationError}</Text>}
 
 
             {/* Second Amount Container */}
-            <View style={styles.amountInfoCon}>
-              <View style={{justifyContent:"center",marginVertical:14}}>
-                <Text style={styles.amountInfoText}>You Receive</Text>
-              </View>
-              <View style={styles.amountInputCon}>
-                <View style={[styles.amountSubCon, { width: getContainerWidth() * 0.4, borderBottomColor:"gray" }]}>
-                  <TextInput
-                   editable={false}
-                    placeholder="0.0" 
-                    placeholderTextColor="gray"
-                    value={operationType==="BUY"?QoutesRes?.cryptoQuantity:QoutesRes?.fiatQuantity}
-                    style={[styles.amountInput,{color:"gray"}]}
-                  />
+            <View style={[styles.amountInfoCon,{backgroundColor:theme.cardBg,borderBottomLeftRadius:0,borderBottomRightRadius:0}]}>
+            <View style={styles.amountInfoHeader}>
+                  <Text style={styles.amountInfoText}>You Get</Text>
+                  <View style={styles.amountInputCon}>
+                    <View style={[styles.amountSubCon, { width: getContainerWidth() * 0.4, borderColor:theme.smallCardBorderColor }]}>
+                      <TextInput
+                        editable={false}
+                        placeholder="0.0"
+                        placeholderTextColor="gray"
+                        value={operationType === "BUY" ? QoutesRes?.cryptoQuantity : QoutesRes?.fiatQuantity}
+                        style={[styles.amountInput, { color: "gray" }]}
+                      />
+                    </View>
+                  </View>
                 </View>
-                
+                {operationType === "SELL" ? 
+                <TouchableOpacity style={[styles.amountFlagCon,{backgroundColor:theme.bg}]}  onPress={() => { settokenModalType(0), setTokenModalVisible(true) }}>
+                  <View style={styles.currencySelector}>
+                    <View style={styles.downBoxCon}>
+                      <Icon name="currency-usd" type="materialCommunity" color={theme.headingTx} size={25} />
+                    </View>
+                    <Text style={[styles.currencyText,{color:theme.headingTx}]}>{selectedfiat?.currency || "Fiat"}</Text>
+                  </View>
+                  <View style={[styles.downBoxCon]}>
+                    <Icon name="chevron-down" type="materialCommunity" color={theme.headingTx} size={25} />
+                  </View>
+                </TouchableOpacity> 
+                :
+                  <TouchableOpacity style={[styles.amountFlagCon,{backgroundColor:theme.bg}]} onPress={() => { settokenModalType(1), setTokenModalVisible(true) }}>
+                    <View style={styles.currencySelector}>
+                      <View style={styles.downBoxCon}>
+                        {selectedCrypto?.icon ? <Image source={{ uri: selectedCrypto?.icon }} style={styles.tokenIcon} /> : <Icon name="ethereum" type="materialCommunity" color={theme.headingTx} size={25} />}
+                      </View>
+                      <View style={{ flexDirection: "column" }}>
+                        <Text style={[styles.currencyText,{color:theme.headingTx}]}>{selectedCrypto?.crypto || "Crypto"}</Text>
+                        {selectedCrypto?.network && <Text style={styles.currencySubText}>{selectedCrypto?.network}</Text>}
+                      </View>
+                    </View>
+                    <View style={[styles.downBoxCon]}>
+                      <Icon name="chevron-down" type="materialCommunity" color={theme.headingTx} size={25} />
+                    </View>
+                  </TouchableOpacity>}
               </View>
-            </View>
 
             {/* Wallet Address */}
-            <View style={styles.walletAddress}>
-            <Text style={styles.sectionTitle}>Wallet Address:</Text>
+            <View style={[styles.walletAddress,{backgroundColor:theme.cardBg}]}>
+            <Text style={[styles.sectionTitle,{color:theme.inactiveTx}]}>Wallet Address:</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft:10}}>
-                <Text style={styles.addressText}>{state&&state.wallet && state.wallet.address}</Text>
+                <Text style={[styles.addressText,{color:theme.inactiveTx}]}>{state&&state.wallet && state.wallet.address}</Text>
                 </ScrollView>
             </View>
 
               {/* Info Container */}
                 {qoutesLoading&&QoutesRes===null?
-              <View style={[styles.infoCon,{paddingVertical:19,alignItems:"center"}]}>
-                  <ActivityIndicator color={"#fff"} size={"large"}/>
-                  <Text style={[styles.addressText,{fontSize:16}]}>Fetching Qoutes Details....</Text>
+              <View style={[styles.infoCon,{paddingVertical:19,alignItems:"center",borderColor:theme.inactiveTx}]}>
+                  <ActivityIndicator color={"#5B65E1"} size={"large"}/>
+                  <Text style={[styles.addressText,{fontSize:16,color:theme.inactiveTx}]}>Fetching Qoutes Details....</Text>
                 </View>:
                   QoutesRes!==null&&
-                  <View style={styles.infoCon}>
+                  <View style={[styles.providerCon,{backgroundColor:theme.cardBg,borderColor:theme.inactiveTx}]}>
+                    <View style={styles.providerSubCon}>
+                      <Text style={{fontSize:16,fontWeight:"400",color:theme.inactiveTx}}>Provider:</Text>
+                      <View style={{flexDirection:"row",alignItems:"center"}}>
+                      <Image source={require('../../../../../../assets/AlcamyPay.jpg')} style={styles.image} resizeMode="cover" />
+                      <Text style={{fontSize:16,fontWeight:"600",color:theme.headingTx}}>Alcamy Pay</Text>
+                      </View>
+                    </View>
+                   <View style={[styles.infoCon,{backgroundColor:theme.cardBg,borderColor:theme.inactiveTx}]}>
+                  <Text style={[styles.amountInfoText,{color:theme.headingTx,marginBottom:hp(1)}]}>Transaction summary</Text>
                   <View style={styles.infoRow}>
-                  <Icon name="circle-small" type="materialCommunity" color="#fff" size={30} />
-                  {operationType==="BUY"?<Text style={styles.infoText}>Your Order : {amountSend} {QoutesRes?.fiat||"USD"} for {operationType==="BUY"?QoutesRes?.cryptoQuantity:QoutesRes?.fiatQuantity||0.0} {QoutesRes?.crypto|| selectedCrypto?.crypto}</Text>:
-                  <Text style={styles.infoText}>Your Order : {QoutesRes?.fiatQuantity||0.0} {QoutesRes?.fiat||"USD"} for {amountSend} {selectedCrypto?.crypto}</Text>}
+                  {operationType==="BUY"?
+                  <>
+                  <Text style={[styles.infoText,{color:theme.headingTx}]}>Your Order </Text>
+                  <Text style={[styles.infoText,{color:theme.headingTx}]}>{amountSend} {QoutesRes?.fiat||"USD"} for {operationType==="BUY"?QoutesRes?.cryptoQuantity:QoutesRes?.fiatQuantity||0.0} {QoutesRes?.crypto|| selectedCrypto?.crypto}</Text>
+                  </>
+                  :
+                  <>
+                  <Text style={[styles.infoText,{color:theme.headingTx}]}>Your Order </Text>
+                  <Text style={[styles.infoText,{color:theme.headingTx}]}>{QoutesRes?.fiatQuantity||0.0} {QoutesRes?.fiat||"USD"} for {amountSend} {selectedCrypto?.crypto}</Text>
+                  </>}
                 </View>
                 <View style={styles.infoRow}>
-                  <Icon name="circle-small" type="materialCommunity" color="#fff" size={30} />
-                  <Text style={styles.infoText}>Processing fee : {QoutesRes?.rampFee||0.0} {QoutesRes?.fiat||"USD"}</Text>
+                  <Text style={[styles.infoText,{color:theme.headingTx}]}>Processing fee</Text>
+                  <Text style={[styles.infoText,{color:theme.headingTx}]}>{QoutesRes?.rampFee||0.0} {QoutesRes?.fiat||"USD"}</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Icon name="circle-small" type="materialCommunity" color="#fff" size={30} />
-                  <Text style={styles.infoText}>Estimation rate : 1 {QoutesRes?.crypto||selectedCrypto?.crypto} = {QoutesRes?.cryptoPrice||0.0} {QoutesRes?.fiat||"USD"}</Text>
+                  <Text style={[styles.infoText,{color:theme.headingTx}]}>Estimation rate </Text>
+                  <Text style={[styles.infoText,{color:theme.headingTx}]}>1 {QoutesRes?.crypto||selectedCrypto?.crypto} = {QoutesRes?.cryptoPrice||0.0} {QoutesRes?.fiat||"USD"}</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Icon name="circle-small" type="materialCommunity" color="#fff" size={30} />
-                  <Text style={styles.infoText}>Network fee : {QoutesRes?.networkFee||0.0} {QoutesRes?.crypto||selectedCrypto?.crypto}</Text>
+                  <Text style={[styles.infoText,{color:theme.headingTx}]}>Network fee</Text>
+                  <Text style={[styles.infoText,{color:theme.headingTx}]}>{QoutesRes?.networkFee||0.0} {QoutesRes?.crypto||selectedCrypto?.crypto}</Text>
                 </View>
-                </View>}
-
-            {/* Payment Methods */}
-            {operationType==="BUY"&&<View style={[styles.paymentSection, { width: "100%" }]}>
-              <Text style={[styles.sectionTitle,{marginLeft:"2%"}]}>Pay via</Text>
-              <View style={styles.paymentOptions}>
-                <TouchableOpacity style={[styles.paymentMethod,{borderColor:payWayaCode==="10001"?"green":"rgba(255, 255, 255, 0.25)",borderWidth:payWayaCode==="10001"?1:0.5}]} onPress={()=>{setPayWayaCode("10001")}}>
-                  <Icon name="credit-card" type="materialCommunity" color="rgba(255, 255, 255, 0.7)" size={30} />
-                  <Text style={styles.paymentText}>Credit Card</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.paymentMethod,{borderColor:payWayaCode==="501"?"green":"rgba(255, 255, 255, 0.25)",borderWidth:payWayaCode==="501"?1:0.5}]} disabled={Platform.OS==="android"} onPress={()=>{setPayWayaCode("501")}}>
-                  <Icon name="apple" type="materialCommunity" color="rgba(255, 255, 255, 0.7)" size={30} />
-                  <Text style={styles.paymentText}>Apple pay</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.paymentMethod,{borderColor:payWayaCode==="701"?"green":"rgba(255, 255, 255, 0.25)",borderWidth:payWayaCode==="701"?1:0.5}]} onPress={()=>{setPayWayaCode("701")}}>
-                  <Icon name="google" type="materialCommunity" color="rgba(255, 255, 255, 0.7)" size={29} />
-                  <Text style={styles.paymentText}>G-Pay</Text>
-                </TouchableOpacity>
-              </View>
-            </View>}
+                </View>
+                 </View>}
 
             {/* Buy Button */}
             <TouchableOpacity 
-              style={[styles.buyBtn, { width: "100%",backgroundColor:btnLoading||qoutesLoading||parseFloat(amountSend)===0||!amountSend||selectedCrypto===null||selectedfiat===null?"gray":"#2164C1" }]}
+              style={[styles.buyBtn, { width: "100%",backgroundColor:btnLoading||qoutesLoading||parseFloat(amountSend)===0||!amountSend||selectedCrypto===null||selectedfiat===null?"gray":"#5B65E1" }]}
               disabled={btnLoading||qoutesLoading||parseFloat(amountSend)===0||!amountSend||selectedCrypto===null||selectedfiat===null}
               onPress={() => {handleUser()}}
             >
@@ -567,13 +590,13 @@ const KycComponent = ({ route }) => {
               onRequestClose={() => setTokenModalVisible(false)}
             >
               <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
+                <View style={[styles.modalContent,{backgroundColor:theme.bg}]}>
                   <View style={styles.modalHandle} />
 
                   <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Select a {tokenModalType===0?"fiat":"crypto"}</Text>
+                    <Text style={[styles.modalTitle,{color:theme.headingTx}]}>Select a {tokenModalType===0?"fiat":"crypto"}</Text>
                     <TouchableOpacity onPress={() => setTokenModalVisible(false)}>
-                      <MaterialIcons name="close" size={24} color="#FFFFFF" />
+                      <MaterialIcons name="close" size={24} color={theme.headingTx} />
                     </TouchableOpacity>
                   </View>
                   <TextInput
@@ -581,7 +604,7 @@ const KycComponent = ({ route }) => {
                     placeholderTextColor={"gray"}
                     value={FindResult}
                     onChangeText={setFindResult}
-                    style={styles.searchCon}
+                    style={[styles.searchCon,{color:theme.headingTx}]}
                   />
                   <FlatList
                     data={listManagerData}
@@ -601,7 +624,6 @@ const KycComponent = ({ route }) => {
 const styles = StyleSheet.create({
   mainCom: {
     flex: 1,
-    backgroundColor: "#011434",
   },
   scrollContent: {
     flexGrow: 1,
@@ -625,34 +647,32 @@ const styles = StyleSheet.create({
     marginBottom:6,
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#1F2937",
     alignItems: "center",
-    height: 58,
+    height: 62,
     alignSelf: "center",
     borderRadius: 16,
     paddingHorizontal: 4,
   },
   pairNameCon: {
     height: 47,
-    borderRadius: 8,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#1F2937",
   },
   pairNameText: {
     fontSize: 16,
-    color: "#FFFFFF",
+    fontWeight:"500"
   },
   amountInfoCon: {
-    backgroundColor: "#1F2937",
     borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical:5,
+    paddingHorizontal: wp(4),
+    paddingVertical:hp(1),
     alignSelf: "center",
     flexDirection:"row",
     justifyContent:"space-between",
     width: "100%", 
-    marginVertical:6
+    marginTop:hp(1.5)
   },
   amountInfoHeader: {
     flexDirection: "column",
@@ -662,6 +682,7 @@ const styles = StyleSheet.create({
   amountInfoText: {
     fontSize: 16,
     color: "gray",
+    fontWeight:"500"
   },
   amountInputCon: {
     flexDirection: "row",
@@ -669,8 +690,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   amountSubCon: {
-    borderBottomWidth: 2,
-    borderBottomColor: "#fff",
+    borderBottomWidth: 1,
+    marginTop:hp(2)
   },
   amountInput: {
     fontSize: 20,
@@ -679,11 +700,16 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   amountFlagCon: {
-    flex: 1,
+    maxWidth:wp(55),
+    height:hp(6),
+    width:wp(35),
+    paddingHorizontal:wp(2),
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginLeft: 5,
+    borderRadius:15,
+    bottom:hp(-2)
   },
   currencySelector: {
     flexDirection: "row",
@@ -692,6 +718,7 @@ const styles = StyleSheet.create({
   currencyText: {
     fontSize: 16,
     color: "#fff",
+    fontWeight:"500",
     marginLeft: 8,
   },
   currencySubText: {
@@ -706,38 +733,48 @@ const styles = StyleSheet.create({
     marginLeft: 1,
   },
   downBoxCon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: "#18212F",
     alignItems: "center",
     justifyContent: "center",
   },
   infoCon: {
     marginVertical: -4,
-    padding: 5,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#FFFFFF33",
+    padding: 14,
+  },
+  providerCon: {
+    marginVertical: 4,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#FFFFFF33",
+  },
+  providerSubCon:{
+    flexDirection:"row",
+    paddingHorizontal: 14,
+    justifyContent:"space-between",
+    alignItems:"center",
+    paddingVertical:hp(1.6)
   },
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 5,
+    justifyContent:"space-between",
+    marginBottom: hp(1),
   },
   infoText: {
     fontSize: 13,
     color: "#fff",
-    marginLeft: -10,
   },
   walletAddress: {
     flexDirection:"row",
-    marginTop:10,
     marginBottom: 15,
     padding: 14,
+    borderTopLeftRadius:0,
+    borderTopRightRadius:0,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#FFFFFF33",
+    borderTopColor:"gray",
+    borderTopWidth:0.3,
     justifyContent:"space-between",
     alignItems:"center"
   },
@@ -754,7 +791,7 @@ const styles = StyleSheet.create({
     borderColor: "#FFFFFF33",
   },
   addressText: {
-    fontSize: 19,
+    fontSize: 16,
     color: "#fff",
   },
   paymentSection: {
@@ -781,8 +818,8 @@ const styles = StyleSheet.create({
   },
   buyBtn: {
     backgroundColor: "#2164C1",
-    height: 50,
-    borderRadius: 25,
+    height: hp(6.9),
+    borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "center",
@@ -827,8 +864,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    marginBottom:2,
+    paddingHorizontal:wp(2),
+    borderRadius:10
   },
   tokenIcon: {
     width: 32,
@@ -856,7 +894,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 10,
     borderRadius: 15,
-  }
+  },
+  image: {
+    width: wp(13),
+    height: hp(5),
+    alignSelf: "center",
+    borderRadius:10,
+    marginRight:9
+  },
 });
 
 export default KycComponent;

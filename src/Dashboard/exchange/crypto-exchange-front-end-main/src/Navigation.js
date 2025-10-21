@@ -74,7 +74,7 @@ export function ExchangeNavigation() {
 
       })}
     >
-      <Tab.Screen
+      {/* <Tab.Screen
         name="/"
         component={HomeView}
         options={{
@@ -88,7 +88,7 @@ export function ExchangeNavigation() {
             // return <ExchangeHeaderIcon />;
           },
         }}
-      />
+      /> */}
        {/* <Tab.Screen
         name="Deposits"
         component={AddFunds_screen}

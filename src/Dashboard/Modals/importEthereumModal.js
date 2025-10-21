@@ -59,6 +59,7 @@ const ImportEthereumModal = ({
   const [disable, setDisable] = useState(true);
   const [text, setText] = useState("");
   const navigation = useNavigation();
+  const state = useSelector((state) => state);
 
   const dispatch = useDispatch();
 
@@ -130,34 +131,46 @@ const ImportEthereumModal = ({
 
 
   return (
-    <Animated.View // Special animatable View
+    <Animated.View
       style={{ opacity: fadeAnim }}
     >
       <Modal
-        animationIn="slideInRight"
-        animationOut="slideOutRight"
-        animationInTiming={500}
-        animationOutTiming={650}
         isVisible={Visible}
-        useNativeDriver={true}
-        // statusBarTranslucent={true}
         onBackdropPress={() => setWalletVisible(false)}
-        onBackButtonPress={() => {
-          setWalletVisible(false);
-        }}
+        onBackButtonPress={() => setWalletVisible(false)}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        useNativeDriver
+        hideModalContentWhileAnimating
+        style={style.modal}
       >
-        <View style={style.Body}>
-          {/* <ModalHeader Function={closeModal} name={"Ethereum"} /> */}
-          <TouchableOpacity onPress={()=>{setWalletVisible(false);}}>
-          <Icon type={'entypo'} name='cross' color={'gray'} size={24} style={style.crossIcon} />
-          </TouchableOpacity>
-          <Text style={style.text}>Ethereum</Text>
 
+      <Animated.View style={[style.overlay]}>
+        <View style={[style.Body, { backgroundColor: state.THEME.THEME ? "#242426" : "#F4F4F8" }]}>
+            <View style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      paddingTop: 30
+                    }}>
+        <View style={{
+              paddingHorizontal: 10,
+              alignItems: "flex-start"
+            }}>
+              <Text style={[style.coinText, { color: state.THEME.THEME ? "#fff" : "black" }]}>Ethereum Wallet</Text>
+              <Text style={[style.coinSubText, { color: state.THEME.THEME ? "#AAAAAA" : "black" }]}>Import your wallet using your secret recovery phrase.</Text>
+            </View>
+            <Icon type={'entypo'} name='cross' color={"black"} size={24} style={[style.crossIcon, { backgroundColor: "#FFFFFF" }]} onPress={()=>{setWalletVisible(false);}} />
+          </View>
+          <View style={style.infoCard}>
+            <Icon type={'entypo'} name='info-with-circle' color={"#ECB742"} size={20} />
+            <Text style={[style.coinSubText, { color: "#ECB742", marginLeft: 5 }]}>Never share this phrase. Enter it here only to recover your wallet.</Text>
+          </View>
           <View style={style.Button}>
             <TouchableOpacity
               style={
                 label == "privateKey"
-                  ? { ...style.tabBtns, borderColor: "#4CA6EA" }
+                  ? { ...style.tabBtns, borderColor: "#5B65E1" }
                   : style.tabBtns
               }
               color={label == "privateKey" ? "green" : "grey"}
@@ -170,7 +183,7 @@ const ImportEthereumModal = ({
               }}
             >
               <Text
-                style={{ color: label == "privateKey" ? "#4CA6EA" : "grey" }}
+                style={{ color: label == "privateKey" ? "#5B65E1" : "grey" }}
               >
                 PrivateKey
               </Text>
@@ -179,7 +192,7 @@ const ImportEthereumModal = ({
             <TouchableOpacity
               style={
                 label == "mnemonic"
-                  ? { ...style.tabBtns, borderColor: "#4CA6EA" }
+                  ? { ...style.tabBtns, borderColor: "#5B65E1" }
                   : style.tabBtns
               }
               color={label == "mnemonic" ? "green" : "grey"}
@@ -191,7 +204,7 @@ const ImportEthereumModal = ({
                 }
               }}
             >
-              <Text style={{ color: label == "mnemonic" ? "#4CA6EA" : "grey" }}>
+              <Text style={{ color: label == "mnemonic" ? "#5B65E1" : "grey" }}>
                 Mnemonic
               </Text>
             </TouchableOpacity>
@@ -199,7 +212,7 @@ const ImportEthereumModal = ({
             <TouchableOpacity
               style={
                 label == "JSON"
-                  ? { ...style.tabBtns, borderColor: "#4CA6EA" }
+                  ? { ...style.tabBtns, borderColor: "#5B65E1" }
                   : style.tabBtns
               }
               color={label == "JSON" ? "green" : "grey"}
@@ -211,55 +224,58 @@ const ImportEthereumModal = ({
                 }
               }}
             >
-              <Text style={{ color: label == "JSON" ? "#4CA6EA" : "grey" }}>
+              <Text style={{ color: label == "JSON" ? "#5B65E1" : "grey" }}>
                 JSON key
               </Text>
             </TouchableOpacity>
           </View>
-
-          <View style={style.labelInputContainer}>
-            <Text style={style.label}>Name</Text>
+          <View style={[style.card, { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C" }]}>
+              <Text style={[style.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>Wallet Name</Text>
+              <View style={[style.inputContainer, {
+                backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426",
+              }]}>
             <TextInput
               value={accountName}
               maxLength={20}
               onChangeText={(text) => {
                 setAccountName(text);
               }}
-              style={{ width: wp("78%"),color:"black" }}
+              style={{  color: state.THEME.THEME === false ?"black":"#fff" }}
               placeholder={accountName ? accountName : "Wallet 1"}
-              placeholderTextColor={"gary"}
+              placeholderTextColor={"gray"}
             />
           </View>
+          </View>
 
-          <View style={style.inputView}>
+          <View style={[style.card, { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C" }]}>
+              <View style={{flexDirection:"row",justifyContent:"space-between"}}>
+              <Text style={[style.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>Phrase</Text>
             <TouchableOpacity
               onPress={async () => {
-                // setText('abc')
                 const text = await Clipboard.getString();
-                // console.log(text)
-                // setText(text)
-                // setText('abc')
                 console.log(label)
                 if (label === 'mnemonic') {
                   setMnemonic(text)
                 setText(text)
-                  // Paste(setMnemonic);
                 } else if (label === 'privateKey') {
-                  // Paste(setPrivateKey);
                   setPrivateKey(text)
                   setText(text)
                 } else if (label === 'JSON') {
-                  // Paste(setJson);
                   setJson(text)
                   setText(text)
                 }
               }}
+              style={{flexDirection:"row"}}
             >
-              <Text style={style.paste}>Paste</Text>
+              <Icon type={'material'} name='content-copy' color={"#5B65E1"} size={19} />
+              <Text style={style.paste}> PASTE</Text>
             </TouchableOpacity>
-            <Text style={{color:"#4CA6EA"}}>Phrase</Text>
+              </View>
+              <View style={[style.inputContainer, {
+                backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426",
+              }]}>
             <TextInput
-              style={[style.input,{color:"black"}]}
+              style={{  color: state.THEME.THEME === false ?"black":"#fff" }}
               value={text}
               onChangeText={(text) => {
                 if (label === "privateKey") {
@@ -283,33 +299,36 @@ const ImportEthereumModal = ({
                     ? "Enter your secret JSON Key here"
                     : "Enter your secret phrase here"
               }
+              placeholderTextColor={"gray"}
             />
           </View>
+          </View>
 
-          {optionVisible ? (
-            <View style={style.labelInputContainer}>
-              {optionVisible ? <Text style={style.label}>Password</Text> : null}
-              <TextInput
-                style={{
-                  display: optionVisible === false ? "none" : "flex",
-                  color:"black"
-                }}
-                value={jsonKey}
-                onChangeText={(text) => {
-                  setJsonKey(text);
-                }}
-                placeholderTextColor="gray"
-                autoCapitalize={"none"}
-                placeholder="JSON password"
-              />
-            </View>
-          ) : null}
 
-          {loading ? (
-            <ActivityIndicator size="large" color="green" />
-          ) : (
-            <Text> </Text>
-          )}
+            {optionVisible ? (
+              <View style={[style.card, { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C" }]}>
+                <Text style={[style.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>Key</Text>
+                <View style={[style.inputContainer, {
+                  backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426",
+                }]}>
+                  <TextInput
+                    style={{
+                      display: optionVisible === false ? "none" : "flex",
+                      color: "black"
+                    }}
+                    value={jsonKey}
+                    onChangeText={(text) => {
+                      setJsonKey(text);
+                    }}
+                    placeholderTextColor="gray"
+                    autoCapitalize={"none"}
+                    placeholder="JSON password"
+                  />
+                </View>
+              </View>
+            ) : null}
+
+          {loading&&(<ActivityIndicator size="large" color="green" />)}
           <View
             style={{
               display: "flex",
@@ -352,24 +371,7 @@ const ImportEthereumModal = ({
                   address: accountFromMnemonic.address,
                   privateKey: privateKey,
                 };
-                /*const response = saveUserDetails(accountFromMnemonic.address).then(async(response)=>{
                 
-                  if(response===400){
-                    return 
-                  }
-                 else if(response===401){
-                    return 
-                  }
-                })
-                .catch((e)=>{
-                    console.log(e)
-                    setLoading(false)
-                    setWalletVisible(false)
-                    setVisible(false)
-                    setModalVisible(false)
-
-
-                  })*/
                 const accounts = {
                   address: wallet.address,
                   privateKey: wallet.privateKey,
@@ -391,7 +393,6 @@ const ImportEthereumModal = ({
                     console.log(e);
                   });
 
-                //wallets.push(accounts)
                 const allWallets = [
                   {
                     address: wallet.address,
@@ -402,7 +403,6 @@ const ImportEthereumModal = ({
                     wallets: wallets,
                   },
                 ];
-                // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
 
                 dispatch(AddToAllWallets(allWallets, user)).then((response) => {
                   if (response) {
@@ -426,9 +426,6 @@ const ImportEthereumModal = ({
                   }
                 });
 
-                // dispatch(getBalance(wallet.address))
-                // dispatch(setToken(token))
-                //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
               } else if (label === "privateKey") {
                 const check = ethers.utils.isHexString(privateKey, 32);
                 if (!check) {
@@ -537,24 +534,7 @@ const ImportEthereumModal = ({
                   address: accountFromMnemonic.address,
                   privateKey: privateKey,
                 };
-                /*const response = saveUserDetails(accountFromMnemonic.address).then(async(response)=>{
-                
-                  if(response===400){
-                    return 
-                  }
-                 else if(response===401){
-                    return 
-                  }
-                })
-                .catch((e)=>{
-                    console.log(e)
-                    setLoading(false)
-                    setWalletVisible(false)
-                    setVisible(false)
-                    setModalVisible(false)
-
-
-                  })*/
+              
                 const accounts = {
                   address: wallet.address,
                   privateKey: wallet.privateKey,
@@ -576,7 +556,6 @@ const ImportEthereumModal = ({
                     console.log(e);
                   });
 
-                //wallets.push(accounts)
                 const allWallets = [
                   {
                     address: wallet.address,
@@ -587,7 +566,6 @@ const ImportEthereumModal = ({
                     wallets: wallets,
                   },
                 ];
-                // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
 
                 dispatch(AddToAllWallets(allWallets, user)).then((response) => {
                   if (response) {
@@ -611,9 +589,6 @@ const ImportEthereumModal = ({
                   }
                 });
 
-                // dispatch(getBalance(wallet.address))
-                // dispatch(setToken(token))
-                //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
               }
 
               setWalletVisible(false);
@@ -625,6 +600,7 @@ const ImportEthereumModal = ({
             <Text style={{ color: "white" }}>Import</Text>
           </TouchableOpacity>
         </View>
+        </Animated.View>
       </Modal>
     </Animated.View>
   );
@@ -633,14 +609,36 @@ const ImportEthereumModal = ({
 export default ImportEthereumModal;
 
 const style = StyleSheet.create({
+  modal: {
+    justifyContent: "flex-end",
+    margin: 0,
+  },
+  overlay: {
+    justifyContent: "flex-end",
+  },
   Body: {
-    backgroundColor: "white",
-    height: hp(75),
-    width: wp(97),
-    borderRadius: hp(1),
-    textAlign: "center",
+    width: wp(100),
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     alignSelf: "center",
-    marginTop: hp(5)
+    paddingHorizontal: 15,
+  },
+  coinText: {
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  coinSubText: {
+    fontSize: 13,
+    fontWeight: "400",
+  },
+  infoCard: {
+    marginVertical: 15,
+    backgroundColor: "#FEF6D8",
+    borderRadius: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    alignItems: "center"
   },
   welcomeText: {
     fontSize: 15,
@@ -658,7 +656,6 @@ const style = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     width: wp(85),
-    marginTop: hp(3),
     marginBottom: hp(3),
     alignSelf: "center",
   },
@@ -739,14 +736,23 @@ const style = StyleSheet.create({
     paddingVertical: hp(1.2),
     borderColor: "#DADADA",
   },
+  card: {
+    borderRadius: 16,
+    padding: wp(3),
+    marginBottom: hp(1.5)
+  },
   label: {
-    position: "absolute",
-    zIndex: 100,
-    backgroundColor: "white",
-    paddingHorizontal: 5,
-    left: 12,
-    color: "#4CA6EA",
-    top: -12,
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: hp(1.5),
+    letterSpacing: 0.3,
+    paddingVertical:1.5
+  },
+  inputContainer: {
+    alignItems: "flex-start",
+    borderRadius: 12,
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(1),
   },
   inputView: {
     borderWidth: 1,
@@ -766,14 +772,20 @@ const style = StyleSheet.create({
     paddingRight: wp("7"),
     backgroundColor: "white",
   },
-  paste: { textAlign: "right", color: "#4CA6EA" },
-  btn: {
-    backgroundColor: "#4CA6EA",
+  paste: {
+    fontSize:15,
+    fontWeight:"500",
+    color: "#5B65E1"
+   },
+   btn: {
+    backgroundColor: "#5B65E1",
     paddingVertical: hp(1.6),
-    width: wp(90),
+    width: wp(95),
     alignSelf: "center",
     borderRadius: hp(1),
     alignItems: "center",
+    justifyContent:"center",
+    marginBottom:15
   },
   text: {
     textAlign: "center",
@@ -783,7 +795,10 @@ const style = StyleSheet.create({
     color:"black"
   },
   crossIcon: {
-    alignSelf: "flex-end",
-    padding: hp(1)
-  }
+    marginTop:hp(-4),
+    height: 31,
+    width: 30,
+    padding: 3,
+    borderRadius: 30
+  },
 });

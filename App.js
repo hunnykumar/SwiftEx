@@ -70,8 +70,6 @@ export default function App() {
         <PaperProvider>
           <Network_Checker/>
             <View style={styles.container}>
-              {/* <StatusBar  backgroundColor="#011434" /> */}
-              {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={"#011434"}/>}
 
               <NavigationProvider />
             </View>

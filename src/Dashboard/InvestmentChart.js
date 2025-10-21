@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { StyleSheet, View, Text, Image, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator, Modal, TouchableWithoutFeedback, FlatList } from "react-native";
+import { StyleSheet, View, Text, Image, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator, TouchableWithoutFeedback, FlatList } from "react-native";
 import {
   Avatar,
   Card,
@@ -26,11 +26,11 @@ import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { RAPID_STELLAR, SET_ASSET_DATA } from "../components/Redux/actions/type";
 import { enableBiometrics } from "../biometrics/biometric";
 import { STELLAR_URL } from "./constants";
-import ResponsiveLineChart from "./exchange/crypto-exchange-front-end-main/src/components/ResponsiveLineChart";
 import fetchAllTokensData from "../utilities/TokenUtils";
 import LinearGradient from "react-native-linear-gradient";
 import { CustomQuotes } from "./exchange/crypto-exchange-front-end-main/src/utils/CustomQuotes";
 import * as StellarSdk from '@stellar/stellar-sdk';
+import Modal from "react-native-modal";
 
 function InvestmentChart(setCurrentWallet) {
   const navigation=useNavigation()
@@ -517,186 +517,143 @@ function InvestmentChart(setCurrentWallet) {
  },[])
   const [chainnData,setchainnData] =useState([
     { id: 1,symbole:"ETH",subSymbole:"ETH",tokenName:"WETH",address:"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", name: "Ethereum", avl: ethBalance ? ethBalance +" ETH": 0.00+" ETH", dollaravl: ethPrice?"$ "+ethPrice:"$ 0.00", status: "+1.8%", statusColor: "#40BF6A", img: "https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png", bgColor: "#181F2C", viewColor: "rgba(45, 170, 32, 0.15)" },
-    { id: 2,symbole:"XLM",subSymbole:"XLM",tokenName:"XLM",address:"", name: "XLM", avl: xmlBalance ? xmlBalance+" XLM" : 0.00 +" XLM", dollaravl: "$ "+current_xlm?"$ "+current_xlm:"$ 0.00", status: "+1.8%", statusColor: "#BF404D", img: stellar, bgColor: "#FF971A26", viewColor: "#AA202226" },
+    { id: 2,symbole:"XLM",subSymbole:"XLM",tokenName:"XLM",address:"", name: "XLM", avl: xmlBalance ? xmlBalance+" XLM" : 0.00 +" XLM", dollaravl: "$ "+current_xlm?"$ "+current_xlm:"$ 0.00", status: "+1.8%", statusColor: "#BF404D", img: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq", bgColor: "#FF971A26", viewColor: "#AA202226" },
     { id: 3,symbole:"BNB",subSymbole:"BSC",tokenName:"WBNB",address:"0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238", name: "Binance", avl: bnbBalance?bnbBalance+" BNB":0.00+" BNB", dollaravl: "$ "+bnbPrice >= 0 ? "$ "+bnbPrice : "$ "+300, status: "+1.8%", statusColor: "#40BF6A", img: "https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1696501970", bgColor: "rgba(243, 186, 47, 0.3)rgba(243, 47, 153, 0.3)", viewColor: "rgba(45, 170, 32, 0.15)" },
     { id: 4,symbole:"BTC",subSymbole:"BTC",tokenName:"",address:"", name: "Bitcoin", avl: "0 BTC", dollaravl: "$ 0.00", status: "+1.8%", statusColor: "#40BF6A", img: "https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png", bgColor: "#FF971A26", viewColor: "rgba(45, 170, 32, 0.15)" },
   ]);
  const renderCoins = ({ item }) => {
   return (
-    <TouchableOpacity 
-    disabled={item.id === 4} 
-    style={[
-      styles.coinMainCon, 
-      { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#18181C" }
-    ]} 
-    onPress={() => navigation.navigate("Asset_info", { asset_type: item })}
-  >
-    {item.id === 4 && (
-      <View style={[styles.TokenInfo]}>
-        <Text style={styles.TokenInfoText}>Arriving soon</Text>
+    <TouchableOpacity
+      disabled={item.id === 4}
+      style={[
+        styles.coinCard,
+        { 
+          backgroundColor: state.THEME.THEME === false ? "#F3F5F6" : "#242426",
+        }
+      ]}
+      onPress={() => navigation.navigate("Asset_info", { asset_type: item })}
+    >
+      {item.id === 4 && (
+        <View style={styles.comingSoonBadge}>
+          <Text style={styles.comingSoonText}>{`Arriving\nsoon`}</Text>
+        </View>
+      )}
+
+      <View style={styles.coinContent}>
+        <View style={[styles.coinIcon, { backgroundColor: item.bgColor }]}>
+          <Image
+            source={{ uri: item.img }}
+            style={styles.coinImage}
+          />
+        </View>
+
+        <View style={styles.coinInfo}>
+          <Text style={[styles.coinName, { color: state.THEME.THEME === false ? "#000" : "#FFF" }]}>
+            {item.name}
+          </Text>
+          <View style={styles.coinPriceRow}>
+            <Text style={styles.coinPrice}>{item.dollaravl}</Text>
+          </View>
+        </View>
+
+        <View style={styles.balanceSection}>
+          <Text style={[styles.balanceAmount, { color: state.THEME.THEME === false ? "#000" : "#FFF" }]}>
+            {parseFloat(item.avl).toFixed(2)} {item.symbole}
+          </Text>
+          <Text style={[styles.balanceUsd,{ color: state.THEME.THEME === false ? "#000" : "#FFF" }]}>
+          ${(parseFloat(item.avl) * parseFloat(item.dollaravl.replace('$ ', '') || 0)).toFixed(5)}</Text>
+        </View>
+        {item?.id !== 4 ? (
+          <TouchableOpacity
+            disabled={item.id === 3}
+            style={[
+              styles.tradeButton
+            ]}
+            onPress={() => {
+              if (item?.id === 2) {
+                navigation.navigate("newOffer_modal", 
+                  item?.id === 1 && { tradeAssetType: item?.symbole }
+                );
+              } else {
+                setTokenChain(item?.subSymbole?.toUpperCase());
+                setTokenName(item?.tokenName?.toUpperCase());
+                setTokenAddress(item?.address);
+                setCustomImport(true);
+              }
+            }}
+          >
+            <Text style={styles.tradeButtonText}>Trade</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.tradeButtonPlaceholder} />
+        )}
       </View>
-    )}
-  
-    {/* Left: Coin Image & Info */}
-    
-{/* Left: Coin Image & Info */}
-<View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-  {/* Coin Image */}
-  <View style={[styles.coinImgCon, { backgroundColor: item.bgColor }]}>
-    <Image 
-      source={item.name === "XLM" ? item.img : { uri: item.img }} 
-      style={item.name === "XLM" ? { width: 49, height: 49 } : { width: 39, height: 39 }} 
-    />
-  </View>
-
-  {/* Coin Info - Adjusted with marginLeft */}
-  <View style={[styles.coinInfoCon, { marginLeft: 10 }]}>
-    <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "black" : "#FFFFFF" }]}>
-      {item.name}
-    </Text>
-    <Text style={styles.coinInfoCon.coinBalText}>
-      {parseFloat(item.avl).toFixed(1)} {item.symbole}
-    </Text>
-    <View style={styles.coinInfoCon.coinSubCon}>
-      <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "black" : "#FFFFFF" }]}>
-        {item.dollaravl}
-      </Text>
-    </View>
-  </View>
-</View>
-
-  
-    {/* Center: Coin Chart */}
-    <View style={{ flex: 1, alignItems: "center" }}>
-      <ResponsiveLineChart width={89} height={70} symbol={item.symbole} />
-    </View>
-  
-    {/* Right: Action Buttons */}
-    {item?.id!==4?<View style={{ alignItems: "center", paddingRight: 5 }}>
-      <TouchableOpacity 
-        disabled={item.id === 4||item.id === 3} 
-        style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
-        onPress={() => {
-          state?.STELLAR_ADDRESS_STATUS === false 
-            // ? navigation.navigate("exchange") :
-            if(item?.id===2)
-            {
-              navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbole });
-            }
-            else{
-              setTokenChain(item?.subSymbole?.toUpperCase())
-              setTokenName(item?.tokenName?.toUpperCase())
-              setTokenAddress(item?.address)
-              setCustomImport(true)
-            }
-        }}
-      >
-        <Text style={styles.actionRowBtnText}>Trade</Text>
-      </TouchableOpacity>
-  
-      <TouchableOpacity 
-        disabled={item.id === 4} 
-        style={styles.actionBuyBtn} 
-        onPress={() => navigation.navigate("payout")}
-      >
-        <Text style={styles.actionRowBtnText}>Buy</Text>
-      </TouchableOpacity>
-    </View>:<View style={{ width: 107,}}/>}
-  </TouchableOpacity>
-  
-  )
+    </TouchableOpacity>
+  );
 }
 
 const renderTokens = ({ item }) => {
   return (
-    <TouchableOpacity 
-    style={[
-      styles.coinMainCon, 
-      { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#18181C" }
-    ]} 
-    onPress={() => navigation.navigate("Asset_info", { asset_type: item })}
-  >
-  
-    {/* Left: Coin Image & Info */}
-    
-{/* Left: Coin Image & Info */}
-<View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-  {/* Coin Image */}
-  <View style={[styles.coinImgCon, { backgroundColor: "#181F2C" }]}>
-    
-     {item?.img_url ?
-                            <Image 
-                            source={item?.symbol?.toUpperCase() === "XLM" ? item?.img_url : { uri: item?.img_url }} 
-                            style={item?.symbol?.toUpperCase() === "XLM" ? { width: 49, height: 49 } : { width: 39, height: 39 }} 
-                          /> :
-                            <LinearGradient
-                              colors={['#3b82f6', '#8b5cf6']}
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 1, y: 0 }}
-                              style={[styles.tokenImage, { borderRadius: 30, justifyContent: "center", alignItems: "center" }]}
-                            >
-                              <Text style={[styles.tokenName, { color: "#fff", fontSize: 28 }]}>{item?.name?.charAt(0)}</Text>
-                            </LinearGradient>}
-  </View>
-
-  {/* Coin Info - Adjusted with marginLeft */}
-  <View style={[styles.coinInfoCon, { marginLeft: 10 }]}>
-    <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "black" : "#FFFFFF" }]}>
-      {item?.symbol?.toUpperCase()} <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "gray" : "gray",fontSize:10 }]}>({item?.network})</Text>
-    </Text>
-    <Text style={styles.coinInfoCon.coinBalText}>
-      {parseFloat(item?.balance)?.toFixed(1)} {item?.symbol?.toUpperCase()}
-    </Text>
-    <View style={styles.coinInfoCon.coinSubCon}>
-      <Text style={[styles.coinInfoCon.coinInfoText, { color: state.THEME.THEME === false ? "black" : "#FFFFFF" }]}>
-        $ {item?.price}
-      </Text>
-    </View>
-  </View>
-</View>
-
-  
-    {/* Center: Coin Chart */}
-    <View style={{ flex: 1, alignItems: "center" }}>
-      <ResponsiveLineChart width={89} height={70} symbol={item?.symbol?.toUpperCase()} />
-    </View>
-  
-    {/* Right: Action Buttons */}
-    <View style={{ alignItems: "center", paddingRight: 5 }}>
-      <TouchableOpacity 
-        disabled={item?.network==="BSC"||item?.network==="ETH"&&item?.symbol?.toUpperCase()!=="USDT"} 
-        style={[styles.actionBuyBtn, { backgroundColor: "#23262F", margin: 2 }]} 
-        onPress={() => {
-          // state?.STELLAR_ADDRESS_STATUS === false 
-            // ? navigation.navigate("exchange") :
-            //  navigation.navigate("newOffer_modal", item?.id === 1 && { tradeAssetType: item?.symbol?.toUpperCase() });
-            setTokenChain(item?.network)
-            setTokenName(item?.symbol?.toUpperCase())
-            setTokenAddress(item?.address)
-            setCustomImport(true)
-        }}
-      >
-        <Text style={styles.actionRowBtnText}>Trade</Text>
-      </TouchableOpacity>
-  
-      <TouchableOpacity 
-        // disabled={item.id === 4} 
-        style={styles.actionBuyBtn} 
-        onPress={() => navigation.navigate("payout")}
-      >
-        <Text style={styles.actionRowBtnText}>Buy</Text>
-      </TouchableOpacity>
-    </View>
-  </TouchableOpacity>
-  
-  )
+    <TouchableOpacity
+      style={[
+        styles.coinCard,
+        { backgroundColor: state.THEME.THEME === false ? "#F3F5F6" : "#242426" }
+      ]}
+      onPress={() => navigation.navigate("Asset_info", { asset_type: item })}
+    >
+      <View style={styles.coinContent}>
+        <View style={[styles.coinIcon, { backgroundColor: "#F7931A1A" }]}>
+          {item?.img_url ? (
+            <Image
+              source={{ uri: item?.img_url }}
+              style={styles.coinImage}
+            />
+          ) : (
+            <LinearGradient
+              colors={['#3b82f6', '#8b5cf6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.gradientIcon}
+            >
+              <Text style={styles.iconLetter}>{item?.name?.charAt(0)}</Text>
+            </LinearGradient>
+          )}
+        </View>
+        <View style={styles.coinInfo}>
+          <View style={styles.tokenHeader}>
+            <Text style={[styles.coinName, { color: state.THEME.THEME === false ? "#000" : "#FFF" }]}>
+              {item?.symbol?.toUpperCase()}
+            </Text>
+            <Text style={styles.networkBadge}>({item?.network})</Text>
+          </View>
+          <Text style={styles.coinPrice}>$ {item?.price}</Text>
+        </View>
+        <View style={styles.balanceSection}>
+          <Text style={[styles.balanceAmount, { color: state.THEME.THEME === false ? "#000" : "#FFF" }]}>
+            {parseFloat(item?.balance || 0)?.toFixed(2)}{" "+item.network}
+          </Text>
+          <Text style={[styles.balanceUsd,{ color: state.THEME.THEME === false ? "#000" : "#FFF" }]}>${(parseFloat(item.balance || 0) * parseFloat(item.price || 0)).toFixed(5)}</Text>
+        </View>
+        <TouchableOpacity
+          disabled={item?.network === "BSC" || (item?.network === "ETH" && item?.symbol?.toUpperCase() !== "USDT")}
+          style={[styles.tradeButton,]}
+          onPress={() => {
+            setTokenChain(item?.network);
+            setTokenName(item?.symbol?.toUpperCase());
+            setTokenAddress(item?.address);
+            setCustomImport(true);
+          }}
+        >
+          <Text style={styles.tradeButtonText}>Trade</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
 }
   return (
-        <View style={[styles.watchlistCon,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#23262F1A"}]}>
-        {/* <Text style={[styles.watchlistCon.watchlistConHeading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Watchlist</Text> */}
+    <View style={[styles.watchlistCon,{backgroundColor:state.THEME.THEME===false?"#FFFFFF":"#1B1B1C"}]}>
     <ScrollView
     showsVerticalScrollIndicator={false}
-     style={{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#23262F1A"}}
       refreshControl={
         <RefreshControl
           refreshing={pull}
@@ -732,32 +689,36 @@ const renderTokens = ({ item }) => {
 
     
       }
- <Modal
-          animationType="fade"
-          transparent={true}
+        <Modal
+          animationType="slide"
+          animationInTiming={50}
           visible={ACTIVATION_MODAL}
+          onRequestClose={()=>{setACTIVATION_MODAL(false)}}
+          useNativeDriver={true}
+          useNativeDriverForBackdrop={true}
+          hideModalContentWhileAnimating
+          onBackdropPress={()=>{setACTIVATION_MODAL(false)}}
+          onBackButtonPress={()=>{setACTIVATION_MODAL(false)}}
+          style={styles.accountContainer}
           >
             <TouchableWithoutFeedback onPress={()=>{setACTIVATION_MODAL(false)}}>
-          <View style={styles.AccountmodalContainer}>
-            <View style={styles.AccounsubContainer}>
+          <View style={[styles.AccountmodalContainer,{ backgroundColor: state.THEME.THEME === false ? "#F4F4F8":"#242426" }]}>
               <Icon
                 name={"alert-circle-outline"}
                 type={"materialCommunity"}
                 size={60}
                 color={"orange"}
               />
-              <Text style={styles.AccounheadingContainer}>Activate {Platform.OS==="android"?"biometric authentication":"Face ID"}</Text>
-              <Text style={[styles.AccounheadingContainer,{fontSize: 10,}]}>Make your wallet even more secure with biometric login.</Text>
-              <Text style={[styles.AccounheadingContainer,{fontSize: 10,marginTop: 0}]}>Use your fingerprint or facial recognition for fast and secure access.</Text>
-              <View style={{ flexDirection: "row",justifyContent:"space-around",width:wp(80),marginTop:hp(3),alignItems:"center" }}>
-                <TouchableOpacity style={styles.AccounbtnContainer} onPress={() => {setACTIVATION_MODAL(false)}}>
-                   <Text style={styles.Accounbtntext}>Cancel</Text>
-                </TouchableOpacity>
+              <Text style={[styles.AccounheadingContainer,{color:state.THEME.THEME === false ? "black":"#fff"}]}>Activate {Platform.OS==="android"?"Biometric Authentication":"Face ID Authentication"}</Text>
+              <Text style={[styles.AccounheadingContainer,{fontSize: 15,color:state.THEME.THEME === false ? "black":"#fff",textAlign:"center",marginTop:3}]}>{`Keep your crypto safe without slowing down.\nQuick access with fingerprint or Face ID.`}</Text>
+              <View style={{ paddingHorizontal:1,marginTop:hp(2),alignItems:"center" }}>
                 <TouchableOpacity style={styles.AccounbtnContainer} onPress={async()=>{setACTIVATION_MODAL(false),await enableBiometrics() }}>
                    <Text style={styles.Accounbtntext}>Continue</Text>
                 </TouchableOpacity>
+                <TouchableOpacity style={styles.AccounbtnSkipContainer} onPress={() => {setACTIVATION_MODAL(false)}}>
+                   <Text style={[styles.Accounbtntext,{color:"gray"}]}>Skip</Text>
+                </TouchableOpacity>
               </View>
-            </View>
             </View>
 
             </TouchableWithoutFeedback>
@@ -806,11 +767,10 @@ const styles = StyleSheet.create({
     color: "rgb(204,51,51)",
   },
   refresh: { borderColor: "#4CA6EA",borderWidth:1, width: wp(10), paddingVertical: hp(0.3), marginTop: hp(1.9), marginLeft: wp(5), alignItems: "center", borderRadius: hp(1) },
-  AccountmodalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  accountContainer: {
+    justifyContent: "flex-end",
+    margin: 0,
+    backgroundColor:"rgba(0, 0, 0, 0.2)"
   },
   AccounsubContainer:{
     backgroundColor:"#131E3A",
@@ -820,16 +780,6 @@ const styles = StyleSheet.create({
     width: "90%",
     height: "35%",
     justifyContent: "center"
-  },
-  AccounbtnContainer:{
-    width:wp(35),
-    height:hp(5),
-    backgroundColor:"rgba(33, 43, 83, 1)",
-    alignItems:"center",
-    justifyContent:"center",
-    borderRadius:10,
-    borderColor:"#4CA6EA",
-    borderWidth:1
   },
   Accounbtntext:{
     fontSize: 16,
@@ -847,7 +797,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     paddingVertical: 10,
-    paddingHorizontal:20,
+    paddingHorizontal:0,
     watchlistConHeading: {
       fontSize: 18,
       fontWeight: "600",
@@ -860,15 +810,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#18181C",
     marginVertical: 4,
     alignItems: "center",
-    paddingVertical: 3,
-    paddingHorizontal: 2,
+    padding: 5,
+    height:90,
     borderRadius: 10,
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    width:"99%",
+    alignSelf:"center"
   },
   coinImgCon: {
-    width: 50,
-    height: 50,
-    left: 5,
+    width: 55,
+    height: 55,
+    left: 10,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
@@ -914,10 +866,10 @@ const styles = StyleSheet.create({
     alignItems:"center",
   },
   actionBuyBtn: {
-    width: 105,
-    height: 29,
+    width: 90,
+    height: 39,
     top:4,
-    borderRadius: 6,
+    borderRadius: 15,
     backgroundColor:"#2164C1",
     justifyContent:"center",
     alignItems:"center"
@@ -956,5 +908,177 @@ const styles = StyleSheet.create({
   tokenName: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  coinCard: {
+    marginBottom: 5,
+    padding: 10,
+    paddingHorizontal:17
+  },
+  coinContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  coinIcon: {
+    width: 59,
+    height: 59,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  coinImage: {
+    width: 45,
+    height: 45,
+    borderRadius: 20,
+  },
+  gradientIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconLetter: {
+    color: "#FFF",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  coinInfo: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: "center",
+  },
+  coinName: {
+    fontSize: 19,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  coinPriceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  coinPrice: {
+    fontSize: 15,
+    color: "#888",
+    marginRight: 8,
+  },
+  coinStatus: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  tokenHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  networkBadge: {
+    fontSize: 10,
+    color: "#888",
+    marginLeft: 6,
+  },
+  balanceSection: {
+    alignItems: "flex-end",
+    marginRight: 18,
+    minWidth: 80,
+  },
+  balanceAmount: {
+    fontSize: 19,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  balanceSymbol: {
+    fontSize: 11,
+    color: "#888",
+  },
+  tradeButton: {
+    backgroundColor: "#5B6FED",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+    minWidth: 80,
+    alignItems: "center",
+  },
+  tradeButtonText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  tradeButtonPlaceholder: {
+    width: 80,
+  },
+  comingSoonBadge: {
+    position: "absolute",
+    backgroundColor: "#FF9800",
+    borderRadius: 8,
+    alignItems: "center",
+    elevation: 5,
+    zIndex: 10,
+    right: 16,
+    top: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  comingSoonText: {
+    textAlign:"center",
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  AccountmodalContainer: {
+    paddingVertical: hp(3),
+    paddingHorizontal: wp(2),
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    alignItems: "center",
+  },
+  AccounsubContainer: {
+    backgroundColor: "#131E3A",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    width: "90%",
+    height: "35%",
+    justifyContent: "center",
+  },
+  AccounbtnContainer: {
+    width:wp(90),
+    padding:20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 15,
+    backgroundColor:"#5B65E1"
+  },
+  AccounbtnSkipContainer: {
+    marginTop:5
+  },
+  Accounbtntext: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  AccounheadingContainer: {
+    fontSize: 21.9,
+    fontWeight: "bold",
+    marginTop: 10,
+    color: "#fff",
+  },
+  flatlistContainer: {
+    flexDirection: "row",
+    marginVertical: hp(3),
+    width: "80%",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: wp(90),
+    alignSelf: "center",
+    marginBottom: 0,
+  },
+  refresh: {
+    borderColor: "#4CA6EA",
+    borderWidth: 1,
+    width: wp(10),
+    paddingVertical: hp(0.3),
+    marginTop: hp(1.9),
+    marginLeft: wp(5),
+    alignItems: "center",
+    borderRadius: hp(1),
   },
 });

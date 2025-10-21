@@ -83,6 +83,7 @@ const Welcome = (props) => {
   }, []);
   const defaultWalletGenration=async()=>{
     try {
+      setLoading(true);
       const response=await dispatch(Generate_Wallet2())
         if (response) {
           console.log("respoms:",response)

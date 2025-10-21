@@ -24,6 +24,8 @@ import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../
 import WalletActivationComponent from "../../utils/WalletActivationComponent";
 import * as StellarSdk from '@stellar/stellar-sdk';
 import CustomInfoProvider from "../../components/CustomInfoProvider";
+import QRScannerComponent from "../../../../../Modals/QRScannerComponent";
+import TokenQrCode from "../../../../../Modals/TokensQrCode";
 StellarSdk.Networks.PUBLIC
 
 const send_recive = ({route}) => {
@@ -34,7 +36,7 @@ const send_recive = ({route}) => {
     const state = useSelector((state) => state);
     const FOCUSED = useIsFocused();
     const navigation = useNavigation();
-    const [modalContainer_menu, setmodalContainer_menu] = useState(false);
+    const [receiveQrOpen, setreceiveQrOpen] = useState(false);
     const [mode_selected, setmode_selected] = useState("SED");
     const [recepi_address, setrecepi_address] = useState("");
     const [recepi_memo, setrecepi_memo] = useState("");
@@ -251,6 +253,7 @@ const send_recive = ({route}) => {
   }
 
     useEffect(() => {
+        setreceiveQrOpen(false)
         setACTIVATION_MODAL_PROD(false)
         setLoading(false)
         setErroVisible(false)
@@ -280,6 +283,26 @@ const send_recive = ({route}) => {
     setACTIVATION_MODAL_PROD(false);
     navigation.goBack()
   };
+
+  const colors = {
+    light: {
+      bg: "#FFFFFF",
+      cardBg: "#F4F4F8",
+      headingTx: "#272729",
+      smallCardBorderColor: "#5E5C5C66",
+      cardSubTx: "#272729",
+      inactiveTx: "#AAAAAA"
+    },
+    dark: {
+      bg: "#1B1B1C",
+      cardBg: "#242426",
+      headingTx: "#E6E8EB",
+      smallCardBorderColor: "#AAAAAA66",
+      cardSubTx: "#E6E8EB",
+      inactiveTx: "#AAAAAA"
+    },
+  };
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
     return (
         <>
      <Exchange_screen_header title="Transaction" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
@@ -296,59 +319,37 @@ const send_recive = ({route}) => {
          appTheme={true}
          shouldNavigateBack={true}
       />
-            <View style={styles.main_con}>
+            <View style={[styles.main_con,{backgroundColor:theme.bg}]}>
                 <View style={styles.mode_con}>
-                    <TouchableOpacity style={[styles.mode_sele, { backgroundColor: mode_selected === "SED" ? "green" : "#011434" }]} onPress={() => { setmode_selected("SED") }}>
-                        <Text style={styles.mode_text}>Send</Text>
+                    <TouchableOpacity style={[styles.mode_sele, { backgroundColor: mode_selected === "SED" ? "#5B65E1" : theme.cardBg }]} onPress={() => { setmode_selected("SED") }}>
+                        <Text style={[styles.mode_text,{color: mode_selected === "SED"?"#fff":theme.headingTx}]}>Send</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.mode_sele, { backgroundColor: mode_selected === "RVC" ? "green" : "#011434" }]} onPress={() => { setmode_selected("RVC") }}>
-                        <Text style={styles.mode_text}>Receive</Text>
+                    <TouchableOpacity style={[styles.mode_sele, { backgroundColor: mode_selected === "RVC" ? "#5B65E1" : theme.cardBg }]} onPress={() => { setmode_selected("RVC"),setreceiveQrOpen(true) }}>
+                        <Text style={[styles.mode_text,{color: mode_selected === "RVC"?"#fff":theme.headingTx}]}>Receive</Text>
                     </TouchableOpacity>
                 </View>
-                {
-                    mode_selected === "SED" ?
-                        <>
-                            <View style={[styles.text_input,{flexDirection:"row",alignItems:"center"}]}>
-                            <TextInput placeholder="Enter stellar address" placeholderTextColor={"gray"} value={recepi_address} style={{height:"100%",width:"80%",fontSize:19,color:"#fff"}}  onChangeText={(value) => { setrecepi_address(value) }} />
+                        <View>
+                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15,color:theme.inactiveTx }]}>Recipient Address</Text>
+                            <View style={[styles.text_input,{flexDirection:"row",alignItems:"center",backgroundColor:theme.cardBg}]}>
+                            <TextInput placeholder="Enter stellar address" placeholderTextColor={"gray"} value={recepi_address} style={{height:"100%",width:"88%",fontSize:19,color:theme.headingTx}}  onChangeText={(value) => { setrecepi_address(value) }} />
                            <TouchableOpacity onPress={()=>{toggleModal();}}>
                             <Icon
                             name={"qrcode-scan"}
                             type={"materialCommunity"}
                             size={28}
-                            color={"white"}
+                            color={"#5B65E1"}
                             />
                             </TouchableOpacity>
                             </View>
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10 }]}>Available: {asset_name==="native"||asset_name!=="native"?!resStellarbal?<ActivityIndicator/>:resStellarbal==="Error"?0.00:resStellarbal:resStellarbal==="Error"?0.00:resStellarbal}</Text>
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Amount</Text>
-                            <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="number-pad" style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_amount(value) }} />
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Transaction memo</Text>
-                            <TextInput placeholder="Enter transaction memo" placeholderTextColor={"gray"} value={recepi_memo} style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_memo(value) }} />
-
-                            <TouchableOpacity disabled={Payment_loading} style={[styles.mode_sele, { height: 60, backgroundColor: Payment_loading  ? "#011434" : "green", marginTop: 40, alignSelf: "center" }]} onPress={() => {Send_Asseet()}}>
+                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10,color:theme.inactiveTx }]}>Available: {asset_name==="native"||asset_name!=="native"?!resStellarbal?<ActivityIndicator/>:resStellarbal==="Error"?0.00:resStellarbal:resStellarbal==="Error"?0.00:resStellarbal}</Text>
+                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15,color:theme.inactiveTx }]}>Amount</Text>
+                            <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="number-pad" style={[styles.text_input,{color:theme.headingTx,backgroundColor:theme.cardBg,paddingVertical:20}]} onChangeText={(value) => { setrecepi_amount(value) }} />
+                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15,color:theme.inactiveTx }]}>Transaction memo</Text>
+                            <TextInput placeholder="Enter transaction memo" placeholderTextColor={"gray"} value={recepi_memo} style={[styles.text_input,{color:theme.headingTx,backgroundColor:theme.cardBg,paddingVertical:20}]} onChangeText={(value) => { setrecepi_memo(value) }} />
+                            <TouchableOpacity disabled={Payment_loading} style={[styles.mode_sele, { height: 60,width:wp(91), backgroundColor: Payment_loading  ? "#011434" : "#5B65E1", marginTop: 40, alignSelf: "center" }]} onPress={() => {Send_Asseet()}}>
                                 {Payment_loading?<ActivityIndicator color={"green"}/>:<Text style={styles.mode_text}>Send</Text>}
                             </TouchableOpacity>
-                        </> :
-                        <View style={styles.QR_con}>
-                            <View style={{ alignSelf: "center", marginTop: hp(5) }}>
-                                <QRCode
-                                    value={qrvalue ? qrvalue : "NA"}
-                                    size={250}
-                                    color="black"
-                                    backgroundColor="white"
-                                    logo={{
-                                        url: "https://raw.githubusercontent.com/AboutReact/sampleresource/master/logosmalltransparen.png",
-                                    }}
-                                    logoSize={30}
-                                    logoMargin={2}
-                                    logoBorderRadius={15}
-                                />
-                            </View>
-                            <Text style={styles.addressTxt}>
-                                {qrvalue ? qrvalue : ""}
-                            </Text>
-                        </View>
-                }
+                        </View> 
            <Modal
         animationType="slide"
         transparent={true}
@@ -362,29 +363,24 @@ const send_recive = ({route}) => {
             captureAudio={false}
             onStatusChange={({ status }) => handleCameraStatus(status)} // Use onStatusChange
           >
-            <>
-              <View style={styles.header}>
-                <TouchableOpacity onPress={() => { setModalVisible(false); }}>
-                  <Icon name="arrow-left" size={24} color="#fff" style={styles.backIcon} />
-                </TouchableOpacity>
-                <Text style={[styles.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
-              </View>
-              <View style={styles.rectangleContainer}>
-                <View style={styles.rectangle}>
-                  <View style={styles.innerRectangle} />
-                </View>
-              </View>
-            </>
+             <QRScannerComponent setModalVisible={setModalVisible}/>
           </RNCamera>
     </Modal>
             </View>
+        <TokenQrCode
+          modalVisible={receiveQrOpen}
+          setModalVisible={()=>{setreceiveQrOpen(false),setmode_selected("SED")}}
+          iconType={asset_name}
+          qrvalue={state?.STELLAR_PUBLICK_KEY}
+          isDark={state.THEME.THEME}
+        />
         </>
     )
 }
 const styles = StyleSheet.create({
     main_con: {
-        backgroundColor: "#011434",
-        height: "100%"
+        height: "100%",
+        paddingHorizontal:5
     },
     QR_con: {
         alignSelf: "center",
@@ -399,6 +395,7 @@ const styles = StyleSheet.create({
         width: wp(65),
         alignSelf: "center",
         color: "black",
+        padding:10,
         fontWeight: "600"
     },
     mode_con: {
@@ -412,14 +409,12 @@ const styles = StyleSheet.create({
     text_input: {
         alignSelf: "center",
         color: "#fff",
-        height: 50,
         width: "95%",
         fontSize: 20,
-        borderWidth: 1.9,
-        borderColor: "rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
-        borderRadius: 19,
+        borderRadius: 15,
         paddingLeft: 10,
-        marginTop: 19
+        marginTop: 19,
+        paddingVertical:10
     },
     mode_text: {
         color: "#fff",
@@ -430,9 +425,7 @@ const styles = StyleSheet.create({
     mode_sele: {
         height: "90%",
         width: "45%",
-        borderWidth: 1.9,
-        borderColor: "rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
-        borderRadius: 19,
+        borderRadius: 15,
         justifyContent: "center"
     },
     headerContainer1_TOP: {

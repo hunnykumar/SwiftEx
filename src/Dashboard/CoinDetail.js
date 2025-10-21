@@ -3,690 +3,503 @@ import {
   StyleSheet,
   Text,
   View,
-  Button,
-  TextInput,
-  FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   ScrollView,
   Image,
-  SafeAreaView,
+  Animated,
 } from "react-native";
-import * as shape from "d3-shape";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  Avatar,
-  Card,
-  Title,
-  Paragraph,
-  CardItem,
-  WebView,
-} from "react-native-paper";
+import { useSelector } from "react-redux";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-// import Chart from "./Chart";
-import MarketChart from "./MarketChart";
-import { urls } from "./constants";
-import IconWithCircle from "../Screens/iconwithCircle";
-import Icon from "../icon";
-import { Area, Chart, HorizontalAxis, Line, Tooltip, VerticalAxis } from "react-native-responsive-linechart";
-import { delay } from "lodash";
+import { Area, Chart, Line, Tooltip } from "react-native-responsive-linechart";
 import { useNavigation } from "@react-navigation/native";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
-import { LineChart } from "react-native-gifted-charts";
+import Icon from "../icon";
 
 export const CoinDetails = (props) => {
-  const navigation=useNavigation();
-  const [load,setload]=useState(false);
-  const [trades, setTrades] = useState();
-  const [percent, setPercent] = useState(1);
-  console.log(props?.route?.params?.data);
-  const image = props?.route?.params?.data?.image;
-  // const data = props?.route?.params?.data?.name;
-  const state = useSelector((state) => state);
-  const [Data, setData] = useState();
+  const navigation = useNavigation();
+  const [load, setload] = useState(false);
   const [chartData, setchartData] = useState([]);
-  const [timeFrame, setTimeFrame] = useState("30m");
-  const [pressed, setPressed] = useState(0);
-  const [lineColor, setlineColor] = useState();
-  const [points_data,setpoints_data]=useState();
-  const [points_data_time,setpoints_data_time]=useState();
-  const [timeData, setTimeData] = useState([
-    "5m",
-    "10m",
-    "15m",
-    "20m",
-    "25m",
-    "30m",
-  ]);
+  const [timeFrame, setTimeFrame] = useState("1d");
+  const [pressed, setPressed] = useState(1);
+  const [lineColor, setlineColor] = useState("#4CAF50");
+  const [points_data, setpoints_data] = useState();
+  const [points_data_time, setpoints_data_time] = useState();
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [Data, setData] = useState([]);
+  const [chartError, setChartError] = useState(false);
 
-  const data2 = ["2h", "4h", "8h", "12h", "18h", "24h"];
+  const state = useSelector((state) => state);
+  const isDark = state.THEME.THEME;
+  const image = props?.route?.params?.data?.image;
+  const coinData = props?.route?.params?.data;
 
-  const contentInset = { left: -100, bottom: 0 };
-  function chooseStyle(percent) {
-    if (parseFloat(percent) === 0) {
-      return setStyle("rgba(0,153,51,0.8)");
-    }
-    if (parseFloat(percent) < 0) {
-      return setStyle("rgba(204,51,51,0.8)");
-    }
+  const timeFrames = [
+    { label: "1H", value: "1h", index: 0 },
+    { label: "1D", value: "1d", index: 1 },
+    { label: "1w", value: "1w", index: 2 },
+    { label: "1m", value: "1M", index: 3 },
+  ];
 
-    return setStyle("rgba(0,153,51,0.8)");
-  }
-  const formatDate = (timestamp) => {
-    const date = new Date(timestamp);
-    return `${date.getHours()}:${date.getMinutes()}`;  // Format as HH:mm
-  };
-   
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
   useEffect(() => {
     const fetch = async () => {
       try {
-        await getChart(props?.route?.params?.data?.symbol.toUpperCase(), "30m");
-        chooseStyle(percent);
-        //fetchKline()
+        await getChart(coinData?.symbol.toUpperCase(), "1d");
       } catch (error) {
-        console.log("====.", error)
+        console.log("Error:", error);
       }
-    }
-    fetch()
+    };
+    fetch();
   }, []);
-  useEffect(() => {
-   const time_fetch=async()=>{
-    try {
-      await getChart(props?.route?.params?.data?.symbol.toUpperCase(), timeFrame);
-      chooseStyle(percent);
-      //fetchKline()
-    } catch (error) {
-      console.log("}{{{{",error)
-    }
-   }
-   time_fetch()
-  }, [timeFrame]);
-  useEffect(()=>{
-    const fetch_color=async()=>{
-     try {
-      const last_Value = Data[Data.length - 1].value;
-      const second_LastValue = Data[Data.length - 2].value;
-      const line_Color = last_Value > second_LastValue ? "green" : "red";
-      setlineColor(line_Color)
-     } catch (error) {
-      console.log("*----",error)
-     }
-    }
-    fetch_color()
-  },[Data])
 
-  // useEffect(()=>{
-  //   setTimeout(()=>{
-  //     // setload("true");
-  //   },500)
-  // })
+  useEffect(() => {
+    const time_fetch = async () => {
+      try {
+        await getChart(coinData?.symbol.toUpperCase(), timeFrame);
+      } catch (error) {
+        console.log("Error:", error);
+      }
+    };
+    time_fetch();
+  }, [timeFrame]);
+
+  useEffect(() => {
+    const fetch_color = async () => {
+      try {
+        if (Data && Data.length > 1) {
+          const last_Value = Data[Data.length - 1].value;
+          const second_LastValue = Data[Data.length - 2].value;
+          const line_Color = last_Value > second_LastValue ? "#40BF6A" : "#FF6B6B";
+          setlineColor(line_Color);
+        }
+      } catch (error) {
+        console.log("Error:", error);
+      }
+    };
+    fetch_color();
+  }, [Data]);
 
   async function getChart(name, timeFrame) {
-    if (timeFrame === "1h") {
-      console.log(name);
-      if (name === "USDT") {
-        name = "USDC";
-      }
+    setload(false);
+    setChartError(false);
+    const intervals = {
+      "1h": "1h",
+      "1d": "1d",
+      "1w": "1w",
+      "1M": "1M",
+    };
 
-      await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1h&limit=35`,
-        {
-          method: "GET",
-        }
-      )
-        .then((resp) => resp.json())
-        .then((resp) => {
-          const trades = resp.map((interval) => parseFloat(interval[1]));
-          console.log(resp);
-          const firstTrade = trades[0];
-          const lastTrade = trades.slice(-1)[0];
-          const percent = (
-            ((lastTrade - firstTrade) / firstTrade) *
-            100
-          ).toFixed(2);
-          const transformedData = resp.map(item => ({
-            x: new Date(item[0]), // Use the timestamp for x
-            y: parseFloat(item[4]) // Use the closing price for y
-        }));
-        const ptData = transformedData.map(item => ({
-          value: item.y,
-          date: new Date(item.x).toLocaleTimeString()
-        })); 
-        const pt_Data = resp.map(item => ({
-          x: new Date(parseInt(item[0])).getTime(),
-          y: parseFloat(item[4])
-        }));
-        setData(ptData);
-          setchartData(pt_Data)
-        setpoints_data(ptData[ptData?.length-1]?.value);
-        setpoints_data_time(ptData[ptData?.length-1]?.date);
-          console.log("----1st---",transformedData)
-          delay(()=>{
-            setload("true");
-          },1000);
-          console.log(trades);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    } else if (timeFrame === "12h") {
-      console.log(name);
-      if (name === "USDT") {
-        name = "USDC";
-      }
+    if (name === "USDT") name = "USDC";
 
-      await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=12h&limit=35`,
-        {
-          method: "GET",
-        }
-      )
-        .then((resp) => resp.json())
-        .then((resp) => {
-          const trades = resp.map((interval) => parseFloat(interval[1]));
-          console.log(resp);
-          const firstTrade = trades[0];
-          const lastTrade = trades.slice(-1)[0];
-          const percent = (
-            ((lastTrade - firstTrade) / firstTrade) *
-            100
-          ).toFixed(2);
+    const interval = intervals[timeFrame] || "1d";
 
-          const transformedData = resp.map(item => ({
-            x: new Date(item[0]), // Use the timestamp for x
-            y: parseFloat(item[4]) // Use the closing price for y
-        }));
-        const ptData = transformedData.map(item => ({
-          value: item.y,
-          date: new Date(item.x).toLocaleTimeString()
-        })); 
-        const pt_Data = resp.map(item => ({
-          x: new Date(parseInt(item[0])).getTime(),
-          y: parseFloat(item[4])
-        }));
-        setData(ptData);
-          setchartData(pt_Data)
-          setpoints_data(ptData[ptData?.length-1]?.value);
-          setpoints_data_time(ptData[ptData?.length-1]?.date);
-          console.log("---2nd----",transformedData)
-          delay(()=>{
-            setload("true");
-          },1000);
-          console.log(trades);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    } else if (timeFrame === "1d") {
-      console.log(name);
-      if (name === "USDT") {
-        name = "USDC";
-      }
-
-      await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1d&limit=35`,
-        {
-          method: "GET",
-        }
-      )
-        .then((resp) => resp.json())
-        .then((resp) => {
-          const trades = resp.map((interval) => parseFloat(interval[1]));
-          console.log(resp);
-          const firstTrade = trades[0];
-          const lastTrade = trades.slice(-1)[0];
-          const percent = (
-            ((lastTrade - firstTrade) / firstTrade) *
-            100
-          ).toFixed(2);
-          const transformedData = resp.map(item => ({
-            x: new Date(item[0]), // Use the timestamp for x
-            y: parseFloat(item[4]) // Use the closing price for y
-        }));
-          const ptData = transformedData.map(item => ({
-            value: item.y,
-            date: new Date(item.x).toLocaleTimeString()
-          })); 
-          const pt_Data = resp.map(item => ({
-            x: new Date(parseInt(item[0])).getTime(),
-            y: parseFloat(item[4])
-          }));
-          setData(ptData);
-          setchartData(pt_Data)
-          setpoints_data(ptData[ptData?.length-1]?.value);
-          setpoints_data_time(ptData[ptData?.length-1]?.date);
-          console.log("----3rd---",transformedData)
-          delay(()=>{
-            setload("true");
-          },1000);
-          console.log(trades);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    } else {
-      console.log(name);
-      if (name === "USDT") {
-        name = "USDC";
-      }
-
-      await fetch(
-        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=1m&limit=35`,
-        {
-          method: "GET",
-        }
-      )
-        .then((resp) => resp.json())
-        .then((resp) => {
-          const trades = resp.map((interval) => parseFloat(interval[1]));
-          console.log(resp);
-          const firstTrade = trades[0];
-          const lastTrade = trades.slice(-1)[0];
-          const percent = (
-            ((lastTrade - firstTrade) / firstTrade) *
-            100
-          ).toFixed(2);
-
-const transformedData = resp.map(item => ({
-                    x: new Date(item[0]), // Use the timestamp for x
-                    y: parseFloat(item[4]) // Use the closing price for y
-                }));
-          const ptData = transformedData.map(item => ({
-            value: item.y,
-            date: new Date(item.x).toLocaleTimeString()
-          })); 
-          const pt_Data = resp.map(item => ({
-            x: new Date(parseInt(item[0])).getTime(),
-            y: parseFloat(item[4])
-          }));
-          setData(ptData);
-          setchartData(pt_Data)
-          setpoints_data(ptData[ptData?.length-1]?.value);
-          setpoints_data_time(ptData[ptData?.length-1]?.date);
-          console.log("----4th---",transformedData)
-          delay(()=>{
-            setload("true");
-          },1000);
-          console.log(trades);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
-  }
-
-
-
-
-  const data = [
-    150, 130, 140, 135, 149, 158, 125, 105, 155, 153, 153, 144, 150, 160, 80,
-  ];
-  async function getchart(name) {
-    const token = await state.token;
-    if (name == "USDT") {
-      name = "USD";
-    }
-    if (name == "WETH") {
-      name = "ETH";
-    }
-    const data = await fetch(`http://${urls.testUrl}/user/getChart`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        input: name,
-        token: token,
-      }),
-    })
-      .then((response) => response.json())
-      .then((responseJson) => {
-        //console.log(responseJson)
-        setTrades(responseJson.trades);
-      })
-      .catch((e) => {
-        console.log(e);
-      });
-  }
-
-  useEffect(() => {
-   const fetch_chart=async()=>{
     try {
-      getchart(props?.route?.params?.data?.symbol, timeFrame);
-    } catch (error) {
-      console.log(":::....",error)
+      const resp = await fetch(
+        `https://api.binance.com/api/v1/klines?symbol=${name}USDT&interval=${interval}&limit=150`,
+        { method: "GET" }
+      );
+      
+      if (!resp.ok) {
+        throw new Error('Failed to fetch chart data');
+      }
+      
+      const data = await resp.json();
+
+      if (!data || data.length === 0) {
+        throw new Error('No chart data available');
+      }
+
+      const transformedData = data.map((item) => ({
+        x: new Date(item[0]),
+        y: parseFloat(item[4]),
+      }));
+
+      const ptData = transformedData.map((item) => ({
+        value: item.y,
+        date: new Date(item.x).toLocaleTimeString(),
+      }));
+
+      const pt_Data = data.map((item) => ({
+        x: new Date(parseInt(item[0])).getTime(),
+        y: parseFloat(item[4]),
+      }));
+
+      setData(ptData);
+      setchartData(pt_Data);
+      setpoints_data(ptData[ptData?.length - 1]?.value);
+      setpoints_data_time(ptData[ptData?.length - 1]?.date);
+
+      setTimeout(() => {
+        setload(true);
+      }, 500);
+    } catch (err) {
+      console.log("Chart Error:", err);
+      setChartError(true);
+      setload(true);
+      setpoints_data(coinData?.currentPrice);
+      setpoints_data_time(new Date().toLocaleTimeString());
     }
-   }
-   fetch_chart()
-  }, []);
-
-  let LeftContent = (props) => {
-    return <Avatar.Image {...props} source={{ uri: image }} />;
-  };
-  const color =
-    props?.route?.params?.data?.price_change_24h > 0 ? "green" : "red";
-
-
-
-
-
-
+  }
 
   return (
-    <View style={{backgroundColor:state.THEME.THEME===false?"#fff":"black"}}>
-    <Wallet_screen_header title="Coin-Detail" onLeftIconPress={() => navigation.goBack()} />
-   
-      <View style={{ alignItems: "flex-start", marginHorizontal: wp(7), marginTop: hp(2) }}>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Image source={{ uri: image }} style={{ height: hp(3), width: wp(6) }} />
-          <Text style={{ marginHorizontal: wp(1),color: state.THEME.THEME === false ? "black" : "#fff",fontSize:19,fontWeight:"400" }}>{props?.route?.params?.data?.name}</Text>
-        </View>
-        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 34, fontWeight: "600", marginVertical: hp(0.1) }}>$ {points_data} </Text>
-        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 13, fontWeight: "600", marginVertical: hp(0.1) }}>{points_data_time} </Text>
-        <View style={{flexDirection:"row",alignItems:"center"}}>
-          <Icon name={props?.route?.params?.data?.priceChangePercentage24h.toFixed(1) > 0 ?"trending-up":"trending-down"} type={"materialCommunity"} size={20} color={props?.route?.params?.data?.priceChangePercentage24h.toFixed(1) > 0 ? "green" : "red"} />
-          <Text style={{ color: props?.route?.params?.data?.priceChangePercentage24h.toFixed(1) > 0 ? "green" : "red", fontSize: 13, fontWeight: "600", marginVertical: hp(0.1) }}> {props?.route?.params?.data?.priceChangePercentage24h.toFixed(1)}%</Text>
-        </View>
+    <View style={[styles.container, { backgroundColor: isDark ? "#1B1B1C" : "#FFFFFF"}]}>
+      <Wallet_screen_header title="Coin-Detail" onLeftIconPress={() => navigation.goBack()} />
+      <ScrollView showsVerticalScrollIndicator={false} style={[styles.scrollView,{backgroundColor:isDark?"#242426":"#F4F4F8"}]}>
+        <Animated.View style={{ opacity: fadeAnim }}>
+          {/* Main Card */}
+          <View style={[styles.mainCard, { backgroundColor: isDark ? "#242426" : "#F4F4F8" }]}>
+            {/* Coin Header */}
+            <View style={styles.coinHeader}>
+              <Image source={{ uri: image }} style={styles.coinIcon} />
+              <Text style={[styles.coinName, { color: isDark ? "#FFF" : "#272729" }]}>
+                {coinData?.symbol?.toUpperCase()}
+              </Text>
+            </View>
 
-      </View>
+            {/* Price */}
+            <Text style={[styles.mainPrice, { color: isDark ? "#FFF" : "#272729" }]}>
+              {points_data?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || coinData?.currentPrice?.toLocaleString()}
+            </Text>
 
-  
-    <View style={{
-          height: hp(30),
-          width: wp(70),
-          marginLeft:hp(-13),
-          alignSelf: "center",
-        }}>
-{load===false?<ActivityIndicator color={state.THEME.THEME===false?"green":"#fff"} size={"large"} style={{marginTop:hp(13),marginLeft:110}}/>:
-    <View
-    style={{ height: hp(28), width: wp(95), padding: 1 ,backgroundColor: state.THEME.THEME===false?"#fff":"black",justifyContent:"center"
-    }}>
-            {/* <LineChart
-              hideRules
-              data={Data}
-              hideDataPoints
-              adjustToWidth
-              spacing={wp(90) / Data.length-1}
-              isAnimated={true}
-              curved
-              color={lineColor}
-              xAxisLabelsHeight={-15}
-              hideYAxisText
-              yAxisOffset={Data[0].value}
-              height={50}
-              yAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
-              xAxisColor={state.THEME.THEME === false ? "#fff" : "black"}
-              pointerConfig={{
-                pointerStripColor: lineColor,
-                pointerColor: lineColor,
-                pointerLabelComponent: item => {
-                  setpoints_data(item[0].value)
-                  setpoints_data_time(item[0].date)
-                }
-              }}
-            /> */}
-              <Chart
-                                style={{ width: wp(98), height: 230 }}
-                                data={chartData}
-                                padding={{ left: 10, bottom: 30, right: 20, top: 30 }}
-                                xDomain={{
-                                    min: Math.min(...chartData.map(d => d.x)),
-                                    max: Math.max(...chartData.map(d => d.x))
-                                }}
-                                yDomain={{
-                                    min: Math.min(...chartData.map(d => d.y)) - (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))), // 10% padding below
-                                    max: Math.max(...chartData.map(d => d.y)) + (0.1 * (Math.max(...chartData.map(d => d.y)) - Math.min(...chartData.map(d => d.y)))) // 10% padding above
-                                }}
-                            >
-                                <Line
-                                    tooltipComponent={
-                                        <Tooltip theme={{
-                                            formatter: ({ y, x }) => {
-                                                setpoints_data(y), setpoints_data_time(x)
-                                                setpoints_data_time(new Date(parseInt(x)).toLocaleString())
-                                            },
-                                            shape: {
-                                                width: 0,
-                                                height: 0,
-                                                dx: 0,
-                                                dy: 0,
-                                                color: 'black',
-                                            }
-                                        }} />
-                                    }
-                                    theme={{
-                                        stroke: { color: lineColor || '#44bd32', width: 2 },
-                                        scatter: {
-                                            selected: { width: 10, height: 11, rx: 5, color: '#2F7DFF' }
-                                        }
-                                    }}
-                                    smoothing="bezier"
-                                />
-                            </Chart>
-    </View>}
-    </View>
-    <View style={styles.btnView}>
-    <TouchableOpacity
-          style={
-            pressed == "0"
-              ? {
-                ...styles.tabBtns,
-                backgroundColor: "#2164C1",
-              }
-              : styles.tabBtns
-          }
-          onPress={() => {
-            setPressed("0");
-            setTimeData(["10m", "20m", "30m", "40m", "50m", "60m"]);
-            setTimeFrame("1m");
-          }}
-        >
-          <Text style={{ color: pressed == "0" ? "#fff" : "grey",fontWeight:"bold" }}>1m</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={
-            pressed == "1"
-              ? {
-                ...styles.tabBtns,
-                backgroundColor: "#2164C1",
-              }
-              : styles.tabBtns
-          }
-          // title="1h" color={pressed==='1'?'green':'grey'}
-          onPress={() => {
-            setPressed("1");
-            setTimeData(["10m", "20m", "30m", "40m", "50m", "60m"]);
-            setTimeFrame("1h");
-          }}
-        >
-          <Text style={{ color: pressed == "1" ? "#fff" : "grey",fontWeight:"bold" }}>1h</Text>
-        </TouchableOpacity>
+            {/* Price Change */}
+            <View style={styles.priceChangeContainer}>
+              <Icon name="trending-up" type="feather" size={16} color="#4CAF50" />
+              <Text style={styles.priceChangeAmount}>
+                ${Math.abs(coinData?.priceChange24h || 294.38).toFixed(2)}
+              </Text>
+              <Text style={styles.priceChangePercent}>
+                (+{coinData?.priceChangePercentage24h?.toFixed(1) || "1.6"}%)
+              </Text>
+              <Text style={[styles.todayLabel, { color: isDark ? "#8E8E93" : "#8E8E93" }]}>
+                Today
+              </Text>
+            </View>
 
-        <TouchableOpacity
-          style={
-            pressed == "2"
-              ? {
-                ...styles.tabBtns,
-                backgroundColor: "#2164C1",
-              }
-              : styles.tabBtns
-          }
-          // title="12h"
-          // color={pressed === "2" ? "green" : "grey"}
-          onPress={() => {
-            setPressed("2");
-            setTimeData(["2h", "4h", "6h", "8h", "10h", "12h"]);
-            setTimeFrame("12h");
-          }}
-        >
-          <Text style={{ color: pressed == "2" ? "#fff" : "grey",fontWeight:"bold" }}>12h</Text>
-        </TouchableOpacity>
+            {/* Chart */}
+            <View style={styles.chartContainer}>
+              {!load ? (
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator color="#4052D6" size="large" />
+                </View>
+              ) : chartError ? (
+                <View style={styles.errorContainer}>
+                  <Text style={[styles.errorText, { color: isDark ? "#8E8E93" : "#8E8E93" }]}>
+                    Chart unavailable
+                  </Text>
+                </View>
+              ) : (
+                <Chart
+                  style={styles.chart}
+                  data={chartData}
+                  padding={{ left: 10, bottom: 0, right: 0, top: 20 }}
+                  xDomain={{
+                    min: Math.min(...chartData.map((d) => d.x)),
+                    max: Math.max(...chartData.map((d) => d.x)),
+                  }}
+                  yDomain={{
+                    min:
+                      Math.min(...chartData.map((d) => d.y)) -
+                      0.05 * (Math.max(...chartData.map((d) => d.y)) - Math.min(...chartData.map((d) => d.y))),
+                    max:
+                      Math.max(...chartData.map((d) => d.y)) +
+                      0.05 * (Math.max(...chartData.map((d) => d.y)) - Math.min(...chartData.map((d) => d.y))),
+                  }}
+                >
+                          <Area
+                    theme={{
+                      gradient: {
+                        from: { color: lineColor, opacity: 0.4 },
+                        to: { color: lineColor, opacity: 0.0 },
+                      },
+                    }}
+                    smoothing="bezier"
+                  />
+                  <Line
+                    tooltipComponent={
+                      <Tooltip
+                        theme={{
+                          formatter: ({ y, x }) => {
+                            setpoints_data(y);
+                            setpoints_data_time(new Date(parseInt(x)).toLocaleTimeString());
+                          },
+                          shape: {
+                            width: 0,
+                            height: 0,
+                            color: "transparent",
+                          },
+                        }}
+                      />
+                    }
+                    theme={{
+                      stroke: { color: lineColor, width: 2 },
+                      scatter: {
+                        selected: { width: 0, height: 0, color: "transparent" },
+                      },
+                    }}
+                    smoothing="bezier"
+                  />
+                </Chart>
+              )}
+            </View>
 
-        <TouchableOpacity
-          style={
-            pressed == "3"
-              ? {
-                ...styles.tabBtns,
-                backgroundColor: "#2164C1",
-              }
-              : styles.tabBtns
-          }
-          // title="1d"
-          // color={pressed === "3" ? "green" : "grey"}
-          onPress={() => {
-            setPressed("3");
-            setTimeData(["2h", "4h", "8h", "12h", "18h", "24h"]);
-            setTimeFrame("1d");
-          }}
-        >
-          <Text style={{ color: pressed == "3" ? "#fff" : "grey",fontWeight:"bold" }}>3d</Text>
-        </TouchableOpacity>
-      </View>
-      {/* <AreaChart
-        style={{
-          height: hp(30),
-          width: wp(90),
-          alignSelf: "center",
-          marginTop: hp(6),
-        }}
-        // data={NewData}
-        data={Data ? Data : data}
-        contentInset={{ top: 30, bottom: 30 }}
-        curve={shape.curveNatural}
-        svg={{ fill: "rgba(134, 65, 244, 0.8)" }}
-      >
-        <Grid />
-      </AreaChart> */}
-      <View style={{height:hp(40),marginTop:8}}>
-      <ScrollView style={{paddingBottom:hp(10),backgroundColor: state.THEME.THEME === false ? "#F4F4F4" : "black" }}>
-      <View style={[styles.market_data,{borderColor:state.THEME.THEME === false ? "#F4F4F4" : "black",borderTopColor:state.THEME.THEME === false ? "#F4F4F4" : "black"}]}>
-        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 17,paddingBottom:hp(1.6),fontWeight:"600" }}>{props?.route?.params?.data?.name} Price (24H) </Text>
-        <View style={{flexDirection:"row"}}>
-        <View style={[styles.iconText]}>
-          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Price USD</Text>
-            <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.current_price}</Text>
-          <View style={styles.arrowText}>
+            {/* Timeframe Buttons */}
+            <View style={[styles.timeframeContainer,{backgroundColor:isDark?"#1B1B1C":"#FFFFFF"}]}>
+              {timeFrames.map((tf) => (
+                <TouchableOpacity
+                  key={tf.index}
+                  style={[
+                    styles.timeframeButton,
+                    pressed === tf.index && [
+                      {backgroundColor:
+                          isDark ? "#242426" : "#F4F4F8"}
+                    ],
+                  ]}
+                  onPress={() => {
+                    setPressed(tf.index);
+                    setTimeFrame(tf.value);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.timeframeText,
+                      {
+                        color: pressed === tf.index
+                        ? isDark ? "#FFF" : "#272729"
+                        : isDark ? "#666" : "#999",
+                      },
+                    ]}
+                  >
+                    {tf.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
 
-        <View style={[styles.iconText]}>
-          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>24H high </Text>
-          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.high_24h}
-          <Icon name="arrow-up-right" type={"feather"} size={20} color={state.THEME.THEME===false?"black":"#fff"} /></Text>
-        </View>
-        </View>
+          {/* About Section */}
+          <View style={[styles.aboutCard, { backgroundColor: isDark ? "#242426" : "#F4F4F8" }]}>
+            <Text style={[styles.aboutTitle, { color: isDark ? "#FFF" : "black" }]}>
+              About
+            </Text>
+            <Text style={[styles.aboutText, { color: isDark ? "#8E8E93" : "#8E8E93" }]}>
+            {coinData?.symbol?.toUpperCase()} operates on a decentralized network, no meaning single authority or government authority or government controls it controls controls it controls ...
+            </Text>
+            <TouchableOpacity>
+              <Text style={styles.showMoreButton}>Show more</Text>
+            </TouchableOpacity>
+          </View>
 
-        <View style={{flexDirection:"row"}}>
-          <View style={[styles.iconText]}>
-           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>24H low </Text>
-           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.low_24h}
-           <Icon name="arrow-down-left" type={"feather"} size={20} color={state.THEME.THEME===false?"black":"#fff"} /></Text>
-          </View>
-          <View style={[styles.iconText]}>
-           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Price change 24H </Text>
-           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff",color:Number.isSafeInteger(props?.route?.params?.data?.priceChangePercentage24h)?"green":"red"}]}>{props?.route?.params?.data?.priceChangePercentage24h}%</Text>
-          </View>
-        </View>
-        <View style={[styles.iconText]}>
-          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>All Time High </Text>
-          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.ath}</Text>
-        </View>
-       
-      </View>
+          {/* Info Cards Grid */}
+          <View style={styles.infoGrid}>
+            <View style={[styles.infoCard, { backgroundColor: isDark ? "#1B1B1C" : "#FFFFFF" }]}>
+              <Text style={[styles.infoLabel, { color: isDark ? "#8E8E93" : "#8E8E93" }]}>
+              Price change 24H
+              </Text>
+              <Text style={[styles.infoValue, { color: isDark ? "#FFF" : "black" }]}>
+              {props?.route?.params?.data?.priceChangePercentage24h}%
+              </Text>
+            </View>
 
-      <View style={[styles.market_data, { marginTop:hp(1),marginBottom:hp(2),borderColor:state.THEME.THEME === false ? "#F4F4F4" : "black"}]}>
-        <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff", fontSize: 17,paddingBottom:hp(1.6),fontWeight:"600" }}>Market stats</Text>
-        
-        <View style={{flexDirection:"row"}}>
-         <View style={[styles.iconText]}>
-          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Market Cap Rank </Text>
-          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>{props?.route?.params?.data?.market_cap_rank}</Text>
-         </View>
-         <View style={[styles.iconText]}>
-          <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Market Cap </Text>
-          <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}> ${props?.route?.params?.data?.market_cap}</Text>
-          </View>
-        </View>
+            <View style={[styles.infoCard, { backgroundColor: isDark ? "#1B1B1C" : "#FFFFFF" }]}>
+              <Text style={[styles.infoLabel, { color: isDark ? "#8E8E93" : "#8E8E93" }]}>
+                Last price (USD)
+              </Text>
+              <Text style={[styles.infoValue, { color: isDark ? "#FFF" : "black" }]}>
+              ${props?.route?.params?.data?.currentPrice}
+              </Text>
+            </View>
 
-        <View style={{flexDirection:"row"}}>
-          <View style={[styles.iconText]}>
-           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Volume </Text>
-           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.total_volume}</Text>
-          </View>
-          <View style={[styles.iconText]}>
-           <Text style={{  color: state.THEME.THEME === false ? "black" : "#fff"}}>Total Supply </Text>
-           <Text style={[styles.heading, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>${props?.route?.params?.data?.total_supply}</Text>
-          </View>
-        </View>
+            <View style={[styles.infoCard, { backgroundColor: isDark ? "#1B1B1C" : "#FFFFFF" }]}>
+              <Text style={[styles.infoLabel, { color: isDark ? "#8E8E93" : "#8E8E93" }]}>
+              24H high
+              </Text>
+              <Text style={[styles.infoValue, { color: isDark ? "#FFF" : "black" }]}>
+              ${props?.route?.params?.data?.high24h}
+              </Text>
+            </View>
 
-        </View>
+            <View style={[styles.infoCard, { backgroundColor: isDark ? "#1B1B1C" : "#FFFFFF" }]}>
+              <Text style={[styles.infoLabel, { color: isDark ? "#8E8E93" : "#8E8E93" }]}>
+              24H Low
+              </Text>
+              <Text style={[styles.infoValue, { color: isDark ? "#FFF" : "black" }]}>
+              ${props?.route?.params?.data?.low24h}
+              </Text>
+            </View>
+          </View>
+
+          <View style={{ height: hp(4) }} />
+        </Animated.View>
       </ScrollView>
-      </View>
-
-
-
-  {/* </ScrollView> */}
-  </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  buttons: {
-    marginTop: hp(7),
+  container: {
+    flex: 1,
+  },
+  header: {
     flexDirection: "row",
-    justifyContent: "space-evenly",
-  },
-  bitcoin: {
-    width: wp(88),
-    marginHorizontal: wp(5.3),
-    marginTop: hp(5),
-  },
-  iconText: {
-    alignSelf: "flex-start",
-    width: wp(50),
-    marginVertical:hp(0.6)
-  },
-  arrowText: {
-    flexDirection: "row",
-  },
-  xAxis: {
-    marginTop: hp(47),
-    position: "absolute",
-    // height: hp(55),
-    alignSelf: "center",
-    width: wp(76),
-
-  },
-  tabBtns: {
-    borderColor: "gray",
-    paddingVertical: hp(1),
-    width: wp(18),
-    alignItems: "center",
-    borderRadius: hp(2),
-  },
-  btnView: {
-    display: "flex",
-    flexDirection: "row",
-    alignContent: "center",
-    alignItems: "center",
-    alignSelf: "center",
-    width: wp(90),
-    marginTop: hp(-2),
     justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: wp(5),
+    paddingTop: hp(6),
+    paddingBottom: hp(2),
   },
-  heading: { color: "black", fontSize: 14, fontWeight: "600" },
-  market_data: {
-    marginTop: hp(1),
-    paddingHorizontal: wp(1),
-    paddingVertical:hp(1),
-    borderTopColor: "#75747433",
-    borderWidth: 1.8,
-    width: wp(95),
-    alignSelf: "center"
-  }
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    letterSpacing: 0.3,
+  },
+  settingsButton: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  mainCard: {
+    marginTop: hp(0.5),
+    paddingTop: wp(4),
+    paddingHorizontal: wp(4),
+    paddingBottom: wp(3),
+  },
+  coinHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: hp(0.2),
+    marginLeft: wp(-1),
+  },
+  coinIcon: {
+    width: 28,
+    height: 28,
+    marginRight: wp(2),
+    borderRadius: 14,
+  },
+  coinName: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  mainPrice: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: hp(0.5),
+  },
+  priceChangeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: hp(2),
+  },
+  priceChangeAmount: {
+    color: "#4CAF50",
+    fontSize: 15,
+    fontWeight: "500",
+    marginLeft: wp(1),
+  },
+  priceChangePercent: {
+    color: "#4CAF50",
+    fontSize: 15,
+    fontWeight: "500",
+    marginLeft: wp(1),
+  },
+  todayLabel: {
+    fontSize: 15,
+    marginLeft: wp(1.5),
+  },
+  chartContainer: {
+    height: hp(28),
+    marginBottom: hp(1.5),
+    marginHorizontal: -wp(2),
+  },
+  chart: {
+    height: hp(28),
+    width: wp(90),
+  },
+  loaderContainer: {
+    height: hp(28),
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorContainer: {
+    height: hp(28),
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    fontSize: 14,
+  },
+  timeframeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: hp(2),
+    paddingVertical: hp(0.2),
+    paddingHorizontal:wp(2),
+    borderRadius:10,
+    marginBottom:hp(2)
+  },
+  timeframeButton: {
+    flex: 1,
+    paddingVertical: hp(1),
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  timeframeText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  aboutCard: {
+    marginHorizontal: wp(1),
+    padding: wp(2),
+  },
+  aboutTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+    marginBottom: hp(1),
+  },
+  aboutText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: hp(1),
+  },
+  showMoreButton: {
+    color: "#007AFF",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  infoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginHorizontal: wp(4),
+    marginTop: hp(2),
+  },
+  infoCard: {
+    width: wp(43.5),
+    padding: wp(4),
+    borderRadius: 16,
+    marginBottom: hp(1.5),
+  },
+  infoLabel: {
+    fontSize: 13,
+    marginBottom: hp(0.8),
+  },
+  infoValue: {
+    fontSize: 17,
+    fontWeight: "700",
+  },
 });

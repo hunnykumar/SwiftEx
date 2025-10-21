@@ -81,7 +81,7 @@ export const ExchangeHeaderIcon = () => {
 
 export const Exchange_screen_header = ({ title, onLeftIconPress, onRightIconPress }) => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
-
+  const state = useSelector((state) => state);
   const toggleDrawer = () => {
     setDrawerVisible(!isDrawerVisible);
     if (onRightIconPress) {
@@ -98,18 +98,18 @@ export const Exchange_screen_header = ({ title, onLeftIconPress, onRightIconPres
 
   return (
     <>
-      <View style={[styles.exchangeheaderContainer, { height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
+      <View style={[styles.exchangeheaderContainer, { height: Platform.OS === "ios" ? hp(8) : hp(6),backgroundColor:state.THEME.THEME?"#1B1B1C":"#FFFFFF" }]}>
         <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
           <Icon
             name={"arrow-left"}
             type={"materialCommunity"}
             size={30}
-            color={"#fff"}
+            color={state.THEME.THEME?"#FFFFFF":"#1B1B1C"}
           />
         </TouchableOpacity>
-        <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4) }]}>{title}</Text>
+        <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:state.THEME.THEME?"#FFFFFF":"#1B1B1C" }]}>{title}</Text>
         <TouchableOpacity onPress={toggleDrawer} style={[styles.exchangerightIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
-          <Icon name={"menu"} type={"materialCommunity"} size={30} color={"#fff"} />
+          <Icon name={"menu"} type={"materialCommunity"} size={30} color={state.THEME.THEME?"#1B1B1C":"#FFFFFF"} />
         </TouchableOpacity>
       </View>
       <CustomDrawer isVisible={isDrawerVisible} onClose={toggleDrawer} />
@@ -192,7 +192,7 @@ export const Wallet_screen_header = ({ title, onLeftIconPress }) => {
   const state = useSelector((state) => state);
   return (
     <>
-      <View style={[styles.exchangeheaderContainer, { backgroundColor:state.THEME.THEME===false?"#fff":"black",height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
+      <View style={[styles.exchangeheaderContainer, { backgroundColor:state.THEME.THEME===false?"#fff":"#1B1B1C",height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
         <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
           <Icon
             name={"arrow-left"}
@@ -228,19 +228,19 @@ export const Exchange_Login_screen = ({ title, onLeftIconPress }) => {
   );
 };
 
-export const TransactionForStellar = ({ title, onLeftIconPress }) => {
+export const TransactionForStellar = ({ title, onLeftIconPress,activeBackgroundColor,activeTxColor }) => {
   return (
     <>
-      <View style={[styles.exchangeheaderContainer, { backgroundColor:"#011434",height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
+      <View style={[styles.exchangeheaderContainer, { backgroundColor:activeBackgroundColor||"#011434",height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
         <TouchableOpacity onPress={onLeftIconPress} style={[styles.exchangeleftIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
           <Icon
             name={"arrow-left"}
             type={"materialCommunity"}
             size={30}
-            color={"#fff"}
+            color={activeTxColor}
           />
         </TouchableOpacity>
-        <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:"#fff" }]}>{title}</Text>
+        <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:activeTxColor }]}>{title}</Text>
       <View style={styles.exchangerightIconContainer} />
       </View>
     </>
@@ -344,8 +344,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',       
     alignItems: 'center',       
     justifyContent: 'space-between', 
-    paddingHorizontal: 17,               
-    backgroundColor: '#011434', 
+    paddingHorizontal: 17,
   },
   exchangeleftIconContainer: {
     width: 40,                  

@@ -32,6 +32,7 @@ import { fetchBSCTokenInfo, fetchTokenInfo } from '../../../../../ethSwap/tokenU
 import { SwapPepare } from '../../../../../utilities/AllbridgeBscUtil';
 import CustomInfoProvider from './CustomInfoProvider';
 import AllbridgeTxTrack from './AllbridgeTxTrack';
+import { convertMultiple } from '../utils/UsdPriceHandler';
 const classic = ({ route }) => {
   const Focused=useIsFocused();
   const toast=useToast();
@@ -70,6 +71,9 @@ const classic = ({ route }) => {
   const [errorMsg,seterrorMsg]=useState(null)
   const [showTx,setshowTx]=useState(false);
   const [showTxHash,setshowTxHash]=useState([]);
+  const [viewInUSD, setViewInUSD] = useState(false);
+  const manageFeeViewer = () => setViewInUSD(prev => !prev);
+
   const chooseItemList = [
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
@@ -134,6 +138,13 @@ useEffect(()=>{
   setWALLETADDRESS(state&&state.wallet && state.wallet.address)
   setfianl_modal_loading(false)
   setamount('');
+  setshowTx(false);
+  setshowTxHash([]);
+  setmessageError(null)
+  setresQuotes(null)
+  setgetInfo(false)
+  setPayFeeType('native')
+  seterrorMsg(null)
 },[chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho])
 
   const fetchUSDCBalnce = async (addresses) => {
@@ -202,7 +213,7 @@ useEffect(()=>{
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate('/');
+        navigation.goBack();
         return true;
       };
       BackHandler.addEventListener('hardwareBackPress', onBackPress);
@@ -250,7 +261,7 @@ const getOffersData = async () => {
   const chooseRenderItem = ({ item }) => (
     <TouchableOpacity onPress={() => handleUpdate(item.name)} style={styles.chooseItemContainer}>
       <Image style={styles.chooseItemImage} source={{ uri: item.url }} />
-      <Text style={styles.chooseItemText}>{item.name}</Text>
+      <Text style={[styles.chooseItemText,{color:theme.headingTx}]}>{item.name}</Text>
     </TouchableOpacity>
   );
 
@@ -433,10 +444,25 @@ const getOffersData = async () => {
   
       fetch(REACT_PROXY_HOST + `/v1/bridge/swap-quotes`, requestOptions)
         .then((response) => response.json())
-        .then((result) => {
+        .then(async(result) => {
           console.log("---err->",result)
           if (result?.quotes) {
-            setresQuotes(result?.quotes),
+            Keyboard.dismiss();
+            const respo = await convertMultiple([
+              { token: result?.quotes?.fee?.native?.symbol, amount: result?.quotes?.fee?.native?.amount },
+              { token: result?.quotes?.fee?.stablecoin?.symbol, amount: result?.quotes?.fee?.stablecoin?.amount }
+            ]);
+            const mergedQuotes = { ...result?.quotes };
+            for (const item of respo) {
+              if (item.success) {
+                if (item.token === mergedQuotes.fee.native.symbol) {
+                  mergedQuotes.fee.native = { ...mergedQuotes.fee.native, ...item };
+                } else if (item.token === mergedQuotes.fee.stablecoin.symbol) {
+                  mergedQuotes.fee.stablecoin = { ...mergedQuotes.fee.stablecoin, ...item };
+                }
+              }
+            }
+            setresQuotes(mergedQuotes),
             setgetInfo(false)
           }
           else {
@@ -469,10 +495,36 @@ const getOffersData = async () => {
       }
     }, [payFeeType, resQuotes, WALLETBALANCE]);
     
+    const feeData = payFeeType === "native"
+      ? resQuotes?.fee?.native
+      : resQuotes?.fee?.stablecoin;
+
+      const colors = {
+        light: {
+          bg: "#FFFFFF",
+          cardBg: "#F4F4F8",
+          headingTx: "#272729",
+          smallCardBg: "#FFFFFF",
+          smallCardBorderColor: "#5E5C5C66",
+          cardSubTx: "#272729",
+          inactiveTx: "#AAAAAA"
+        },
+        dark: {
+          bg: "#1B1B1C",
+          cardBg: "#242426",
+          headingTx: "#E6E8EB",
+          smallCardBg: "#1B1B1C",
+          smallCardBorderColor: "#AAAAAA66",
+          cardSubTx: "#E6E8EB",
+          inactiveTx: "#AAAAAA"
+        },
+      };
+    
+      const theme = state.THEME.THEME ? colors.dark : colors.light;
 
   return (
-    <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
-     <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
+    <View style={{ backgroundColor: theme.bg,width:wp(100),height:hp(100)}}>
+     <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
      <WalletActivationComponent
          isVisible={ACTIVATION_MODAL_PROD}
          onClose={() => {ActivateModal}}
@@ -489,145 +541,162 @@ const getOffersData = async () => {
                    tokenAddress={"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"}
                    ACTIVATED={state?.STELLAR_ADDRESS_STATUS}
                  /> */}
-      <ScrollView style={{marginBottom:hp(5)}}>
-      <View style={styles.modalHeader}>
-            <Text style={styles.headingText}>Import USDC on Trade Wallet</Text>
-          </View>
-          <View style={{ marginTop: hp(0),alignSelf:"center" }}>
-              <TouchableOpacity style={styles.modalOpen} onPress={() => { setChooseModalVisible(true); setIdIndex(1); }}>
+      <ScrollView style={{marginBottom:hp(5),paddingHorizontal:wp(3.5)}}>
+        <View style={[styles.card,{backgroundColor:theme.cardBg,flexDirection:"column"}]}>
+            <Text style={[styles.headingText,{color:theme.headingTx}]}>Import USDC on Trade Wallet</Text>
+          <View style={[styles.exportBottomCon,{backgroundColor:theme.cardBg}]}>
+              <TouchableOpacity style={[styles.exportCon,{backgroundColor:theme.bg}]} onPress={() => { setChooseModalVisible(true); setIdIndex(1); }}>
                <View style={{flexDirection:"row"}}>
                {chooseSelectedItemId === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemId === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemId === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} />}
                 <View>
                 <Text style={styles.networkSubHeading}>Network</Text>
-                <Text style={styles.networkHeading}>{chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId}</Text>
+                <Text style={[styles.networkHeading,{color:theme.headingTx}]}>{chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId}</Text>
                 </View>
                </View>
-              <Icon name={"chevron-right"} type={"materialCommunity"} color={"#fff"} size={30}/>
+              <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30}/>
             </TouchableOpacity>
 
-              <TouchableOpacity style={styles.modalOpen} onPress={() => { setchooseModalVisible_choose(true); setIdIndex(3); }}>
+              <TouchableOpacity style={[styles.exportCon,{backgroundColor:theme.bg}]} onPress={() => { setchooseModalVisible_choose(true); setIdIndex(3); }}>
                <View style={{flexDirection:"row"}}>
                 {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} />}
                <View>
                <Text style={styles.networkSubHeading}>Assets</Text>
-               <Text style={styles.networkHeading}>{chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho}</Text>
+               <Text style={[styles.networkHeading,{color:theme.headingTx}]}>{chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho}</Text>
                </View>
                </View>
-               <Icon name={"chevron-right"} type={"materialCommunity"} color={"#fff"} size={30}/>
+               <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30}/>
               </TouchableOpacity>
           </View>
-
-          <View style={[styles.modalOpen,{paddingVertical: hp(0.5),}]}>
-            <View>
-            <Text style={styles.subInputText}>Amount</Text>
-            <TextInput maxLength={10} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" style={[ {width: wp(40),fontSize:18,color:"#fff",marginTop:hp(-0.9)}]} onChangeText={(value) => { handleInputChange(value,chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho) }} returnKeyType="done"/>
-            </View>
-            <TouchableOpacity style={styles.maxCon} onPress={()=>{setamount(parseFloat(WALLETBALANCE)===0?null:WALLETBALANCE)}}>
-            <Text style={styles.maxBtn}>MAX</Text>
-            </TouchableOpacity>    
           </View>
-
-          <View style={[styles.modalOpen,{paddingVertical: hp(1.5),}]}>
-            <Text style={[styles.subInputText,{ marginTop:hp(0)}]}>Address</Text>
-            <View style={{width:"50%"}}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
-                <Text style={{fontSize:17,color:"gray" }}>{WALLETADDRESS}</Text>
+          
+                  <View style={[styles.card,{backgroundColor:theme.cardBg,flexDirection:"column",borderBottomLeftRadius:0,borderBottomRightRadius:0}]}>
+                  <View style={[styles.rowBtnCon, { paddingVertical: hp(-0.5),backgroundColor:theme.cardBg }]}>
+                      <Text style={[styles.subInputText,{color:theme.inactiveTx,marginTop: hp(0)}]}>Amount</Text>
+                      <TouchableOpacity style={styles.maxCon} onPress={()=>{parseFloat(WALLETBALANCE)===0?alert("error","Invalid amount."):handleInputChange(parseFloat(WALLETBALANCE)===0?null:WALLETBALANCE,chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho)}}>
+                      <Text style={styles.maxBtn}>MAX</Text>
+                    </TouchableOpacity>
+                      </View>
+                   <View style={[styles.modalOpen, { paddingVertical: hp(0.5),backgroundColor:theme.bg }]}>
+                      <TextInput maxLength={10} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" value={amount} style={[{ width: wp(40), fontSize: 18, color: theme.headingTx, marginTop: hp(0.2) }]} onChangeText={(value) => { handleInputChange(value,chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho) }} returnKeyType="done"/>
+                  </View>
+                  </View>
+        <View style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: "column", borderTopLeftRadius: 0, borderTopRightRadius: 0, marginTop: -4, borderTopColor: theme.smallCardBorderColor, borderTopWidth: 1 }]}>
+          <View style={styles.accountDetailsCon}>
+            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Active Wallet :</Text>
+            <View style={{ width: "60%" }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "99%" }}>
+                <Text style={{ fontSize: 14, color: theme.headingTx }}>{WALLETADDRESS}</Text>
+              </ScrollView>
+            </View>
+          </View>
+          <View style={styles.accountDetailsCon}>
+            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Balance :</Text>
+            <View style={{ minWidth: wp(15) }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%" }}>
+                {balanceLoading ? <ActivityIndicator color={"green"} /> : <Text style={{ color: theme.headingTx, fontSize: 14 }}>{WALLETBALANCE}</Text>}
               </ScrollView>
             </View>
           </View>
 
-          <View style={[styles.modalOpen,{paddingVertical: hp(1.5),marginTop:hp(0.5)}]}>
-            <Text style={[styles.subInputText,{ marginTop:hp(0)}]}>Balance</Text>
-            <View style={{width:"15%"}}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
-            {balanceLoading?<ActivityIndicator color={"green"}/>:<Text style={{color:"gray",fontSize:17 }}>{WALLETBALANCE}</Text>}
-              </ScrollView>
-            </View>
-          </View>
-
-        <View style={[styles.modalOpen, { paddingVertical: hp(1.5), marginTop: hp(0.5) }]}>
-          <View style={{ flexDirection: "row" }}>
-            <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={"#fff"} />
-            <Text style={[styles.subInputText, { marginTop: hp(0), fontSize: 19 }]}> Relayer Fee</Text>
-          </View>
-          <View style={{ flexDirection: "row" }}>
-            <TouchableOpacity style={[styles.feePayCon, { borderColor: payFeeType === "native" ? "#2164C1" : "#fff" }]} onPress={() => { setPayFeeType("native") }}>
-              <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={payFeeType === "native" ? "#2164C1" : "#fff"} />
-              <Text style={[styles.feePayTx, { color: payFeeType === "native" ? "#2164C1" : "#fff" }]}> Native</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.feePayCon, { borderColor: payFeeType === "stable" ? "#2164C1" : "#fff" }]} onPress={() => { setPayFeeType("stable") }}>
-              <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={payFeeType === "stable" ? "#2164C1" : "#fff"} />
-              <Text style={[styles.feePayTx, { color: payFeeType === "stable" ? "#2164C1" : "#fff" }]}> Stable-Coin</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
-      <View style={styles.modalOpen}>
-        <View style={{ flexDirection: "row" }}>
+        <View style={[styles.card,{backgroundColor:theme.cardBg,flexDirection:"column",borderBottomLeftRadius:0,borderBottomRightRadius:0}]}>
+          <View style={{ flexDirection: "row", paddingLeft: wp(3) }}>
+            <Icon name={"fire"} type={"materialCommunity"} size={25} color={"#4052D6"} />
+            <Text style={[styles.subInputText, { fontSize: 16,color:theme.headingTx }]}> Relayer Fee</Text>
+          </View>
+            <View style={{flexDirection:"row",marginLeft:5}}>
+            <TouchableOpacity style={[styles.feePayCon,{backgroundColor:payFeeType==="native"?"#4052D6":theme.bg}]} onPress={() => { setPayFeeType("native") }}>
+              <Icon name={"fire"} type={"materialCommunity"} size={25} color={payFeeType==="native"?"#fff":"#4052D6"} />
+              <Text style={[styles.feePayTx,{color: payFeeType==="native"?"#fff":theme.headingTx}]}>Native </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.feePayCon,{backgroundColor:payFeeType==="stable"?"#4052D6":theme.bg}]} onPress={() => { setPayFeeType("stable") }}>
+              <Icon name={"fire"} type={"materialCommunity"} size={25} color={payFeeType==="stable"?"#fff":"#4052D6"} />
+              <Text style={[styles.feePayTx,{color: payFeeType==="stable"?"#fff":theme.headingTx}]}>Stable-Coin </Text>
+            </TouchableOpacity>
+            </View>
+        </View>
+        <View style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: "column", borderTopLeftRadius: 0, borderTopRightRadius: 0, marginTop: -4, borderTopColor: theme.smallCardBorderColor, borderTopWidth: 1 }]}>
+        <View style={styles.accountDetailsCon}>
+        <View style={{ flexDirection: "row", }}>
          {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} />}
           <View>
             <Text style={styles.networkSubHeading}>Receive</Text>
             <View style={{flexDirection:"row",alignItems:"center"}}>
-            <Text style={styles.networkHeading}>{chooseSelectedItemIdCho === null ? "USDC" : chooseSelectedItemIdCho === "USDC" ? chooseSelectedItemId === "Matic" || chooseSelectedItemIdCho === "Matic" ? "apUSDC" : "USDC" : chooseSelectedItemIdCho === "BNB" ? "BNB" : chooseSelectedItemIdCho === "Matic" ? "apMATIC" : "USDC"}</Text>
+            <Text style={[styles.networkHeading,{color:theme.headingTx}]}>{chooseSelectedItemIdCho === null ? "USDC" : chooseSelectedItemIdCho === "USDC" ? chooseSelectedItemId === "Matic" || chooseSelectedItemIdCho === "Matic" ? "apUSDC" : "USDC" : chooseSelectedItemIdCho === "BNB" ? "BNB" : chooseSelectedItemIdCho === "Matic" ? "apMATIC" : "USDC"}</Text>
             <Text style={{color:"gray",fontSize:13}}> (centre.io)</Text>
             </View>
           </View>
         </View>
       </View>
+          </View>
+
       {getInfo && (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#0066cc" />
                 <Text style={styles.loadingText}>Getting best quote...</Text>
               </View>
             )}
-      {resQuotes !== null && <View style={styles.modalQoutesCon}>
-      <Text style={styles.quoteTitle}>Quote Details</Text>
+      {resQuotes !== null && 
+      <View style={[styles.modalQoutesCon,{backgroundColor:theme.cardBg}]}>
+      <Text style={[styles.quoteTitle,{color:theme.headingTx}]}>Quote Details</Text>
         <View style={[styles.quoteDetailsContainer]}>
           <View style={styles.quoteRow}>
-            <Text style={styles.quoteLabel}>Provider</Text>
-            <Text style={styles.quoteValue}>Allbridge</Text>
+            <Text style={[styles.quoteLabel,{color:theme.inactiveTx}]}>Provider</Text>
+            <Text style={[styles.quoteValue,{color:theme.headingTx}]}>Allbridge</Text>
           </View>
 
           <View style={styles.quoteRow}>
-            <Text style={styles.quoteLabel}>Rate</Text>
-            <Text style={styles.quoteValue}>
+            <Text style={[styles.quoteLabel,{color:theme.inactiveTx}]}>Rate</Text>
+            <Text style={[styles.quoteValue,{color:theme.headingTx}]}>
               1 USDT = {resQuotes.conversionRate} USDC
             </Text>
           </View>
 
           <View style={styles.quoteRow}>
-            <Text style={styles.quoteLabel}>Slippage</Text>
-            <Text style={styles.quoteValue}>
+            <Text style={[styles.quoteLabel,{color:theme.inactiveTx}]}>Slippage</Text>
+            <Text style={[styles.quoteValue,{color:theme.headingTx}]}>
               {resQuotes.slippageTolerance}%
             </Text>
           </View>
 
           <View style={styles.quoteRow}>
-            <Text style={styles.quoteLabel}>Minimum Received</Text>
+            <Text style={[styles.quoteLabel,{color:theme.inactiveTx}]}>Minimum Received</Text>
             <View style={{ width: wp(25), flexDirection: 'row' }}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <Text style={styles.quoteValue}>{resQuotes.minimumAmountOut}</Text>
+                <Text style={[styles.quoteValue,{color:theme.headingTx}]}>{resQuotes.minimumAmountOut}</Text>
               </ScrollView>
-              <Text style={styles.quoteValue}>USDC</Text>
+              <Text style={[styles.quoteValue,{color:theme.headingTx}]}> USDC</Text>
             </View>
           </View>
             <View style={styles.quoteRow}>
-              <Text style={styles.quoteLabel}>Fee</Text>
-              <View style={{ width: wp(25), flexDirection: 'row' }}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <Text style={styles.quoteValue}>{payFeeType === "native" ? resQuotes?.fee?.native?.amount +" "+resQuotes?.fee?.native?.symbol : resQuotes?.fee?.stablecoin?.amount+" "+resQuotes?.fee?.stablecoin?.symbol}</Text>
-                </ScrollView>
-              </View>
+              <Text style={[styles.quoteLabel,{color:theme.inactiveTx}]}>Network Fee</Text>
+                <View View style={{ width: wp(25), flexDirection: "row", alignItems: "center" }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <Text style={[styles.quoteValue,{color:theme.headingTx}]}>
+                      {feeData?.amount}
+                    </Text>
+                  </ScrollView>
+                  <Text style={[styles.quoteValue,{color:theme.headingTx}]}>
+                    {" " + feeData?.symbol}
+                  </Text>
+                </View>
             </View>
+
             <View style={styles.quoteRow}>
-              <Text style={styles.quoteLabel}>Time</Text>
-              <Text style={styles.quoteValue}>{resQuotes.completionTime?(resQuotes.completionTime / (1000 * 60)+" Min"):"getting.."}</Text>
+              <Text style={[styles.quoteLabel,{color:theme.inactiveTx}]}>Network Fee (USD)</Text>
+                <Text style={[[styles.quoteValue,{color:theme.headingTx}], { textAlign: "right" }]}>{feeData?.formattedUSD || `$${Number(feeData?.usdValue || 0).toFixed(2)}`}</Text>
+            </View>
+
+            <View style={styles.quoteRow}>
+              <Text style={[styles.quoteLabel,{color:theme.inactiveTx}]}>Estimated time</Text>
+              <Text style={[styles.quoteValue,{color:theme.headingTx}]}>{resQuotes.completionTime?(resQuotes.completionTime / (1000 * 60)+" Min"):"getting.."}</Text>
             </View>
         </View>
-        <View style={styles.quoteTextCon}>
-          <Text style={styles.quoteText}>≈</Text>
+        <View style={[styles.quoteTextCon,{borderColor:theme.inactiveTx}]}>
+          <Text style={[styles.quoteText,{color:theme.headingTx}]}>≈</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <Text style={styles.quoteText}>
+              <Text style={[styles.quoteText,{color:theme.headingTx}]}>
                 {Math.max(
                   0,
                   parseFloat(resQuotes.minimumAmountOut || "0") -
@@ -639,14 +708,15 @@ const getOffersData = async () => {
                 ).toFixed(6)}
               </Text>
             </ScrollView>
-          <Text style={styles.quoteText}>USDC</Text>
+          <Text style={[styles.quoteText,{color:theme.headingTx}]}>USDC</Text>
         </View>
-      </View>}
+      </View>
+      }
 
 
             <TouchableOpacity
               // disabled={chooseSelectedItemIdCho === null||chooseSelectedItemId === null} 
-              style={[styles.nextButton, { backgroundColor: !amount||balanceLoading||getInfo||errorMsg!==null?"gray":'#2F7DFF' }]}
+              style={[styles.nextButton, { backgroundColor: !amount||balanceLoading||getInfo||errorMsg!==null?"gray":'#4052D6' }]}
             disabled={!amount||fianl_modal_loading||balanceLoading||getInfo||errorMsg!==null} onPress={() => { Keyboard.dismiss(),manage_swap() }}
             >
               {fianl_modal_loading||getInfo?<ActivityIndicator color={"white"}/>:<Text style={styles.nextButtonText}>{errorMsg!==null?errorMsg:"Confirm Transaction"}</Text>}
@@ -819,8 +889,8 @@ const getOffersData = async () => {
         visible={chooseModalVisible}
       >
         <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setChooseModalVisible(false)}>
-          <View style={styles.chooseModalContent}>
-          <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical:hp(1), color: "#fff" }}>Select Wallet</Text>
+          <View style={[styles.chooseModalContent,{backgroundColor:theme.cardBg}]}>
+          <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical:hp(1), color: theme.headingTx }}>Select Wallet</Text>
             {/* <TextInput
               style={styles.searchInput}
               placeholder="Search..."
@@ -844,8 +914,8 @@ const getOffersData = async () => {
         visible={chooseModalVisible_choose}
       >
         <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setchooseModalVisible_choose(false)}>
-          <View style={styles.chooseModalContent}>
-          <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical:hp(1), color: "#fff" }}>Choose Asset</Text>
+          <View style={[styles.chooseModalContent,{backgroundColor:theme.cardBg}]}>
+          <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical:hp(1), color: theme.headingTx }}>Choose Asset</Text>
             {/* <TextInput
               style={styles.searchInput}
               placeholder="Search..."
@@ -993,24 +1063,25 @@ const styles = StyleSheet.create({
     paddingLeft:wp(5)
   },
   headingText: {
-    marginTop: 10,
     color: "#fff",
-    fontSize: 19,
+    fontSize: 16,
+    fontWeight:"400",
+    textAlign: "left",
+    paddingLeft: wp(5)
   },
   subInputText: {
-    marginTop:hp(1),
     color: "#94A3B8",
-    fontSize: 16,
+    fontSize: 15,
   },
   maxBtn: {
     color: "#FFF",
     fontSize: 16,
   },
-  maxCon:{
-    backgroundColor:"#2F7DFF",
-    borderRadius:10,
-    padding:8,
-    paddingHorizontal:wp(5),
+  maxCon: {
+    backgroundColor: "#4052D6",
+    borderRadius: 10,
+    paddingVertical:5,
+    paddingHorizontal: wp(5),
   },
   modalOpen: {
     width: '93%',
@@ -1025,26 +1096,27 @@ const styles = StyleSheet.create({
     paddingHorizontal:wp(3.6)
   },
   modalQoutesCon: {
-    width: '93%',
-    flexDirection:"column",
-    justifyContent:"space-between",
-    backgroundColor:"#0D2041",
-    marginTop: hp(1.8),
+    width: '100%',
+    flexDirection: "column",
+    justifyContent: "space-between",
+    backgroundColor: "#0D2041",
+    marginTop: hp(1),
     borderRadius: 10,
-    alignSelf:"center",
-    paddingVertical:hp(1.8),
-    paddingHorizontal:wp(3.6)
+    alignSelf: "center",
+    paddingVertical: hp(1.8),
+    paddingHorizontal: wp(3.6)
   },
   nextButton: {
     width: wp(93),
-    borderRadius: 30,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 10,
     marginTop: 20,
     alignSelf: "center",
     height:hp(6.4),
-    marginTop:hp(1.6)
+    marginTop:hp(1.6),
+    marginBottom:hp(3)
   },
   nextButtonText: {
     color: '#fff',
@@ -1145,8 +1217,8 @@ const styles = StyleSheet.create({
     width: wp("12"),
   },
   logoImg_TOP_1: {
-    height: 39,
-    width: 39,
+    height: 35,
+    width: 35,
     marginRight: 3
   },
   text_TOP: {
@@ -1171,14 +1243,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
     margin: 10,
     borderRadius: 10
-  },
-  card: {
-    marginRight: 10,
-    borderWidth: 1.9,
-    borderColor: 'rgba(122, 59, 144, 1)rgba(100, 115, 197, 1)',
-    borderRadius: 10,
-    padding: 8,
-    backgroundColor: "#011434"
   },
   image: {
     width: 90,
@@ -1270,7 +1334,7 @@ const styles = StyleSheet.create({
   },
   networkHeading:{
     color:"#fff",
-    fontSize:16,
+    fontSize:14,
     fontWeight:"500",
     marginLeft:wp(1.3),
     marginTop:hp(-0.1)
@@ -1283,13 +1347,14 @@ const styles = StyleSheet.create({
   quoteTextCon: {
     flexDirection: "row",
     padding: 9,
-    backgroundColor: "#10B981",
+    borderWidth:1,
     borderRadius: 8,
   },
   quoteText: {
-    fontSize: 24,
+    fontSize: 20,
     color: '#fff',
     borderRadius: 8,
+    fontWeight:"600"
   },
   quoteDetailsContainer: {
     paddingHorizontal: 1,
@@ -1310,6 +1375,7 @@ const styles = StyleSheet.create({
   quoteLabel: {
     fontSize: 14,
     color: 'silver',
+    fontWeight:"500"
   },
   quoteValue: {
     color: '#fff',
@@ -1327,13 +1393,15 @@ const styles = StyleSheet.create({
   feePayCon:{
     flexDirection: "row",
     marginLeft:10,
-    borderColor:"#fff",
-    borderWidth:1,
-    paddingHorizontal:10,
-    paddingVertical:4,
-    borderRadius:10
-  },
-  feePayTx: {
+    paddingVertical:hp(1),
+    paddingHorizontal:wp(2),
+    borderRadius:10,
+    maxWidth:wp(38),
+    alignItems:"center",
+    justifyContent:"center",
+    marginTop:8
+   },
+   feePayTx: {
     fontSize: 16,
     fontWeight:"600"
   },
@@ -1343,6 +1411,51 @@ const styles = StyleSheet.create({
     width:"100%",
     maxHeight:"50%",
     bottom:25
-  }
+  },
+  exportBottomCon: {
+    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderRadius: 10,
+    alignSelf: "center",
+    marginTop:12,
+    paddingVertical: hp(0),
+    paddingHorizontal: wp(3.9)
+  },
+  exportCon: {
+    width: wp(41),
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#0D2041",
+    borderRadius: 10,
+    alignSelf: "center",
+    paddingVertical: hp(1.4),
+    paddingHorizontal: wp(3)
+  },
+  card: {
+    flexDirection: "row",
+    backgroundColor: "#2b3c57",
+    borderRadius: 10,
+    paddingVertical:hp(1.9),
+    marginVertical: hp(0.5),
+    justifyContent: "space-between",
+  },
+  accountDetailsCon:{
+    flexDirection:"row",
+    justifyContent:"space-between",
+    paddingHorizontal:wp(4.5)
+  },
+  rowBtnCon: {
+    width: '93%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderRadius: 10,
+    alignSelf: "center",
+    paddingVertical: hp(1.8),
+    paddingHorizontal: wp(2)
+  },
 });
 export default classic;

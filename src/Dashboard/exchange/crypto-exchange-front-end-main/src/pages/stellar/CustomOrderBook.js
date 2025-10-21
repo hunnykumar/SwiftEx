@@ -11,6 +11,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
+import { useSelector } from 'react-redux';
 const ASSET_PAIRS = [
   {
     base: { code: 'XLM', issuer: null },
@@ -61,6 +62,25 @@ const ALL_TABS = [
   { id: 'bids', label: 'Bids' },
   { id: 'asks', label: 'Asks' }
 ];
+
+const colors = {
+  light: {
+    bg: "#FFFFFF",
+    cardBg: "#F4F4F8",
+    headingTx: "#272729",
+    smallCardBorderColor: "#5E5C5C66",
+    cardSubTx: "#272729",
+    inactiveTx: "#AAAAAA"
+  },
+  dark: {
+    bg: "#1B1B1C",
+    cardBg: "#242426",
+    headingTx: "#E6E8EB",
+    smallCardBorderColor: "#AAAAAA66",
+    cardSubTx: "#E6E8EB",
+    inactiveTx: "#AAAAAA"
+  },
+};
 
 const CustomOrderBook = ({ visibleTabs = ['chart', 'trades', 'bids', 'asks'] }) => {
   const eventSourceRef = useRef(null);
@@ -420,7 +440,7 @@ const connectEventSource = useCallback(() => {
     setPairSelectorVisible(false);
   };
 
-  const renderTabContent = () => {
+  const renderTabContent = (theme) => {
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
@@ -433,9 +453,9 @@ const connectEventSource = useCallback(() => {
     switch (activeTab) {
       case 'chart':
         return (
-          <View style={styles.chartContainer}>
+          <View style={[styles.chartContainer,{backgroundColor:theme.bg}]}>
             <View style={styles.chartHeader}>
-              <Text style={styles.chartTitle}>{selectedPair.displayName} Price History</Text>
+              <Text style={[styles.chartTitle,{color:theme.headingTx}]}>{selectedPair.displayName} Price History</Text>
               {/* <View style={styles.timeframeContainer}>
                 <TouchableOpacity style={[styles.timeframeButton, styles.activeTimeframe]}>
                   <Text style={styles.timeframeText}>Live</Text>
@@ -675,25 +695,26 @@ const connectEventSource = useCallback(() => {
         return null;
     }
   };
-
+  const state = useSelector((state) => state);
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container,{backgroundColor:theme.bg}]}>
+      <View style={[styles.header,{backgroundColor:theme.cardBg}]}>
         <TouchableOpacity 
           style={styles.headerLeft}
           onPress={() => setPairSelectorVisible(true)}
         >
-          <View style={styles.pairSelector}>
-            <Text style={styles.title}>{selectedPair.displayName}</Text>
-            <Ionicons name="chevron-down" size={16} color="#8A8A8F" />
+          <View style={[styles.pairSelector,{backgroundColor:theme.bg}]}>
+            <Text style={[styles.title,{color:theme.headingTx}]}>{selectedPair.displayName}</Text>
+            <Ionicons name="chevron-down" size={16} color={theme.headingTx} />
           </View>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle,{color:theme.headingTx}]}>
             {!loading && asks.length > 0 ? 
               `${selectedPair.counter.code === 'USDC' ? '$' : '$'}${parseFloat(asks[0].price).toFixed(6)}` : 
               '...'}
           </Text>
           {lastTrade && (
-            <View style={styles.lastTradePreview}>
+            <View style={[styles.lastTradePreview,{backgroundColor:theme.cardBg}]}>
               <Text style={styles.lastTradePreviewLabel}>Last:</Text>
               <Text style={[
                 styles.lastTradePreviewValue,
@@ -708,7 +729,7 @@ const connectEventSource = useCallback(() => {
             </View>
           )}
         </TouchableOpacity>
-        <View style={styles.headerRight}>
+        <View style={[styles.headerRight,{backgroundColor:theme.bg}]}>
           {refreshing ? (
             <Animated.View style={{ transform: [{ rotate: spin }] }}>
               <Ionicons name="refresh" size={24} color="#007AFF" />
@@ -751,7 +772,7 @@ const connectEventSource = useCallback(() => {
           />
         }
       >
-        {renderTabContent()}
+        {renderTabContent(theme)}
       </ScrollView>
       
       {refreshing && (
@@ -769,9 +790,9 @@ const connectEventSource = useCallback(() => {
         onRequestClose={() => setPairSelectorVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent,{backgroundColor:theme.bg}]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Asset Pair</Text>
+              <Text style={[styles.modalTitle,{color:theme.headingTx}]}>Select Asset Pair</Text>
               <TouchableOpacity onPress={() => setPairSelectorVisible(false)}>
                 <Ionicons name="close" size={24} color="#8A8A8F" />
               </TouchableOpacity>
@@ -782,13 +803,15 @@ const connectEventSource = useCallback(() => {
                   key={index} 
                   style={[
                     styles.pairItem,
-                    selectedPair.displayName === pair.displayName && styles.selectedPairItem
+                    selectedPair.displayName === pair.displayName && styles.selectedPairItem,
+                    {backgroundColor:theme.cardBg}
                   ]}
                   onPress={() => handlePairSelect(pair)}
                 >
                   <Text style={[
                     styles.pairItemText,
-                    selectedPair.displayName === pair.displayName && styles.selectedPairText
+                    selectedPair.displayName === pair.displayName && styles.selectedPairText,
+                    {color:theme.headingTx}
                   ]}>
                     {pair.displayName}
                   </Text>
@@ -810,14 +833,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#011434',
   },
   header: {
-    paddingTop: 5,
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2E2E3A',
+    borderRadius: 20,
+    padding: 15,
+    marginBottom: 16,
+    marginHorizontal:wp(2.5),
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
   headerLeft: {
     flex: 1,
@@ -825,17 +846,21 @@ const styles = StyleSheet.create({
   pairSelector: {
     flexDirection: 'row',
     alignItems: 'center',
+    maxWidth:wp(30),
+    paddingVertical:hp(1.5),
+    paddingHorizontal:wp(2),
+    borderRadius:10,
   },
   headerRight: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 35,
+    height: 30,
+    alignItems:"center",
+    marginTop:hp(0.1),
+    borderRadius:30,
   },
   refreshButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
@@ -845,10 +870,11 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   subtitle: {
-    fontSize: 28,
+    fontSize: 19,
     fontWeight: 'bold',
     color: 'white',
     marginTop: 5,
+    marginLeft:5
   },
   lastTradePreview: {
     flexDirection: 'row',
@@ -1188,8 +1214,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2E2E3A',
+    marginBottom:4
   },
   selectedPairItem: {
     backgroundColor: 'rgba(0, 122, 255, 0.1)',

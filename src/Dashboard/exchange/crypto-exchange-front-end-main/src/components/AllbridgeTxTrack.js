@@ -433,7 +433,6 @@ export default function AllbridgeTxTrack({ txs, isDarkMode, showTx, closeTx }) {
   if (showTx) {
     return (
       <View style={[styles.container, { backgroundColor: getThemedColor('#F8F9FA', '#000000') }]}>
-        <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={getThemedColor("#FFFFFF", "#000000")} />
         <Modal
           visible={modalVisible}
           animationType="slide"

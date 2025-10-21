@@ -133,7 +133,7 @@ export async function GetStellarUSDCAvilabelBalance(publicKey,coinName,coinIssue
     });
 
     if (!selectedAsset) {
-        return { error: `Token ${coinName} not found in account`,status:false };
+        return { error: `Trust ${coinName} to use it in your wallet.`,status:false };
     }
 
     return selectedAsset;
@@ -142,4 +142,31 @@ export async function GetStellarUSDCAvilabelBalance(publicKey,coinName,coinIssue
     console.error("Error fetching account details:", error.message);
     return { error: error.message };
 }
+}
+
+export async function HandleStellarTrustLine(secretKey, assetCode, assetIssuer, addTrustline = true) {
+  try {
+    const keypair = StellarSdk.Keypair.fromSecret(secretKey);
+    const publicKey = keypair.publicKey();
+    const account = await server.loadAccount(publicKey);
+    const asset = new StellarSdk.Asset(assetCode, assetIssuer);
+    const transaction = new TransactionBuilder(account, {
+      fee: await server.fetchBaseFee(),
+      networkPassphrase: StellarSdk.Networks.PUBLIC,
+    })
+      .addOperation(
+        addTrustline
+          ? Operation.changeTrust({ asset })
+          : Operation.changeTrust({ asset, limit: '0' })
+      )
+      .setTimeout(100)
+      .build();
+    transaction.sign(keypair);
+    const txResult = await server.submitTransaction(transaction);
+    console.log('updating trustline:', txResult);
+    return { response: txResult, status: true };
+  } catch (error) {
+    console.error('Error updating trustline:', error);
+    return { response: error, status: false };
+  }
 }

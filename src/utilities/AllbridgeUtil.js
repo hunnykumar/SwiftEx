@@ -151,19 +151,29 @@ export async function swapPepare(
         return { success: false };
       }
       if (sent.status === "PENDING") {
-        const matchedTx = await sdk.getTransferStatus("SRB", sent.hash);
-        if (matchedTx.txId) {
-          return {
-            success: true,
-            txHash: sent.hash,
-          };
-        } else {
-          return { success: false };
+          const matchedTx = await waitForTransferStatus(sdk, "SRB", sent.hash, 60000, 5000);
+          if (matchedTx?.txId) {
+            return { success: true, txHash: sent.hash };
+          } else {
+            return { success: false, error: "Transaction still pending after 1 minute." };
+          }
         }
-      }
     } catch (err) {
       console.log("Error in allbridge swap:", err.message || err);
       return { success: false, error: err.message || "Unknown error occurred." };
     }
+  }
+
+  async function waitForTransferStatus(sdk, chain, hash, timeout = 60000, interval = 5000) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      const status = await sdk.getTransferStatus(chain, hash);
+      if (status && status.txId) {
+        return status;
+      }
+      console.log(`TX still pending... checking again in ${interval / 1000}s`);
+      await new Promise(res => setTimeout(res, interval));
+    }
+    return null;
   }
   

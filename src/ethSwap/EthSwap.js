@@ -12,7 +12,8 @@ import {
   Alert,
   Image,
   ScrollView,
-  Keyboard
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native';
 import {
   widthPercentageToDP as wp,
@@ -152,6 +153,8 @@ const EthSwap = () => {
 
 
   useEffect(() => {
+    setAmount('');
+    setQuoteInfo(null);
     const updateBalances=async()=>{
       if (currentNetwork === 0) {
         setallblnLoading(true);
@@ -255,7 +258,7 @@ const EthSwap = () => {
   }
 
   const TokenSelector = ({ token, onPress,balance }) => (
-    <TouchableOpacity disabled={loading} style={[styles.tokenSelector,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]} onPress={onPress}>
+    <TouchableOpacity disabled={loading} style={[styles.tokenSelector,{backgroundColor:state?.THEME?.THEME===false?"#FFFFFF":"#1B1B1C"}]} onPress={onPress}>
       <View style={styles.tokenContainer}>
       <Image source={{ uri: token.logoURI }} style={[styles.logoImage,{marginRight:5}]} />
       <Text style={[styles.tokenSymbol,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{token.symbol}</Text>
@@ -294,8 +297,9 @@ const EthSwap = () => {
         animationType="slide"
         onRequestClose={() => setShowTokenList(false)}
       >
+        <TouchableWithoutFeedback onPress={() => setShowTokenList(false)}>
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, {backgroundColor: state?.THEME?.THEME === false ? "#fff" : "#171616"}]}>
+          <View style={[styles.modalContent, {backgroundColor: state?.THEME?.THEME === false ? "#F4F4F8" : "#242426"}]}>
             <Text style={[styles.modalTitle, {color: state?.THEME?.THEME === false ? "black" : "#fff"}]}>
               Select Token
             </Text>
@@ -394,6 +398,7 @@ const EthSwap = () => {
             </TouchableOpacity>
           </View>
         </View>
+        </TouchableWithoutFeedback>
       </Modal>
     );
   };
@@ -555,15 +560,21 @@ const EthSwap = () => {
           onClose={() => setErroVisible(false)}
           message="We encountered an issue while attempting to fetch the requested quote. Please try again later."
         />
-    <View style={[styles.container,{backgroundColor:state?.THEME?.THEME===false?"#fff":"black"}]}>
-      <View style={[styles.card,{backgroundColor:state?.THEME?.THEME===false?"#ebebeb":"#171616"}]}>
-        <View style={[styles.inputContainer,{backgroundColor:state?.THEME?.THEME===false?"#ebebeb":"#171616"}]}>
+    <View style={[styles.container,{backgroundColor:state?.THEME?.THEME===false?"#FFF":"#1B1B1C"}]}>
+      <View style={[styles.card,{backgroundColor:state?.THEME?.THEME===false?"#F4F4F8":"#242426"}]}>
+        <View style={[styles.inputContainer,]}>
+            <TouchableOpacity style={[styles.headerCard, { backgroundColor: state?.THEME?.THEME ? "#1B1B1C" : "#F4F4F8" }]} onPress={()=>{currentNetwork===0?setCurrentNetwork(1):setCurrentNetwork(0)}}>
+              <View style={styles.assetInfo}>
+                <Image source={{uri:NETWORK[currentNetwork].logoURI}} style={styles.assetIcon} />
+                <View>
+                  <Text style={[styles.assetName, { color: state?.THEME?.THEME ? "#FFF" : "#000" },]}>{NETWORK[currentNetwork].symbol}</Text>
+                  <Text style={[styles.assetSymbol,{ color: state?.THEME?.THEME ? "#8B8B99" : "#666" },]}>Active Network</Text>
+                </View>
+              </View>
+                <Icon name={"arrow-down"} size={30} color={"#666"}/>
+            </TouchableOpacity>
             <View style={styles.networkCon}>
               <Text style={styles.label}>From</Text>
-              <TouchableOpacity style={styles.networkSelector} onPress={()=>{currentNetwork===0?setCurrentNetwork(1):setCurrentNetwork(0)}}>
-              <Icon name={"arrow-down"} size={19} color={"#666"}/>
-                <Text style={[styles.label,{marginBottom: 0}]}> {NETWORK[currentNetwork].symbol}</Text>
-              </TouchableOpacity>
             </View>
           <TokenSelector
             token={fromToken}
@@ -576,7 +587,7 @@ const EthSwap = () => {
           <TextInput
             maxLength={30}
             returnKeyType='done'
-            style={[styles.input,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a",color:state?.THEME?.THEME===false?"black":"#fff"}]}
+            style={[styles.input,{backgroundColor:state?.THEME?.THEME===false?"#FFFFFF":"#1B1B1C",color:state?.THEME?.THEME===false?"black":"#fff"}]}
             value={amount}
             onChangeText={(text)=>{handleChange(text,fromToken.decimals)}}
             placeholder="0.0"
@@ -609,18 +620,18 @@ const EthSwap = () => {
             balance={USDCBAL}
           />
           {quoteInfo && (
-            <View style={[styles.quoteTextCon,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>
-              <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>≈</Text>
+            <View style={[styles.quoteTextCon,{backgroundColor:state?.THEME?.THEME===false?"#fff":"#1B1B1C"}]}>
+              <Text style={[styles.quoteText,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>≈</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>{quoteInfo.outputAmount}</Text>
+            <Text style={[styles.quoteText,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{quoteInfo.outputAmount}</Text>
               </ScrollView>
-            <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>{quoteInfo.outputToken}</Text>
+            <Text style={[styles.quoteText,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{quoteInfo.outputToken}</Text>
             </View>
           )}
         </View>
 
         {quoteInfo && (
-          <View style={[styles.quoteDetailsContainer,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>
+          <View style={[styles.quoteDetailsContainer,{backgroundColor:state?.THEME?.THEME===false?"#fff":"#1B1B1C"}]}>
             <Text style={[styles.quoteTitle,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>Quote Details</Text>
             
             <View style={styles.quoteRow}>
@@ -655,7 +666,7 @@ const EthSwap = () => {
         )}
       </View>
 
-      <TouchableOpacity style={[styles.swapButtonCon,{backgroundColor:btnDisable||SwapExecution?"gray":"#3574B6"}]} disabled={btnDisable||SwapExecution} onPress={()=>{handleSwap(amount,state?.wallet?.privateKey,currentNetwork === 0?"ETH":"BSC")}}>
+      <TouchableOpacity style={[styles.swapButtonCon,{backgroundColor:btnDisable||SwapExecution?"gray":"#4052D6"}]} disabled={btnDisable||SwapExecution} onPress={()=>{handleSwap(amount,state?.wallet?.privateKey,currentNetwork === 0?"ETH":"BSC")}}>
         {SwapExecution?<ActivityIndicator color={"green"}/>:<Text style={styles.swapButtonConText}>{btnMessage}</Text>}
       </TouchableOpacity>
 
@@ -674,14 +685,9 @@ const styles = StyleSheet.create({
     height:"100%"
   },
   card: {
-    backgroundColor: '#ebebeb',
+    backgroundColor: '#F4F4F8',
     borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
   },
   inputContainer: {
     marginBottom: 16,
@@ -741,9 +747,6 @@ const styles = StyleSheet.create({
   },
   quoteText: {
     fontSize: 24,
-    color: '#666',
-    // padding: 12,
-    backgroundColor: '#f8f9fa',
     borderRadius: 8,
   },
   quoteDetailsContainer: {
@@ -841,7 +844,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop:wp(5),
     padding:14,
-    borderRadius:20
+    paddingVertical:15,
+    borderRadius:10
   },
   swapButtonConText:{
     fontSize:18,
@@ -904,6 +908,36 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     textAlign: 'center',
+  },
+  headerCard: {
+    marginTop: hp(2),
+    flexDirection:"row",
+    justifyContent:"space-between",
+    alignItems:"center",
+    padding: wp(2),
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  assetInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  assetIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 24,
+    marginRight: wp(3),
+  },
+  assetName: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  assetSymbol: {
+    fontSize: 14,
   },
 });
 

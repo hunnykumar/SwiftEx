@@ -26,6 +26,10 @@ import { useNavigation } from '@react-navigation/native';
 import { STELLAR_URL } from '../../../../../constants';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import CustomInfoProvider from '../../components/CustomInfoProvider';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 
 const AMMSwap = () => {
   const state=useSelector((state)=>state);
@@ -119,7 +123,10 @@ const AMMSwap = () => {
       } if (assetCode !== "native") {
         const nonNativeBal = await GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY, assetCode, assetCodeIssuer);
         if (nonNativeBal.status === false&&nonNativeBal.error) {
-         CustomInfoProvider.show("Info", nonNativeBal.error);
+          CustomInfoProvider.show("Info", nonNativeBal.error, [
+            { text: "Cancel", style: "cancel" },
+            { text: "Trust", onPress: () => {navigation.navigate("Assets_manage",{openAssetModal:true})} },
+          ]);
           return { "balance": "0.00" }
         }
         if (nonNativeBal.availableBalance) {
@@ -322,7 +329,7 @@ const AMMSwap = () => {
   
   const renderTokenItem = ({ item }) => (
     <TouchableOpacity 
-      style={styles.tokenItem} 
+      style={[styles.tokenItem,{backgroundColor:theme.cardBg}]} 
       onPress={() =>{handleTokenSelection(item)}}
     >
       <Image 
@@ -330,8 +337,8 @@ const AMMSwap = () => {
         style={styles.tokenIcon}
       />
       <View style={styles.tokenInfo}>
-        <Text style={styles.tokenSymbol}>{item.code}</Text>
-        <Text style={styles.tokenName}>{item.name}</Text>
+        <Text style={[styles.tokenSymbol,{color:theme.headingTx}]}>{item.code}</Text>
+        <Text style={[styles.tokenName,{color:theme.inactiveTx}]}>{item.name}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -354,41 +361,49 @@ const AMMSwap = () => {
       setmessageError("Transaction Faild.")
     }
   }
+
+  const colors = {
+    light: {
+      bg: "#FFFFFF",
+      cardBg: "#F4F4F8",
+      headingTx: "#272729",
+      smallCardBorderColor: "#5E5C5C66",
+      cardSubTx: "#272729",
+      inactiveTx: "#AAAAAA"
+    },
+    dark: {
+      bg: "#1B1B1C",
+      cardBg: "#242426",
+      headingTx: "#E6E8EB",
+      smallCardBorderColor: "#AAAAAA66",
+      cardSubTx: "#E6E8EB",
+      inactiveTx: "#AAAAAA"
+    },
+  };
+
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
   
   return (
     <View style={styles.container}>
         <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : null}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-        style={{ flex: 1, backgroundColor: "#011434" }}
+        style={{ flex: 1, backgroundColor: theme.bg }}
       >
         <ScrollView contentContainerStyle={styles.scrollView}>
-          {/* <View style={styles.header}>
-          <Ionicons name="flash" size={20} color="#EFBF04" />
-            <Text style={styles.headerTitle}>Instant trade</Text>
-          </View> */}
           
           {/* From Token Input */}
-          <View style={styles.card}>
+          <View style={[styles.card,{backgroundColor:theme.cardBg}]}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardLabel}>From</Text>
-              <Text style={styles.balanceText}>
-                Balance: {fromBal} {fromToken.code}
-              </Text>
+              <Text style={[styles.cardLabel,{color:theme.inactiveTx}]}>You Pay</Text>
+              {messageError===null?<TouchableOpacity style={styles.maxButton} onPress={()=>{handleInputChange(fromBal)}}>
+              <Text style={styles.maxButtonText}>MAX</Text>
+            </TouchableOpacity>:<Text style={[styles.maxButtonText,{color:messageError==="Transaction successful!"?"green":"red"}]}>{messageError}</Text>}
             </View>
             
             <View style={styles.inputContainer}>
-              <TouchableOpacity style={styles.tokenSelector} onPress={()=>{settokenTypeSelection(0),setTokenModalVisible(true)}}>
-                <Image
-                  source={{ uri: fromToken.icon }}
-                  style={styles.tokenLogo}
-                />
-                <Text style={styles.tokenSymbol}>{fromToken.code}</Text>
-                <Ionicons name="chevron-down" size={20} color="#FFF" />
-              </TouchableOpacity>
-              
               <TextInput
-                style={styles.amountInput}
+                style={[styles.amountInput,{borderBottomColor:theme.smallCardBorderColor,color:theme.headingTx}]}
                 returnKeyType="done"
                 placeholder="0.00"
                 placeholderTextColor="#8A8A8A"
@@ -396,75 +411,80 @@ const AMMSwap = () => {
                 value={fromAmount}
                 onChangeText={(value)=>{handleInputChange(value)}}
               />
+              <TouchableOpacity style={[styles.tokenSelector,{backgroundColor:theme.bg}]} onPress={()=>{settokenTypeSelection(0),setTokenModalVisible(true)}}>
+                <Image
+                  source={{ uri: fromToken.icon }}
+                  style={styles.tokenLogo}
+                />
+                <Text style={[styles.tokenSymbol,{color:theme.headingTx}]}>{fromToken.code}</Text>
+                <View style={styles.seprator}/>
+                <Ionicons name="chevron-down" size={20} color={theme.headingTx} />
+              </TouchableOpacity>
             </View>
-            
-            {messageError===null?<TouchableOpacity style={styles.maxButton} onPress={()=>{setFromAmount(fromBal)}}>
-              <Text style={styles.maxButtonText}>MAX</Text>
-            </TouchableOpacity>:<Text style={[styles.maxButtonText,{color:messageError==="Transaction successful!"?"green":"red"}]}>{messageError}</Text>}
-          </View>
-          
-          {/* Swap Button */}
-          <TouchableOpacity style={styles.swapButton} onPress={swapTokens}>
-            <View style={styles.swapIconContainer}>
-              <Ionicons name="swap-vertical" size={24} color="#4CA6EA" />
-            </View>
-          </TouchableOpacity>
-          
-          {/* To Token Input */}
-          <View style={[styles.card,{marginTop:16}]}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardLabel}>To (Estimated)</Text>
-              <Text style={styles.balanceText}>
-                Balance: {toBal} {toToken.code}
+            <Text style={[styles.balanceText,{color:theme.inactiveTx}]}>
+                Balance: {fromBal} {fromToken.code}
               </Text>
+          </View>
+
+          {/* Swap Button */}
+          <TouchableOpacity style={[styles.swapButton,{backgroundColor:theme.bg}]} onPress={swapTokens}>
+              <Ionicons name="swap-vertical" size={24} color="#4052D6" />
+          </TouchableOpacity>
+          {/* To Token Input */}
+          <View style={[[styles.card,{backgroundColor:theme.cardBg}],{marginTop:15}]}>
+            <View style={styles.cardHeader}>
+              <Text style={[styles.cardLabel,{color:theme.inactiveTx}]}>You Get (Estimated)</Text>
             </View>
             
             <View style={styles.inputContainer}>
-              <TouchableOpacity style={styles.tokenSelector} onPress={()=>{settokenTypeSelection(1),setTokenModalVisible(true)}}>
-                <Image
-                  source={{ uri: toToken.icon }}
-                  style={styles.tokenLogo}
-                />
-                <Text style={styles.tokenSymbol}>{toToken.code}</Text>
-                <Ionicons name="chevron-down" size={20} color="#FFF" />
-              </TouchableOpacity>
-              
               <TextInput
-                style={styles.amountInput}
+                style={[styles.amountInput,{borderBottomColor:theme.smallCardBorderColor,color:theme.headingTx}]}
                 placeholder="0.00"
                 placeholderTextColor="#8A8A8A"
                 keyboardType="decimal-pad"
                 value={toAmount}
                 editable={false}
               />
+              <TouchableOpacity style={[styles.tokenSelector,{backgroundColor:theme.bg}]} onPress={()=>{settokenTypeSelection(1),setTokenModalVisible(true)}}>
+                <Image
+                  source={{ uri: toToken.icon }}
+                  style={styles.tokenLogo}
+                />
+                <Text style={[styles.tokenSymbol,{color:theme.headingTx}]}>{toToken.code}</Text>
+                <View style={styles.seprator}/>
+                <Ionicons name="chevron-down" size={20} color={theme.headingTx} />
+              </TouchableOpacity>
             </View>
+            <Text style={[styles.balanceText,{color:theme.inactiveTx}]}>
+                Balance: {toBal} {toToken.code}
+              </Text>
           </View>
           
           {/* Swap Details */}
-          {exchangeRes !== null ? <View style={styles.detailsCard}>
-          <Text style={styles.tokenSymbol}>Swap Details</Text>
+          {exchangeRes !== null ? <View style={[styles.detailsCard,{backgroundColor:theme.cardBg,borderColor:theme.smallCardBorderColor}]}>
+          <Text style={[styles.tokenSymbol,{color:theme.headingTx}]}>Swap Details</Text>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Network</Text>
-              <Text style={styles.detailValue}>{exchangeRes?.network}</Text>
+              <Text style={[styles.detailLabel,{color:theme.headingTx}]}>Network</Text>
+              <Text style={[styles.detailValue,{color:theme.headingTx}]}>{exchangeRes?.network}</Text>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Exchange Rate</Text>
+              <Text style={[styles.detailLabel,{color:theme.headingTx}]}>Exchange Rate</Text>
               <View style={{flexDirection:"row",alignContent:"center"}}>
-              <Text style={styles.detailValue}>{showReverse?exchangeRes?.exchangeRate?.inverse:exchangeRes?.exchangeRate?.rate} </Text>
+              <Text style={[styles.detailValue,{color:theme.headingTx}]}>{showReverse?exchangeRes?.exchangeRate?.inverse:exchangeRes?.exchangeRate?.rate} </Text>
               <TouchableOpacity onPress={()=>{setshowReverse(showReverse?false:true)}}>
-                <Ionicons name="swap-horizontal" size={19} color="#FFF" />
+                <Ionicons name="swap-horizontal" size={19} color={theme.headingTx} />
               </TouchableOpacity>
               </View>
             </View>
 
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Slippage Tolerance</Text>
-              <Text style={styles.detailValue}>{exchangeRes?.swapDetails?.slippageTolerance}</Text>
+              <Text style={[styles.detailLabel,{color:theme.headingTx}]}>Slippage Tolerance</Text>
+              <Text style={[styles.detailValue,{color:theme.headingTx}]}>{exchangeRes?.swapDetails?.slippageTolerance}</Text>
             </View>
 
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Minimum Received</Text>
-              <Text style={styles.detailValue}>{exchangeRes?.swapDetails?.minReceived}</Text>
+              <Text style={[styles.detailLabel,{color:theme.headingTx}]}>Minimum Received</Text>
+              <Text style={[styles.detailValue,{color:theme.headingTx}]}>{exchangeRes?.swapDetails?.minReceived}</Text>
             </View>
           </View> : null}
           
@@ -491,13 +511,13 @@ const AMMSwap = () => {
         onRequestClose={() => setTokenModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent,{backgroundColor:theme.bg}]}>
             <View style={styles.modalHandle} />
             
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select a token</Text>
+              <Text style={[styles.modalTitle,{color:theme.headingTx}]}>Select a token</Text>
               <TouchableOpacity onPress={() => setTokenModalVisible(false)}>
-                <MaterialIcons name="close" size={24} color="#FFFFFF" />
+                <MaterialIcons name="close" size={24} color={theme.headingTx} />
               </TouchableOpacity>
             </View>      
             <FlatList
@@ -519,7 +539,6 @@ const styles = StyleSheet.create({
   container: {
     width:"100%",
     height:"100%",
-    backgroundColor: '#011434',
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -538,10 +557,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 10,
     marginBottom: 16,
+    marginHorizontal:wp(1.5)
   },
   cardHeader: {
     flexDirection: 'row',
@@ -549,12 +568,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   cardLabel: {
-    color: '#BBBBBB',
     fontSize: 16,
+    fontWeight:"500"
   },
   balanceText: {
     color: '#BBBBBB',
     fontSize: 14,
+    alignSelf:"flex-end"
   },
   inputContainer: {
     flexDirection: 'row',
@@ -563,12 +583,12 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   tokenSelector: {
+    width:wp(32),
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 12,
-    padding: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 15,
   },
   tokenLogo: {
     width: 24,
@@ -583,43 +603,40 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   amountInput: {
-    flex: 1,
     color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '600',
-    textAlign: 'right',
+    textAlign: "left",
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 1,
+    borderBottomWidth:1,
+    width:wp(50)
   },
   maxButton: {
     alignSelf: 'flex-end',
-    backgroundColor: 'rgba(255, 255, 255, 0.30)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    backgroundColor: '#4052D6',
+    paddingHorizontal: 19,
+    paddingVertical: 8,
     borderRadius: 8,
   },
   maxButtonText: {
-    color: '#4CA6EA',
+    color: '#fff',
     fontWeight: '600',
     fontSize: 12,
   },
   swapButton: {
     alignSelf: 'center',
-    marginVertical: -9,
+    marginVertical: -33,
     zIndex: 1,
-  },
-  swapIconContainer: {
-    backgroundColor: '#12122E',
-    width: 40,
-    height: 40,
+    position:"relative",
     borderRadius: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#4CA6EA',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    borderColor:"#4052D6",
+    borderWidth:1
   },
   detailsCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -627,6 +644,8 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: 16,
     marginBottom: 24,
+    marginHorizontal:wp(2.5),
+    borderWidth:1
   },
   detailRow: {
     flexDirection: 'row',
@@ -643,7 +662,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   swapActionButton: {
-    backgroundColor:"#2164C1",
+    backgroundColor:"#4052D6",
     borderRadius: 16,
     marginBottom: 16,
     paddingVertical: 16,
@@ -693,8 +712,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    marginBottom:5,
+    paddingHorizontal:10,
+    borderRadius:10
   },
   tokenIcon: {
     width: 32,
@@ -718,6 +738,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
   },
+  seprator:{
+    marginHorizontal:wp(1),
+    height:hp(3)
+  }
 });
 
 export default AMMSwap;

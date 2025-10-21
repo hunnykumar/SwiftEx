@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { getToken } from './api';
+import { createGuestUser, getToken } from './api';
+import { alert } from '../../../reusables/Toasts';
 
 const getAuthToken = async () => {
   try {
@@ -116,6 +117,14 @@ const apiRequest = async ({
         data: error.response.data
       };
       console.log('🔴 Returning server error result:', serverErrorResult);
+      if(serverErrorResult.status===403&&serverErrorResult.success===false){
+        const guestUserResponse = await createGuestUser();
+        if (guestUserResponse.status) {
+          alert("Success","Session recovery complete.")
+        }else{
+          alert("error","Session recovery failed.")
+        }
+      }
       return serverErrorResult;
       
     } else if (error.request) {

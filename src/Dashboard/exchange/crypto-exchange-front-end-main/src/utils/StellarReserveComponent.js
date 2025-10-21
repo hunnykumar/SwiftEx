@@ -4,10 +4,10 @@ import {
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  Modal, 
   SafeAreaView,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import * as StellarSdk from '@stellar/stellar-sdk';
@@ -131,6 +131,27 @@ const StellarAccountReserve = ({
     }
   }, [isVisible]);
 
+  const colors = {
+    light: {
+      bg: "#FFFFFF",
+      cardBg: "#F4F4F8",
+      headingTx: "#272729",
+      smallCardBorderColor: "#5E5C5C66",
+      cardSubTx: "#272729",
+      inactiveTx: "#AAAAAA"
+    },
+    dark: {
+      bg: "#1B1B1C",
+      cardBg: "#242426",
+      headingTx: "#E6E8EB",
+      smallCardBorderColor: "#AAAAAA66",
+      cardSubTx: "#E6E8EB",
+      inactiveTx: "#AAAAAA"
+    },
+  };
+
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
+
   return (
     <Modal
       animationType="slide"
@@ -139,15 +160,15 @@ const StellarAccountReserve = ({
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.contentContainer}>
+        <View style={[styles.contentContainer,{backgroundColor:theme.cardBg}]}>
           {/* Header with close button */}
           <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={[styles.title,{color:theme.headingTx}]}>{title}</Text>
             <TouchableOpacity 
               style={styles.closeButton}
               onPress={onClose}
             >
-              <Text style={styles.closeButtonText}>✕</Text>
+              <Text style={[styles.closeButtonText,{color:theme.headingTx}]}>✕</Text>
             </TouchableOpacity>
           </View>
 
@@ -155,14 +176,14 @@ const StellarAccountReserve = ({
           <View style={styles.content}>
             {isLoading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007AFF" />
+                <ActivityIndicator size="large" color="#4052D6" />
               </View>
             ) : (
               <ScrollView>
                   {reserveData.map((item, index) => (
-                    <View key={index} style={styles.row}>
-                      <Text style={styles.label}>{item.label}</Text>
-                      <Text style={styles.value}>{item.value}</Text>
+                    <View key={index} style={[styles.row,{borderBottomColor:theme.bg}]}>
+                      <Text style={[styles.label,{color:theme.headingTx}]}>{item.label}</Text>
+                      <Text style={[styles.value,{color:theme.headingTx}]}>{item.value}</Text>
                     </View>
                   ))}
 
@@ -175,7 +196,7 @@ const StellarAccountReserve = ({
             style={styles.doneButton}
             onPress={onClose}
           >
-            <Text style={styles.doneButtonText}>Done</Text>
+            <Text style={styles.doneButtonText}>Okay</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -190,9 +211,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    // backgroundColor: '#FFFFFF',
-    backgroundColor:"#011434",
-    marginTop: 50,
+    marginTop: "50%",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
@@ -227,8 +246,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    // backgroundColor: '#FFFFFF',
-    backgroundColor:"#011434"
   },
   loadingContainer: {
     flex: 1,
@@ -241,7 +258,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
   },
   label: {
     fontSize: 16,
@@ -261,7 +277,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   doneButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#4052D6',
     margin: 16,
     padding: 16,
     borderRadius: 12,

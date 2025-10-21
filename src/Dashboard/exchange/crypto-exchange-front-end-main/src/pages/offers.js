@@ -38,6 +38,7 @@ import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import Offers_manages from "./Offers_manages";
 import CustomOrderBook from "./stellar/CustomOrderBook";
 import { STELLAR_URL } from "../../../../constants";
+import { useSelector } from "react-redux";
 
 
 
@@ -293,28 +294,12 @@ export const OfferListViewHome = () => {
 
 export const OfferView = () => {
   const navigation = useNavigation();
-  const [offers, setOffers] = useState();
-  const [change, setChange] = useState(false);
-  const [modalContainer_menu,setmodalContainer_menu]=useState(false);
-
-  const [profile, setProfile] = useState({
-    isVerified: false,
-    firstName: "",
-    lastName: "",
-    email: "",
-    phoneNumber: "",
-    isEmailVerified: true,
-  });
-  const [enableComponent, setenableComponent] = useState(0);
+  const state = useSelector((state) => state);
   return (
     <>
- 
- <Exchange_screen_header title="Offers" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
-      <View style={{ height: hp(100), backgroundColor: "#011434",paddingBottom:hp(15) }}>
-         {/* enableComponent Buttons */}
-     <Offers_manages/>
-     {/* <CustomOrderBook/> */}
-      
+      <Exchange_screen_header title="Offers" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+      <View style={{ height: hp(100),backgroundColor:state.THEME.THEME ? "#1B1B1C" : "#FFFFFF", paddingBottom: hp(15) }}>
+        <Offers_manages />
       </View>
     </>
   );

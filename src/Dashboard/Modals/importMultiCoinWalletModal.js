@@ -17,7 +17,7 @@ import {
 import { Animated } from "react-native";
 import title_icon from "../../../assets/title_icon.png";
 import { useDispatch, useSelector } from "react-redux";
-import { AddToAllWallets,setCurrentWallet } from "../../components/Redux/actions/auth";
+import { AddToAllWallets, setCurrentWallet } from "../../components/Redux/actions/auth";
 import { urls } from "../constants";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -28,7 +28,7 @@ import Modal from "react-native-modal";
 import ModalHeader from "../reusables/ModalHeader";
 import { alert } from "../reusables/Toasts";
 import { Paste } from "../../utilities/utilities";
-import  Clipboard from "@react-native-clipboard/clipboard";
+import Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../../icon";
 import { recoverMultiChainWallet } from "../../utilities/WalletManager";
 import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
@@ -57,6 +57,7 @@ const ImportMultiCoinWalletModal = ({
   const [provider, setProvider] = useState("");
   const [disable, setDisable] = useState(true);
   const [message, setMessage] = useState("");
+  const state = useSelector((state) => state);
 
   const navigation = useNavigation();
 
@@ -155,84 +156,95 @@ const ImportMultiCoinWalletModal = ({
   }, [mnemonic, accountName])
 
   const handleUsernameChange = (text) => {
-    // Remove whitespace from the username
     const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
     setAccountName(formattedUsername);
   };
+  
   return (
-    <Animated.View // Special animatable View
-      style={{ opacity: fadeAnim }}
+    <Modal
+    isVisible={Visible}
+    onBackdropPress={() => setWalletVisible(false)}
+    onBackButtonPress={() => setWalletVisible(false)}
+    animationIn="slideInUp"
+    animationOut="slideOutDown"
+    useNativeDriver
+    hideModalContentWhileAnimating
+    style={style.modal}
     >
-      <Modal
-        animationIn="slideInRight"
-        animationOut="slideOutRight"
-        animationInTiming={500}
-        animationOutTiming={650}
-        isVisible={Visible}
-        useNativeDriver={true}
-        // statusBarTranslucent={true}
-        onBackdropPress={() => setWalletVisible(false)}
-        onBackButtonPress={() => {
-          setWalletVisible(false);
-        }}
-      >
-        <View style={style.Body}>
-          {/* <ModalHeader Function={closeModal} name={'Multi-Coin'}/> */}
-          <Icon type={'entypo'} name='cross' color={'gray'} size={24} style={style.crossIcon} onPress={onCrossPress} />
-          <Text style={style.coinText}>Multi-Chain Wallet</Text>
-          <View style={style.labelInputContainer}>
-            <Text style={style.label}>Name</Text>
-            <TextInput
-              value={accountName}
-              maxLength={20}
-              onChangeText={(text) =>{handleUsernameChange(text)}}
-              style={{ width: wp("78%"),color:"black" }}
-              placeholder={accountName ? accountName : "Wallet 1"}
-              placeholderTextColor={"gray"}
-            />
+      <Animated.View style={[style.overlay]}>
+        <View style={[style.Body, { backgroundColor: state.THEME.THEME ? "#242426" : "#F4F4F8" }]}>
+          <View style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingTop: 30
+          }}>
+            <View style={{
+              paddingHorizontal: 10,
+              alignItems: "flex-start"
+            }}>
+              <Text style={[style.coinText, { color: state.THEME.THEME ? "#fff" : "black" }]}>Multi-Chain Wallet</Text>
+              <Text style={[style.coinSubText, { color: state.THEME.THEME ? "#AAAAAA" : "black" }]}>Import your wallet using your secret recovery phrase.</Text>
+            </View>
+            <Icon type={'entypo'} name='cross' color={"black"} size={24} style={[style.crossIcon, { backgroundColor: "#FFFFFF" }]} onPress={onCrossPress} />
+          </View>
+          <View style={style.infoCard}>
+            <Icon type={'entypo'} name='info-with-circle' color={"#ECB742"} size={20} />
+            <Text style={[style.coinSubText, { color: "#ECB742", marginLeft: 5 }]}>Never share this phrase. Enter it here only to recover your wallet.</Text>
+          </View>
+          <View style={[style.card, { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C" }]}>
+              <Text style={[style.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>Wallet Name</Text>
+              <View style={[style.inputContainer, {
+                backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426",
+              }]}>
+              <TextInput
+                value={accountName}
+                maxLength={20}
+                onChangeText={(text) => { handleUsernameChange(text) }}
+                style={{  color: state.THEME.THEME === false ?"black":"#fff" }}
+                placeholder={accountName ? accountName : "Wallet 1"}
+                placeholderTextColor={"gray"}
+              />
+            </View>
           </View>
 
 
-          <View style={style.inputView}>
+          <View style={[style.card, { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C" }]}>
+           <View style={{flexDirection:"row",justifyContent:"space-between"}}>
+           <Text style={[style.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>Phrase</Text>
             <TouchableOpacity
               onPress={async () => {
-                // setText('abc')
                 Paste(setMnemonic);
-
               }}
+              style={{flexDirection:"row"}}
             >
-              <Text style={style.paste}>Paste</Text>
+              <Icon type={'material'} name='content-copy' color={"#5B65E1"} size={19} />
+              <Text style={style.paste}> PASTE</Text>
             </TouchableOpacity>
-            <Text style={{color:"#4CA6EA"}}>Phrase</Text>
-            <TextInput
-              placeholder={"Please enter your mnemonic phrase here"}
-              style={[style.input,{color:"black"}]}
-              value={mnemonic}
-              onChangeText={(text) => {
-                setMnemonic(text);
-              }}
-            />
+           </View>
+            <View style={[style.inputContainer, {
+              backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426",
+            }]}>
+              <TextInput
+                placeholder={"Please enter your mnemonic phrase here"}
+                style={{ color: state.THEME.THEME === false ?"black":"#fff" }}
+                value={mnemonic}
+                onChangeText={(text) => {
+                  setMnemonic(text);
+                }}
+                placeholderTextColor={"gray"}
+              />
+            </View>
           </View>
-
-
-          {loading ? (
-            <ActivityIndicator size="large" color="green" />
-          ) : (
-            <Text> </Text>
-          )}
           <View
-            style={{
-              display: "flex",
-              alignContent: "center",
-              alignItems: "center",
-            }}
+            style={{ display: "flex", alignContent: "center", alignItems: "center" }}
           >
             <Text style={{ color: "red" }}>{message}</Text>
           </View>
 
           <TouchableOpacity
             style={style.btn}
-            disabled={disable||!accountName || !/\S/.test(accountName)?true:false}
+            disabled={loading||disable || !accountName || !/\S/.test(accountName) ? true : false}
             onPress={async () => {
               if (!accountName) {
                 return alert("error", "Please enter an wallet name to proceed");
@@ -250,14 +262,11 @@ const ImportMultiCoinWalletModal = ({
                     "Incorrect Mnemonic. Please provide a valid Mnemonic"
                   );
                 }
-                // const xrpWalletFromM = xrpl.Wallet.fromMnemonic(trimmedPhrase); // UNCOMMENT
-                const accountFromMnemonic = Platform.OS==="android"?await EthereumWallet.recoverMultiChainWallet(trimmedPhrase):await recoverMultiChainWallet(trimmedPhrase);
+                const accountFromMnemonic = Platform.OS === "android" ? await EthereumWallet.recoverMultiChainWallet(trimmedPhrase) : await recoverMultiChainWallet(trimmedPhrase);
                 const wallet = {
                   address: accountFromMnemonic.ethereum.address,
                   privateKey: accountFromMnemonic.ethereum.privateKey,
                   xrp: {
-                    // address: xrpWallet.classicAddress, // UNCOMMENT
-                    // privateKey: xrpWallet.seed, // UNCOMMENT
                     address: "000000000",
                     privateKey: "000000000",
                   },
@@ -267,22 +276,7 @@ const ImportMultiCoinWalletModal = ({
                   },
 
                 };
-                /* const response = saveUserDetails(accountFromMnemonic.address).then(async (response)=>{
-                if(response===400){
-                  return 
-                }
-               else if(response===401){
-                  return 
-                }
-              }).catch((e)=>{
-                console.log(e)
-                setLoading(false)
-                setWalletVisible(false)
-                setVisible(false)
-                setModalVisible(false)
 
-
-              })*/
                 let wallets = [];
                 const data = await AsyncStorageLib.getItem(`${user}-wallets`)
                   .then((response) => {
@@ -298,7 +292,6 @@ const ImportMultiCoinWalletModal = ({
                     console.log(e);
                   });
 
-                //wallets.push(accounts)
                 const allWallets = [
                   {
                     address: wallet.address,
@@ -306,8 +299,6 @@ const ImportMultiCoinWalletModal = ({
                     mnemonic: trimmedPhrase,
                     name: accountName,
                     xrp: {
-                      // address: xrpWallet.classicAddress, // UNCOMMENT
-                      // privateKey: xrpWallet.seed,  // UNCOMMENT
                       address: "000000000",
                       privateKey: "000000000",
                     },
@@ -319,20 +310,19 @@ const ImportMultiCoinWalletModal = ({
                     wallets: wallets,
                   },
                 ];
-                const resultApi =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
-                  "multiChainAddress":wallet.address,
+                const resultApi = await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+                  "multiChainAddress": wallet.address,
                   "stellarAddress": wallet.stellarWallet.publicKey,
                   "isPrimary": true
                 });
-                console.log("result---result",resultApi)
-                
+                console.log("result---result", resultApi)
+
                 if (resultApi.success) {
-                   alert("success","wallet synced!");
+                  alert("success", "wallet synced!");
                 } else {
-                  alert("error","unable to sync wallet.");
+                  alert("error", "unable to sync wallet.");
                   console.log('Error:', resultApi.error, 'Status:', resultApi.status);
                 }
-                // AsyncStorageLib.setItem(`${accountName}-wallets`,JSON.stringify(wallets))
 
                 dispatch(AddToAllWallets(allWallets, user)).then((response) => {
                   if (response) {
@@ -354,7 +344,7 @@ const ImportMultiCoinWalletModal = ({
                         setWalletVisible(false);
                         setVisible(false);
                         setModalVisible(false);
-                    AsyncStorageLib.setItem("currentWallet", accountName);
+                        AsyncStorageLib.setItem("currentWallet", accountName);
                         navigation.navigate("AllWallets");
                       }, 0);
                     } else {
@@ -364,12 +354,9 @@ const ImportMultiCoinWalletModal = ({
                   }
                 });
 
-                // dispatch(getBalance(wallet.address))
-                //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
-
                 let result = [];
               } catch (e) {
-                console.log("--====000---",e)
+                console.log("--====000---", e)
                 alert("error", e);
                 setLoading(false);
                 setWalletVisible(false);
@@ -377,33 +364,39 @@ const ImportMultiCoinWalletModal = ({
                 setModalVisible(false);
               }
 
-              // setVisible(!visible)
               setWalletVisible(false);
               setVisible(false);
               setModalVisible(false);
               setLoading(false);
             }}
           >
-            <Text style={{ color: "white" }}>Import</Text>
+            
+            {loading ? (
+            <ActivityIndicator size="small" color="white" />
+          ): (<Text style={{ color: "white",fontSize:16 }}>Import</Text>)}
           </TouchableOpacity>
         </View>
-      </Modal>
-    </Animated.View>
+      </Animated.View>
+    </Modal>
   );
 };
 
 export default ImportMultiCoinWalletModal;
 
 const style = StyleSheet.create({
+  modal: {
+    justifyContent: "flex-end",
+    margin: 0,
+  },
+  overlay: {
+    justifyContent: "flex-end",
+  },
   Body: {
-    display: "flex",
-    backgroundColor: "white",
-    height: hp(75),
-    width: wp(97),
-    textAlign: "center",
-    borderRadius: hp(1),
+    width: wp(100),
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     alignSelf: "center",
-    marginTop: hp(5)
+    paddingHorizontal: 15,
   },
   welcomeText: {
     fontSize: 15,
@@ -436,15 +429,6 @@ const style = StyleSheet.create({
     fontWeight: "200",
     color: "white",
   },
-  input: {
-    height: hp("5%"),
-    marginBottom: hp("2"),
-    color: "black",
-    marginTop: hp("2"),
-    width: wp("85"),
-    paddingRight: wp("7"),
-    backgroundColor: "white",
-  },
 
   labelInputContainer: {
     position: "relative",
@@ -460,15 +444,6 @@ const style = StyleSheet.create({
     paddingLeft: wp(3),
     paddingVertical: hp(1.2),
     borderColor: "#DADADA",
-  },
-  label: {
-    position: "absolute",
-    zIndex: 100,
-    backgroundColor: "white",
-    paddingHorizontal: 5,
-    left: 12,
-    color: "#4CA6EA",
-    top: -12,
   },
   input: {
     height: hp("5%"),
@@ -488,35 +463,33 @@ const style = StyleSheet.create({
     alignSelf: "center",
     paddingHorizontal: wp(2),
   },
-  inputView: {
-    borderWidth: 1,
-    width: wp(90),
-    alignSelf: "center",
-    padding: 10,
-    marginTop: hp(3),
-    borderRadius: hp(1),
-    borderColor: "#DADADA",
-  },
   text: {
     marginHorizontal: wp(6),
     marginTop: hp(5),
     color: "gray",
   },
   btn: {
-    backgroundColor: "#4CA6EA",
+    backgroundColor: "#5B65E1",
     paddingVertical: hp(1.6),
-    width: wp(90),
+    width: wp(95),
     alignSelf: "center",
     borderRadius: hp(1),
     alignItems: "center",
+    justifyContent:"center",
+    marginBottom:15
   },
-  paste: { textAlign: "right", color: "#4CA6EA" },
+  paste: {
+    fontSize:15,
+    fontWeight:"500",
+    color: "#5B65E1"
+   },
   coinText: {
-    textAlign: "center",
-    marginTop: hp(1.5),
-    fontSize: 15,
-    fontWeight: "700",
-    color:"black"
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  coinSubText: {
+    fontSize: 13,
+    fontWeight: "400",
   },
   inputView: {
     borderWidth: 1,
@@ -527,17 +500,38 @@ const style = StyleSheet.create({
     borderRadius: hp(1),
     borderColor: "#DADADA",
   },
-  input: {
-    height: hp("5%"),
-    marginBottom: hp("2"),
-    color: "black",
-    marginTop: hp("2"),
-    width: wp("90"),
-    paddingRight: wp("7"),
-    backgroundColor: "white",
-  },
   crossIcon: {
-    alignSelf: "flex-end",
-    padding: hp(1.5)
-  }
+    marginTop:hp(-4),
+    height: 31,
+    width: 30,
+    padding: 3,
+    borderRadius: 30
+  },
+  infoCard: {
+    marginVertical: 15,
+    backgroundColor: "#FEF6D8",
+    borderRadius: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  card: {
+    borderRadius: 16,
+    padding: wp(3),
+    marginBottom: hp(1.5)
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: hp(1.5),
+    letterSpacing: 0.3,
+    paddingVertical:1.5
+  },
+  inputContainer: {
+    alignItems: "flex-start",
+    borderRadius: 12,
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(1),
+  },
 });

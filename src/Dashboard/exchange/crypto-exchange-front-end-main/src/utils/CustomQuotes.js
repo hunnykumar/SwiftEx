@@ -38,8 +38,9 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 import { swap_prepare } from '../../../../../../All_bridge';
 import { getTokenBalancesUsingAddress, getWalletBalance } from './getWalletInfo/EtherWalletService';
 import CustomInfoProvider from '../components/CustomInfoProvider';
+import { convertMultiple } from './UsdPriceHandler';
 export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationToken,hideQuote,typeProvider,feetype }) => {
-
+  const [viewUSDFee, setViewUSDFee] = useState(false);
   const styles = StyleSheet.create({
     quoteTextCon: {
       flexDirection: "row",
@@ -89,6 +90,13 @@ export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationTo
 
   if (!quoteInfo && !loading) return null;
 
+  const feeData =
+  feetype === "native"
+    ? quoteInfo?.fee?.native
+    : quoteInfo?.fee?.stablecoin;
+
+  const manageFee = () => setViewUSDFee((prev) => !prev);
+
   return (
     <View style={{ padding: 1 }}>
       {quoteInfo !== null && (
@@ -120,15 +128,19 @@ export const QuotesComponent = ({ quoteInfo, loading, sourceToken, destinationTo
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <Text style={styles.quoteValue}>{quoteInfo.minimumAmountOut}</Text>
               </ScrollView>
-              <Text style={styles.quoteValue}>{destinationToken}</Text>
+              <Text style={styles.quoteValue}>{" "+destinationToken}</Text>
             </View>
           </View>
           {feetype&&<>
             <View style={styles.quoteRow}>
             <Text style={styles.quoteLabel}>Fee</Text>
-            <Text style={styles.quoteValue}>
-              {feetype==="native"?quoteInfo?.fee?.native?.amount +" "+quoteInfo?.fee?.native?.symbol : quoteInfo?.fee?.stablecoin?.amount+" "+quoteInfo?.fee?.stablecoin?.symbol}
-            </Text>
+            <TouchableOpacity onPress={manageFee}>
+                <Text style={styles.quoteValue}>
+                  {viewUSDFee
+                    ? feeData?.formattedUSD || `$${feeData?.usdValue?.toFixed(2)}`
+                    : `${feeData?.amount} ${feeData?.symbol}`}
+                </Text>
+              </TouchableOpacity>
           </View>
           <View style={styles.quoteRow}>
             <Text style={styles.quoteLabel}>Time</Text>
@@ -603,11 +615,25 @@ export const CustomQuotes = ({
 
     fetch(REACT_PROXY_HOST+`/v1/bridge/swap-quotes`, requestOptions)
       .then((response) => response.json())
-      .then((result) => {
+      .then(async(result) => {
         console.log("---err->",result)
         if (result?.quotes) {
-          setusdcRes(result?.quotes),
-            setusdcResLoading(false)
+          const respo = await convertMultiple([
+            { token: result?.quotes?.fee?.native?.symbol, amount: result?.quotes?.fee?.native?.amount },
+            { token: result?.quotes?.fee?.stablecoin?.symbol, amount: result?.quotes?.fee?.stablecoin?.amount }
+          ]);
+          const mergedQuotes = { ...result?.quotes };
+          for (const item of respo) {
+            if (item.success) {
+              if (item.token === mergedQuotes.fee.native.symbol) {
+                mergedQuotes.fee.native = { ...mergedQuotes.fee.native, ...item };
+              } else if (item.token === mergedQuotes.fee.stablecoin.symbol) {
+                mergedQuotes.fee.stablecoin = { ...mergedQuotes.fee.stablecoin, ...item };
+              }
+            }
+          }
+          setusdcRes(mergedQuotes);
+          setusdcResLoading(false);
         }
         else {
           setusdcResLoading(false)
@@ -751,13 +777,26 @@ export const CustomQuotes = ({
   }
 
   const theme = {
-    background: '#1E1E1E',
+    background: '#080a0a',
     text: '#FFFFFF',
     secondaryText: '#AAAAAA',
     accentColor: '#4F8EF7',
     accentBackground: '#2C3E50',
     handleColor: '#555555',
-    backdropColor: 'rgba(0, 0, 0, 0.7)'
+    backdropColor: 'rgba(0, 0, 0, 0.7)',
+    textInputBackground: '#111111',
+    textInputColor:"#fff"
+  };
+  const lightTheme = {
+    background: '#fff',
+    text: 'black',
+    secondaryText: '#AAAAAA',
+    accentColor: '#4F8EF7',
+    accentBackground: '#2C3E50',
+    handleColor: '#555555',
+    backdropColor: 'rgba(0, 0, 0, 0.7)',
+    textInputBackground: '#fff',
+    textInputColor:"black"
   };
 
 
@@ -876,12 +915,12 @@ export const CustomQuotes = ({
           name="fire-circle"
           type="materialCommunity"
           size={20}
-          color={isSelected ? "#2164C1" : "#fff"}
+          color={isSelected ? "#2164C1" : state.THEME.THEME===false?"black":"#fff"}
         />
         <Text
           style={[
             styles.payBtnLabel,
-            { color: isSelected ? "#2164C1" : "#fff" }
+            { color: isSelected ? "#2164C1" : state.THEME.THEME===false?"black":"#fff" }
           ]}
         >
           {label}
@@ -900,7 +939,7 @@ export const CustomQuotes = ({
       <View style={styles.modalOverlay}>
         {/* Prevent touch events from closing when touching the modal content */}
        <TouchableWithoutFeedback>
-          <View style={styles.modalContainer}>
+          <View style={[styles.modalContainer,{backgroundColor:state.THEME.THEME===false?lightTheme.background:theme.background}]}>
             {/* Drag handle */}
             <View style={styles.dragHandle} />
 
@@ -913,7 +952,7 @@ export const CustomQuotes = ({
                 <MaterialCommunityIcons
                   name={'close-circle-outline'}
                   size={33}
-                  color={"white"}
+                  color={state.THEME.THEME===false?"black":"white"}
                 />
             </TouchableOpacity>}
 
@@ -930,7 +969,7 @@ export const CustomQuotes = ({
                        <Ionicons name="warning-outline" size={40} color={theme.accentColor} />
                        </View>
                        
-                       <Text style={[styles.title, { color: theme.text }]}>
+                       <Text style={[styles.title, { color: state.THEME.THEME===false?lightTheme.text:theme.text }]}>
                        Activate and Trust USDC
                        </Text>
                        
@@ -973,7 +1012,7 @@ export const CustomQuotes = ({
              <TouchableOpacity 
                style={[styles.activateButton,{backgroundColor:Loading?"gray":"#4F8EF7"}]}
                disabled={Loading}
-               onPress={()=>{changeTrust("USDC","GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID")}}
+               onPress={()=>{changeTrust("USDC","GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN")}}
              >
                {Loading?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={styles.buttonText}>Trust Now!</Text>}
              </TouchableOpacity>
@@ -989,11 +1028,11 @@ export const CustomQuotes = ({
              </TouchableOpacity>
            </View>:
                 <>
-                <Text style={styles.quoteTitle}>How much {tokenName==="WETH"?"USDT":tokenName} you want on trade wallet?</Text>
+                <Text style={[styles.quoteTitle,{color:state.THEME.THEME===false?lightTheme.text:theme.text}]}>How much {tokenName==="WETH"?"ETH":tokenName} you want on trade wallet as USDC ?</Text>
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Enter Amount</Text>
+                <Text style={[styles.inputLabel,{color:state.THEME.THEME===false?lightTheme.text:theme.text}]}>Enter Amount</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input,{backgroundColor:state.THEME.THEME===false?lightTheme.textInputBackground:theme.textInputBackground,color:state.THEME.THEME===false?lightTheme.textInputColor:theme.textInputColor}]}
                   placeholder="Enter swap amount"
                   placeholderTextColor={'#666666'}
                   keyboardType="numeric"
@@ -1002,10 +1041,10 @@ export const CustomQuotes = ({
                 />
                 <Text style={{ color: "red" }}>{messageError}</Text>
               </View>
-              <View style={styles.feeCon}>
+              <View style={[styles.feeCon,{backgroundColor:state.THEME.THEME===false?lightTheme.textInputBackground:theme.textInputBackground}]}>
                 <View style={[styles.feeIconCon,{marginTop:6}]}>
-                   <Icon name={"fire-circle"} type={"materialCommunity"} size={21} color={"#fff"} />
-                   <Text style={[styles.inputLabel,{fontSize:15}]}> Relayer fee</Text>
+                   <Icon name={"fire-circle"} type={"materialCommunity"} size={21} color={state.THEME.THEME===false?"black":"#fff"} />
+                   <Text style={[styles.inputLabel,{fontSize:15,color:state.THEME.THEME===false?lightTheme.textInputColor:theme.textInputColor}]}> Relayer fee</Text>
                 </View>
                 <View style={styles.payCon}>
                 <GasPayOption type="native" label="Native" selected={feePayType} onPress={setfeePayType} />

@@ -165,7 +165,6 @@ const ExchangeDetailsSubmittion = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#011434" barStyle="light-content" />
       
       {/* Header with Skip button */}
       <View style={styles.header}>

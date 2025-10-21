@@ -132,7 +132,7 @@ const ImportOtherWallets = (props) => {
           <TouchableOpacity
             style={
               label == "privateKey"
-                ? { ...style.tabBtns, borderColor: "#4CA6EA" }
+                ? { ...style.tabBtns, borderColor: "#5B65E1" }
                 : style.tabBtns
             }
             color={label == "privateKey" ? "green" : "grey"}
@@ -144,7 +144,7 @@ const ImportOtherWallets = (props) => {
               }
             }}
           >
-            <Text style={{ color: label == "privateKey" ? "#4CA6EA" : "grey" }}>
+            <Text style={{ color: "black" }}>
               PrivateKey
             </Text>
           </TouchableOpacity>
@@ -152,7 +152,7 @@ const ImportOtherWallets = (props) => {
           <TouchableOpacity
             style={
               label == "mnemonic"
-                ? { ...style.tabBtns, borderColor: "#4CA6EA" }
+                ? { ...style.tabBtns, borderColor: "#5B65E1" }
                 : style.tabBtns
             } // color={label == "mnemonic" ? "green" : "grey"}
             onPress={() => {
@@ -163,7 +163,7 @@ const ImportOtherWallets = (props) => {
               }
             }}
           >
-            <Text style={{ color: label == "mnemonic" ? "#4CA6EA" : "grey" }}>
+            <Text style={{ color: "black" }}>
               Mnemonic
             </Text>
           </TouchableOpacity>
@@ -171,7 +171,7 @@ const ImportOtherWallets = (props) => {
           <TouchableOpacity
             style={
               label == "JSON"
-                ? { ...style.tabBtns, borderColor: "#4CA6EA" }
+                ? { ...style.tabBtns, borderColor: "#5B65E1" }
                 : style.tabBtns
             }
             // color={label == "JSON" ? "green" : "grey"}
@@ -183,28 +183,28 @@ const ImportOtherWallets = (props) => {
               }
             }}
           >
-            <Text style={{ color: label == "JSON" ? "#4CA6EA" : "grey" }}>
+            <Text style={{ color:"black" }}>
               JSON key
             </Text>
           </TouchableOpacity>
         </View>
 
         <View style={style.labelInputContainer}>
-          <Text style={style.label}>Name</Text>
-          <TextInput
-            value={accountName}
-            maxLength={20}
-            onChangeText={(text) => {
-              handleUsernameChange(text)
-            }}
-            style={{ width: wp("78%"),color:"black" }}
-            placeholder={accountName ? accountName : "Wallet 1"}
-            placeholderTextColor={"gray"}
-          />
-        </View>
+                 <Text style={style.label}>Name</Text>
+                 <TextInput
+                   value={accountName}
+                   maxLength={20}
+                   onChangeText={(text) => {handleUsernameChange(text)}}
+                   style={{ width: wp("78%"),color:"black",marginLeft:8,backgroundColor:"#fff",borderRadius:10,marginTop:10,paddingLeft:10,fontSize:16,marginBottom:8 }}
+                   placeholder={accountName?accountName: "Wallet"}
+                   placeholderTextColor={"gray"}
+                 />
+               </View>
 
         <View style={style.inputView}>
-          <TouchableOpacity onPress={async ()=>{
+          <View style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center",marginTop:20}}>
+          <Text style={{color:"#4CA6EA"}}>Phrase</Text>       
+          <TouchableOpacity style={style.pasteCon} onPress={async ()=>{
            // setText('abc')
            setDisable(false)
             if (label === "privateKey") {
@@ -237,9 +237,9 @@ const ImportOtherWallets = (props) => {
           }}>
           <Text style={style.paste}>Paste</Text>
           </TouchableOpacity>
-          <Text style={{color:"#4CA6EA"}}>Phrase</Text>
+          </View>
           <TextInput
-            style={[style.input,{color:"black"}]}
+            style={[style.input,{color:"black",fontSize:16}]}
             value={text}
             onChangeText={(text) => {
               if (label === "privateKey") {
@@ -501,7 +501,7 @@ const ImportOtherWallets = (props) => {
               }
           }}
         >
-          <Text style={{ color: "white" }}>Import</Text>
+          <Text style={{ color: "white",fontSize:18 }}>Import</Text>
         </TouchableOpacity>
       </View>
     </Animated.View>
@@ -535,7 +535,6 @@ const style = StyleSheet.create({
     justifyContent: "space-between",
     width: wp(85),
     marginTop: hp(3),
-    marginBottom: hp(3),
     alignSelf: "center",
   },
   tinyLogo: {
@@ -549,15 +548,6 @@ const style = StyleSheet.create({
     fontSize: 15,
     fontWeight: "200",
     color: "white",
-  },
-  input: {
-    height: hp("5%"),
-    marginBottom: hp("2"),
-    color: "black",
-    marginTop: hp("2"),
-    width: wp("90"),
-    paddingRight: wp("7"),
-    backgroundColor: "white",
   },
   textInput: {
     borderWidth: 1,
@@ -594,56 +584,65 @@ const style = StyleSheet.create({
     elevation: 24,
   },
   labelInputContainer: {
-    position: "relative",
     width: wp(90),
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "flex-start",
     alignSelf: "center",
     marginTop: hp(3),
     borderRadius: wp(2),
-    backgroundColor: "white",
-    borderWidth: 1,
+    backgroundColor: "#F4F4F8",
     paddingLeft: wp(3),
-    paddingVertical: hp(1.2),
-    borderColor: "#DADADA",
+    paddingVertical: hp(2),
   },
   label: {
-    position: "absolute",
-    zIndex: 100,
-    backgroundColor: "white",
-    paddingHorizontal: 5,
-    left: 12,
-    color: "#4CA6EA",
-    top: -12,
+    left: 10,
+    color: "gray",
+    fontSize:16
   },
-  inputView: {
-    borderWidth: 1,
+  inputView:{
+    backgroundColor:"#F4F4F8",
     width: wp(90),
     alignSelf: "center",
-    padding: 10,
+    paddingHorizontal:wp(5),
     marginTop: hp(3),
     borderRadius: hp(1),
-    borderColor: "#DADADA",
   },
-  input: { paddingVertical: hp(4) },
-  paste: { textAlign: "right", color: "#4CA6EA" },
+  input:{
+    marginVertical:hp(2),
+    paddingVertical: hp(1),
+    backgroundColor:"#fff",
+    borderRadius:10,
+    paddingLeft:10
+  },
+  pasteCon:{
+    paddingVertical:5,
+    paddingHorizontal:10,
+    backgroundColor:"#5B65E1",
+    borderRadius:10
+  },
+  paste:{ 
+    fontSize:16,
+    color:"#FFF"
+  },
   btn: {
-    backgroundColor: "#4CA6EA",
-    paddingVertical: hp(1.6),
+    backgroundColor: "#5B65E1",
+    paddingVertical: hp(1.9),
     width: wp(90),
     alignSelf: "center",
     borderRadius: hp(1),
     alignItems: "center",
   },
   jsonInput: {
-    borderWidth: StyleSheet.hairlineWidth * 1,
+    fontSize:16,
     marginTop: hp(3),
     width: wp(90),
     borderRadius: hp(1),
     paddingVertical: hp(1.6),
     alignSelf: "center",
     paddingHorizontal: wp(2),
+    paddingLeft:30,
+    backgroundColor:"#F4F4F8"
   },
   tabBtns: {
     borderBottomWidth: 1,

@@ -8,10 +8,9 @@ import {
   TouchableOpacity,
   ScrollView,
   RefreshControl,
-  ActivityIndicator,
-  Image,StatusBar
+  Image,StatusBar,
+  FlatList
 } from "react-native";
-import { urls } from "./constants";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -102,16 +101,15 @@ const Market = (props) => {
 
 
   return (
-    <View style={{ backgroundColor: state.THEME.THEME===false?"#fff":"black" }}>
+    <View style={{ backgroundColor: state.THEME.THEME===false?"#fff":"#1B1B1C" }}>
     <Wallet_screen_header elementestID={"market_back"} title="Market" onLeftIconPress={() => navigation.goBack()} />
-    {Platform.OS === 'ios' &&  <StatusBar hidden={true} />}
       <View style={{ height: hp(100) }}>
-        <View style={[Styles.searchContainer,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616",borderColor:"rgba(255, 255, 255, 0.2)"}]}>
+        <View style={[Styles.searchContainer,{backgroundColor:state.THEME.THEME===false?"#F4F4F8":"#242426",borderColor:"rgba(255, 255, 255, 0.2)"}]}>
           <Icon name="search1" type="antDesign" size={25} color={state.THEME.THEME===false?"black":"gray"} />
           <TextInput
-            placeholder="Search Crypto"
+            placeholder="search your coin"
             placeholderTextColor={"gray"}
-            style={[Styles.input,{width:wp(80),fontSize:18,color:state.THEME.THEME===false?"black":"#fff"}]}
+            style={[Styles.input,{width:wp(80),fontSize:18,color:state.THEME.THEME===false?"black":"#ebebeb"}]}
             onChangeText={(input) => {
               setSearchItem(input)
               let UpdatedData = []
@@ -128,86 +126,118 @@ const Market = (props) => {
             }}
           />
         </View>
-        {/* <View style={Styles.iconwithTextContainer1}> */}
-          {/* <Text style={{ color: "gray" }}>New DApps</Text> */}
-          {/* <Icon
-            name={"arrowright"}
-            type={"antDesign"}
-            size={hp(3)}
-            color={"gray"}
-          /> */}
-        {/* </View> */}
-        {Load_new_data?<Wallet_market_loading/>:
-        <View style={{height:hp(75),paddingBottom: hp(5)}}>
-        <ScrollView
-          alwaysBounceVertical={true}
-          contentContainerStyle={{ marginBottom: hp(2) }}
-          refreshControl={
-            <RefreshControl tintColor={"#4CA6EA"} refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-          {data.length>0 ? (
-            data.map((item,index) => {
-              const image = item.image;
-              const color = item.priceChange24h > 0 ? "green" : "red";
-              let data = item
-              return (
-                  <View key={index}>
-                <ScrollView>
-                  <TouchableOpacity
-                    style={[Styles.Container,{backgroundColor:state.THEME.THEME===false?"rgba(244, 244, 244, 1)":"#171616"}]}
-                    key={item.id}
-                    onPress={() => {
-                      props.navigation.navigate("CoinDetails", { data: data });
-                    }}
-                  >
-                      <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <View style={[Styles.imgCon,{backgroundColor: state.THEME.THEME === false ?"#F2F0EF":"#23262F1A"}]}>
-                          <Image source={{ uri: image }} style={Styles.img} />
-                        </View>
-                        <View style={Styles.flatContainerText}>
-                          <Text style={{ color: state.THEME.THEME === false ? "black" : "#fff" }}>{item.name}</Text>
-                          <Text style={{ color: "gray", fontSize: 12, marginTop: hp(0.4) }}>{item?.symbol?.toUpperCase()}</Text>
-                        </View>
-                      </View>
-                      <View style={Styles.flatContainerPrice}>
-                      <Text style={{color:state.THEME.THEME===false?"black":"#fff"}}>{`$ ${item.currentPrice ? item.currentPrice.toFixed(2) : "0"
-                        }`}</Text>
-                        <View style={{flexDirection:"row",alignItems:"center"}}>
-                          {/* Number.isSafeInteger(item.priceChangePercentage24h) */}
-                          <Icon name={Number.isSafeInteger(item.priceChangePercentage24h)?"menu-down":"menu-down"} type="materialCommunity" size={20} color={Number.isSafeInteger(item.priceChangePercentage24h)?"green":"red"} />
-<Text style={{color:Number.isSafeInteger(item.priceChangePercentage24h)?"green":"red",fontSize:13}}>{`${item.priceChangePercentage24h
-                          ? item.priceChangePercentage24h.toFixed(3)
-                          : "0"
-                        }%`}</Text>
-                        </View>
-                        </View>
-                  </TouchableOpacity>
-                </ScrollView>
-                  </View>
-              );
-            })
-          ) : (
-            <View>
-                <Image source={monkey} style={Styles.monkey_img}/>
-                <Text style={{color:state.THEME.THEME===false?"black":"#fff",alignSelf:"center",fontSize:18,marginTop:hp(2)}}>No results found.</Text>
+
+        {Load_new_data ? (
+  <Wallet_market_loading />
+) : (
+  <View style={{ height: hp(75), paddingBottom: hp(5) }}>
+    <FlatList
+      data={data}
+      keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+      contentContainerStyle={{ marginBottom: hp(2) }}
+      refreshControl={
+        <RefreshControl
+          tintColor={"#4CA6EA"}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      }
+      ListEmptyComponent={() => (
+        <View>
+          <Image source={monkey} style={Styles.noItemImg} />
+          <Text
+            style={{
+              color: state.THEME.THEME === false ? "black" : "#fff",
+              alignSelf: "center",
+              fontSize: 18,
+              marginTop: hp(2),
+            }}
+          >
+            No results found.
+          </Text>
+        </View>
+      )}
+      renderItem={({ item, index }) => {
+        const image = item.image;
+        const color = item.priceChange24h > 0 ? "green" : "red";
+        const backgroundColor =
+          state.THEME.THEME === false ? "#F4F4F8" : "#242426";
+        const imgBgColor =
+          state.THEME.THEME === false ? "#fff" : "#23262F1A";
+
+        return (
+          <TouchableOpacity
+            style={[Styles.container, { backgroundColor }]}
+            onPress={() => {
+              props.navigation.navigate("CoinDetails", { data: item });
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={[Styles.imgCon, { backgroundColor: imgBgColor }]}>
+                <Image source={{ uri: image }} style={Styles.img} />
+              </View>
+              <View style={Styles.flatContainerText}>
+                <Text style={{ fontSize:16,fontWeight:"500",color: state.THEME.THEME === false ? "black" : "#fff" }}>
+                  {item.name}
+                </Text>
+                <Text
+                  style={{
+                    color: "gray",
+                    fontSize: 14,
+                    marginTop: hp(0.2),
+                  }}
+                >
+                  {item?.symbol?.toUpperCase()}
+                </Text>
+              </View>
             </View>
-          )}
-        </ScrollView>
-        </View>}
+
+            <View style={Styles.flatContainerPrice}>
+              <Text
+                style={{
+                  color: state.THEME.THEME === false ? "black" : "#fff",
+                  fontSize:16,
+                  fontWeight:"500"
+                }}
+              >
+                {`$ ${item.currentPrice ? item.currentPrice.toFixed(2) : "0"}`}
+              </Text>
+
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Icon
+                  name={item.priceChangePercentage24h >= 0 ?"menu-up":"menu-down"||"menu-down"}
+                  type="materialCommunity"
+                  size={20}
+                  color={
+                    item.priceChangePercentage24h >= 0 ? "green" : "red"
+                  }
+                />
+                <Text
+                  style={{
+                    color: item.priceChangePercentage24h >= 0 ? "green" : "red",
+                    fontSize: 13,
+                  }}
+                >
+                  {`${item.priceChangePercentage24h
+                    ? item.priceChangePercentage24h.toFixed(3)
+                    : "0"
+                  }%`}
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        );
+      }}
+    />
+  </View>
+)}
+
       </View>
     </View>
   );
 };
 const Styles = StyleSheet.create({
-  iconwithTextContainer1: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: hp(48),
-    alignSelf: "center",
-    padding: hp(2),
-  },
-  Container: {
+  container: {
     width: wp(90),
     paddingHorizontal: wp(2),
     paddingVertical:hp(1),
@@ -216,8 +246,8 @@ const Styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent:"space-between",
-    borderRadius:10,
-    borderColor:"rgba(255, 255, 255, 0.2)"
+    borderRadius:15,
+    borderColor:"rgba(255, 255, 255, 0.2)",
   },
   flatContainerText: {
     marginHorizontal: wp(2),
@@ -226,8 +256,8 @@ const Styles = StyleSheet.create({
     alignItems:"flex-end"
   },
   img: {
-    height: hp(5),
-    width: wp(11),
+    height: hp(5.1),
+    width: wp(10.5),
   },
   imgCon: {
     height: hp(6),
@@ -236,7 +266,7 @@ const Styles = StyleSheet.create({
     alignItems:"center",
     borderRadius:10
   },
-  monkey_img:{
+  noItemImg:{
     width:hp(20),
     height:hp(20),
     alignSelf:"center",
@@ -248,7 +278,7 @@ const Styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth * 1,
     alignItems: "center",
     paddingLeft: wp(3),
-    borderRadius: wp(7),
+    borderRadius: wp(4),
     alignSelf: "center",
     marginTop: hp(2),
     paddingVertical: hp(1),
@@ -257,9 +287,6 @@ const Styles = StyleSheet.create({
   input: {
     marginHorizontal: hp(1.5),
     padding: hp(0.6),
-  },
-  textWidth: {
-    width: "45%",
   },
 });
 export default Market;

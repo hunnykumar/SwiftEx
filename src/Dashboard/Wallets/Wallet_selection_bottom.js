@@ -276,7 +276,7 @@ const Wallet_selection_bottom = ({ onClose }) => {
   }, []);
 
   return (
-    <ScrollView contentContainerStyle={[style.body,{backgroundColor: state.THEME.THEME===false?"#fff":"black"}]}>
+    <ScrollView contentContainerStyle={[style.body,{backgroundColor: state.THEME.THEME===false?"#F4F4F8":"#242426"}]}>
       {Wallets[0] ? (
         Wallets[0].map((item,index) => {
           if (item.walletType === "BSC") {
@@ -297,7 +297,7 @@ const Wallet_selection_bottom = ({ onClose }) => {
             <View key={index}>
               <TouchableOpacity
                 key={item.name}
-                style={style.Box}
+                style={[style.Box,{backgroundColor:item.name===state.wallet.name?"#5B65E1":state.THEME.THEME?"#1B1B1C":"#FFFFFF"}]}
                 onPress={() => {
                   // props.navigation.navigate('Import Multi-Coin Wallet')
                   if (item.walletType) {
@@ -436,16 +436,11 @@ const Wallet_selection_bottom = ({ onClose }) => {
                     flexDirection: "row",
                     alignItems: "center"
                   }}>
-                  <View style={{backgroundColor:"green",padding:wp(1),marginRight:wp(2),borderRadius:8}}>
-                 <Text style={{color:"#fff",fontSize:17 }}>
-                    Active
-                  </Text>
-                 </View>
                   <Icon
                     name="check-decagram"
                     type={"materialCommunity"}
                     size={hp(3)}
-                    color="green"
+                    color="#5FC88F"
                   />
                   </View>}
                 </View>
@@ -484,10 +479,11 @@ const style = StyleSheet.create({
     color: "white",
   },
   Box: {
-    marginHorizontal: wp(0),
-    borderBottomWidth: StyleSheet.hairlineWidth * 1,
+    marginHorizontal: wp(3),
     padding: 10,
     borderColor: "#D7D7D7",
+    marginVertical:5,
+    borderRadius:19
   },
   img: {
     height: hp(4.5),

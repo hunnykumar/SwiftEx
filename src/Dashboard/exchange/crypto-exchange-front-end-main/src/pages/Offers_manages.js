@@ -68,6 +68,29 @@ const Offers_manages = () => {
     fetchOffers();
   }, [isFocused]);
 
+  const colors = {
+    light: {
+      bg: "#FFFFFF",
+      cardBg: "#F4F4F8",
+      headingTx: "#272729",
+      smallCardBg: "#FFFFFF",
+      smallCardBorderColor: "#5E5C5C66",
+      cardSubTx: "#272729",
+      inactiveTx: "#AAAAAA"
+    },
+    dark: {
+      bg: "#1B1B1C",
+      cardBg: "#242426",
+      headingTx: "#E6E8EB",
+      smallCardBg: "#1B1B1C",
+      smallCardBorderColor: "#AAAAAA66",
+      cardSubTx: "#E6E8EB",
+      inactiveTx: "#AAAAAA"
+    },
+  };
+
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
+
 
   const fetchAvilableBalance=async(asset,coinName,assetIssuer)=>{
     if(asset==="native")
@@ -281,44 +304,51 @@ const Offers_manages = () => {
   
 
   const renderItem = ({ item,index }) => (
-    <View style={styles.offerItem}>
+    <View style={[styles.offerItem, { backgroundColor: theme.cardBg }]}>
       <View style={styles.offer_id_con}>
-        <Text style={[styles.offerText,{color:"#94A3B8"}]}>Offer ID: {item.id}</Text>
-        <View style={styles.active_text}>
-          <Text style={[styles.offerText, { color: "#2DAA20" }]}>Active</Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={[styles.offerText, { color: theme.headingTx }]}>Offer ID: {item.id}</Text>
+          <View style={styles.active_text}>
+            <Text style={[styles.offerText, { color: "#fff", fontSize: 13 }]}>Active</Text>
+          </View>
+        </View>
+        <View style={styles.buttonContainer}>
+          {loading_edi && SelectedIndex === index ? <ActivityIndicator color={"green"} size={"small"} /> :
+            <TouchableOpacity style={{ marginRight: 15 }} disabled={loading_del} onPress={() => handleEdit(item, index)}>
+              <Icon name={"edit"} type={"antDesign"} size={25} color={"#AA2022"} />
+            </TouchableOpacity>}
+          {loading_del && SelectedIndex === index ? <ActivityIndicator color={"green"} size={"small"} /> :
+            <TouchableOpacity disabled={loading_edi} onPress={() => handleDelete(item, index)}>
+              <Icon name={"delete"} type={"antDesign"} size={25} color={"#40BF6A"} />
+            </TouchableOpacity>}
         </View>
       </View>
-      <View style={styles.container_sub}>
-      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Asset Selling :</Text>
-      <Text style={styles.offerText}>{item?.selling?.asset_type==="native"?"XLM":item.selling?.asset_code}</Text>
-      </View>
-      <View style={styles.container_sub}>
-      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Asset Buying :</Text>
-      <Text style={styles.offerText}>{item?.buying?.asset_type==="native"?"XLM":item.buying?.asset_code}</Text>
-      </View>
-      <View style={styles.container_sub}>
-      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Amount :</Text>
-      <Text style={styles.offerText}>{Number(item.amount).toFixed(5)}</Text>
-      </View>
-      <View style={styles.container_sub}>
-      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Price :</Text>
-      <Text style={styles.offerText}>{Number(item.price).toFixed(5)}</Text>
-      </View>
-      <View style={styles.buttonContainer}>
-      {loading_edi&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
-        <TouchableOpacity style={[styles.buttonView,{backgroundColor:"#2164C1",marginRight:10}]} disabled={loading_del} onPress={() => handleEdit(item,index)}><Text style={{color:"#fff",fontSize:15}}>Edit</Text></TouchableOpacity> }
-        {loading_del&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
-        <TouchableOpacity style={[styles.buttonView,{backgroundColor:"rgba(254, 32, 36, 0.16)"}]} disabled={loading_edi} onPress={() => handleDelete(item,index)}><Text style={{color:"rgb(254, 32, 36)",fontSize:15}}>Delete</Text></TouchableOpacity>}
+      <View style={{flexDirection:"row",alignItems:"center",justifyContent:"center"}}>
+        <View style={styles.container_sub}>
+          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Selling Asset</Text>
+          <Text style={[styles.offerSubText, { color: theme.headingTx }]}>{item?.selling?.asset_type === "native" ? "XLM" : item.selling?.asset_code}</Text>
+        </View>
+        <View style={styles.container_sub}>
+          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Buying Asset</Text>
+          <Text style={[styles.offerSubText, { color: theme.headingTx }]}>{item?.buying?.asset_type === "native" ? "XLM" : item.buying?.asset_code}</Text>
+        </View>
+        <View style={styles.container_sub}>
+          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Amount</Text>
+          <Text style={[styles.offerSubText, { color: theme.headingTx }]}>{Number(item.amount).toFixed(5)}</Text>
+        </View>
+        <View style={styles.container_sub}>
+          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Price</Text>
+          <Text style={[styles.offerSubText, { color: theme.headingTx }]}>{Number(item.price).toFixed(5)}</Text>
+        </View>
+
       </View>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Active Offers</Text>
-    
+    <View style={[styles.container,{backgroundColor:theme.bg}]}>
       {loading ? (
-        <ActivityIndicator color={"gray"} size={"large"}/>
+        <ActivityIndicator color={"#4052D6"} size={"large"}/>
       ) : (
         offers.length>0?<FlatList
           data={offers}
@@ -327,7 +357,7 @@ const Offers_manages = () => {
           style={styles.offerList}
         />:
         <View style={styles.error_cont}>
-          <Text style={styles.error_text}>No Active Offers</Text>
+          <Text style={[styles.error_text,{color:theme.inactiveTx}]}>No Active Offers</Text>
         </View>
       )}
 
@@ -406,22 +436,17 @@ const styles = StyleSheet.create({
     color:"black"
   },
   offerItem: {
-    backgroundColor: 'rgba(13, 30, 59, 0.8)',
     borderRadius: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-    elevation: 3,
+    marginBottom: 15
   },
   offerText: {
-    fontSize: 16,
-    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight:"500"
+  },
+  offerSubText: {
+    fontSize: 13,
+    fontWeight:"500",
+    textAlign:"left"
   },
   offerList: {
     marginTop: 10,
@@ -449,17 +474,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 10,
-    borderTopColor:"#fff",
-    borderWidth:0.5,
-    borderLeftColor:'rgba(13, 30, 59, 0.8)',
-    borderRightColor:'rgba(13, 30, 59, 0.8)',
-    borderBottomColor:'rgba(13, 30, 59, 0.8)',
-    borderBottomLeftRadius:15,
-    borderBottomRightRadius:15,
     paddingHorizontal:10,
-    paddingVertical:9
   },
   buttonView:{
     alignContent:"center",
@@ -481,23 +496,29 @@ const styles = StyleSheet.create({
   },
   container_sub:{
     justifyContent:"space-between",
-    flexDirection:"row",
-    marginBottom:5,
-    paddingHorizontal: 15,
+    flexDirection:"column",
+    alignItems:"center",
+    paddingHorizontal: 12,
+    paddingTop:5,
+    paddingBottom:15
   },
   offer_id_con:{
     justifyContent:"space-between",
     flexDirection:"row",
-    paddingVertical:21,
-    paddingBottom:10,
+    paddingVertical:14,
     paddingHorizontal: 15,
+    borderBottomColor:"gray",
+    borderBottomWidth:0.5,
+    marginBottom:8
   },
   active_text:{
-    backgroundColor:"#2DAA2033",
-    paddingHorizontal:16,
+    backgroundColor:"#1D5F33",
+    paddingHorizontal:wp(2),
+    paddingVertical:hp(0.4),
     alignItems:"center",
     justifyContent:"center",
-    borderRadius:10
+    borderRadius:8,
+    marginLeft:4
   },
   update_btn:{
     alignSelf:"center",

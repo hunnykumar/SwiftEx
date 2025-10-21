@@ -180,77 +180,75 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
 };
 
 
-// const storeData_marge = async (publicKey,secretKey,Ether_address) => {
-//   try {
-//     let userTransactions = [];
-//     const transactions = await AsyncStorageLib.getItem('myDataKey');
-//     if (transactions) {
-//       userTransactions = JSON.parse(transactions);
-//       if (!Array.isArray(userTransactions)) {
-//         userTransactions = [];
-//       }
-//     }
-//     const newTransaction = {
-//       Ether_address,
-//       publicKey,
-//       secretKey
-//     };
-//     userTransactions.push(newTransaction);
-//     await AsyncStorageLib.setItem('myDataKey', JSON.stringify(userTransactions));
-//     console.log('Updated userTransactions:', userTransactions);
-//     alert('success',"Account Imported.");
-//     setWalletVisible(false)
-//     setTimeout(()=>{
-//     navigation.navigate("Home")
-//     },2000)
-//   } catch (error) {
-//     console.error('Error saving payout:', error);
-//     throw error;
-//   }
-// };
-
   return (
     <Animated.View
       style={{ opacity: fadeAnim }}
     >
       <Modal
-        animationIn="slideInRight"
-        animationOut="slideOutRight"
-        animationInTiming={500}
-        animationOutTiming={650}
         isVisible={Visible}
-        useNativeDriver={true}
         onBackdropPress={() => setWalletVisible(false)}
-        onBackButtonPress={() => {
-          setWalletVisible(false);
-        }}
+        onBackButtonPress={() => setWalletVisible(false)}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        useNativeDriver
+        hideModalContentWhileAnimating
+        style={style.modal}
       >
-        <View style={style.Body}>
-          <Icon type={'entypo'} name='cross' color={'gray'} size={24} style={style.crossIcon} onPress={onCrossPress} />
-          <Text style={style.coinText}>Stellar wallet</Text>
-          <View style={style.inputView}>
+         <Animated.View style={[style.overlay]}>
+        <View style={[style.Body, { backgroundColor: state.THEME.THEME ? "#242426" : "#F4F4F8" }]}>
+        <View style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingTop: 30
+          }}>
+            <View style={{
+              paddingHorizontal: 10,
+              alignItems: "flex-start"
+            }}>
+              <Text style={[style.coinText, { color: state.THEME.THEME ? "#fff" : "black" }]}>Stellar Wallet</Text>
+              <Text style={[style.coinSubText, { color: state.THEME.THEME ? "#AAAAAA" : "black" }]}>Import your wallet using your secret recovery key.</Text>
+            </View>
+            <Icon type={'entypo'} name='cross' color={"black"} size={24} style={[style.crossIcon, { backgroundColor: "#FFFFFF" }]} onPress={onCrossPress} />
+          </View>
+
+          <View style={style.infoCard}>
+            <Icon type={'entypo'} name='info-with-circle' color={"#ECB742"} size={20} />
+            <Text style={[style.coinSubText, { color: "#ECB742", marginLeft: 5 }]}>Never share this phrase. Enter it here only to recover your wallet.</Text>
+          </View>
+
+    <View style={[style.card, { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C" }]}>
+          <View style={{flexDirection:"row",justifyContent:"space-between"}}>
+           <Text style={[style.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>Secret Key</Text>
             <TouchableOpacity
               onPress={async () => {
                 Paste(setsecretkey);
               }}
+              style={{flexDirection:"row"}}
             >
-              <Text style={style.paste}>Paste</Text>
+              <Icon type={'material'} name='content-copy' color={"#5B65E1"} size={19} />
+              <Text style={style.paste}> PASTE</Text>
             </TouchableOpacity>
-            <Text style={{color:"#4CA6EA"}}>Secret Key</Text>
+           </View>
+           <View style={[style.inputContainer, {
+                         backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426",
+                       }]}>
             <TextInput
               placeholder={"Enter your secret Key here"}
               placeholderTextColor={"gray"}
-              style={[style.input,{color:"black"}]}
+              style={{ color: state.THEME.THEME === false ?"black":"#fff" }}
               value={secretkey}
               onChangeText={(text) => {
                 setsecretkey(text)
               }}
             />
+            </View>
           </View>
-          <TouchableOpacity style={[style.btn,{backgroundColor:loadingAccount?"gray":"#4CA6EA"}]} disabled={loadingAccount} onPress={()=>{add_wallet()}}>
+          <TouchableOpacity style={[style.btn,{backgroundColor:loadingAccount?"gray":"#4052D6"}]} disabled={loadingAccount} onPress={()=>{add_wallet()}}>
             {loadingAccount?<ActivityIndicator color={"#4CA6EA"} size={"small"}/>:<Text style={{ color: "white" }}>Import</Text>}
           </TouchableOpacity>
         </View>
+        </Animated.View>
       </Modal>
     </Animated.View>
   );
@@ -259,15 +257,19 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
 export default ImportStellarModal;
 
 const style = StyleSheet.create({
+  modal: {
+    justifyContent: "flex-end",
+    margin: 0,
+  },
+  overlay: {
+    justifyContent: "flex-end",
+  },
   Body: {
-    display: "flex",
-    backgroundColor: "white",
-    height: hp(75),
-    width: wp(97),
-    textAlign: "center",
-    borderRadius: hp(1),
+    width: wp(100),
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     alignSelf: "center",
-    marginTop: hp(5)
+    paddingHorizontal: 15,
   },
   Button: {
     marginTop: hp(0),
@@ -286,33 +288,58 @@ const style = StyleSheet.create({
     backgroundColor: "white",
   },
   btn: {
-    backgroundColor: "#4CA6EA",
+    backgroundColor: "#4052D6",
     paddingVertical: hp(1.6),
     width: wp(90),
     alignSelf: "center",
     borderRadius: hp(1),
     alignItems: "center",
-    marginTop:hp(10)
+    marginVertical:hp(3)
   },
-  paste: { textAlign: "right", color: "#4CA6EA" },
-  coinText: {
-    textAlign: "center",
-    marginTop: hp(1.5),
-    fontSize: 15,
-    fontWeight: "700",
-    color:"black"
+  paste: {
+    fontSize:15,
+    fontWeight:"500",
+    color: "#5B65E1"
   },
-  inputView: {
-    borderWidth: 1,
-    width: wp(90),
-    alignSelf: "center",
-    padding: 10,
-    marginTop: hp(3),
-    borderRadius: hp(1),
-    borderColor: "#DADADA",
+ infoCard: {
+    marginVertical: 15,
+    backgroundColor: "#FEF6D8",
+    borderRadius: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    alignItems: "center"
   },
   crossIcon: {
-    alignSelf: "flex-end",
-    padding: hp(1.5)
-  }
+    marginTop:hp(-4),
+    height: 31,
+    width: 30,
+    padding: 3,
+    borderRadius: 30
+  },
+  coinText: {
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  coinSubText: {
+    fontSize: 13,
+    fontWeight: "400",
+  },
+  card: {
+    borderRadius: 16,
+    padding: wp(3),
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: hp(1.5),
+    letterSpacing: 0.3,
+    paddingVertical:1.5
+  },
+  inputContainer: {
+    alignItems: "flex-start",
+    borderRadius: 12,
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(0.5),
+  },
 });

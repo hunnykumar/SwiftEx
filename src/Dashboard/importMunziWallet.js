@@ -114,7 +114,7 @@ const ImportMunziWallet = (props) => {
             value={accountName}
             maxLength={20}
             onChangeText={(text) => {handleUsernameChange(text)}}
-            style={{ width: wp("78%"),color:"black" }}
+            style={{ width: wp("78%"),color:"black",marginLeft:8,backgroundColor:"#fff",borderRadius:10,marginTop:10,paddingLeft:10,fontSize:16,marginBottom:8 }}
             placeholder={accountName?accountName: "Wallet"}
             placeholderTextColor={"gray"}
           />
@@ -122,16 +122,18 @@ const ImportMunziWallet = (props) => {
         <View
           style={style.inputView}
         >
-          <TouchableOpacity onPress={async ()=>{
-           // setText('abc')
+          <View style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center",marginTop:20}}>
+          <Text style={style.label}>Phrase</Text>
+          <TouchableOpacity style={style.pasteCon} onPress={async ()=>{
               Paste(setMnemonic)
               setDisable(false)        
           }}>
           <Text style={style.paste}>Paste</Text>
           </TouchableOpacity>
-          <Text style={{color: "#4CA6EA"}}>Phrase</Text>
+          </View>
+
           <TextInput
-            style={[style.input,{color:"black"}]}
+            style={[style.input,{color:"black",fontSize:16}]}
             value={mnemonic}
             placeholder="Please enter your mnemonic phrase here"
             placeholderTextColor={"gray"}
@@ -160,7 +162,7 @@ const ImportMunziWallet = (props) => {
         </View>
 
           <TouchableOpacity
-            style={[style.btn,{backgroundColor:!accountName || !/\S/.test(accountName)?"gray":"green",}]}
+            style={[style.btn,{backgroundColor:disable||!accountName || !/\S/.test(accountName)?"gray":"#5B65E1",}]}
             disabled={disable||!accountName || !/\S/.test(accountName)?true:false}
             onPress={async () => {
               const pin = await AsyncStorageLib.getItem("pin");
@@ -312,7 +314,7 @@ const ImportMunziWallet = (props) => {
               }, 1);
             }}
           >
-            <Text style={{color:"white"}}>Import</Text>
+            <Text style={{color:"white",fontSize:19}}>Import</Text>
           </TouchableOpacity>
       </View>
     </Animated.View>
@@ -357,15 +359,6 @@ const style = StyleSheet.create({
     fontWeight: "200",
     color: "white",
   },
-  input: {
-    height: hp("5%"),
-    marginBottom: hp("2"),
-    color: "black",
-    marginTop: hp("2"),
-    width: wp("90"),
-    paddingRight: wp("7"),
-    backgroundColor: "white",
-  },
   textInput: {
     width: wp(90),
     borderWidth: StyleSheet.hairlineWidth * 1,
@@ -394,19 +387,16 @@ const style = StyleSheet.create({
     elevation: 24,
   },
   labelInputContainer: {
-    position: "relative",
     width: wp(90),
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "flex-start",
     alignSelf: "center",
     marginTop: hp(3),
     borderRadius: wp(2),
-    backgroundColor: "white",
-    borderWidth: 1,
+    backgroundColor: "#F4F4F8",
     paddingLeft: wp(3),
-    paddingVertical: hp(1.2),
-    borderColor: "#DADADA",
+    paddingVertical: hp(2),
   },
   labelInputContainer1: {
     position: "relative",
@@ -424,13 +414,9 @@ const style = StyleSheet.create({
     borderColor: "#DADADA",
   },
   label: {
-    position: "absolute",
-    zIndex: 100,
-    backgroundColor: "white",
-    paddingHorizontal: 5,
-    left: 12,
-    color: "#4CA6EA",
-    top: -12,
+    left: 10,
+    color: "gray",
+    fontSize:16
   },
   text: {
     marginHorizontal: wp(6),
@@ -438,19 +424,33 @@ const style = StyleSheet.create({
     color: "gray",
   },
   inputView:{
-    borderWidth: 1,
+    backgroundColor:"#F4F4F8",
     width: wp(90),
     alignSelf: "center",
-    padding: 10,
+    paddingHorizontal:wp(5),
     marginTop: hp(3),
     borderRadius: hp(1),
-    borderColor: "#DADADA",
   },
-  input:{ paddingVertical: hp(4) },
-  paste:{ textAlign: "right",color:"#4CA6EA" },
+  input:{
+    marginVertical:hp(2),
+    paddingVertical: hp(1),
+    backgroundColor:"#fff",
+    borderRadius:10,
+    paddingLeft:10
+  },
+  pasteCon:{
+    paddingVertical:5,
+    paddingHorizontal:10,
+    backgroundColor:"#5B65E1",
+    borderRadius:10
+  },
+  paste:{ 
+    fontSize:16,
+    color:"#FFF"
+  },
   btn:{
-    backgroundColor: "#4CA6EA",
-    paddingVertical: hp(1.6),
+    backgroundColor: "#5B65E1",
+    paddingVertical: hp(2),
     width: wp(90),
     alignSelf: "center",
     borderRadius: hp(1),

@@ -494,7 +494,7 @@ export const ProfileView = (props) => {
                        <Text style={{color:"#fff",margin:5,padding:3}}>{state.STELLAR_PUBLICK_KEY}</Text>
                         </ScrollView>
                   <View style={{ marginHorizontal:1,marginLeft:10 }}>
-                    <TouchableOpacity onPress={()=>{copyToClipboard()}}>
+                    <TouchableOpacity onPress={()=>{ Clipboard.setString(state.STELLAR_PUBLICK_KEY); alert("success","Copied"); }}>
                     <Icon
                           name={"content-copy"}
                           type={"materialCommunity"}

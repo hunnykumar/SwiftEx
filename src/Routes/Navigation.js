@@ -84,6 +84,7 @@ import StellarTransactionViewer from "../Dashboard/exchange/crypto-exchange-fron
 import TxDetails from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/txDetails";
 import FloatingScreen from "../../FloatingComponet/FloatingScreen";
 import ExportUSDC from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/ExportUsdc";
+import { TransactionView } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/transaction";
 
 const Stack = createNativeStackNavigator();
 
@@ -616,6 +617,20 @@ const AuthStack = () => {
         name="TokenSend"
         component={TokenSend}
         options={{headerShown:false}}
+      />
+      <Stack.Screen
+        name="StellarTransactions"
+        component={TransactionView}
+        options={{
+          headerShown:false
+        }}
+      />
+        <Stack.Screen
+        name="StellarOffers"
+        component={OfferView}
+        options={{
+          headerShown:false
+        }}
       />
       <Stack.Screen
         name="TxDetails"

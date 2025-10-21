@@ -18,16 +18,16 @@ import AllbridgeTxTrack from '../components/AllbridgeTxTrack';
 const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
 const getThemeColors = (isDarkMode) => ({
-  background: isDarkMode ? '#011434' : '#F5F5F5',
-  cardBackground: isDarkMode ? '#1E1E1E' : '#FFFFFF',
+  background: isDarkMode ? '#1B1B1C' : '#F5F5F5',
+  cardBackground: isDarkMode ? '#242426' : '#FFFFFF',
   primaryText: isDarkMode ? '#FFFFFF' : '#333333',
   secondaryText: isDarkMode ? '#B0B0B0' : '#666666',
-  tabBarBackground: isDarkMode ? '#011434' : '#FFFFFF',
-  iconBackground: isDarkMode ? '#2D2D2D' : '#F5F5F5',
+  tabBarBackground: isDarkMode ? '#242426' : '#FFFFFF',
+  iconBackground: isDarkMode ? '#1B1B1C' : '#F5F5F5',
   divider: isDarkMode ? '#2D2D2D' : '#E0E0E0',
   shadow: isDarkMode ? '#000000' : '#000000',
-  accent: '#2196F3',
-  success: '#4CAF50',
+  accent: '#4052D6',
+  success: '#1D5F33',
   error: '#F44336',
   sent: '#FF5722',
   received: '#4CAF50',
@@ -95,7 +95,7 @@ const getTransactionIcon = (type) => {
       return 'trending-up';
       case 'path_payment_strict_send':
       case 'path_payment_strict_receive':
-      return 'routes';
+      return 'swap-vertical';
     case 'invoke_host_function':
       return 'bridge';  
     case 'setOptions':
@@ -114,10 +114,10 @@ const getTransactionIcon = (type) => {
 const TabBar = ({ selectedTab, onTabPress, isDarkMode }) => {
   const colors = getThemeColors(isDarkMode);
   const tabs = [
-    { key: 'all', title: 'All', icon: 'bank-transfer' },
+    { key: 'all', title: 'All', icon: 'history' },
     { key: 'sent', title: 'Sent', icon: 'arrow-top-right' },
     { key: 'received', title: 'Received', icon: 'arrow-bottom-left' },
-    { key: 'path', title: 'Swaps', icon: 'routes' },
+    { key: 'path', title: 'Swaps', icon: 'swap-vertical' },
   ];
 
   return (
@@ -135,13 +135,13 @@ const TabBar = ({ selectedTab, onTabPress, isDarkMode }) => {
           <Icon
             name={tab.icon}
             size={24}
-            color={selectedTab === tab.key ? colors.accent : colors.secondaryText}
+            color={selectedTab === tab.key ? colors.primaryText : colors.secondaryText}
           />
           <Text
             style={[
               styles.tabText,
               { color: colors.secondaryText },
-              selectedTab === tab.key && { color: colors.accent }
+              selectedTab === tab.key && { color: colors.primaryText }
             ]}
           >
             {tab.title}
@@ -230,17 +230,49 @@ console.log(operation)
     >
       <View style={[styles.iconContainer, { backgroundColor: colors.iconBackground }]}>
         <Icon
-          name={iconName}
+          name={
+            isReceived && operation.type === "payment"
+              ? "arrow-bottom-left"
+              : operation.type === "payment"
+                ? "arrow-top-right"
+                : iconName
+          }          
           size={24}
-          color={isReceived ? colors.received : colors.sent}
+          color={colors.primaryText}
         />
       </View>
 
       <View style={styles.contentContainer}>
-        <View style={styles.transactionHeader}>
+        {!isPathPayment&&<View style={styles.transactionHeader}>
+          <Text style={[
+            styles.amount,
+            { color: colors.primaryText }
+          ]}>
+            {isReceived||operation.type === 'manage_sell_offer'||operation.type === 'manage_buy_offer'||operation.type === 'sellCry' || operation.type === 'buyCry'|| operation.type === 'create_claimable_balance' ? '' : '-'}{amountText}
+          </Text>
+        </View>}
+        {isPathPayment ? <View style={[styles.transactionDetails,{paddingVertical:5}]}>
+        <View style={{marginTop:-3}}>
+         <Text style={[styles.type, { color: colors.primaryText }]}>{isPathPayment ? `${assetFrom} to ${assetTo}` : transactionType}</Text>
+              <Text style={[styles.date, { color: colors.secondaryText }]}>
+            {item.date}
+          </Text>
+         </View>
+          <View>
+            <Text style={[styles.amount, { color: colors.primaryText }]}>-{amountFrom}</Text>
+            <Text style={[styles.amount, { color: colors.primaryText }]}>+{amountTo}</Text>
+          </View>
+        </View> :
+        <View style={styles.transactionDetails}>
+          <View style={{marginTop:-33}}>
+          <Text style={[styles.type, { color: colors.primaryText }]}>
+            {transactionType}
+          </Text>
           <Text style={[styles.date, { color: colors.secondaryText }]}>
             {item.date}
           </Text>
+          </View>
+
           <View style={[
             styles.statusBadge,
             { backgroundColor: item.success ? colors.success : colors.error }
@@ -249,24 +281,7 @@ console.log(operation)
               {item.success ? operation.type==="create_claimable_balance"?"Claimable":'Success' : typeof item.success === "string" ? item.success : 'Failed'}
             </Text>
           </View>
-        </View>
-        {isPathPayment ? <View style={styles.transactionDetails}>
-          <Text style={[styles.type, { color: colors.primaryText }]}>{isPathPayment ? `${assetFrom} to ${assetTo}` : transactionType}</Text>
-          <View>
-            <Text style={[styles.amount, { color: colors.sent }]}>-{amountFrom}</Text>
-            <Text style={[styles.amount, { color: colors.received }]}>+{amountTo}</Text>
-          </View>
-        </View> :
-        <View style={styles.transactionDetails}>
-          <Text style={[styles.type, { color: colors.primaryText }]}>
-            {transactionType}
-          </Text>
-          <Text style={[
-            styles.amount,
-            { color: isReceived ? colors.received : colors.sent }
-          ]}>
-            {isReceived||operation.type === 'manage_sell_offer'||operation.type === 'manage_buy_offer'||operation.type === 'sellCry' || operation.type === 'buyCry'|| operation.type === 'create_claimable_balance' ? '' : '-'}{amountText}
-          </Text>
+          
         </View>}
 
         {/* Memo (if exists) */}
@@ -467,9 +482,9 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
   showsVerticalScrollIndicator={false}
   ListEmptyComponent={
       <View style={styles.emptyContainer}>
-          <Icon name="history" size={60} color={"#fff"} />
-          <Text style={styles.emptyText}>No transactions found</Text>
-          <Text style={styles.emptySubText}>Your transactions will appear here.</Text>
+          <Icon name="history" size={60} color={colors.primaryText} />
+          <Text style={[styles.emptyText,{color:colors.primaryText}]}>No transactions found</Text>
+          <Text style={[styles.emptySubText,{color:colors.secondaryText}]}>Your transactions will appear here.</Text>
       </View>
   }
 />
@@ -518,17 +533,17 @@ const styles = StyleSheet.create({
   transactionCard: {
     marginBottom: 12,
     borderRadius: 12,
-    elevation: 2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     flexDirection: 'row',
-    overflow: 'hidden',
+    overflow: 'hidden'
   },
   iconContainer: {
-    width: 60,
+    width: 63,
+    height:63,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius:10,
+    alignSelf:"center",
+    marginLeft:10
   },
   contentContainer: {
     flex: 1,
@@ -536,7 +551,7 @@ const styles = StyleSheet.create({
   },
   transactionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent:"flex-end",
     alignItems: 'center',
     marginBottom: 8,
   },
@@ -546,7 +561,7 @@ const styles = StyleSheet.create({
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 8,
   },
   statusText: {
     color: '#FFFFFF',
@@ -557,7 +572,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
   type: {
     fontSize: 16,
