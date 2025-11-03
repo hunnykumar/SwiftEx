@@ -125,7 +125,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
             style={{
               display: "flex",
               flexDirection: "row",
-              marginTop: hp(5),
+              marginTop: hp(3),
               alignItems: "center",
             }}
             onPress={() => setCheckBox2(!Checked2)}
@@ -147,9 +147,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
               /> */}
             </View>
           </TouchableOpacity>
-          {loading ? (
-            <ActivityIndicator size="large" color="white" />
-          ) : (
+         
             <>
             <View style={style.infoCon}>
             <Icon
@@ -158,7 +156,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
           size={25}
           color={"#F7CC49"}
           />
-          <Text style={{width:wp(80),fontSize:15,color:"#ECB742"}}>
+          <Text style={{width:wp(80),fontSize:13,color:"#ECB742"}}>
           Your private key is solely your responsibility SwfitEx cannot be held liable for any loss or sharing of your private key.
           </Text>
 
@@ -212,11 +210,14 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
             // style={style.PresssableBtn}
           > */}
 
-              <Text style={{ color: "white",fontSize:16 }}>Continue</Text>
+{loading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+              <Text style={{ color: "white",fontSize:16 }}>Continue</Text>)}
           {/* </LinearGradient> */}
             </TouchableOpacity>
             </>
-          )}
+
           </View>
           {/* <ModalHeader Function={closeModal} name={"Import"} /> */}
           
@@ -299,7 +300,7 @@ const style = StyleSheet.create({
     alignSelf: "center",
     paddingHorizontal: wp(3),
     borderRadius: 50,
-    marginBottom: hp(2),
+    marginBottom: hp(4),
     alignItems: "center",
   },
   crossIcon: {

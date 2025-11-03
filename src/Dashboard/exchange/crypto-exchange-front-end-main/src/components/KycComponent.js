@@ -38,6 +38,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
+import { colors } from "../../../../../Screens/ThemeColorsConfig";
 
 
 const KycComponent = ({ route }) => {
@@ -298,16 +299,26 @@ const KycComponent = ({ route }) => {
   }
 
   useEffect(()=>{
+    setamountSend(0.00);
     setSelectedCrypto(null);
     setSelectedfiat(null);
     setbtnLoading(false);
     setVisibleAlert(false);
     setVisibleAlertLoading(false)
-    setamountSend(0.00);
     setoperationError(null);
     setqoutesLoading(false);
     setQoutesRes(null);
   },[operationType])
+
+  useEffect(()=>{
+    setamountSend(0.00);
+    setbtnLoading(false);
+    setVisibleAlert(false);
+    setVisibleAlertLoading(false);
+    setoperationError(null);
+    setqoutesLoading(false);
+    setQoutesRes(null);
+  },[selectedCrypto,selectedfiat])
 
   const renderTokenItem = ({ item }) => (
     <TouchableOpacity 
@@ -355,26 +366,6 @@ const KycComponent = ({ route }) => {
     );
   }, [FindResult, listManager]);
 
-  const colors = {
-    light: {
-      bg: "#FFFFFF",
-      cardBg: "#F4F4F8",
-      headingTx: "#272729",
-      smallCardBorderColor: "black",
-      cardSubTx: "#272729",
-      inactiveTx: "#AAAAAA",
-      typeTX:"black"
-    },
-    dark: {
-      bg: "#1B1B1C",
-      cardBg: "#242426",
-      headingTx: "#E6E8EB",
-      smallCardBorderColor: "#9E9E9E",
-      cardSubTx: "#E6E8EB",
-      inactiveTx: "#AAAAAA",
-      typeTX:"#fff"
-    },
-  };
 
   const theme = state.THEME.THEME ? colors.dark : colors.light;
 
@@ -417,13 +408,13 @@ const KycComponent = ({ route }) => {
                 ]}
                 onPress={()=>{setoperationType("BUY")}}
               >
-                <Text style={[styles.pairNameText,{color:operationType==="BUY"?"#fff":theme.typeTX}]}>Buy</Text>
+                <Text style={[styles.pairNameText,{color:operationType==="BUY"?theme.inactiveTx:theme.headingTx}]}>Buy</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.pairNameCon, { backgroundColor: operationType==="SELL"?"#4052D6":theme.cardBg,width: getPairButtonWidth() }]}
                 onPress={()=>{setoperationType("SELL")}}
               >
-                <Text style={[styles.pairNameText,{color:operationType==="SELL"?"#fff":theme.typeTX}]}>Sell</Text>
+                <Text style={[styles.pairNameText,{color:operationType==="SELL"?theme.inactiveTx:theme.headingTx}]}>Sell</Text>
               </TouchableOpacity>
             </View>
 

@@ -85,11 +85,11 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
             type={"ionicon"}
             name="information-circle"
             color={"#ECB742"}
-            size={29}
+            size={20}
           />
           <Text
             style={{
-              fontSize: 15,
+              fontSize: 13,
               color: "#ECB742",
               fontWeight: "400",
               marginLeft: 3,
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     width: wp(90),
-    borderRadius: hp(3),
+    borderRadius: hp(2),
     marginTop: hp(0.5),
     backgroundColor: "#FEF6D8",
     alignSelf: "center",

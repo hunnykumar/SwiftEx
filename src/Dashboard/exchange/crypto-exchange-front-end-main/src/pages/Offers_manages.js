@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   Modal,
   Keyboard,
+  ScrollView,
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import * as StellarSdk from '@stellar/stellar-sdk';
@@ -26,6 +27,7 @@ import {
 import BigNumber from 'bignumber.js';
 import { STELLAR_URL } from '../../../../constants';
 import CustomInfoProvider from '../components/CustomInfoProvider';
+import { colors } from '../../../../../Screens/ThemeColorsConfig';
 
 const STELLAR_NETWORK = StellarSdk.Networks.PUBLIC;
 
@@ -68,26 +70,6 @@ const Offers_manages = () => {
     fetchOffers();
   }, [isFocused]);
 
-  const colors = {
-    light: {
-      bg: "#FFFFFF",
-      cardBg: "#F4F4F8",
-      headingTx: "#272729",
-      smallCardBg: "#FFFFFF",
-      smallCardBorderColor: "#5E5C5C66",
-      cardSubTx: "#272729",
-      inactiveTx: "#AAAAAA"
-    },
-    dark: {
-      bg: "#1B1B1C",
-      cardBg: "#242426",
-      headingTx: "#E6E8EB",
-      smallCardBg: "#1B1B1C",
-      smallCardBorderColor: "#AAAAAA66",
-      cardSubTx: "#E6E8EB",
-      inactiveTx: "#AAAAAA"
-    },
-  };
 
   const theme = state.THEME.THEME ? colors.dark : colors.light;
 
@@ -323,6 +305,7 @@ const Offers_manages = () => {
             </TouchableOpacity>}
         </View>
       </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       <View style={{flexDirection:"row",alignItems:"center",justifyContent:"center"}}>
         <View style={styles.container_sub}>
           <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Selling Asset</Text>
@@ -342,6 +325,7 @@ const Offers_manages = () => {
         </View>
 
       </View>
+      </ScrollView>
     </View>
   );
 
@@ -357,6 +341,7 @@ const Offers_manages = () => {
           style={styles.offerList}
         />:
         <View style={styles.error_cont}>
+          <Icon name={"cart-outline"} type={"materialCommunity"} size={55} color={theme.inactiveTx} />
           <Text style={[styles.error_text,{color:theme.inactiveTx}]}>No Active Offers</Text>
         </View>
       )}

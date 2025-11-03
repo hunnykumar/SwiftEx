@@ -114,7 +114,7 @@ const ImportMunziWallet = (props) => {
             value={accountName}
             maxLength={20}
             onChangeText={(text) => {handleUsernameChange(text)}}
-            style={{ width: wp("78%"),color:"black",marginLeft:8,backgroundColor:"#fff",borderRadius:10,marginTop:10,paddingLeft:10,fontSize:16,marginBottom:8 }}
+            style={style.textInputForCrossChain}
             placeholder={accountName?accountName: "Wallet"}
             placeholderTextColor={"gray"}
           />
@@ -133,7 +133,7 @@ const ImportMunziWallet = (props) => {
           </View>
 
           <TextInput
-            style={[style.input,{color:"black",fontSize:16}]}
+            style={style.input}
             value={mnemonic}
             placeholder="Please enter your mnemonic phrase here"
             placeholderTextColor={"gray"}
@@ -420,23 +420,26 @@ const style = StyleSheet.create({
   },
   text: {
     marginHorizontal: wp(6),
-    marginTop: hp(5),
+    marginTop: hp(2),
     color: "gray",
   },
   inputView:{
     backgroundColor:"#F4F4F8",
     width: wp(90),
     alignSelf: "center",
-    paddingHorizontal:wp(5),
-    marginTop: hp(3),
+    paddingHorizontal:wp(3),
+    marginTop: hp(1.5),
     borderRadius: hp(1),
   },
   input:{
     marginVertical:hp(2),
-    paddingVertical: hp(1),
+    width:"98%",
+    paddingHorizontal: wp(2),
+    paddingVertical:  Platform.OS=="android"?hp(1):hp(2),
     backgroundColor:"#fff",
     borderRadius:10,
-    paddingLeft:10
+    color:"black",
+    fontSize:15
   },
   pasteCon:{
     paddingVertical:5,
@@ -455,5 +458,15 @@ const style = StyleSheet.create({
     alignSelf: "center",
     borderRadius: hp(1),
     alignItems: "center",
-  }
+  },
+  textInputForCrossChain: {
+    width:"95%",
+    paddingHorizontal: wp(2),
+    paddingVertical:  Platform.OS=="android"?hp(1):hp(2),
+    backgroundColor:"#fff",
+    borderRadius:10,
+    marginTop:4,
+    color:"black",
+    fontSize:15
+  },
 });

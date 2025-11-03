@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, Button, TextInput, StyleSheet, FlatList, Image, Alert, RefreshControl, TouchableOpacity, ActivityIndicator, Modal, Animated, Dimensions, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, Button, TextInput, StyleSheet, FlatList, Image, Alert, RefreshControl, TouchableOpacity, ActivityIndicator, Animated, Dimensions, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ethers } from 'ethers';
 import { useSelector } from 'react-redux';
@@ -19,6 +19,7 @@ import { FAB } from 'react-native-paper';
 import Icon from '../icon';
 import { getTokenBalancesUsingAddress } from './exchange/crypto-exchange-front-end-main/src/utils/getWalletInfo/EtherWalletService';
 import CustomInfoProvider from './exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
+import Modal from "react-native-modal";
 
 const { height } = Dimensions.get('window');
 
@@ -409,11 +410,17 @@ const Token_Import = () => {
 
       <Modal
         visible={bottomSheetVisible}
-        transparent
-        animationType="none"
         onRequestClose={handleCloseBottomSheet}
+        avoidKeyboard={true}
+        style={styles.modalContainer}
+        onBackdropPress={handleCloseBottomSheet}
+        onBackButtonPress={handleCloseBottomSheet}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        useNativeDriver
+        hideModalContentWhileAnimating
       >
-        <View style={styles.modalContainer}>
+        <View style={styles.body}>
           <TouchableWithoutFeedback onPress={handleCloseBottomSheet}>
             <Animated.View
               style={[
@@ -620,7 +627,7 @@ const styles = StyleSheet.create({
     right: wp(3),
     borderColor: "#2164C1",
     borderWidth: 1,
-    bottom:"59%",
+    bottom:Platform.OS==="android"?"59%":"62%",
     borderRadius: 8,
   },
   customFab: {
@@ -669,8 +676,14 @@ const styles = StyleSheet.create({
     marginTop: "53%"
   },
   modalContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
+    margin: 0,
+  },
+  body: {
+    width: wp(100),
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    alignSelf: "center",
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -806,13 +819,13 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 18,
     paddingVertical: 0,
   },
   pasteButton: {
     alignItems: 'center',
     paddingHorizontal: 19,
-    paddingVertical: 15,
+    paddingVertical: 10,
     borderRadius: 8,
     backgroundColor:"#4052D6"
   },

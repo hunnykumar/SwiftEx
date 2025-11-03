@@ -16,27 +16,10 @@ import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import CustomInfoProvider from '../../components/CustomInfoProvider';
 import { useSelector } from 'react-redux';
+import { colors } from '../../../../../../Screens/ThemeColorsConfig';
 
 
 
-  const colors = {
-    light: {
-      bg: "#FFFFFF",
-      cardBg: "#F4F4F8",
-      headingTx: "#272729",
-      smallCardBorderColor: "#5E5C5C66",
-      cardSubTx: "#272729",
-      inactiveTx: "#AAAAAA"
-    },
-    dark: {
-      bg: "#1B1B1C",
-      cardBg: "#242426",
-      headingTx: "#E6E8EB",
-      smallCardBorderColor: "#AAAAAA66",
-      cardSubTx: "#E6E8EB",
-      inactiveTx: "#AAAAAA"
-    },
-  };
 
 // API Functions
 function getCanonicalAsset(code, issuer) {

@@ -259,11 +259,11 @@ const EthSwap = () => {
 
   const TokenSelector = ({ token, onPress,balance }) => (
     <TouchableOpacity disabled={loading} style={[styles.tokenSelector,{backgroundColor:state?.THEME?.THEME===false?"#FFFFFF":"#1B1B1C"}]} onPress={onPress}>
-      <View style={styles.tokenContainer}>
+      <View style={[styles.tokenContainer,{width:wp(40)}]}>
       <Image source={{ uri: token.logoURI }} style={[styles.logoImage,{marginRight:5}]} />
       <Text style={[styles.tokenSymbol,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{token.symbol}</Text>
       </View>
-      {allblnLoading?<ActivityIndicator size={"small"} color={"green"}/>:<Text style={styles.tokenBalance}>Balance: {balance}</Text>}
+      {allblnLoading?<ActivityIndicator size={"small"} color={"green"}/>:<Text style={styles.tokenBalance} numberOfLines={1}>Balance: {balance}</Text>}
     </TouchableOpacity>
   );
 
@@ -553,8 +553,9 @@ const EthSwap = () => {
     }
   }
   return (
-    <>
+    <View style={{backgroundColor:state?.THEME?.THEME===false?"#FFF":"#1B1B1C",flex:1}}>
       <Wallet_screen_header title="Swap" onLeftIconPress={() => {navigation.goBack()}} />
+        <ScrollView showsVerticalScrollIndicator={false}>
       <ErrorComponet
           isVisible={ErroVisible}
           onClose={() => setErroVisible(false)}
@@ -562,8 +563,10 @@ const EthSwap = () => {
         />
     <View style={[styles.container,{backgroundColor:state?.THEME?.THEME===false?"#FFF":"#1B1B1C"}]}>
       <View style={[styles.card,{backgroundColor:state?.THEME?.THEME===false?"#F4F4F8":"#242426"}]}>
-        <View style={[styles.inputContainer,]}>
-            <TouchableOpacity style={[styles.headerCard, { backgroundColor: state?.THEME?.THEME ? "#1B1B1C" : "#F4F4F8" }]} onPress={()=>{currentNetwork===0?setCurrentNetwork(1):setCurrentNetwork(0)}}>
+      <View style={styles.networkCon}>
+              <Text style={styles.label}>Network</Text>
+            </View>
+            <TouchableOpacity style={[styles.headerCard, { backgroundColor: state?.THEME?.THEME===false?"#FFFFFF":"#1B1B1C" }]} onPress={()=>{currentNetwork===0?setCurrentNetwork(1):setCurrentNetwork(0)}}>
               <View style={styles.assetInfo}>
                 <Image source={{uri:NETWORK[currentNetwork].logoURI}} style={styles.assetIcon} />
                 <View>
@@ -573,7 +576,10 @@ const EthSwap = () => {
               </View>
                 <Icon name={"arrow-down"} size={30} color={"#666"}/>
             </TouchableOpacity>
-            <View style={styles.networkCon}>
+
+        </View>
+        <View style={[styles.card,{backgroundColor:state?.THEME?.THEME===false?"#F4F4F8":"#242426",marginTop:hp(1)}]}>
+        <View style={styles.networkCon}>
               <Text style={styles.label}>From</Text>
             </View>
           <TokenSelector
@@ -596,21 +602,18 @@ const EthSwap = () => {
           />
         </View>
          
-         <View style={styles.swapButton}>
-
-        <View style={[styles.divider,{backgroundColor:state?.THEME?.THEME===false?"#c7c5c5":"#080a0a"}]} />
-          <TouchableOpacity style={styles.swapButtonCircle} onPress={()=>{tokenHande()}}>
+          <TouchableOpacity style={[styles.swapButton,{backgroundColor:state?.THEME?.THEME===false?"#FFFFFF":"#1B1B1C"}]} onPress={()=>{tokenHande()}}>
           <Icon
             name={"swap-vertical"}
-            size={23}
-            color={"#3574B6"}
+            size={24}
+            color={"#4052D6"}
           />
           </TouchableOpacity>
-        <View style={[styles.divider,{backgroundColor:state?.THEME?.THEME===false?"#c7c5c5":"#080a0a"}]} />
-         </View>
 
-        <View style={styles.inputContainer}>
+         <View style={[styles.card,{backgroundColor:state?.THEME?.THEME===false?"#F4F4F8":"#242426",marginTop:-2}]}>
+         <View style={styles.networkCon}>
           <Text style={styles.label}>To</Text>
+          </View>
           <TokenSelector
             token={toToken}
             onPress={() => {
@@ -631,7 +634,7 @@ const EthSwap = () => {
         </View>
 
         {quoteInfo && (
-          <View style={[styles.quoteDetailsContainer,{backgroundColor:state?.THEME?.THEME===false?"#fff":"#1B1B1C"}]}>
+          <View style={[styles.quoteDetailsContainer,{backgroundColor:state?.THEME?.THEME===false?"#F4F4F8":"#242426"}]}>
             <Text style={[styles.quoteTitle,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>Quote Details</Text>
             
             <View style={styles.quoteRow}>
@@ -664,15 +667,15 @@ const EthSwap = () => {
             <Text style={styles.loadingText}>Getting best quote...</Text>
           </View>
         )}
-      </View>
 
       <TouchableOpacity style={[styles.swapButtonCon,{backgroundColor:btnDisable||SwapExecution?"gray":"#4052D6"}]} disabled={btnDisable||SwapExecution} onPress={()=>{handleSwap(amount,state?.wallet?.privateKey,currentNetwork === 0?"ETH":"BSC")}}>
         {SwapExecution?<ActivityIndicator color={"green"}/>:<Text style={styles.swapButtonConText}>{btnMessage}</Text>}
       </TouchableOpacity>
+      </View>
 
       <TokenListModal />
+    </ScrollView>
     </View>
-    </>
   );
 };
 
@@ -687,22 +690,20 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#F4F4F8',
     borderRadius: 16,
-    padding: 16,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  swapButtonCircle:{
-    borderColor:"#3574B6",
-    borderWidth:2,
-    borderRadius:100,
-    padding:5
+    paddingVertical:hp(1.5),
+    paddingHorizontal:wp(3),
   },
   swapButton:{
-    flexDirection: "row",
-    paddingHorizontal:10,
-    alignItems: "center",
-    justifyContent: "space-between"
+    borderColor:"#4052D6",
+    borderWidth:1,
+    borderRadius:100,
+    padding:10,
+    alignSelf: 'center',
+    marginVertical: -16,
+    zIndex: 1,
+    position:"relative",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   label: {
     fontSize: 16,
@@ -726,6 +727,8 @@ const styles = StyleSheet.create({
   tokenBalance: {
     fontSize: 14,
     color: '#666',
+    width:wp(40),
+    textAlign:"right"
   },
   input: {
     fontSize: 24,
@@ -778,7 +781,7 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: hp(1.5),
   },
   loadingText: {
     marginTop: 8,
@@ -842,10 +845,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#3574B6",
     justifyContent: "center",
     alignItems: "center",
-    marginTop:wp(5),
-    padding:14,
-    paddingVertical:15,
-    borderRadius:10
+    alignSelf:"center",
+    marginTop:hp(2.5),
+    paddingHorizontal:wp(2),
+    paddingVertical:hp(2),
+    borderRadius:10,
   },
   swapButtonConText:{
     fontSize:18,
@@ -857,7 +861,7 @@ const styles = StyleSheet.create({
     justifyContent:"space-between",
     flexDirection:"row",
     alignContent:"space-evenly",
-    padding:10
+    padding:1
   },
   networkSelector:{
     padding:5,
@@ -910,17 +914,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerCard: {
-    marginTop: hp(2),
     flexDirection:"row",
     justifyContent:"space-between",
     alignItems:"center",
     padding: wp(2),
     borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 10,
   },
   assetInfo: {
     flexDirection: "row",

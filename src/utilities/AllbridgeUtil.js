@@ -167,10 +167,16 @@ export async function swapPepare(
   async function waitForTransferStatus(sdk, chain, hash, timeout = 60000, interval = 5000) {
     const start = Date.now();
     while (Date.now() - start < timeout) {
+    try {
       const status = await sdk.getTransferStatus(chain, hash);
       if (status && status.txId) {
         return status;
       }
+    } catch (error) {
+        if (error.status !== 404) {
+            throw error;
+        }
+    }
       console.log(`TX still pending... checking again in ${interval / 1000}s`);
       await new Promise(res => setTimeout(res, interval));
     }

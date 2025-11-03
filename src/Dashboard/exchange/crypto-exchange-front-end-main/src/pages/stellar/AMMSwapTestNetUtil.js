@@ -8,7 +8,8 @@ async function AMMSWAPTESTNET(
   toTokenCode,
   toTokenIssuer,
   sourceSecret,
-  destAmount
+  destAmount,
+  trustLineOpt
 ) {
   if (!sourceSecret) {
     return {
@@ -68,8 +69,23 @@ async function AMMSWAPTESTNET(
     const tx = new StellarSdk.TransactionBuilder(account, {
       fee: StellarSdk.BASE_FEE,
       networkPassphrase: StellarSdk.Networks.PUBLIC,
-    })
-      .addOperation(
+    });
+  
+    if (Array.isArray(trustLineOpt) && trustLineOpt.length > 0) {
+      trustLineOpt.forEach(trustLineAsset => {
+        const asset = new StellarSdk.Asset(
+          trustLineAsset.tokenSymbole, 
+          trustLineAsset.tokenIssuer
+        );
+        tx.addOperation(
+          StellarSdk.Operation.changeTrust({
+            asset: asset,
+          })
+        );
+      });
+    }
+    
+    tx.addOperation(
         StellarSdk.Operation.pathPaymentStrictReceive({
           sendAsset: assetSend,
           sendMax: sendMaxAmt,
@@ -78,13 +94,11 @@ async function AMMSWAPTESTNET(
           destAmount: destAmount,
           path: bestPath,
         })
-      )
-      .setTimeout(60)
-      .build();
-
+      );
+    const transaction =tx.setTimeout(60).build();
     // Sign & submit
-    tx.sign(sourceKeypair);
-    const result = await server.submitTransaction(tx);
+    transaction.sign(sourceKeypair);
+    const result = await server.submitTransaction(transaction);
 
     return {
       status: true,

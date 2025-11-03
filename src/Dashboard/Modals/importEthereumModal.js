@@ -143,6 +143,7 @@ const ImportEthereumModal = ({
         useNativeDriver
         hideModalContentWhileAnimating
         style={style.modal}
+        avoidKeyboard={true}
       >
 
       <Animated.View style={[style.overlay]}>
@@ -160,7 +161,7 @@ const ImportEthereumModal = ({
               <Text style={[style.coinText, { color: state.THEME.THEME ? "#fff" : "black" }]}>Ethereum Wallet</Text>
               <Text style={[style.coinSubText, { color: state.THEME.THEME ? "#AAAAAA" : "black" }]}>Import your wallet using your secret recovery phrase.</Text>
             </View>
-            <Icon type={'entypo'} name='cross' color={"black"} size={24} style={[style.crossIcon, { backgroundColor: "#FFFFFF" }]} onPress={()=>{setWalletVisible(false);}} />
+            <Icon type={'entypo'} name='circle-with-cross' color={state.THEME.THEME? "#fff" : "black" } size={26} style={[style.crossIcon]} onPress={()=>{setWalletVisible(false);}} />
           </View>
           <View style={style.infoCard}>
             <Icon type={'entypo'} name='info-with-circle' color={"#ECB742"} size={20} />
@@ -240,7 +241,7 @@ const ImportEthereumModal = ({
               onChangeText={(text) => {
                 setAccountName(text);
               }}
-              style={{  color: state.THEME.THEME === false ?"black":"#fff" }}
+              style={[style.crossChainTextInput,{  color: state.THEME.THEME === false ?"black":"#fff" }]}
               placeholder={accountName ? accountName : "Wallet 1"}
               placeholderTextColor={"gray"}
             />
@@ -275,7 +276,7 @@ const ImportEthereumModal = ({
                 backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426",
               }]}>
             <TextInput
-              style={{  color: state.THEME.THEME === false ?"black":"#fff" }}
+              style={[style.crossChainTextInput,{  color: state.THEME.THEME === false ?"black":"#fff" }]}
               value={text}
               onChangeText={(text) => {
                 if (label === "privateKey") {
@@ -312,10 +313,10 @@ const ImportEthereumModal = ({
                   backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426",
                 }]}>
                   <TextInput
-                    style={{
+                    style={[style.crossChainTextInput,{
                       display: optionVisible === false ? "none" : "flex",
                       color: "black"
-                    }}
+                    }]}
                     value={jsonKey}
                     onChangeText={(text) => {
                       setJsonKey(text);
@@ -801,4 +802,9 @@ const style = StyleSheet.create({
     padding: 3,
     borderRadius: 30
   },
+  crossChainTextInput:{
+    width:"100%",
+    paddingHorizontal: wp(2),
+    paddingVertical:  Platform.OS=="android"?hp(1):hp(2),
+  }
 });

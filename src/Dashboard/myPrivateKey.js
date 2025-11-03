@@ -105,7 +105,7 @@ const MyPrivateKey = (props) => {
   const RenderItem = ({ item, index }) => {
     console.log("-------------", item);
     return (
-      <Pressable style={[style.pressable,{backgroundColor:state.THEME.THEME===false?"#fff":"black"}]} onPress={()=>{
+      <Pressable style={[style.pressable,{backgroundColor:state.THEME.THEME===false?"#F4F4F8":"#242426"}]} onPress={()=>{
         console.log("Hello World")
       }}>
         <Text style={[style.pressText,{color:state.THEME.THEME===false?"black":"#fff"}]}>{index + 1}</Text>
@@ -131,7 +131,7 @@ const MyPrivateKey = (props) => {
     }
 }
   return (
-    <View style={{ backgroundColor:state.THEME.THEME===false?"#fff":"black", height: hp(100) }}>
+    <View style={{ backgroundColor:state.THEME.THEME===false?"#FFFFFF":"#1B1B1C", height: hp(100) }}>
           <Wallet_screen_header title="Secret Key" onLeftIconPress={() => navi.goBack()} />
       <Animated.View // Special animatable View
         style={{ opacity: fadeAnim }}
@@ -152,7 +152,7 @@ const MyPrivateKey = (props) => {
             correct.
           </Text>
         </View>
-        <View style={{ marginTop: hp(3),backgroundColor:state.THEME.THEME===false?"#fff":"black" }}>
+        <View style={{ marginTop: hp(3),backgroundColor:state.THEME.THEME===false?"#fff":"#1B1B1C" }}>
          {mnemonic.length>0?
           
            <FlatList
@@ -179,6 +179,10 @@ const MyPrivateKey = (props) => {
               copyToClipboard(privateKey)
             }
           }}
+          backgroundColor={"#4052D6"}
+          width={wp(90)}
+          borderRadius={10}
+          style={{marginVertical:15}}
           >Copy</Button>
         </View>
 
@@ -193,6 +197,7 @@ const MyPrivateKey = (props) => {
           onPress={async()=>{
               copyToClipboard(STTELLAR_KEY)
           }}
+          backgroundColor={"#4052D6"}
           >Copy</Button>
         </View>
 

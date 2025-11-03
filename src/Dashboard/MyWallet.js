@@ -84,9 +84,9 @@ const MyWallet = (props) => {
 
       <View style={styles.infoCard}>
         <View style={{padding:5,borderRadius:50,backgroundColor:"#ECB742",marginRight:4}}>
-        <Icon name="info" type={"antDesign"} color={"#fff"} size={20}/>
+        <Icon name="info" type={"antDesign"} color={"#fff"} size={18}/>
         </View>
-        <Text style={{fontSize:14,color:"#ECB742",textAlign:"left"}}>`{"If you lose access to this device, your funds will be lost\n unless you back up your wallet."}`</Text>
+        <Text style={{fontSize:12,color:"#ECB742",textAlign:"left",marginLeft:10, maxWidth:wp(70)}}>If you lose access to this device, your funds will be lost unless you back up your wallet.</Text>
       </View>
 
       <Text style={styles.text}>Your secret phrase is the only way to recover your wallet. Never share it with anyone.</Text>
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     color: "gray",
     marginHorizontal: wp(4),
     marginTop: hp(3),
-    fontSize:16,
+    fontSize:15,
     textAlign:"center"
   },
   rightIcon: {

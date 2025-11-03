@@ -21,6 +21,7 @@ import { TransactionForStellar, Wallet_screen_header } from './reusables/Exchang
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import StellarTransactionHistory from './exchange/crypto-exchange-front-end-main/src/pages/StellarTransactionHistory';
 import { PGET, PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';
+import CustomInfoProvider from './exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
 
 const ThemeContext = React.createContext();
 
@@ -79,9 +80,12 @@ const ThemeProvider = ({ children }) => {
 
 const useTheme = () => useContext(ThemeContext);
 
-const formatNumber = (value, decimals = 4) => {
-  if (!value) return '0';
-  return parseFloat(value).toFixed(decimals);
+const formatNumber = (num) => {
+    if (num === 0) return "0";
+    if (Math.abs(num) < 0.0001 || Math.abs(num) > 1000000) {
+      return num.toExponential(2);
+    }
+    return num.toLocaleString(undefined, { maximumSignificantDigits: 6 });
 };
 
 const TransactionHistory = () => {
@@ -139,14 +143,17 @@ const TransactionHistory = () => {
     try {
       setLoading(true);
        const {res,err} = await proxyRequest(`/v1/transaction-history/${walletAddress}/eth`, PGET);
-      if (err?.status === 500) {
+      if (err?.status) {
+        CustomInfoProvider.show("Info","Oops! Something went wrong while fetching wallet transaction history.");
         console.log('Error fetching transactions:', err);
         setLoading(false);
         setRefreshing(false);
-      }      
-      setTransactions(res);
-      setLoading(false);
-      setRefreshing(false);
+      }
+      if(res){
+        setTransactions(res);
+        setLoading(false);
+        setRefreshing(false);
+      }
     } catch (error) {
       console.log('Error fetching transactions:', error);
       setLoading(false);
@@ -158,14 +165,17 @@ const TransactionHistory = () => {
     try {
       setLoading(true);
        const {res,err} = await proxyRequest(`/v1/transaction-history/${walletAddress}/bsc`, PGET);
-      if (err?.status === 500) {
+       if (err?.status) {
+        CustomInfoProvider.show("Info","Oops! Something went wrong while fetching wallet transaction history.");
         console.log('Error fetching transactions:', err);
         setLoading(false);
         setRefreshing(false);
-      }      
-      setTransactions(res);
-      setLoading(false);
-      setRefreshing(false);
+      }
+      if (res) {
+        setTransactions(res);
+        setLoading(false);
+        setRefreshing(false);
+      }
     } catch (error) {
       console.log('Error fetching transactions:', error);
       setLoading(false);
@@ -267,14 +277,10 @@ const TransactionHistory = () => {
               <Text style={[styles.assetName, { color: colors.textPrimary }]}>
                 {item.asset || 'ETH'}
               </Text>
-             <View style={{alignSelf:"flex-end",width:"20%"}}>
-             <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-              <Text style={[styles.amountText, { color: statusColor }]}>
+              <Text numberOfLines={1} style={[styles.amountText, { color: statusColor }]}>
                 {txType === 'Send' ? '-' : '+'}
                 {formatNumber(item.value ||item?.formattedAmount || 0,item?.rawContract?.decimal)}
               </Text>
-              </ScrollView>
-             </View>
             </View>
           </View>
         </TouchableOpacity>
@@ -465,8 +471,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   amountText: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: 'bold',
+    textAlign:"right",
+    maxWidth:"35%"
   },
   addressRow: {
     marginTop: 4,

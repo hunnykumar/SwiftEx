@@ -34,6 +34,7 @@ import {
 import Icon from "../icon";
 import Wallet_selection_bottom from "./Wallets/Wallet_selection_bottom";
 import CustomInfoProvider from "./exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
+import { PORTFOLIO_CONFIG } from "../components/Redux/actions/type";
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -42,35 +43,17 @@ if (
 }
 const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
   state = useSelector((state) => state);
-  const state2 = useSelector((state) => state.walletBalance);
-  const EthBalance = useSelector((state) => state.EthBalance);
-  const bnbBalance = useSelector((state) => state.walletBalance);
-  const xrpBalance = useSelector((state) => state.XrpBalance);
-  const XLMBalance = useSelector((state) => state?.assetData);
-  const walletState = useSelector((state) => state.wallets);
-  const type = useSelector((state) => state.walletType);
-
-  console.log(state.wallets);
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const [modalVisible2, setModalVisible2] = useState(false);
   const [modalVisible3, setModalVisible3] = useState(false);
   const [swapType, setSwapType] = useState("");
-  const [balance, GetBalance] = useState(0.0);
-  const [wallet, getWallet] = useState(walletState ? walletState : []);
-  const [Type, setType] = useState("");
   const [user, setUser] = useState("");
-  const [bnbPrice, setBnbPrice] = useState(0);
-  const [ethPrice, setEthPrice] = useState(0);
-  const [xrpPrice, setXrpPrice] = useState(0);
   const [balanceUsd, setBalance] = useState(0.0);
-  const [XLMPrice, setXLMPrice] = useState(0.0);
   const [Wallet_modal, setWallet_modal] = useState(false);
   const [Loading_upper, setLoading_upper] = useState(true);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [balanceVisible, setbalanceVisible] = useState(false);
-  // onPress={() => setModalVisible(true)}
   if (Platform.OS === "android") {
     if (UIManager.setLayoutAnimationEnabledExperimental) {
       UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -107,228 +90,6 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
 
   const translation = useRef(new Animated.Value(0)).current;
 
-
-  const getAllBalance = async () => {
-    try {
-      const wallet = await AsyncStorageLib.getItem("wallet");
-      const address = (await state.wallet.address)
-        ? await state.wallet.address
-        : "";
-      const wType = await type;
-
-      AsyncStorageLib.getItem("walletType").then(async (type) => {
-        console.log("hi" + JSON.parse(type));
-        if (!state.wallet.address) {
-          GetBalance(0.0);
-          setType("");
-        } else if (JSON.parse(type) == "Matic") {
-          await dispatch(getMaticBalance(address))
-            .then(async (res) => {
-              let bal = await AsyncStorageLib.getItem("MaticBalance");
-              console.log(bal);
-              if (res) {
-                setType("Mat");
-                GetBalance(bal);
-              } else {
-                console.log("coudnt get balance");
-              }
-            })
-            .catch((e) => {
-              console.log(e);
-            });
-        } else if (JSON.parse(type) == "Ethereum") {
-          dispatch(getEthBalance(address))
-            .then(async (e) => {
-              const Eth = await e.EthBalance;
-              let bal = await AsyncStorageLib.getItem("EthBalance");
-
-              if (Eth) {
-                setType("Eth");
-                GetBalance(Eth);
-              } else {
-                console.log("coudnt get balance");
-              }
-            })
-            .catch((e) => {
-              console.log(e);
-            });
-        } else if (JSON.parse(type) == "BSC") {
-          const balance = await state.walletBalance;
-          if (balance) {
-            GetBalance(balance);
-            setType("BNB");
-          }
-        } else if (JSON.parse(type) == "Xrp") {
-          console.log("entering xrp balance");
-          try {
-            const resp = dispatch(getXrpBalance(address))
-              .then((response) => {
-                console.log(response);
-                setType("XRP");
-                console.log(response.XrpBalance);
-                GetBalance(response.XrpBalance ? response.XrpBalance : 0);
-              })
-              .catch((e) => {
-                console.log(e);
-              });
-          } catch (e) {
-            console.log(e);
-          }
-        } else if (JSON.parse(type) == "Multi-coin") {
-          await dispatch(getMaticBalance(address))
-            .then(async (res) => {
-              console.log("hi poly" + res.MaticBalance);
-
-              let bal = await AsyncStorageLib.getItem("MaticBalance");
-              console.log(bal);
-              if (res) {
-                setType("Mat");
-                GetBalance(bal);
-              } else {
-                console.log("coudnt get balance");
-              }
-            })
-            .catch((e) => {
-              console.log(e);
-            });
-
-          dispatch(getEthBalance(address))
-            .then(async (e) => {
-              const Eth = await e.EthBalance;
-              let bal = await AsyncStorageLib.getItem("EthBalance");
-              console.log("hi" + Eth);
-              console.log(bal);
-              if (Eth) {
-                setType("Eth");
-                GetBalance(bal);
-              } else {
-                console.log("coudnt get balance");
-              }
-            })
-            .catch((e) => {
-              console.log(e);
-            });
-
-          const balance = await state.walletBalance;
-          if (balance) {
-            GetBalance(balance);
-            setType("BNB");
-          }
-        } else {
-          setType("");
-        }
-      });
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  useEffect( () => {
-    const get_bal=async()=>{
-      try {
-        getAllBalance().catch((e) => {
-          console.log(e);
-        });
-      } catch (e) {
-        console.log(e);
-      }
-    }
-    get_bal()
-    Animated.timing(translation, {
-      toValue: 1,
-      delay: 0.1,
-      useNativeDriver: true,
-    }).start();
-  }, [state2, wallet,state.walletBalance,state.EthBalance,state.XrpBalance,state.MaticBalance]);
-
-  useEffect(() => {
-    const get_ALL_BALE=async()=>{
-      try {
-        getAllBalance().catch((e) => {
-          console.log(e);
-        });
-      } catch (e) {
-        console.log(e);
-      }
-    }
-    get_ALL_BALE()
-  }, [state.wallet.address, state.wallet.name, state.walletType,state.walletBalance,state.EthBalance,state.XrpBalance,state.MaticBalance]);
-
-  const calculateUsdValue = (balance, price) => {
-    const balanceNum = Number(balance);
-    const priceNum = Number(price)
-    
-    if (isNaN(balanceNum) || isNaN(priceNum)) {
-      return 0;
-    }
-    return balanceNum * priceNum;
-  };
-  const getBalanceInUsd = (ethBalance, bnbBalance, xrpBalance) => {
-    const lumansBalance = XLMBalance?.filter(balance => balance.asset_type === "native")[0]?.balance || "0";
-
-    console.log("My wallet Type", Type);
-    console.log(ethBalance, bnbBalance, xrpBalance, xrpPrice);
-    const ethInUsd =calculateUsdValue (ethBalance, ethPrice);
-    const bnbInUsd =calculateUsdValue(bnbBalance,bnbPrice);
-    const xrpInUsd =calculateUsdValue(xrpBalance,xrpPrice);
-    const XLMInUsd =calculateUsdValue(lumansBalance,XLMPrice);
-    console.log("Eth balance", ethInUsd);
-    console.log("BNB balance", bnbInUsd);
-    console.log("Xrp balance", xrpInUsd);
-    console.log("Xrp balance",state?.assetData[0]?.balance);
-
-    AsyncStorageLib.getItem("walletType").then((Type) => {
-      console.log("Async type", Type);
-      if (JSON.parse(Type) === "Ethereum") {
-        const totalBalance = Number(ethInUsd)+Number(XLMInUsd);
-        setBalance(totalBalance.toFixed(1));
-        return;
-      } else if (JSON.parse(Type) === "BSC") {
-        const totalBalance = Number(bnbInUsd)+Number(XLMInUsd);
-        setBalance(totalBalance.toFixed(1));
-        return;
-      } else if (JSON.parse(Type) === "Xrp") {
-        const totalBalance = Number(xrpInUsd);
-        console.log("Xrpl $", totalBalance);
-        setBalance(totalBalance.toFixed(1));
-        return;
-      } else if (JSON.parse(Type) === "Matic") {
-        setBalance(0.0);
-        return;
-      } else if (JSON.parse(Type) === "Multi-coin") {
-        const totalBalance =
-          Number(ethInUsd) + Number(bnbInUsd) +Number(XLMInUsd);
-        console.log(totalBalance);
-        setBalance(totalBalance.toFixed(1));
-        return;
-      }
-    });
-    return;
-  };
-  
-  const getETHBNBPrice = async () => {
-    await getEthPrice().then((response) => {
-      console.log("eth price = ", response.USD);
-      setEthPrice(response.USD);
-    });
-    await getBnbPrice().then((response) => {
-      console.log("BNB price= ", response.USD);
-      setBnbPrice(response.USD);
-    });
-    await getXrpPrice().then((response) => {
-      console.log("XRP price =", response.USD);
-      setXrpPrice(response.USD);
-    });
-    await getXLMPrice().then((response) => {
-      console.log("XLM price= ", response.USD);
-      setXLMPrice(response.USD);
-    });
-
-    return true
-
-  };
-  console.log("-asde-",balanceUsd)
-
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -343,46 +104,6 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   }, []);
 
-  useEffect(() => {
-    const get_BAL=async()=>{
-      try {
-        console.log(balanceUsd);
-        getETHBNBPrice();
-        getBalanceInUsd(EthBalance, bnbBalance, xrpBalance);
-      } catch (error) {
-        console.log(":::",error)
-      }
-    }
-    get_BAL()
-  }, [
-    ethPrice,
-    bnbPrice,
-    EthBalance,
-    bnbBalance,
-    xrpPrice,
-    xrpBalance,
-    Type,
-    state.wallet.name,
-    state?.assetData,
-  ]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const getBalances = async () => {
-      if (!isMounted) return;
-      try {
-        await getETHBNBPrice();
-        if (!isMounted) return;
-        getBalanceInUsd(EthBalance, bnbBalance, xrpBalance);
-      } catch (error) {
-        console.error("Balance fetch error:", error);
-      }
-    };
-    getBalances();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     const set_user_current=async()=>{
@@ -491,18 +212,14 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
             </View>
             <View style={styles.walletSubCon}>
               <Text style={[styles.walletBalText, { color: themeColors.text }]}>
-                {balanceVisible
-                  ? balanceUsd
-                    ? `$ ${balanceUsd}`
-                    : "$ 0.0"
-                  : "$ X.XX"}
+                {state&&state.isTotalInUSDVisible? `$ ${state&&state.totalInUSD}`: "$ X.XX"}
               </Text>
               <Icon
-                name={balanceVisible ? "eye-off" : "eye"}
+                name={state&&state.isTotalInUSDVisible ? "eye-off" : "eye"}
                 type="ionicon"
                 size={26}
                 color={themeColors.text}
-                onPress={() => setbalanceVisible(!balanceVisible)}
+                onPress={() => {dispatch({type: PORTFOLIO_CONFIG,payload: {isTotalInUSDVisible: state&&state.isTotalInUSDVisible===true?false:true,totalInUSD: state&&state.totalInUSD}}) }}
               />
             </View>
           </View>

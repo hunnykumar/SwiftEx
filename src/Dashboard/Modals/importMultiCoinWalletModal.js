@@ -170,6 +170,7 @@ const ImportMultiCoinWalletModal = ({
     useNativeDriver
     hideModalContentWhileAnimating
     style={style.modal}
+    avoidKeyboard={true}
     >
       <Animated.View style={[style.overlay]}>
         <View style={[style.Body, { backgroundColor: state.THEME.THEME ? "#242426" : "#F4F4F8" }]}>
@@ -186,7 +187,7 @@ const ImportMultiCoinWalletModal = ({
               <Text style={[style.coinText, { color: state.THEME.THEME ? "#fff" : "black" }]}>Multi-Chain Wallet</Text>
               <Text style={[style.coinSubText, { color: state.THEME.THEME ? "#AAAAAA" : "black" }]}>Import your wallet using your secret recovery phrase.</Text>
             </View>
-            <Icon type={'entypo'} name='cross' color={"black"} size={24} style={[style.crossIcon, { backgroundColor: "#FFFFFF" }]} onPress={onCrossPress} />
+            <Icon type={'entypo'} name='circle-with-cross' color={state.THEME.THEME ? "#fff" : "black" } size={26} style={[style.crossIcon]} onPress={onCrossPress} />
           </View>
           <View style={style.infoCard}>
             <Icon type={'entypo'} name='info-with-circle' color={"#ECB742"} size={20} />
@@ -201,7 +202,7 @@ const ImportMultiCoinWalletModal = ({
                 value={accountName}
                 maxLength={20}
                 onChangeText={(text) => { handleUsernameChange(text) }}
-                style={{  color: state.THEME.THEME === false ?"black":"#fff" }}
+                style={[style.textInputForCrossChain,{  color: state.THEME.THEME === false ?"black":"#fff" }]}
                 placeholder={accountName ? accountName : "Wallet 1"}
                 placeholderTextColor={"gray"}
               />
@@ -227,7 +228,7 @@ const ImportMultiCoinWalletModal = ({
             }]}>
               <TextInput
                 placeholder={"Please enter your mnemonic phrase here"}
-                style={{ color: state.THEME.THEME === false ?"black":"#fff" }}
+                style={[style.textInputForCrossChain,{ color: state.THEME.THEME === false ?"black":"#fff" }]}
                 value={mnemonic}
                 onChangeText={(text) => {
                   setMnemonic(text);
@@ -311,8 +312,12 @@ const ImportMultiCoinWalletModal = ({
                   },
                 ];
                 const resultApi = await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
-                  "multiChainAddress": wallet.address,
-                  "stellarAddress": wallet.stellarWallet.publicKey,
+                  "addresses": {
+                      "eth": wallet.address,
+                      "xlm": wallet.stellarWallet.publicKey,
+                      "bnb": wallet.address,
+                      "multi": wallet.address
+                  },
                   "isPrimary": true
                 });
                 console.log("result---result", resultApi)
@@ -502,10 +507,7 @@ const style = StyleSheet.create({
   },
   crossIcon: {
     marginTop:hp(-4),
-    height: 31,
-    width: 30,
     padding: 3,
-    borderRadius: 30
   },
   infoCard: {
     marginVertical: 15,
@@ -533,5 +535,10 @@ const style = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: wp(2),
     paddingVertical: hp(1),
+  },
+  textInputForCrossChain:{
+    width:"100%",
+    paddingHorizontal: wp(2),
+    paddingVertical:  Platform.OS=="android"?hp(1):hp(2),
   },
 });

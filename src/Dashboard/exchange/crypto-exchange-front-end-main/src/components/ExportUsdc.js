@@ -19,6 +19,7 @@ import { debounce } from 'lodash';
 import AllbridgeTxTrack from './AllbridgeTxTrack';
 import CustomInfoProvider from './CustomInfoProvider';
 import { convertMultiple } from '../utils/UsdPriceHandler';
+import { colors } from '../../../../../Screens/ThemeColorsConfig';
 
 const ExportUSDC = () => {
   const Focused = useIsFocused();
@@ -278,7 +279,7 @@ const ExportUSDC = () => {
       } else {
         setshowTx(false);
         Snackbar.show({
-          text: "USDC Exported Faild.",
+          text: result.error||"USDC Exported Faild.",
           duration: Snackbar.LENGTH_SHORT,
           backgroundColor: 'red',
         });
@@ -303,28 +304,32 @@ console.log("resQuotes-",resQuotes)
     : resQuotes?.fee?.stablecoin;
 
 
-    const colors = {
-      light: {
-        bg: "#FFFFFF",
-        cardBg: "#F4F4F8",
-        headingTx: "#272729",
-        smallCardBg: "#FFFFFF",
-        smallCardBorderColor: "#5E5C5C66",
-        cardSubTx: "#272729",
-        inactiveTx: "#AAAAAA"
-      },
-      dark: {
-        bg: "#1B1B1C",
-        cardBg: "#242426",
-        headingTx: "#E6E8EB",
-        smallCardBg: "#1B1B1C",
-        smallCardBorderColor: "#AAAAAA66",
-        cardSubTx: "#E6E8EB",
-        inactiveTx: "#AAAAAA"
-      },
-    };
   
     const theme = state.THEME.THEME ? colors.dark : colors.light;
+
+    const numericAmount = parseFloat(amount) || 0;
+    const numericWalletBalance = parseFloat(walletBalance) || 0;
+    const xlmFee = parseFloat(resQuotes?.fee?.native?.amount || 0);
+    const stableFee = parseFloat(resQuotes?.fee?.stablecoin?.amount || 0);
+    const noAmount = !amount || isNaN(Number(amount));
+    const insufficientFunds = numericAmount > numericWalletBalance;
+    const insufficientXLMFee = payFeeType === "native" && resQuotes && xlmFee > parseFloat(XLMAvlBal || 0);
+    const insufficientStableFee = payFeeType === "stable" && resQuotes && stableFee > numericWalletBalance;
+    const isProcessing = basicProccesing || btnLoading || getInfo;
+    const isDisabled =
+      noAmount ||
+      isProcessing ||
+      insufficientFunds ||
+      insufficientXLMFee ||
+      insufficientStableFee;
+    const buttonColor = isDisabled ? 'gray' : '#4052D6';
+    let buttonLabel = 'Confirm Transaction';
+    if (insufficientXLMFee || insufficientStableFee) {
+      buttonLabel = `Insufficient ${payFeeType === 'stable' ? 'USDC' : 'XLM'
+        } to cover the fee`;
+    } else if (insufficientFunds) {
+      buttonLabel = 'Insufficient Funds';
+    }
   return (
     <View style={[styles.container,{backgroundColor:theme.bg}]}>
       <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
@@ -369,7 +374,7 @@ console.log("resQuotes-",resQuotes)
           </TouchableOpacity>
             </View>
          <View style={[styles.modalOpen, { paddingVertical: hp(0.5),backgroundColor:theme.bg }]}>
-            <TextInput maxLength={10} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" value={amount} style={[{ width: wp(40), fontSize: 18, color: theme.headingTx, marginTop: hp(0.2) }]} onChangeText={(value) => { handleInputChange(value) }} returnKeyType="done" />
+            <TextInput maxLength={10} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" value={amount} style={[styles.textInputForCrossChain,{fontSize: 18, color: theme.headingTx}]} onChangeText={(value) => { handleInputChange(value) }} returnKeyType="done" />
         </View>
         </View>
 
@@ -388,7 +393,7 @@ console.log("resQuotes-",resQuotes)
           <Text style={[styles.subInputText, { color:theme.inactiveTx }]}>Balance :</Text>
           <View style={{ minWidth:wp(15) }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%" }}>
-              {basicProccesing ? <ActivityIndicator color={"green"} /> : <Text style={{ color: theme.headingTx, fontSize: 14 }}>{walletBalance}</Text>}
+              {basicProccesing ? <ActivityIndicator color={"green"} /> : <Text style={{ color: theme.headingTx, fontSize: 14 }}>{payFeeType==="stable"?walletBalance:XLMAvlBal}</Text>}
             </ScrollView>
           </View>
           </View>
@@ -515,12 +520,17 @@ console.log("resQuotes-",resQuotes)
           </View>
         </View>}
 
-          <TouchableOpacity
-              style={[styles.confirmButton, { backgroundColor: !amount || isNaN(Number(amount))||basicProccesing||btnLoading||getInfo||resQuotes!==null&&parseFloat(resQuotes?.fee?.native.amount)>parseFloat(XLMAvlBal)||parseFloat(amount)>parseFloat(walletBalance)?"gray":'#4052D6' }]}
-            disabled={!amount || isNaN(Number(amount))||btnLoading||basicProccesing||getInfo||resQuotes!==null&&parseFloat(resQuotes?.fee?.native.amount)>parseFloat(XLMAvlBal)||parseFloat(amount)>parseFloat(walletBalance)} onPress={() => {swapExecute()}}
-            >
-              {btnLoading||getInfo?<ActivityIndicator color={"white"}/>:<Text style={styles.confirmButtonText}>{resQuotes!==null&&parseFloat(resQuotes?.fee?.native.amount)>parseFloat(XLMAvlBal)||parseFloat(resQuotes?.fee?.stablecoin.amount)>parseFloat(walletBalance)?`Insufficient ${payFeeType==="stable"?"USDC":"XLM"} to cover the fee`:parseFloat(amount)>parseFloat(walletBalance)?"Insufficient Funds":"Confirm Transaction"}</Text>}
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.confirmButton, { backgroundColor: buttonColor }]}
+          disabled={isDisabled}
+          onPress={swapExecute}
+        >
+          {isProcessing ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.confirmButtonText}>{buttonLabel}</Text>
+          )}
+        </TouchableOpacity>
 
 
         {/* perfect network selection */}
@@ -822,6 +832,11 @@ const styles = StyleSheet.create({
     flexDirection:"row",
     justifyContent:"space-between",
     paddingHorizontal:wp(4.5)
-  }
+  },
+  textInputForCrossChain:{
+    width:"100%",
+    paddingHorizontal: wp(2),
+    paddingVertical:  Platform.OS=="android"?hp(1):hp(2),
+  },
 });
 export default ExportUSDC;

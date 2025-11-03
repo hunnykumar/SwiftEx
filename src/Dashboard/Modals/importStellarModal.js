@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -75,8 +76,12 @@ const storeData = async (secretKey) => {
 
 const updateWallet=async(stellarAdd,WalletAdd)=>{
   const resultApi =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
-    "multiChainAddress":WalletAdd,
-    "stellarAddress": stellarAdd,
+    "addresses": {
+      "eth": WalletAdd,
+      "xlm": stellarAdd,
+      "bnb": WalletAdd,
+      "multi": WalletAdd
+    },
     "isPrimary": true
   });
   console.log("result---result",resultApi)
@@ -185,6 +190,7 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
       style={{ opacity: fadeAnim }}
     >
       <Modal
+        avoidKeyboard={true}
         isVisible={Visible}
         onBackdropPress={() => setWalletVisible(false)}
         onBackButtonPress={() => setWalletVisible(false)}
@@ -209,7 +215,7 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
               <Text style={[style.coinText, { color: state.THEME.THEME ? "#fff" : "black" }]}>Stellar Wallet</Text>
               <Text style={[style.coinSubText, { color: state.THEME.THEME ? "#AAAAAA" : "black" }]}>Import your wallet using your secret recovery key.</Text>
             </View>
-            <Icon type={'entypo'} name='cross' color={"black"} size={24} style={[style.crossIcon, { backgroundColor: "#FFFFFF" }]} onPress={onCrossPress} />
+            <Icon type={'entypo'} name='circle-with-cross' color={state.THEME.THEME ? "#fff" : "black"} size={26} style={[style.crossIcon]} onPress={onCrossPress} />
           </View>
 
           <View style={style.infoCard}>
@@ -236,7 +242,7 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
             <TextInput
               placeholder={"Enter your secret Key here"}
               placeholderTextColor={"gray"}
-              style={{ color: state.THEME.THEME === false ?"black":"#fff" }}
+              style={[style.textInputForCrossChain,{ color: state.THEME.THEME === false ?"black":"#fff" }]}
               value={secretkey}
               onChangeText={(text) => {
                 setsecretkey(text)
@@ -339,7 +345,10 @@ const style = StyleSheet.create({
   inputContainer: {
     alignItems: "flex-start",
     borderRadius: 12,
+  },
+  textInputForCrossChain: {
+    width:"100%",
     paddingHorizontal: wp(2),
-    paddingVertical: hp(0.5),
+    paddingVertical:  Platform.OS=="android"?hp(1):hp(2),
   },
 });

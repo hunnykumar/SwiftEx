@@ -17,7 +17,7 @@ import { RNCamera } from 'react-native-camera';
 import { Exchange_screen_header } from "../../../../../reusables/ExchangeHeader";
 import { alert } from "../../../../../reusables/Toasts";
 import { STELLAR_URL } from "../../../../../constants";
-import { SaveTransaction } from "../../../../../../utilities/utilities";
+import { Paste, SaveTransaction } from "../../../../../../utilities/utilities";
 import Snackbar from "react-native-snackbar";
 import ErrorComponet from "../../../../../../utilities/ErrorComponet";
 import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../../utilities/StellarUtils";
@@ -26,6 +26,7 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 import CustomInfoProvider from "../../components/CustomInfoProvider";
 import QRScannerComponent from "../../../../../Modals/QRScannerComponent";
 import TokenQrCode from "../../../../../Modals/TokensQrCode";
+import { colors } from "../../../../../../Screens/ThemeColorsConfig";
 StellarSdk.Networks.PUBLIC
 
 const send_recive = ({route}) => {
@@ -284,24 +285,6 @@ const send_recive = ({route}) => {
     navigation.goBack()
   };
 
-  const colors = {
-    light: {
-      bg: "#FFFFFF",
-      cardBg: "#F4F4F8",
-      headingTx: "#272729",
-      smallCardBorderColor: "#5E5C5C66",
-      cardSubTx: "#272729",
-      inactiveTx: "#AAAAAA"
-    },
-    dark: {
-      bg: "#1B1B1C",
-      cardBg: "#242426",
-      headingTx: "#E6E8EB",
-      smallCardBorderColor: "#AAAAAA66",
-      cardSubTx: "#E6E8EB",
-      inactiveTx: "#AAAAAA"
-    },
-  };
   const theme = state.THEME.THEME ? colors.dark : colors.light;
     return (
         <>
@@ -328,28 +311,45 @@ const send_recive = ({route}) => {
                         <Text style={[styles.mode_text,{color: mode_selected === "RVC"?"#fff":theme.headingTx}]}>Receive</Text>
                     </TouchableOpacity>
                 </View>
-                        <View>
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15,color:theme.inactiveTx }]}>Recipient Address</Text>
-                            <View style={[styles.text_input,{flexDirection:"row",alignItems:"center",backgroundColor:theme.cardBg}]}>
-                            <TextInput placeholder="Enter stellar address" placeholderTextColor={"gray"} value={recepi_address} style={{height:"100%",width:"88%",fontSize:19,color:theme.headingTx}}  onChangeText={(value) => { setrecepi_address(value) }} />
-                           <TouchableOpacity onPress={()=>{toggleModal();}}>
-                            <Icon
-                            name={"qrcode-scan"}
-                            type={"materialCommunity"}
-                            size={28}
-                            color={"#5B65E1"}
-                            />
-                            </TouchableOpacity>
-                            </View>
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10,color:theme.inactiveTx }]}>Available: {asset_name==="native"||asset_name!=="native"?!resStellarbal?<ActivityIndicator/>:resStellarbal==="Error"?0.00:resStellarbal:resStellarbal==="Error"?0.00:resStellarbal}</Text>
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15,color:theme.inactiveTx }]}>Amount</Text>
-                            <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="number-pad" style={[styles.text_input,{color:theme.headingTx,backgroundColor:theme.cardBg,paddingVertical:20}]} onChangeText={(value) => { setrecepi_amount(value) }} />
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15,color:theme.inactiveTx }]}>Transaction memo</Text>
-                            <TextInput placeholder="Enter transaction memo" placeholderTextColor={"gray"} value={recepi_memo} style={[styles.text_input,{color:theme.headingTx,backgroundColor:theme.cardBg,paddingVertical:20}]} onChangeText={(value) => { setrecepi_memo(value) }} />
-                            <TouchableOpacity disabled={Payment_loading} style={[styles.mode_sele, { height: 60,width:wp(91), backgroundColor: Payment_loading  ? "#011434" : "#5B65E1", marginTop: 40, alignSelf: "center" }]} onPress={() => {Send_Asseet()}}>
-                                {Payment_loading?<ActivityIndicator color={"green"}/>:<Text style={styles.mode_text}>Send</Text>}
-                            </TouchableOpacity>
-                        </View> 
+          <View style={[styles.card,{backgroundColor:theme.cardBg}]}>
+            <View style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center",paddingVertical:5}}>
+            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 16, fontSize: 16, color: theme.inactiveTx }]}>Recipient Address</Text>
+            <TouchableOpacity style={{flexDirection:"row",alignItems:"center"}}  onPress={() => {Paste(setrecepi_address)}}>
+            <Icon name={"content-copy"} type={"materialCommunity"} size={18} color={"#5B65E1"}/>
+            <Text style={[styles.mode_text, { textAlign: "left", marginRight: 16,marginLeft:5, fontSize: 16, color: "#5B65E1" }]}>PASTE</Text>
+            </TouchableOpacity>
+            </View>
+            <View style={[styles.text_input, { flexDirection: "row", alignItems: "center", backgroundColor: theme.bg }]}>
+              <TextInput placeholder="Recipient stellar address" placeholderTextColor={"gray"} value={recepi_address} style={{ height: "100%", width: "88%", fontSize: 19, color: theme.headingTx }} onChangeText={(value) => { setrecepi_address(value) }} />
+              <TouchableOpacity onPress={() => { toggleModal(); }}>
+                <Icon
+                  name={"qrcode-scan"}
+                  type={"materialCommunity"}
+                  size={28}
+                  color={"#5B65E1"}
+                />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 16, fontSize: 16, marginTop: 10, color: theme.inactiveTx }]}>Available: {asset_name === "native" || asset_name !== "native" ? !resStellarbal ? <ActivityIndicator /> : resStellarbal === "Error" ? 0.00 : resStellarbal : resStellarbal === "Error" ? 0.00 : resStellarbal}</Text>
+          </View>
+
+          <View style={[styles.card, { backgroundColor: theme.cardBg,marginTop:2 }]}>
+            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 16, fontSize: 16, color: theme.inactiveTx }]}>Amount</Text>
+            <View style={[styles.text_input, { flexDirection: "row", alignItems: "center", backgroundColor: theme.bg }]}>
+              <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="decimal-pad" style={{ height: "100%", width: "88%", fontSize: 19, color: theme.headingTx }} onChangeText={(value) => { setrecepi_amount(value) }} />
+            </View>
+          </View>
+
+          <View style={[styles.card, { backgroundColor: theme.cardBg,marginTop:2 }]}>
+
+              <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 16, fontSize: 16,color:theme.inactiveTx }]}>Transaction Memo</Text>
+              <View style={[styles.text_input, { flexDirection: "row", alignItems: "center", backgroundColor: theme.bg }]}>
+              <TextInput placeholder="Enter transaction memo" placeholderTextColor={"gray"} value={recepi_memo} style={{ height: "100%", width: "88%", fontSize: 19, color: theme.headingTx }} onChangeText={(value) => { setrecepi_memo(value) }} />
+              </View>
+                </View>
+              <TouchableOpacity disabled={Payment_loading} style={[styles.mode_sele, { height: 60,width:wp(91), backgroundColor: Payment_loading  ? "#011434" : "#5B65E1", marginTop: 20, alignSelf: "center" }]} onPress={() => {Send_Asseet()}}>
+              {Payment_loading?<ActivityIndicator color={"green"}/>:<Text style={styles.mode_text}>Send</Text>}
+              </TouchableOpacity>
            <Modal
         animationType="slide"
         transparent={true}
@@ -413,8 +413,8 @@ const styles = StyleSheet.create({
         fontSize: 20,
         borderRadius: 15,
         paddingLeft: 10,
-        marginTop: 19,
-        paddingVertical:10
+        marginTop: 10,
+        paddingVertical:hp(1.5)
     },
     mode_text: {
         color: "#fff",
@@ -520,6 +520,13 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color:"#fff"
+      },
+      card: {
+        borderRadius: 16,
+        paddingVertical:hp(1.9),
+        paddingHorizontal:hp(0.1),
+        marginVertical: hp(1.5),
+        marginHorizontal:wp(2)
       },
 })
 export default send_recive;

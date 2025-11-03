@@ -767,7 +767,8 @@ const style = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: wp(2),
-    justifyContent:"space-between"
+    justifyContent:"space-between",
+    maxHeight:hp(4)
   },
   balanceAmount: {
     fontSize: 16,

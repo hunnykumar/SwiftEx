@@ -34,6 +34,7 @@ import Modal from "react-native-modal";
 import CheckNewWalletMnemonic from "./checkNewWalletMnemonic";
 import ModalHeader from "../reusables/ModalHeader";
 import Icon from "../../icon";
+import { colors } from "../../Screens/ThemeColorsConfig";
 
 const NewWalletPrivateKey = ({
   props,
@@ -151,9 +152,9 @@ const NewWalletPrivateKey = ({
     console.log("============------------", item);
     setData(data);
     return (
-      <TouchableOpacity style={[style.flatBtn,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
-        <Text style={{ textAlign: "right",color:"#fff" }}>{index + 1}</Text>
-        <Text style={{ color:"#fff" }}>{item}</Text>
+      <TouchableOpacity style={[style.flatBtn,{backgroundColor:theme.cardBg}]}>
+        <Text style={{ textAlign: "right",color:theme.headingTx}}>{index + 1}</Text>
+        <Text style={{ color:theme.headingTx }}>{item}</Text>
       </TouchableOpacity>
     );
   };
@@ -162,18 +163,18 @@ const NewWalletPrivateKey = ({
     const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
     setAccountName(formattedUsername);
   };
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
       <Modal
-        animationIn="slideInRight"
-        animationOut="slideOutRight"
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
         animationInTiming={500}
         animationOutTiming={650}
         isVisible={Visible}
         statusBarTranslucent={true}
-        // style={{backgroundColor:"blue",height:hp(100),top:20,width:wp(100),alignSelf:"center"}}
         useNativeDriverForBackdrop={true}
         backdropTransitionOutTiming={0}
         hideModalContentWhileAnimating
@@ -183,40 +184,36 @@ const NewWalletPrivateKey = ({
         onBackButtonPress={() => {
           SetVisible(false);
         }}
+        style={style.modalCon}
       >
 
-        <SafeAreaView style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
+        <View style={[style.Body,{backgroundColor:theme.bg}]}>
           {/* <ModalHeader Function={closeModal} name={'Private Key'}/> */}
           <Icon
-            name={"arrow-left"} 
+            name={"close-circle-outline"} 
             type={"materialCommunity"}
-            color={"#fff"}
-            size={24}
+            color={theme.headingTx}
+            size={30}
             style={style.croosIcon}
             onPress={onCrossPress}
           />
-            <View style={{marginTop:hp(1)}}>
-            <Text style={style.label}>Account Name</Text>
+            <Text style={[style.label,{color:theme.headingTx}]}>Account Name</Text>
             <TextInput
               value={accountName}
               returnKeyType="done"
               onChangeText={(text) => {
                 handleUsernameChange(text)
               }}
-              style={style.labelInputContainer}
+              style={[style.labelInputContainer,{color:theme.headingTx,backgroundColor:theme.cardBg}]}
               placeholder={user ? user : "Enter your account name"}
               placeholderTextColor={"gray"}
               maxLength={20}
             />
-          </View>
 
-          <Text style={[style.backupText,{color:"#fff"}]}>Backup Mnemonic Phrase</Text>
-          <Text style={style.welcomeText1}>
-            Please select the mnemonic in order to ensure the backup is
-            correct.
-          </Text>
+          <Text style={[style.backupText,{color:theme.headingTx}]}>Backup Mnemonic Phrase</Text>
+          <Text style={[style.welcomeText1,{color:theme.inactiveTx}]}>Keep your mnemonic in a safe place, isolated from any network.</Text>
 
-          <View style={{ marginTop: hp(3) }}>
+          <View style={{ marginTop: hp(2) }}>
             <FlatList
               data={mnemonic}
               renderItem={RenderItem}
@@ -228,14 +225,8 @@ const NewWalletPrivateKey = ({
           </View>
 
           <View style={style.dotView}>
-            <Icon name="dot-single" type={"entypo"} size={20} color={"gray"}/>
-            <Text style={{ color: "gray" }}>
-            Keep your mnemonic in a safe place, isolated from any network.
-            </Text>
-          </View>
-          <View style={style.dotView1}>
-            <Icon name="dot-single" type={"entypo"} size={20} color={"gray"}/>
-            <Text style={{ color: "gray", width: "90%" }}>
+            <Icon name="dot-single" type={"entypo"} size={24} color={theme.inactiveTx}/>
+            <Text style={{ color: theme.inactiveTx, width: "90%" }}>
             Do not share it through email, photos, social media, apps, etc.
             </Text>
           </View>
@@ -255,16 +246,16 @@ const NewWalletPrivateKey = ({
             autoCapitalize={"none"}
           /> */}
 
-          <View style={{ width: wp(100) }}>
+          <View style={{ width: wp(100),marginBottom:hp(5) }}>
             <TouchableOpacity
               style={{
                 // backgroundColor:
                   // accountName && !/\s/.test(accountName) ? "#4CA6EA" : "gray",
-                  backgroundColor:!accountName || !/\S/.test(accountName)?"gray":"#2164C1",
+                  backgroundColor:!accountName || !/\S/.test(accountName)?"gray":"#4052D6",
                 width: wp(90),
                 alignSelf: "center",
                 alignItems: "center",
-                borderRadius: 50,
+                borderRadius: 20,
                 marginTop: hp(3),
                 paddingVertical: hp(1.7),
               }}
@@ -284,7 +275,7 @@ const NewWalletPrivateKey = ({
               <Text style={{ color: "white",fontSize:16  }}>Done</Text>
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
+        </View>
         {MnemonicVisible && (
           <CheckNewWalletMnemonic
             Wallet={newWallet}
@@ -306,11 +297,16 @@ const NewWalletPrivateKey = ({
 export default NewWalletPrivateKey;
 
 const style = StyleSheet.create({
+  modalCon:{
+    justifyContent: "flex-end",
+    margin: 0,
+  },
   Body: {
-    width: wp(100),
-    height:hp(90),
-    alignSelf:"center",
-    textAlign: "center",
+    borderTopLeftRadius:20,
+    borderTopRightRadius:20,
+    justifyContent: "flex-end",
+    margin: 0,
+    width:wp(100)
   },
   welcomeText: {
     fontSize: 20,
@@ -373,8 +369,7 @@ const style = StyleSheet.create({
     paddingVertical: hp(1.7),
   },
   flatBtn: {
-    backgroundColor: "#F2F2F2",
-    borderRadius: hp(0.3),
+    borderRadius: hp(0.5),
     width: wp(30),
     paddingVertical: hp(2),
     borderWidth: 0.3,
@@ -383,7 +378,7 @@ const style = StyleSheet.create({
   },
   backupText: {
     fontWeight: "bold",
-    fontSize: 17,
+    fontSize: 15,
     color: "black",
     marginLeft: 20,
     marginBottom: hp(1),
@@ -391,8 +386,6 @@ const style = StyleSheet.create({
   },
   welcomeText1: {
     marginLeft: wp(4.7),
-    color: "gray",
-    // marginLeft: wp(4),
     width: wp(90),
   },
   dotView: {
@@ -400,7 +393,7 @@ const style = StyleSheet.create({
     alignItems: "center",
     width: wp(85),
     marginLeft: 18,
-    marginTop: hp(3),
+    marginTop: hp(2),
   },
   dotView1: {
     flexDirection: "row",
@@ -419,21 +412,18 @@ const style = StyleSheet.create({
     alignItems: "center",
     alignSelf: "center",
     borderRadius: wp(2),
-    backgroundColor: "white",
     paddingLeft: wp(3),
     paddingVertical: hp(1.6),
     fontSize:15,
-    color:"black"
   },
   label: {
     marginLeft: 20,
     fontSize:16,
-    color:"white",
     fontWeight: "bold",
   },
   croosIcon: {
-    alignSelf: "flex-start",
-    padding: hp(1.2),
+    alignSelf: "flex-end",
+    padding: 10,
   },
 });
 //  const mnemonic = Wallet?.mnemonic.match(/\b(\w+)'?(\w+)?\b/g)

@@ -17,6 +17,7 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 import ClaimableBalanceChecker from "./ClaimableBalanceChecker";
 import stellarTokens from "./Tokens.json";
 import Modal from "react-native-modal";
+import { colors } from "../../../../../../Screens/ThemeColorsConfig";
 
 const Assets_manage = ({ route }) => {
     const FOCUSED = useIsFocused();
@@ -71,10 +72,10 @@ const Assets_manage = ({ route }) => {
     const AVL_ASSETS = [
         { name: 'USDC', domain: "USDC (center.io)", img: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png", issuerAddress: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN" },
         { name: 'BTC', domain: "BTC (ultracapital.xyz)", img: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png", issuerAddress: "GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM" },
-        { name: 'ETH', domain: "ETH (ultracapital.xyz)", img: ethereum, issuerAddress: "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" },
+        { name: 'ETH', domain: "ETH (ultracapital.xyz)", img:  "https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png", issuerAddress: "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" },
         { name: 'EURC', domain: "EURC (circle.com)", img: "https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420", issuerAddress: "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2" },
         { name: 'yUSDC', domain: "yUSDC (ultracapital.xyz)", img: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png", issuerAddress: "GDGTVWSM4MGS4T7Z6W4RPWOCHE2I6RDFCIFZGS3DOA63LWQTRNZNTTFF" },
-        { name: 'yXLM', domain: "yXLM (ultracapital.xyz)", img: stellar, issuerAddress: "GARDNV3Q7YGT4AKSDF25LT32YSCCW4EV22Y2TV3I2PU2MMXJTEDL5T55" },
+        { name: 'yXLM', domain: "yXLM (ultracapital.xyz)", img: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq", issuerAddress: "GARDNV3Q7YGT4AKSDF25LT32YSCCW4EV22Y2TV3I2PU2MMXJTEDL5T55" },
     ];
 
     const changeTrust = async (domainName, domainIssuerAddress) => {
@@ -113,6 +114,7 @@ const Assets_manage = ({ route }) => {
                             type: SET_ASSET_DATA,
                             payload: account.balances,
                         })
+                        get_stellar()
                     });
                 })
                 .catch(error => {
@@ -123,15 +125,79 @@ const Assets_manage = ({ route }) => {
                         duration: Snackbar.LENGTH_SHORT,
                         backgroundColor: 'red',
                     });
+                    get_stellar()
                 });
         } catch (error) {
             console.error(`Error changing trust:`, error);
             setLoading(null)
             Snackbar.show({
-                text: 'USDC failed to be added',
+                text: `${domainName} failed to be added`,
                 duration: Snackbar.LENGTH_SHORT,
                 backgroundColor: 'red',
             });
+            get_stellar()
+        }
+    };
+
+    const removeTrustLine = async (domainName, domainIssuerAddress) => {
+        setLoading(domainName)
+        try {
+            console.log(":++++ Entered into remove trusting ++++:")
+            const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
+            StellarSdk.Networks.PUBLIC
+            const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
+            const transaction = new StellarSdk.TransactionBuilder(account, {
+                fee: StellarSdk.BASE_FEE,
+                networkPassphrase: StellarSdk.Networks.PUBLIC,
+            })
+                .addOperation(
+                    StellarSdk.Operation.changeTrust({
+                        asset: new StellarSdk.Asset(domainName, domainIssuerAddress),
+                        limit:"0"
+                    })
+                )
+                .setTimeout(30)
+                .build();
+            transaction.sign(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY));
+            const result = await server.submitTransaction(transaction);
+            console.log("Trustline remove aand updated successfully",result);
+            Snackbar.show({
+                text: `${domainName} removed successfully`,
+                duration: Snackbar.LENGTH_SHORT,
+                backgroundColor: 'green',
+            });
+            server.loadAccount(state.STELLAR_PUBLICK_KEY)
+                .then(account => {
+                    console.log('Balances for account:', state.STELLAR_PUBLICK_KEY);
+                    account.balances.forEach(balance => {
+                        setassets(account.balances)
+                        setLoading(null)
+                        dispatch_({
+                            type: SET_ASSET_DATA,
+                            payload: account.balances,
+                        })
+                        get_stellar()
+                    });
+                })
+                .catch(error => {
+                    console.log('Error loading account:', error);
+                    setLoading(null)
+                    Snackbar.show({
+                        text: `${domainName} failed to remove.`,
+                        duration: Snackbar.LENGTH_SHORT,
+                        backgroundColor: 'red',
+                    });
+                    get_stellar()
+                });
+        } catch (error) {
+            console.error(`Error changing trust:`, error);
+            setLoading(null)
+            Snackbar.show({
+                text: `${domainName} failed to remove.`,
+                duration: Snackbar.LENGTH_SHORT,
+                backgroundColor: 'red',
+            });
+            get_stellar()
         }
     };
 
@@ -141,24 +207,6 @@ const Assets_manage = ({ route }) => {
         get_stellar()
     }, [FOCUSED])
 
-    const colors = {
-        light: {
-            bg: "#FFFFFF",
-            cardBg: "#F4F4F8",
-            headingTx: "#272729",
-            smallCardBorderColor: "#5E5C5C66",
-            cardSubTx: "#272729",
-            inactiveTx: "#AAAAAA"
-        },
-        dark: {
-            bg: "#1B1B1C",
-            cardBg: "#242426",
-            headingTx: "#E6E8EB",
-            smallCardBorderColor: "#AAAAAA66",
-            cardSubTx: "#E6E8EB",
-            inactiveTx: "#AAAAAA"
-        },
-    };
 
     const theme = state.THEME.THEME ? colors.dark : colors.light;
 
@@ -207,45 +255,39 @@ const Assets_manage = ({ route }) => {
                     <View style={{ flexDirection: "row", justifyContent: "space-between",width:wp(90)}}>
                        <View style={{flexDirection:"column",paddingVertical:10}}>
                        <Text style={[styles.modal_heading,{color:theme.headingTx}]}>Add Asset</Text>
-                       <Text style={[styles.modal_heading,{color:theme.inactiveTx,fontSize:19,fontWeight:"300"}]}>Enable Trustline to Hold Asset</Text>
+                       <Text style={[styles.modal_heading,{color:theme.inactiveTx,fontSize:16,fontWeight:"300"}]}>Enable Trustline to Hold Asset</Text>
                        </View>
-                        <TouchableOpacity onPress={() => { setTRUST_ASSET(false) }} style={{padding:10,borderRadius:40,backgroundColor:theme.bg,height:48}}>
+                        <TouchableOpacity onPress={() => { setTRUST_ASSET(false) }}>
                             <Icon
-                                name={"close"}
-                                type={"antDesign"}
-                                size={28}
+                                name={"close-circle-outline"}
+                                type={"materialCommunity"}
+                                size={35}
                                 color={theme.headingTx}
                             />
                         </TouchableOpacity>
                     </View>
                     <View style={{flexDirection:"row",paddingHorizontal:16,paddingVertical:10,backgroundColor:"#FEF6D8",borderRadius:13,marginVertical:10,alignItems:"center"}}>
                     <Icon name={"information-circle-outline"} type={"ionicon"} size={28} color={"#ECB742"} />
-                        <Text style={{fontSize:16,color:"#ECB742",fontWeight:"300",marginLeft:4}}>{`Trustlines let your wallet accept and hold \n approved assets.`}</Text>
+                        <Text style={{fontSize:13,color:"#ECB742",fontWeight:"300",marginLeft:4}}>{`Trustlines let your wallet accept and hold \n approved assets.`}</Text>
                     </View>
                     {AVL_ASSETS.map((list, index) => {
                         return (
                             <View key={index} style={[styles.search_bar, { flexDirection: "row", justifyContent: "space-between", alignItems: "center",backgroundColor:theme.bg }]}>
                                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                                    {list.name === "ETH" || list.name === "yXLM" ? <Image source={list.img} style={styles.modal_IMG} /> : <Image source={{ uri: list.img }} style={styles.modal_IMG} />}
+                                    <Image source={{ uri: list.img }} style={styles.modal_IMG} />
                                     <View>
                                         <Text style={[styles.modal_sub_heading,{color:theme.headingTx}]}>{list.name}</Text>
                                         <Text style={[styles.modal_sub_heading, { fontSize: 10, color: theme.inactiveTx }]}>{list.domain}</Text>
                                     </View>
                                 </View>
                                 {assets.some((list_item) => list_item.asset_code === list.name) ?
-                                    <View style={[styles.btn,{backgroundColor:theme.cardBg}]}>
-                                        <Icon
-                                            name={"check-decagram"}
-                                            type={"materialCommunity"}
-                                            size={22}
-                                            color={"green"}
-                                            style={{ paddingHorizontal: "10%" }}
-                                        />
-                                    </View> :
+                                    <TouchableOpacity style={[styles.btn,{backgroundColor:theme.cardBg}]} disabled={Loading!==null} onPress={()=>{removeTrustLine(list.name, list.issuerAddress)}}>
+                                        {Loading === list.name ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:"#fff"}]}>Remove</Text>}
+                                    </TouchableOpacity> :
                                     <TouchableOpacity style={[styles.btn,{backgroundColor:"#4052D6"}]} onPress={() => {
                                         changeTrust(list.name, list.issuerAddress)
-                                    }}>
-                                        {Loading === list.name ? <ActivityIndicator color={"green"} /> : <Text style={[styles.modal_sub_heading,{color:"#fff"}]}>Add Asset</Text>}
+                                    }} disabled={Loading!==null}>
+                                        {Loading === list.name ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:"#fff"}]}>Add Asset</Text>}
                                     </TouchableOpacity>
                                 }
                             </View>
@@ -257,16 +299,20 @@ const Assets_manage = ({ route }) => {
             <ClaimableBalanceChecker
                 publicKey={state.STELLAR_PUBLICK_KEY}
                 autoFetch={true}
-                isDark={true}
+                isDark={state.THEME.THEME}
             />
         </>
     )
 }
 const styles = StyleSheet.create({
     btn: {
-        padding: 5,
+        width:wp(24),
+        height:hp(5),
+        padding:10,
         borderRadius: 10,
         marginRight: 10,
+        alignItems:"center",
+        justifyContent:"center"
     },
     main_con: {
         height: "100%",
@@ -399,7 +445,7 @@ const styles = StyleSheet.create({
         padding: 19,
         alignItems: 'flex-start',
         marginTop: 60,
-        paddingLeft: 32
+        paddingLeft: 16
     },
     Body: {
         borderTopLeftRadius: 30,
@@ -409,7 +455,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 5,
     },
     modal_heading: {
-        fontSize: 24,
+        fontSize: 21,
         color: "#fff",
         fontWeight: "600"
     },
@@ -419,9 +465,9 @@ const styles = StyleSheet.create({
         fontWeight: "600"
     },
     modal_IMG: {
-        height: hp(5.5),
-        width: wp(11),
-        marginRight: 5
+        height: hp(5),
+        width: wp(10.6),
+        marginRight: wp(2)
     },
 })
 export default Assets_manage;

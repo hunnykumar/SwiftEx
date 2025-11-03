@@ -22,7 +22,7 @@ import { debounce } from 'lodash';
 import { useSelector } from 'react-redux';
 import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from '../../../../../../utilities/StellarUtils';
 import { AMMSWAPTESTNET } from './AMMSwapTestNetUtil';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { STELLAR_URL } from '../../../../../constants';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import CustomInfoProvider from '../../components/CustomInfoProvider';
@@ -30,9 +30,11 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
+import { colors } from '../../../../../../Screens/ThemeColorsConfig';
 
 const AMMSwap = () => {
   const state=useSelector((state)=>state);
+  const [assetTrustRequired,setassetTrustRequired]=useState([]);
   const [fromToken, setFromToken] = useState({
     code: "USDC",
     issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
@@ -67,7 +69,12 @@ const AMMSwap = () => {
   const [tokenTypeSelection, settokenTypeSelection] = useState(0);
   const [messageError,setmessageError]=useState(null);
   const [showReverse,setshowReverse]=useState(false);
+  const isFocused=useIsFocused();
   
+  useEffect(()=>{
+    setassetTrustRequired([]);
+  },[isFocused,fromToken,toToken])
+
   useEffect(()=>{
     settokenBurn(false)
     setshowReverse(false)
@@ -123,10 +130,24 @@ const AMMSwap = () => {
       } if (assetCode !== "native") {
         const nonNativeBal = await GetStellarUSDCAvilabelBalance(state?.STELLAR_PUBLICK_KEY, assetCode, assetCodeIssuer);
         if (nonNativeBal.status === false&&nonNativeBal.error) {
-          CustomInfoProvider.show("Info", nonNativeBal.error, [
-            { text: "Cancel", style: "cancel" },
-            { text: "Trust", onPress: () => {navigation.navigate("Assets_manage",{openAssetModal:true})} },
-          ]);
+          const addRequest={
+            tokenSymbole:nonNativeBal.tokenSymbole,
+            tokenIssuer:nonNativeBal.tokenIssuer,
+            userPublicKey:nonNativeBal.userPublicKey
+          }
+          setassetTrustRequired(lastAssets => {
+            const assetExist = lastAssets.some(
+              asset =>
+                asset.tokenSymbole === addRequest.tokenSymbole &&
+                asset.tokenIssuer === addRequest.tokenIssuer &&
+                asset.userPublicKey === addRequest.userPublicKey
+            );
+            if (assetExist) {
+              return lastAssets;
+            } else {
+              return [...lastAssets, addRequest];
+            }
+          });
           return { "balance": "0.00" }
         }
         if (nonNativeBal.availableBalance) {
@@ -272,7 +293,7 @@ const AMMSwap = () => {
       };
   
     } catch (error) {
-      console.error("Swap quote error:", error);
+      console.log("Swap quote error:", error);
       return {
         status: false,
         error: error.message || "Unknown error",
@@ -345,7 +366,7 @@ const AMMSwap = () => {
 
   const handleSwap=async()=>{
     settokenBurn(true)
-    const respo=await AMMSWAPTESTNET(fromToken.code,fromToken.issuer,toToken.code,toToken.issuer,state?.STELLAR_SECRET_KEY,toAmount)
+    const respo=await AMMSWAPTESTNET(fromToken.code,fromToken.issuer,toToken.code,toToken.issuer,state?.STELLAR_SECRET_KEY,toAmount,assetTrustRequired)
     if(respo.status===true)
     {
       setmessageError("Transaction successful!")
@@ -362,24 +383,6 @@ const AMMSwap = () => {
     }
   }
 
-  const colors = {
-    light: {
-      bg: "#FFFFFF",
-      cardBg: "#F4F4F8",
-      headingTx: "#272729",
-      smallCardBorderColor: "#5E5C5C66",
-      cardSubTx: "#272729",
-      inactiveTx: "#AAAAAA"
-    },
-    dark: {
-      bg: "#1B1B1C",
-      cardBg: "#242426",
-      headingTx: "#E6E8EB",
-      smallCardBorderColor: "#AAAAAA66",
-      cardSubTx: "#E6E8EB",
-      inactiveTx: "#AAAAAA"
-    },
-  };
 
   const theme = state.THEME.THEME ? colors.dark : colors.light;
   
@@ -500,7 +503,7 @@ const AMMSwap = () => {
               {isLoading||tokenBurn ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={styles.swapActionButtonText}>{parseFloat(fromBal)===0||parseFloat(fromAmount)>=parseFloat(fromBal)?"Insufficient balance":"Swap Tokens"}</Text>
+                <Text style={styles.swapActionButtonText}>{parseFloat(fromBal)===0||parseFloat(fromAmount)>=parseFloat(fromBal)?"Insufficient balance":assetTrustRequired.length>0?"Trust and Swap":"Swap Tokens"}</Text>
               )}
           </TouchableOpacity>
 

@@ -12,6 +12,7 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { useSelector } from 'react-redux';
+import { colors } from '../../../../../../Screens/ThemeColorsConfig';
 const ASSET_PAIRS = [
   {
     base: { code: 'XLM', issuer: null },
@@ -63,24 +64,6 @@ const ALL_TABS = [
   { id: 'asks', label: 'Asks' }
 ];
 
-const colors = {
-  light: {
-    bg: "#FFFFFF",
-    cardBg: "#F4F4F8",
-    headingTx: "#272729",
-    smallCardBorderColor: "#5E5C5C66",
-    cardSubTx: "#272729",
-    inactiveTx: "#AAAAAA"
-  },
-  dark: {
-    bg: "#1B1B1C",
-    cardBg: "#242426",
-    headingTx: "#E6E8EB",
-    smallCardBorderColor: "#AAAAAA66",
-    cardSubTx: "#E6E8EB",
-    inactiveTx: "#AAAAAA"
-  },
-};
 
 const CustomOrderBook = ({ visibleTabs = ['chart', 'trades', 'bids', 'asks'] }) => {
   const eventSourceRef = useRef(null);
@@ -187,7 +170,7 @@ const fetchRecentTrades = useCallback(async () => {
   }
   
   try {
-    const server = new StellarSdk.Server('https://horizon.stellar.org');
+    const server = new StellarSdk.Horizon.Server('https://horizon.stellar.org');
     const baseAsset = getAsset(selectedPair.base);
     const counterAsset = getAsset(selectedPair.counter);
 
@@ -251,7 +234,7 @@ const fetchRecentTrades = useCallback(async () => {
   // Add this function to fetch trade aggregation data
   const fetchTradeAggregation = useCallback(async () => {
     try {
-      const server = new StellarSdk.Server('https://horizon.stellar.org');
+      const server = new StellarSdk.Horizon.Server('https://horizon.stellar.org');
       const baseAsset = getAsset(selectedPair.base);
       const counterAsset = getAsset(selectedPair.counter);
       
@@ -509,18 +492,18 @@ const connectEventSource = useCallback(() => {
 
             {points_data===null?null:<View style={styles.legendContainer}>
               <View style={styles.legendItem}>
-              <Text style={[styles.legendText,{fontSize:20}]}>$ {points_data}</Text>
+              <Text style={[styles.legendText,{fontSize:20,color:theme.headingTx}]}>$ {points_data}</Text>
                 {/* <Text style={styles.legendText}>{points_data_time}</Text> */}
               </View>
 
             </View>}
             
             {lastTrade && (
-              <View style={styles.lastTradeContainer}>
-                <Text style={styles.lastTradeTitle}>Last Trade</Text>
+              <View style={[styles.lastTradeContainer,{backgroundColor:theme.cardBg}]}>
+                <Text style={[styles.lastTradeTitle,{color:theme.headingTx}]}>Last Trade</Text>
                 <View style={styles.lastTradeContent}>
                   <View style={styles.lastTradeItem}>
-                    <Text style={styles.lastTradeLabel}>Price</Text>
+                    <Text style={[styles.lastTradeLabel,{color:theme.inactiveTx}]}>Price</Text>
                     <Text style={[
                       styles.lastTradeValue, 
                       lastTrade.type === 'buy' ? styles.bidText : styles.askText
@@ -529,15 +512,15 @@ const connectEventSource = useCallback(() => {
                     </Text>
                   </View>
                   <View style={styles.lastTradeItem}>
-                    <Text style={styles.lastTradeLabel}>Amount</Text>
-                    <Text style={styles.lastTradeValue}>{lastTrade.amount.toFixed(7)} {selectedPair.base.code}</Text>
+                    <Text style={[styles.lastTradeLabel,{color:theme.inactiveTx}]}>Amount</Text>
+                    <Text style={[styles.lastTradeValue,{color:theme.headingTx}]}>{lastTrade.amount.toFixed(7)} {selectedPair.base.code}</Text>
                   </View>
                   <View style={styles.lastTradeItem}>
-                    <Text style={styles.lastTradeLabel}>Time</Text>
-                    <Text style={styles.lastTradeValue}>{lastTrade.timestamp}</Text>
+                    <Text style={[styles.lastTradeLabel,{color:theme.inactiveTx}]}>Time</Text>
+                    <Text style={[styles.lastTradeValue,{color:theme.headingTx}]}>{lastTrade.timestamp}</Text>
                   </View>
                   <View style={styles.lastTradeItem}>
-                    <Text style={styles.lastTradeLabel}>Type</Text>
+                    <Text style={[styles.lastTradeLabel,{color:theme.inactiveTx}]}>Type</Text>
                     <View style={[
                       styles.lastTradeTypeTag,
                       lastTrade.type === 'buy' ? styles.buyTag : styles.sellTag
@@ -577,10 +560,10 @@ const connectEventSource = useCallback(() => {
                   ]}>
                     {selectedPair.counter.code === 'USDC' ? '$' : ''}{trade.price.toFixed(7)}
                   </Text>
-                  <Text style={styles.tradeAmount}>{trade.amount.toFixed(7)}</Text>
+                  <Text style={[styles.tradeAmount,{color:theme.headingTx}]}>{trade.amount.toFixed(7)}</Text>
                   <View style={styles.tradeTimeCol}>
-                    <Text style={styles.tradeTime}>{trade.timestamp}</Text>
-                    <Text style={styles.tradeDate}>{trade.date}</Text>
+                    <Text style={[styles.tradeTime,{color:theme.inactiveTx}]}>{trade.timestamp}</Text>
+                    <Text style={[styles.tradeDate,{color:theme.headingTx}]}>{trade.date}</Text>
                   </View>
                   <View style={[
                     styles.tradeTypeTag,
@@ -631,7 +614,7 @@ const connectEventSource = useCallback(() => {
                         <Text style={[styles.priceText, styles.askText]}>
                           {selectedPair.counter.code === 'USDC' ? '$' : ''}{price.toFixed(7)}
                         </Text>
-                        <Text style={styles.amountText}>{amount.toFixed(7)}</Text>
+                        <Text style={[styles.amountText,{color:theme.headingTx}]}>{amount.toFixed(7)}</Text>
                         <Text numberOfLines={1} style={styles.totalText}>{total}</Text>
                       </View>
                     );
@@ -708,11 +691,10 @@ const connectEventSource = useCallback(() => {
             <Text style={[styles.title,{color:theme.headingTx}]}>{selectedPair.displayName}</Text>
             <Ionicons name="chevron-down" size={16} color={theme.headingTx} />
           </View>
-          <Text style={[styles.subtitle,{color:theme.headingTx}]}>
             {!loading && asks.length > 0 ? 
-              `${selectedPair.counter.code === 'USDC' ? '$' : '$'}${parseFloat(asks[0].price).toFixed(6)}` : 
-              '...'}
-          </Text>
+          <Text style={[styles.subtitle,{color:theme.headingTx}]}>
+              {`${selectedPair.counter.code === 'USDC' ? '$' : '$'}${parseFloat(asks[0].price).toFixed(6)}`}
+          </Text>:<></>}
           {lastTrade && (
             <View style={[styles.lastTradePreview,{backgroundColor:theme.cardBg}]}>
               <Text style={styles.lastTradePreviewLabel}>Last:</Text>

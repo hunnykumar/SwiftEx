@@ -295,9 +295,6 @@ export const CoinDetails = (props) => {
             <Text style={[styles.aboutText, { color: isDark ? "#8E8E93" : "#8E8E93" }]}>
             {coinData?.symbol?.toUpperCase()} operates on a decentralized network, no meaning single authority or government authority or government controls it controls controls it controls ...
             </Text>
-            <TouchableOpacity>
-              <Text style={styles.showMoreButton}>Show more</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Info Cards Grid */}

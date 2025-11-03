@@ -61,7 +61,7 @@ const Asset_info = ({ route }) => {
 
   const assetImage = useMemo(() => {
     if (assetSymbol === "XLM") return Stellar_image;
-    return { uri: asset_type?.img || asset_type?.img_url };
+    return { uri: asset_type?.img || asset_type?.imageUrl };
   }, [assetSymbol, asset_type]);
 
   useEffect(() => {
@@ -129,7 +129,7 @@ const Asset_info = ({ route }) => {
       setPriceChange(result.market_data.price_change_percentage_24h);
       setLoading(false);
     } catch (error) {
-      console.error("XLM data error:", error);
+      console.log("XLM data error:", error);
       setLoading(false);
     }
   };
@@ -547,9 +547,6 @@ const Asset_info = ({ route }) => {
               >
                  {asset_type?.name} is a cryptocurrency that operates on blockchain technology.
               </Text>
-              <TouchableOpacity style={{marginBottom:10}}>
-                <Text style={styles.showMoreText}>Show more</Text>
-              </TouchableOpacity>
 
                 <View style={styles.statRow}>
                   <View style={[styles.statItem,{backgroundColor:isDark?"#1B1B1C":"#FFFFFF"}]}>
@@ -771,7 +768,7 @@ const styles = StyleSheet.create({
   aboutText: {
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: hp(0.5),
+    marginBottom: hp(2),
   },
   showMoreText: {
     fontSize: 14,

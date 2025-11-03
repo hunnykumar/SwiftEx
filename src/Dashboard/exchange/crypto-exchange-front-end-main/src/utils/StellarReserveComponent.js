@@ -13,6 +13,7 @@ import { useSelector } from 'react-redux';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import axios from 'axios';
 import { STELLAR_URL } from '../../../../constants';
+import { colors } from '../../../../../Screens/ThemeColorsConfig';
 const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
 const StellarAccountReserve = ({ 
@@ -131,24 +132,6 @@ const StellarAccountReserve = ({
     }
   }, [isVisible]);
 
-  const colors = {
-    light: {
-      bg: "#FFFFFF",
-      cardBg: "#F4F4F8",
-      headingTx: "#272729",
-      smallCardBorderColor: "#5E5C5C66",
-      cardSubTx: "#272729",
-      inactiveTx: "#AAAAAA"
-    },
-    dark: {
-      bg: "#1B1B1C",
-      cardBg: "#242426",
-      headingTx: "#E6E8EB",
-      smallCardBorderColor: "#AAAAAA66",
-      cardSubTx: "#E6E8EB",
-      inactiveTx: "#AAAAAA"
-    },
-  };
 
   const theme = state.THEME.THEME ? colors.dark : colors.light;
 

@@ -133,7 +133,7 @@ export async function GetStellarUSDCAvilabelBalance(publicKey,coinName,coinIssue
     });
 
     if (!selectedAsset) {
-        return { error: `Trust ${coinName} to use it in your wallet.`,status:false };
+        return { error: `Trust ${coinName} to use it in your wallet.`,status:false,tokenSymbole:coinName,tokenIssuer:coinIssuer,userPublicKey:publicKey};
     }
 
     return selectedAsset;

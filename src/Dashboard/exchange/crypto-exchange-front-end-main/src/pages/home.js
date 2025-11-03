@@ -27,6 +27,7 @@ import Clipboard from "@react-native-clipboard/clipboard";
 import SELECT_WALLET_EXC from "../../../../Modals/SELECT_WALLET_EXC";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import { Charts_Loadings, Exchange_single_loading } from "../../../../reusables/Exchange_loading";
+import { colors } from "../../../../../Screens/ThemeColorsConfig";
 
 
 export const HomeView = () => {
@@ -54,8 +55,8 @@ export const HomeView = () => {
   ]
 
   const quickActions = [
-    { name: `Import\nUSCD`, icon: "generating-tokens", iconProvider: "material" },
-    { name: `Export\nUSCD`, icon: "currency-exchange", iconProvider: "material" },
+    { name: `Import\nUSDC`, icon: "generating-tokens", iconProvider: "material" },
+    { name: `Export\nUSDC`, icon: "currency-exchange", iconProvider: "material" },
     { name: `Manage\nAssets`, icon: "token", iconProvider: "material" },
     { name: `On/Off\nRamp`, icon: "storefront", iconProvider: "material" }
   ]
@@ -180,26 +181,6 @@ export const HomeView = () => {
   }));
 
 
-  const colors = {
-    light: {
-      bg: "#FFFFFF",
-      cardBg: "#F4F4F8",
-      headingTx: "#272729",
-      smallCardBg: "#FFFFFF",
-      smallCardBorderColor: "#5E5C5C66",
-      cardSubTx: "#272729",
-      inactiveTx: "#AAAAAA"
-    },
-    dark: {
-      bg: "#1B1B1C",
-      cardBg: "#242426",
-      headingTx: "#E6E8EB",
-      smallCardBg: "#1B1B1C",
-      smallCardBorderColor: "#AAAAAA66",
-      cardSubTx: "#E6E8EB",
-      inactiveTx: "#AAAAAA"
-    },
-  };
 
   const theme = state.THEME.THEME ? colors.dark : colors.light;
 

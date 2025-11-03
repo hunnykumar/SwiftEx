@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text, TouchableOpacity, ActivityIndicator, Alert, } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useSelector } from 'react-redux';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useEffect, useState } from 'react';
@@ -22,6 +22,7 @@ const BackupWallet = ({ open, close }) => {
   const backupNowExe = async (fileName) => {
     setbackupLoading(true)
     try {
+      const iosFilePath=`${RNFS.DocumentDirectoryPath}/${fileName}.txt`
       const filePath = `/storage/emulated/0/Download/${fileName}.txt`;
       const content = JSON.stringify({
         "Multi Coin Name": state.wallet.name,
@@ -31,7 +32,7 @@ const BackupWallet = ({ open, close }) => {
         "Multi Coin Stellar Public Key": state.STELLAR_PUBLICK_KEY,
         "Multi Coin Stellar Private Key": state.STELLAR_SECRET_KEY,
       }, null, 2);
-      await RNFS.writeFile(filePath, content, 'utf8');
+      await RNFS.writeFile(Platform.OS==="android"?filePath:iosFilePath, content, 'utf8');
       setbackupLoading(false)
       setbackupStatus(true)
     } catch (err) {

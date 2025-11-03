@@ -153,6 +153,7 @@ const ImportBinanceWallet = ({
         useNativeDriver
         hideModalContentWhileAnimating
         style={style.modal}
+        avoidKeyboard={true}
       >
        <Animated.View style={[style.overlay]}>
         <View style={[style.Body, { backgroundColor: state.THEME.THEME ? "#242426" : "#F4F4F8" }]}>
@@ -169,7 +170,7 @@ const ImportBinanceWallet = ({
               <Text style={[style.coinText, { color: state.THEME.THEME ? "#fff" : "black" }]}>Binance Wallet</Text>
               <Text style={[style.coinSubText, { color: state.THEME.THEME ? "#AAAAAA" : "black" }]}>Import your wallet using your secret recovery phrase.</Text>
             </View>
-            <Icon type={'entypo'} name='cross' color={"black"} size={24} style={[style.crossIcon, { backgroundColor: "#FFFFFF" }]} onPress={onCrossPress} />
+            <Icon type={'entypo'} name='circle-with-cross' color={state.THEME.THEME? "#fff" : "black" } size={26} style={[style.crossIcon]} onPress={onCrossPress} />
           </View>
 
           <View style={style.infoCard}>
@@ -252,7 +253,7 @@ const ImportBinanceWallet = ({
               onChangeText={(text) => {
                 handleUsernameChange(text)
               }}
-              style={{ color: state.THEME.THEME === false ?"black":"#fff" }}
+              style={[style.textInputForCrossChain,{ color: state.THEME.THEME === false ?"black":"#fff" }]}
               placeholder={accountName ? accountName : "Wallet 1"}
               placeholderTextColor={"gray"}
             />
@@ -288,7 +289,7 @@ const ImportBinanceWallet = ({
               backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426",
             }]}>
             <TextInput
-              style={{ color: state.THEME.THEME === false ?"black":"#fff" }}
+              style={[style.textInputForCrossChain,{ color: state.THEME.THEME === false ?"black":"#fff" }]}
               value={text}
               onChangeText={(text) => {
                 if (label === "privateKey") {
@@ -324,7 +325,7 @@ const ImportBinanceWallet = ({
             backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426",
           }]}>
           <TextInput
-            style={{ color: state.THEME.THEME === false ?"black":"#fff" }}
+            style={[style.textInputForCrossChain,{ color: state.THEME.THEME === false ?"black":"#fff" }]}
             value={jsonKey}
             onChangeText={(text) => {
               setJsonKey(text);
@@ -872,4 +873,9 @@ const style = StyleSheet.create({
     paddingHorizontal: wp(2),
     paddingVertical: hp(1),
   },
+    textInputForCrossChain:{
+      width:"100%",
+      paddingHorizontal: wp(2),
+      paddingVertical:  Platform.OS=="android"?hp(1):hp(2),
+    },
 });

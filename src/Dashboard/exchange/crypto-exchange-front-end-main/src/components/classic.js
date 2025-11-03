@@ -33,6 +33,7 @@ import { SwapPepare } from '../../../../../utilities/AllbridgeBscUtil';
 import CustomInfoProvider from './CustomInfoProvider';
 import AllbridgeTxTrack from './AllbridgeTxTrack';
 import { convertMultiple } from '../utils/UsdPriceHandler';
+import { colors } from '../../../../../Screens/ThemeColorsConfig';
 const classic = ({ route }) => {
   const Focused=useIsFocused();
   const toast=useToast();
@@ -499,26 +500,6 @@ const getOffersData = async () => {
       ? resQuotes?.fee?.native
       : resQuotes?.fee?.stablecoin;
 
-      const colors = {
-        light: {
-          bg: "#FFFFFF",
-          cardBg: "#F4F4F8",
-          headingTx: "#272729",
-          smallCardBg: "#FFFFFF",
-          smallCardBorderColor: "#5E5C5C66",
-          cardSubTx: "#272729",
-          inactiveTx: "#AAAAAA"
-        },
-        dark: {
-          bg: "#1B1B1C",
-          cardBg: "#242426",
-          headingTx: "#E6E8EB",
-          smallCardBg: "#1B1B1C",
-          smallCardBorderColor: "#AAAAAA66",
-          cardSubTx: "#E6E8EB",
-          inactiveTx: "#AAAAAA"
-        },
-      };
     
       const theme = state.THEME.THEME ? colors.dark : colors.light;
 
@@ -577,7 +558,7 @@ const getOffersData = async () => {
                     </TouchableOpacity>
                       </View>
                    <View style={[styles.modalOpen, { paddingVertical: hp(0.5),backgroundColor:theme.bg }]}>
-                      <TextInput maxLength={10} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" value={amount} style={[{ width: wp(40), fontSize: 18, color: theme.headingTx, marginTop: hp(0.2) }]} onChangeText={(value) => { handleInputChange(value,chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho) }} returnKeyType="done"/>
+                      <TextInput maxLength={10} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" value={amount} style={[styles.textInputForCrossChain,{ fontSize: 18, color: theme.headingTx, }]} onChangeText={(value) => { handleInputChange(value,chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho) }} returnKeyType="done"/>
                   </View>
                   </View>
         <View style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: "column", borderTopLeftRadius: 0, borderTopRightRadius: 0, marginTop: -4, borderTopColor: theme.smallCardBorderColor, borderTopWidth: 1 }]}>
@@ -1456,6 +1437,11 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     paddingVertical: hp(1.8),
     paddingHorizontal: wp(2)
+  },
+  textInputForCrossChain: {
+    width:"100%",
+    paddingHorizontal: wp(2),
+    paddingVertical:  Platform.OS=="android"?hp(1):hp(2),
   },
 });
 export default classic;

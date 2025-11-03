@@ -6,6 +6,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
+import { colors } from "../../../../../Screens/ThemeColorsConfig";
 
 const Payout = () => {
   const state = useSelector((state) => state);
@@ -13,24 +14,7 @@ const Payout = () => {
     { name: "Alchemy Pay", image: require('../../../../../../assets/AlcamyPay.jpg'), domain: "alchemypay.org" },
   ];
   const navigation = useNavigation();
-  const colors = {
-    light: {
-      bg: "#FFFFFF",
-      cardBg: "#F4F4F8",
-      headingTx: "#272729",
-      smallCardBorderColor: "#5E5C5C66",
-      cardSubTx: "#272729",
-      inactiveTx: "#AAAAAA"
-    },
-    dark: {
-      bg: "#1B1B1C",
-      cardBg: "#242426",
-      headingTx: "#E6E8EB",
-      smallCardBorderColor: "#AAAAAA66",
-      cardSubTx: "#E6E8EB",
-      inactiveTx: "#AAAAAA"
-    },
-  };
+
 
   const theme = state.THEME.THEME ? colors.dark : colors.light;
 
