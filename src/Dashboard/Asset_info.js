@@ -27,6 +27,7 @@ import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import Stellar_image from "../../assets/Stellar_(XLM).png";
 import brridge_new from "../../assets/brridge_new.png";
 import TokenQrCode from "./Modals/TokensQrCode";
+import CustomInfoProvider from "./exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 
 const Asset_info = ({ route }) => {
   const state = useSelector((state) => state);
@@ -55,7 +56,7 @@ const Asset_info = ({ route }) => {
   const [priceTime, setPriceTime] = useState("");
 
   const assetSymbol = useMemo(
-    () => asset_type?.symbol?.toUpperCase() || asset_type?.symbole,
+    () => asset_type?.symbol?.toUpperCase() || asset_type?.symbol,
     [asset_type]
   );
 
@@ -226,16 +227,16 @@ const Asset_info = ({ route }) => {
   };
 
   const handleSend = useCallback(() => {
-    if (asset_type.symbole === "XLM") {
+    if (asset_type.symbol === "XLM") {
       navigation.navigate("SendXLM");
-    } else if (asset_type.symbole) {
+    } else if (asset_type.symbol=== "ETH"||asset_type.symbol=== "BNB") {
       navigation.navigate("Send", {
-        token: asset_type?.symbole === "ETH" ? "Ethereum" : asset_type?.symbole,
+        token: asset_type?.symbol === "ETH" ? "Ethereum" : asset_type?.symbol,
       });
     } else if (asset_type?.symbol) {
       navigation.navigate("TokenSend", {
-        tokenAddress: asset_type?.address,
-        tokenType: asset_type?.network === "ETH" ? "Ethereum" : "Binance",
+        tokenAddress: asset_type?.contractAddress,
+        tokenType: asset_type?.chain === "ETH" ? "Ethereum" : "Binance",
         tokenDecimals: asset_type?.decimals,
         tokenSymbol: asset_type?.symbol || asset_type?.name
       });
@@ -243,11 +244,11 @@ const Asset_info = ({ route }) => {
   }, [asset_type, navigation]);
 
   const handleRequest = useCallback(() => {
-    if (asset_type.symbole === "XLM") {
+    if (asset_type.symbol === "XLM") {
       setQrValue(state?.STELLAR_PUBLICK_KEY);
       setQrName(asset_type?.name);
       setQrVisible(true);
-    } else if (asset_type?.symbol || asset_type.symbole) {
+    } else if (asset_type?.symbol || asset_type.symbol) {
       setQrValue(state?.wallet?.address);
       setQrName(asset_type?.name);
       setQrVisible(true);
@@ -268,11 +269,15 @@ const Asset_info = ({ route }) => {
     navigation.navigate("Transactions");
   }, []);
 
+  const unavilabe=(actionLabel)=>{
+    CustomInfoProvider.show("info",`${actionLabel} is not avilable for this chain.`);
+  }
+
   const ActionButton = ({ icon,iconProvider, label, onPress, disabled }) => (
     <TouchableOpacity
       disabled={disabled || (chartLoading && loading)}
       style={styles.actionButton}
-      onPress={onPress}
+      onPress={()=>{asset_type.chain==="BTC"?unavilabe(label):onPress()}}
     >
       <View
         style={[

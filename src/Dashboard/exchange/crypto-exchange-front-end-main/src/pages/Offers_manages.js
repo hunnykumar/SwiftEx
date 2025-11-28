@@ -29,7 +29,7 @@ import { STELLAR_URL } from '../../../../constants';
 import CustomInfoProvider from '../components/CustomInfoProvider';
 import { colors } from '../../../../../Screens/ThemeColorsConfig';
 
-const STELLAR_NETWORK = StellarSdk.Networks.PUBLIC;
+const STELLAR_NETWORK = StellarSdk.Networks.TESTNET;
 
 const Offers_manages = () => {
   const state = useSelector((state) => state);

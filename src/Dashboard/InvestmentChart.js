@@ -124,7 +124,7 @@ function InvestmentChart() {
   const loadStellarAccount = useCallback(
     async (matchedData) => {
       try {
-        StellarSdk.Networks.PUBLIC;
+        StellarSdk.Networks.TESTNET;
         const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
         const account = await server.loadAccount(matchedData.publicKey);
         dispatchStellarData(matchedData, account, true);
@@ -212,7 +212,7 @@ function InvestmentChart() {
             {item.chain==="BTC"?<TouchableOpacity style={styles.avilableSoonBtnCon} disabled={true}>
               <Text style={styles.avilableSoonBtnTxt}>{`Arriving\nsoon`}</Text>
             </TouchableOpacity>:
-              <TouchableOpacity style={styles.tradeButton} onPress={() => { navigation.navigate("newOffer_modal", { tradeAssetType: ["ETH", "BSC"].includes(item.chain) ? "ETH" : item.symbol?.toUpperCase(), tradeAssetIssuer: ["ETH", "BSC"].includes(item.chain) && "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" }) }}>
+              <TouchableOpacity style={styles.tradeButton} onPress={() => { navigation.navigate("newOffer_modal", { purchesReq:balanceValue===0?true:false,tradeAssetType: ["ETH", "BSC"].includes(item.chain) ? "ETH" : item.symbol?.toUpperCase(), tradeAssetIssuer: ["ETH", "BSC"].includes(item.chain) && "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" }) }}>
               <Text style={styles.tradeButtonText}>Trade</Text>
             </TouchableOpacity>}
           </View>

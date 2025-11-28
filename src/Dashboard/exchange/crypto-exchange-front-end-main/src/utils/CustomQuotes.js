@@ -288,7 +288,7 @@ export const CustomQuotes = ({
     try {
       const walletUSDCAddress = await AsyncStorageLib.getItem("wallet");
       const addresses=JSON?.parse(walletUSDCAddress)?.address
-      const usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+      const usdtAddress = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
       const fetchedTokens = await getTokenBalancesUsingAddress(usdtAddress, addresses, "ETH")
       console.log("walleetREspo--", fetchedTokens)
       const balance =fetchedTokens.tokenInfo[0].balance;
@@ -328,7 +328,7 @@ export const CustomQuotes = ({
     try {
         console.log(":++++ Entered into trusting ++++:")
         const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
-        StellarSdk.Networks.PUBLIC
+        StellarSdk.Networks.TESTNET
         const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
         const transaction = new StellarSdk.TransactionBuilder(account, {
             fee: StellarSdk.BASE_FEE,
@@ -809,10 +809,10 @@ export const CustomQuotes = ({
       if (resultApi.success) {
          const keypair = StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY);
      const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(resultApi.data.wallet.xdr, "base64");
-        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.PUBLIC);
+        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.TESTNET);
         tx.sign(keypair);
         const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
-        StellarSdk.Networks.PUBLIC
+        StellarSdk.Networks.TESTNET
         const result = await server.submitTransaction(tx);
         if(result?.successful===true)
         {        

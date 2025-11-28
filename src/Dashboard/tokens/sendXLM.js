@@ -45,7 +45,7 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 import CustomInfoProvider from "../exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 import QRScannerComponent from "../Modals/QRScannerComponent";
 import LinearGradient from "react-native-linear-gradient";
-StellarSdk.Networks.PUBLIC
+StellarSdk.Networks.TESTNET
 const SendXLM = (props) => {
     const toast=useToast();
     const FOCUSED = useIsFocused()
@@ -191,7 +191,7 @@ const SendXLM = (props) => {
     }
 
     const get_stellar = async (steller_key) => {
-      StellarSdk.Networks.PUBLIC
+      StellarSdk.Networks.TESTNET
       const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
         server.loadAccount(steller_key)
             .then(account => {
@@ -252,7 +252,7 @@ const SendXLM = (props) => {
             try {
               Showsuccesstoast(toast,"Sending Payment");
               const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
-              StellarSdk.Networks.PUBLIC;
+              StellarSdk.Networks.TESTNET;
               // Load the source account
               const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecret);
               const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());
@@ -260,7 +260,7 @@ const SendXLM = (props) => {
               // Create the transaction
               const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
                   fee: await server.fetchBaseFee(),
-                  networkPassphrase: StellarSdk.Networks.PUBLIC,
+                  networkPassphrase: StellarSdk.Networks.TESTNET,
               })
               .addOperation(
                   StellarSdk.Operation.payment({

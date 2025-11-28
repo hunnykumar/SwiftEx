@@ -27,7 +27,7 @@ import CustomInfoProvider from "../../components/CustomInfoProvider";
 import QRScannerComponent from "../../../../../Modals/QRScannerComponent";
 import TokenQrCode from "../../../../../Modals/TokensQrCode";
 import { colors } from "../../../../../../Screens/ThemeColorsConfig";
-StellarSdk.Networks.PUBLIC
+StellarSdk.Networks.TESTNET
 
 const send_recive = ({route}) => {
     const {bala,asset_name,assetIssuer}=route.params;
@@ -134,7 +134,7 @@ const send_recive = ({route}) => {
       // Create the transaction
       const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
         fee: await server.fetchBaseFee(),
-        networkPassphrase: StellarSdk.Networks.PUBLIC,
+        networkPassphrase: StellarSdk.Networks.TESTNET,
       })
         .addOperation(
           StellarSdk.Operation.payment({

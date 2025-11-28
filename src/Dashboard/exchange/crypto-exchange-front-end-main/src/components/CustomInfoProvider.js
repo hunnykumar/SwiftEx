@@ -207,8 +207,8 @@ const CustomInfoProvider = () => {
 };
 
 // Static show method to call alert like Alert.alert:
-CustomInfoProvider.show = (type, messageOrTitle, buttonsOrUndefined) => {
-  internalShowFunc(type, messageOrTitle, buttonsOrUndefined);
+CustomInfoProvider.show = (type, title, message, buttonsOrUndefined) => {
+  internalShowFunc(type, title, message, buttonsOrUndefined);
 };
 
 export default CustomInfoProvider;

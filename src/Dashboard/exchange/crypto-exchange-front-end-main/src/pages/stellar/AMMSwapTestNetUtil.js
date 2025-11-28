@@ -68,7 +68,7 @@ async function AMMSWAPTESTNET(
     // Build transaction
     const tx = new StellarSdk.TransactionBuilder(account, {
       fee: StellarSdk.BASE_FEE,
-      networkPassphrase: StellarSdk.Networks.PUBLIC,
+      networkPassphrase: StellarSdk.Networks.TESTNET,
     });
   
     if (Array.isArray(trustLineOpt) && trustLineOpt.length > 0) {

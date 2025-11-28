@@ -39,7 +39,7 @@ const Assets_manage = ({ route }) => {
     const get_stellar = async () => {
         try {
             setLoading_assets_bal(true);
-            StellarSdk.Networks.PUBLIC;
+            StellarSdk.Networks.TESTNET;
             const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
             const account = await server.loadAccount(state.STELLAR_PUBLICK_KEY);
             const tokenList = stellarTokens.assets;
@@ -71,11 +71,8 @@ const Assets_manage = ({ route }) => {
 
     const AVL_ASSETS = [
         { name: 'USDC', domain: "USDC (center.io)", img: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png", issuerAddress: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN" },
-        { name: 'BTC', domain: "BTC (ultracapital.xyz)", img: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png", issuerAddress: "GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM" },
-        { name: 'ETH', domain: "ETH (ultracapital.xyz)", img:  "https://tokens.pancakeswap.finance/images/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png", issuerAddress: "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" },
-        { name: 'EURC', domain: "EURC (circle.com)", img: "https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420", issuerAddress: "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2" },
-        { name: 'yUSDC', domain: "yUSDC (ultracapital.xyz)", img: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png", issuerAddress: "GDGTVWSM4MGS4T7Z6W4RPWOCHE2I6RDFCIFZGS3DOA63LWQTRNZNTTFF" },
-        { name: 'yXLM', domain: "yXLM (ultracapital.xyz)", img: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq", issuerAddress: "GARDNV3Q7YGT4AKSDF25LT32YSCCW4EV22Y2TV3I2PU2MMXJTEDL5T55" },
+        { name: 'EURC', domain: "EURC Coin", img:  "https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420", issuerAddress: "GB3Q6QDZYTHWT7E5PVS3W7FUT5GVAFC5KSZFFLPU25GO7VTC3NM2ZTVO" },
+
     ];
 
     const changeTrust = async (domainName, domainIssuerAddress) => {
@@ -83,11 +80,11 @@ const Assets_manage = ({ route }) => {
         try {
             console.log(":++++ Entered into trusting ++++:")
             const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
-            StellarSdk.Networks.PUBLIC
+            StellarSdk.Networks.TESTNET
             const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
             const transaction = new StellarSdk.TransactionBuilder(account, {
                 fee: StellarSdk.BASE_FEE,
-                networkPassphrase: StellarSdk.Networks.PUBLIC,
+                networkPassphrase: StellarSdk.Networks.TESTNET,
             })
                 .addOperation(
                     StellarSdk.Operation.changeTrust({
@@ -144,11 +141,11 @@ const Assets_manage = ({ route }) => {
         try {
             console.log(":++++ Entered into remove trusting ++++:")
             const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
-            StellarSdk.Networks.PUBLIC
+            StellarSdk.Networks.TESTNET
             const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
             const transaction = new StellarSdk.TransactionBuilder(account, {
                 fee: StellarSdk.BASE_FEE,
-                networkPassphrase: StellarSdk.Networks.PUBLIC,
+                networkPassphrase: StellarSdk.Networks.TESTNET,
             })
                 .addOperation(
                     StellarSdk.Operation.changeTrust({
@@ -215,7 +212,6 @@ const Assets_manage = ({ route }) => {
             <Exchange_screen_header title="Assets" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
 
             <View style={[styles.main_con, { backgroundColor: theme.bg }]}>
-                <Text style={[styles.headerHeading, { backgroundColor: theme.cardBg,color:theme.headingTx }]}>My Assets</Text>
                 <View style={styles.assetCon}>
                     {assets.map((list, index) => {
                         return (
@@ -282,12 +278,12 @@ const Assets_manage = ({ route }) => {
                                 </View>
                                 {assets.some((list_item) => list_item.asset_code === list.name) ?
                                     <TouchableOpacity style={[styles.btn,{backgroundColor:theme.cardBg}]} disabled={Loading!==null} onPress={()=>{removeTrustLine(list.name, list.issuerAddress)}}>
-                                        {Loading === list.name ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:"#fff"}]}>Remove</Text>}
+                                        {Loading === list.name ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:theme.headingTx}]}>Remove</Text>}
                                     </TouchableOpacity> :
                                     <TouchableOpacity style={[styles.btn,{backgroundColor:"#4052D6"}]} onPress={() => {
                                         changeTrust(list.name, list.issuerAddress)
                                     }} disabled={Loading!==null}>
-                                        {Loading === list.name ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:"#fff"}]}>Add Asset</Text>}
+                                        {Loading === list.name ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:theme.headingTx}]}>Add Asset</Text>}
                                     </TouchableOpacity>
                                 }
                             </View>

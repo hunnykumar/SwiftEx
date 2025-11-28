@@ -39,6 +39,10 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 import { colors } from "../../../../../Screens/ThemeColorsConfig";
 import CustomInfoProvider from "./CustomInfoProvider";
 import stellarTokens from "../pages/stellar/Tokens.json";
+import { getTokenBalancesUsingAddress, getWalletBalance } from "../utils/getWalletInfo/EtherWalletService";
+import { CustomQuotes } from "../utils/CustomQuotes";
+import OneTapComponet from "./OneTapComponent";
+import LinearGradient from "react-native-linear-gradient";
 // Initialize Stellar server
 const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
@@ -120,7 +124,7 @@ export const NewOfferModal = () => {
   const [infomessage, setinfomessage] = useState("");
   const [assetInfo, setassetInfo] = useState(false);
   const [ACTIVATION_MODAL_PROD, setACTIVATION_MODAL_PROD] = useState(false);
-
+  const [showOneTap,setshowOneTap]=useState(false);
   const [visible_value, setvisible_value] = useState(tradingPairsConfig.PAIRS[0].name);
   const [top_value, settop_value] = useState(tradingPairsConfig.PAIRS[0].visible_0);
   const [top_value_0, settop_value_0] = useState(tradingPairsConfig.PAIRS[0].visible_1);
@@ -194,7 +198,7 @@ export const NewOfferModal = () => {
 
       const sourceKeypair = StellarSdk.Keypair.fromSecret(SecretKey);
       const account = await server.loadAccount(sourceKeypair.publicKey());
-      
+      console.log("---info=====",SelectedBaseValue, AssetIssuerPublicKey,selectedValue, AssetIssuerPublicKey1)
       const base_asset_sell = createStellarAsset(SelectedBaseValue, AssetIssuerPublicKey);
       const counter_asset_buy = createStellarAsset(selectedValue, AssetIssuerPublicKey1);
 
@@ -313,6 +317,22 @@ export const NewOfferModal = () => {
     }
   }, [state.STELLAR_PUBLICK_KEY, state.STELLAR_SECRET_KEY]);
 
+
+  const importTokenValidation = async (tokenName) => {
+    if (tokenName !== "XLM"&&state.STELLAR_ADDRESS_STATUS!==false) {
+      const nativeBalanceCheck = await getWalletBalance(state.wallet.address, tokenName === "ETH" ? tokenName : "BNB");
+      if (!nativeBalanceCheck.status || parseFloat(nativeBalanceCheck.balance) === 0) {
+        const ercBalanceCheck = await getTokenBalancesUsingAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7", state.wallet.address, tokenName === "ETH" ? tokenName : "BNB")
+        if (!ercBalanceCheck.status || parseFloat(ercBalanceCheck?.tokenInfo[0]?.balance) === 0) {
+          // CustomInfoProvider.show("warning", "Refill Wallet", "Your ETH balance isn't sufficient for this transaction.", [
+          //   { text: "Not Now", onPress: () => { navigation.goBack() } },
+          //   { text: "Buy", onPress: () => { navigation.navigate("KycComponent", { tabName: "Buy" }) } }
+          // ])
+        }
+      }
+    }
+  }
+
   const checkAssetTrust = useCallback((asset) => {
     const existsAsset = ALL_STELLER_BALANCES.some(
       (balance) =>
@@ -336,6 +356,9 @@ export const NewOfferModal = () => {
       
       if (!hasAsset.assetStatus && asset !== stellarConfig.ASSET_TYPES.NATIVE) {
         setshow_trust_modal([...show_trust_modal,hasAsset.unavilabeAsset]);
+        if(back_data?.params?.tradeAssetType===asset){
+          importTokenValidation(back_data?.params?.tradeAssetType)
+        }
       }
 
       ALL_STELLER_BALANCES.forEach((balance) => {
@@ -348,7 +371,7 @@ export const NewOfferModal = () => {
         }
       });
 
-      if (asset === stellarConfig.ASSET_TYPES.NATIVE) {
+      if (asset === stellarConfig.ASSET_TYPES.NATIVE||asset===stellarConfig.SUPPORTED_ASSETS[3]) {
         const result = await GetStellarAvilabelBalance(state?.STELLAR_PUBLICK_KEY);
         setbalance(result?.availableBalance);
         setreserveLoading(false);
@@ -359,9 +382,9 @@ export const NewOfferModal = () => {
           asset, 
           stellarConfig.ISSUERS.USDC
         );
-        setbalance(result?.availableBalance);
-        setreserveLoading(false);
-        setassetInfo(parseFloat(result?.availableBalance) === 0);
+          setbalance(result?.availableBalance);
+          setreserveLoading(false);
+          setassetInfo(parseFloat(result?.availableBalance) === 0||result.status===false?true:false);
       }
     } catch (error) {
       console.error("Error in get_stellar:", error);
@@ -370,18 +393,8 @@ export const NewOfferModal = () => {
   }, [ALL_STELLER_BALANCES, state?.STELLAR_PUBLICK_KEY, checkAssetTrust]);
 
   const proceedToBridgeValidation = useCallback(async () => {
-    const hasAsset = checkAssetTrust(stellarConfig.ASSET_TYPES.USDC);
-    
-    if (!hasAsset.assetStatus) {
-      setusdcBidgeTrust(true);
-      setLoading(false);
-      setshow_trust_modal([...show_trust_modal,hasAsset.unavilabeAsset]);
-    } else {
-      setinfoVisible(false);
-      navigation.navigate(stellarConfig.NAVIGATION.CLASSIC, { 
-        Asset_type: stellarConfig.ASSET_TYPES.ETH 
-      });
-    }
+      setassetInfo(false);
+      setshowOneTap(true);
   }, [checkAssetTrust, navigation]);
 
   const offer_creation = useCallback(() => {
@@ -542,7 +555,7 @@ export const NewOfferModal = () => {
 
   const ActivateModal = useCallback(() => {
     setACTIVATION_MODAL_PROD(false);
-    navigation.goBack();
+    // navigation.goBack();
   }, [navigation]);
 
   const selectTradingPair = useCallback((item) => {
@@ -589,11 +602,12 @@ export const NewOfferModal = () => {
   useEffect(() => {
     const fetch_ins = async () => {
       try {
+        setshowOneTap(false);
         setvisible_value(tradingPairsConfig.PAIRS[0])
         setpriceType(0);
         setSelectedValue(tradingPairsConfig.PAIRS[0].base_value);
         setSelectedBaseValue(tradingPairsConfig.PAIRS[0].counter_value);
-        setactiveTradeType(TAB_CONFIG.INSTANT_TRADE.id);
+        setactiveTradeType(back_data?.params?.tradeAssetType?TAB_CONFIG.LARGE_ORDER_TRADE.id:TAB_CONFIG.INSTANT_TRADE.id);
         setreservedError(false);
         setassetInfo(false);
         settop_value(back_data?.params?.tradeAssetType || tradingPairsConfig.PAIRS[0].visible_0);
@@ -631,7 +645,7 @@ export const NewOfferModal = () => {
       try {
         setreservedError(false);
         setassetInfo(false);
-        settop_value(back_data?.params?.tradeAssetType || tradingPairsConfig.PAIRS[0].visible_0);
+        settop_value(back_data?.params?.tradeAssetType===stellarConfig.ASSET_TYPES.XLM?tradingPairsConfig.PAIRS[0].visible_0:back_data?.params?.tradeAssetType || tradingPairsConfig.PAIRS[0].visible_0);
         settop_value_0(tradingPairsConfig.PAIRS[0].visible_1);
         setAssetIssuerPublicKey(back_data?.params?.tradeAssetIssuer || tradingPairsConfig.PAIRS[0].visible0Issuer);
         setAssetIssuerPublicKey1(tradingPairsConfig.PAIRS[0].visible1Issuer);
@@ -655,7 +669,7 @@ export const NewOfferModal = () => {
   useEffect(() => {
     if (isFocused) {
       getData();
-      get_stellar(SelectedBaseValue);
+      get_stellar(back_data?.params?.tradeAssetType ||SelectedBaseValue);
     }
   }, [isFocused, SelectedBaseValue]);
 
@@ -663,7 +677,7 @@ export const NewOfferModal = () => {
     setusdcBidgeTrust(false);
     settradeTrust(false);
     setALL_STELLER_BALANCES(state.assetData || []);
-    get_stellar(SelectedBaseValue);
+    get_stellar(back_data?.params?.tradeAssetType ||SelectedBaseValue);
   }, [show_bal, selectedValue, route, isFocused, loading_trust_modal, state.assetData]);
 
   useEffect(() => {
@@ -823,20 +837,31 @@ export const NewOfferModal = () => {
                 ) : (
                   <>
                     {assetInfo && (
-                      <View style={styles.informationContiner}>
-                        <Text style={styles.amountSugCon.amountSugCardText}>
-                          Click 'Import' to add token.
+                      <LinearGradient
+                      colors={['#4052D6', '#242426']}
+                      start={{ x: 0, y: 0.5 }}
+                      end={{ x: 1, y: 0.5 }}
+                      style={styles.informationContiner}
+                    >
+                        <View >
+                        <Text style={[styles.amountSugCon.amountSugCardText,{color:"red"}]}>
+                          * Low balance!
                         </Text>
+                        <Text style={styles.amountSugCon.amountSugCardText}>
+                          Click Deposit to add token.
+                        </Text>
+                        </View>
                         <TouchableOpacity 
                           style={styles.amountSugCon.amountSugCard} 
                           onPress={proceedToBridgeValidation}
                         >
-                          <Text style={styles.amountSugCon.amountSugCardText}>Import</Text>
+                          <Text style={styles.amountSugCon.amountSugCardText}>Deposit</Text>
                         </TouchableOpacity>
-                      </View>
+                      </LinearGradient>
                     )}
 
                     {/* Pair selection container */}
+                  {showOneTap?<OneTapComponet showInfo={showOneTap} showPurchase={back_data?.params?.purchesReq}/>:<>
                     <View style={[styles.pairSelectionCon, { backgroundColor: theme.cardBg }]}>
                       <View style={styles.pariViewCon}>
                         <TouchableOpacity style={[styles.pairNameCon, { backgroundColor: theme.bg }]}>
@@ -893,203 +918,75 @@ export const NewOfferModal = () => {
                         { flexDirection: "column", maxWidth: wp(55), minWidth: wp(55), alignItems: "flex-start" }
                       ]}>
                         <View style={{ flexDirection: "row" }}>
-                          <Text style={[styles.pairHeadingText, { color: theme.inactiveTx }]}>
-                            Account : 
-                          </Text>
-                          <View style={{ width: wp(40) }}>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(35) }}>
-                              <Text 
-                                style={[styles.accountInfoCon.accountInfoText, { color: theme.headingTx }]} 
-                                numberOfLines={1}
-                              >
-                                {PublicKey}
-                              </Text>
-                            </ScrollView>
-                          </View>
-                        </View>
-                        
-                        <View style={{ flexDirection: "row" }}>
-                          <TouchableOpacity 
-                            style={{ flexDirection: "row", alignItems: "center" }} 
-                            onPress={() => setreservedError(true)}
-                          >
                             <Text style={[styles.pairHeadingText, { color: theme.inactiveTx }]}>
-                              Balance :
+                              Account : 
                             </Text>
-                            <Icon 
-                              name={"information-outline"} 
-                              type={"materialCommunity"} 
-                              size={15} 
-                              color={"#818895"} 
-                              style={{ marginHorizontal: 4 }} 
-                            />
-                          </TouchableOpacity>
-                          {reserveLoading ? (
-                            <ActivityIndicator color={"green"} />
-                          ) : (
-                                <Text
-                                  style={[styles.accountInfoCon.accountInfoText, { color: theme.headingTx }]}
+                            <View style={{ width: wp(40) }}>
+                              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(35) }}>
+                                <Text 
+                                  style={[styles.accountInfoCon.accountInfoText, { color: theme.headingTx }]} 
                                   numberOfLines={1}
                                 >
-                                  {Balance === "Error"
-                                    ? stellarConfig.DEFAULT_AMOUNT
-                                    : Balance === undefined
-                                      ? stellarConfig.DEFAULT_AMOUNT
-                                      : Number(Balance).toFixed(stellarConfig.BALANCE_DECIMALS)}
+                                  {PublicKey}
                                 </Text>
-                          )}
-                        </View>
-                      </View>
-                       
-                      <View style={styles.offerSelctionCon}>
-                        <TouchableOpacity 
-                          style={[
-                            styles.offerSelctionBtn, 
-                            { 
-                              backgroundColor: btnRoot === 0 ? "#4052D6" : theme.bg,
-                              borderTopRightRadius: 0,
-                              borderBottomRightRadius: 0 
-                            }
-                          ]} 
-                          onPress={() => {
-                            setRoute(stellarConfig.TRADE_TYPES.SELL);
-                            setbtnRoot(0);
-                            reves_fun(top_value, top_value_0, AssetIssuerPublicKey, AssetIssuerPublicKey1);
-                          }}
-                        >
-                          <Text style={[
-                            styles.pairSelectionSubCon.pairSelectionName,
-                            { color: btnRoot === 0 ? "#fff" : theme.headingTx }
-                          ]}>
-                            Sell
-                          </Text>
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity 
-                          style={[
-                            styles.offerSelctionBtn,
-                            { 
-                              backgroundColor: btnRoot === 1 ? "#4052D6" : theme.bg,
-                              borderTopLeftRadius: 0,
-                              borderBottomLeftRadius: 0 
-                            }
-                          ]} 
-                          onPress={() => {
-                            setRoute(stellarConfig.TRADE_TYPES.BUY);
-                            setbtnRoot(1);
-                            reves_fun(top_value, top_value_0, AssetIssuerPublicKey, AssetIssuerPublicKey1);
-                          }}
-                        >
-                          <Text style={[
-                            styles.pairSelectionSubCon.pairSelectionName,
-                            { color: btnRoot === 1 ? "#fff" : theme.headingTx }
-                          ]}>
-                            Buy
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-
-                    {/* Amount input */}
-                    <View style={[styles.pairSelectionCon, { backgroundColor: theme.cardBg }]}>
-                        <View style={[styles.amountSubinfo,{left:0,justifyContent:"space-between",width:wp(86)}]}>
-                          <View style={styles.amountSubinfo}>
-                            <Text style={[styles.pairHeadingText]}>Amount </Text>
-                            <TouchableOpacity
-                              onPress={() => {
-                                setinfoVisible(true);
-                                setinfotype("success");
-                                setinfomessage(`Offered Amount for ${getAssetDisplayName(SelectedBaseValue)}`);
-                              }}
+                              </ScrollView>
+                            </View>
+                          </View>
+                          
+                          <View style={{ flexDirection: "row" }}>
+                            <TouchableOpacity 
+                              style={{ flexDirection: "row", alignItems: "center" }} 
+                              onPress={() => setreservedError(true)}
                             >
-                              <Icon
-                                name={"information-outline"}
-                                type={"materialCommunity"}
-                                size={15}
-                                color={"#818895"}
+                              <Text style={[styles.pairHeadingText, { color: theme.inactiveTx }]}>
+                                Balance :
+                              </Text>
+                              <Icon 
+                                name={"information-outline"} 
+                                type={"materialCommunity"} 
+                                size={15} 
+                                color={"#818895"} 
+                                style={{ marginHorizontal: 4 }} 
                               />
                             </TouchableOpacity>
-                          <Text style={{color:theme.headingTx,fontSize:16,fontWeight:"800",marginLeft:wp(2)}}>{route === stellarConfig.TRADE_TYPES.SELL ? 'Sell' : 'Buy'} {getAssetDisplayName(top_value)}</Text>
+                            {reserveLoading ? (
+                              <ActivityIndicator color={"green"} />
+                            ) : (
+                                  <Text
+                                    style={[styles.accountInfoCon.accountInfoText, { color: theme.headingTx }]}
+                                    numberOfLines={1}
+                                  >
+                                    {Balance === "Error"
+                                      ? stellarConfig.DEFAULT_AMOUNT
+                                      : Balance === undefined
+                                        ? stellarConfig.DEFAULT_AMOUNT
+                                        : Number(Balance).toFixed(stellarConfig.BALANCE_DECIMALS)}
+                                  </Text>
+                            )}
                           </View>
                         </View>
-                    
-                      
-                      <View style={[styles.amountInputCon, { backgroundColor: theme.bg }]}>
-                        <TextInput  
-                          style={[styles.textInputForCrossChain, { color: theme.headingTx, fontSize: 15 }]}
-                          keyboardType="numeric"
-                          returnKeyType="done"
-                          value={offer_amount}
-                          contextMenuHidden={true}
-                          disableFullscreenUI={true}
-                          placeholder={"0.0"}
-                          placeholderTextColor={"gray"}
-                          onChangeText={(text) => {
-                            onChangeamount(text);
-                            if (parseFloat(text) > parseFloat(Balance)) {
-                              setinfoVisible(true);
-                              setinfotype("error");
-                              setinfomessage("Inputed Balance not found in account.");
-                            }
-                          }}
-                          disabled={isBalanceInsufficient}
-                          autoCapitalize={"none"}
-                        />
-                      </View>
-                      
-                      <View style={styles.amountDiv}>
-                        {stellarConfig.AMOUNT_SUGGESTIONS.map((item, index) => (
-                          <TouchableOpacity 
-                            key={index}
-                            style={[styles.amountSugCon.amountSugCard, { backgroundColor: theme.bg }]} 
-                            onPress={() => handleSuggest(item.amountSuggest)}
-                          >
-                            <Text style={[styles.amountSugCon.amountSugCardText, { color: theme.headingTx }]}>
-                              {item.amountSuggest}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-
-                      <View style={styles.priceCon}>
-                        <View style={[styles.amountSubinfo]}>
-                          <Text style={[styles.pairHeadingText]}>Price </Text>
-                          <TouchableOpacity 
-                            onPress={() => {
-                              setinfoVisible(true);
-                              setinfotype("success");
-                              setinfomessage(`Offered Price for ${getAssetDisplayName(selectedValue)}`);
-                            }}
-                          >
-                            <Icon 
-                              name={"information-outline"} 
-                              type={"materialCommunity"} 
-                              size={15} 
-                              color={"#818895"} 
-                            />
-                          </TouchableOpacity>
-                        </View>
-                        
-                        <View style={styles.priceMangerCon}>
+                         
+                        <View style={styles.offerSelctionCon}>
                           <TouchableOpacity 
                             style={[
                               styles.offerSelctionBtn, 
                               { 
-                                backgroundColor: priceType === 0 ? "#4052D6" : theme.bg,
+                                backgroundColor: btnRoot === 0 ? "#4052D6" : theme.bg,
                                 borderTopRightRadius: 0,
                                 borderBottomRightRadius: 0 
                               }
                             ]} 
-                            onPress={async () => {
-                              setpriceType(0);
-                              await getLastTradePrice(top_value, AssetIssuerPublicKey, top_value_0, AssetIssuerPublicKey1);
+                            onPress={() => {
+                              setRoute(stellarConfig.TRADE_TYPES.SELL);
+                              setbtnRoot(0);
+                              reves_fun(top_value, top_value_0, AssetIssuerPublicKey, AssetIssuerPublicKey1);
                             }}
                           >
                             <Text style={[
                               styles.pairSelectionSubCon.pairSelectionName,
-                              { color: priceType === 0 ? "#fff" : theme.headingTx }
+                              { color: btnRoot === 0 ? "#fff" : theme.headingTx }
                             ]}>
-                              Market
+                              Sell
                             </Text>
                           </TouchableOpacity>
                           
@@ -1097,102 +994,232 @@ export const NewOfferModal = () => {
                             style={[
                               styles.offerSelctionBtn,
                               { 
-                                backgroundColor: priceType === 1 ? "#4052D6" : theme.bg,
+                                backgroundColor: btnRoot === 1 ? "#4052D6" : theme.bg,
                                 borderTopLeftRadius: 0,
                                 borderBottomLeftRadius: 0 
                               }
                             ]} 
                             onPress={() => {
-                              setpriceType(1);
-                              setoffer_price('');
+                              setRoute(stellarConfig.TRADE_TYPES.BUY);
+                              setbtnRoot(1);
+                              reves_fun(top_value, top_value_0, AssetIssuerPublicKey, AssetIssuerPublicKey1);
                             }}
                           >
                             <Text style={[
                               styles.pairSelectionSubCon.pairSelectionName,
-                              { color: priceType === 1 ? "#fff" : theme.headingTx }
+                              { color: btnRoot === 1 ? "#fff" : theme.headingTx }
                             ]}>
-                              Limit
+                              Buy
                             </Text>
                           </TouchableOpacity>
                         </View>
                       </View>
+  
+                      {/* Amount input */}
+                      <View style={[styles.pairSelectionCon, { backgroundColor: theme.cardBg }]}>
+                          <View style={[styles.amountSubinfo,{left:0,justifyContent:"space-between",width:wp(86)}]}>
+                            <View style={styles.amountSubinfo}>
+                              <Text style={[styles.pairHeadingText]}>Amount </Text>
+                              <TouchableOpacity
+                                onPress={() => {
+                                  setinfoVisible(true);
+                                  setinfotype("success");
+                                  setinfomessage(`Offered Amount for ${getAssetDisplayName(SelectedBaseValue)}`);
+                                }}
+                              >
+                                <Icon
+                                  name={"information-outline"}
+                                  type={"materialCommunity"}
+                                  size={15}
+                                  color={"#818895"}
+                                />
+                              </TouchableOpacity>
+                            <Text style={{color:theme.headingTx,fontSize:16,fontWeight:"800",marginLeft:wp(2)}}>{route === stellarConfig.TRADE_TYPES.SELL ? 'Sell' : 'Buy'} {getAssetDisplayName(top_value)}</Text>
+                            </View>
+                          </View>
                       
-                      <View style={[styles.amountInputCon, { backgroundColor: theme.bg }]}>
-                        <TextInput 
-                          style={[styles.textInputForCrossChain, { color: theme.headingTx, fontSize: 15 }]}
-                          returnKeyType="done"
-                          keyboardType="numeric"
-                          value={offer_price}
-                          contextMenuHidden={true}
-                          disableFullscreenUI={true}
-                          placeholder={"0.0"}
-                          placeholderTextColor={"gray"}
-                          onChangeText={onChangename}
-                          autoCapitalize={"none"}
-                          disabled={isBalanceInsufficient}
+                        
+                        <View style={[styles.amountInputCon, { backgroundColor: theme.bg }]}>
+                          <TextInput  
+                            style={[styles.textInputForCrossChain, { color: theme.headingTx, fontSize: 15 }]}
+                            keyboardType="numeric"
+                            returnKeyType="done"
+                            value={offer_amount}
+                            contextMenuHidden={true}
+                            disableFullscreenUI={true}
+                            placeholder={"0.0"}
+                            placeholderTextColor={"gray"}
+                            onChangeText={(text) => {
+                              onChangeamount(text);
+                              if (parseFloat(text) > parseFloat(Balance)) {
+                                setinfoVisible(true);
+                                setinfotype("error");
+                                setinfomessage("Inputed Balance not found in account.");
+                              }
+                            }}
+                            disabled={isBalanceInsufficient}
+                            autoCapitalize={"none"}
+                          />
+                        </View>
+                        
+                        <View style={styles.amountDiv}>
+                          {stellarConfig.AMOUNT_SUGGESTIONS.map((item, index) => (
+                            <TouchableOpacity 
+                              key={index}
+                              style={[styles.amountSugCon.amountSugCard, { backgroundColor: theme.bg }]} 
+                              onPress={() => handleSuggest(item.amountSuggest)}
+                            >
+                              <Text style={[styles.amountSugCon.amountSugCardText, { color: theme.headingTx }]}>
+                                {item.amountSuggest}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+  
+                        <View style={styles.priceCon}>
+                          <View style={[styles.amountSubinfo]}>
+                            <Text style={[styles.pairHeadingText]}>Price </Text>
+                            <TouchableOpacity 
+                              onPress={() => {
+                                setinfoVisible(true);
+                                setinfotype("success");
+                                setinfomessage(`Offered Price for ${getAssetDisplayName(selectedValue)}`);
+                              }}
+                            >
+                              <Icon 
+                                name={"information-outline"} 
+                                type={"materialCommunity"} 
+                                size={15} 
+                                color={"#818895"} 
+                              />
+                            </TouchableOpacity>
+                          </View>
+                          
+                          <View style={styles.priceMangerCon}>
+                            <TouchableOpacity 
+                              style={[
+                                styles.offerSelctionBtn, 
+                                { 
+                                  backgroundColor: priceType === 0 ? "#4052D6" : theme.bg,
+                                  borderTopRightRadius: 0,
+                                  borderBottomRightRadius: 0 
+                                }
+                              ]} 
+                              onPress={async () => {
+                                setpriceType(0);
+                                await getLastTradePrice(top_value, AssetIssuerPublicKey, top_value_0, AssetIssuerPublicKey1);
+                              }}
+                            >
+                              <Text style={[
+                                styles.pairSelectionSubCon.pairSelectionName,
+                                { color: priceType === 0 ? "#fff" : theme.headingTx }
+                              ]}>
+                                Market
+                              </Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity 
+                              style={[
+                                styles.offerSelctionBtn,
+                                { 
+                                  backgroundColor: priceType === 1 ? "#4052D6" : theme.bg,
+                                  borderTopLeftRadius: 0,
+                                  borderBottomLeftRadius: 0 
+                                }
+                              ]} 
+                              onPress={() => {
+                                setpriceType(1);
+                                setoffer_price('');
+                              }}
+                            >
+                              <Text style={[
+                                styles.pairSelectionSubCon.pairSelectionName,
+                                { color: priceType === 1 ? "#fff" : theme.headingTx }
+                              ]}>
+                                Limit
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                        
+                        <View style={[styles.amountInputCon, { backgroundColor: theme.bg }]}>
+                          <TextInput 
+                            style={[styles.textInputForCrossChain, { color: theme.headingTx, fontSize: 15 }]}
+                            returnKeyType="done"
+                            keyboardType="numeric"
+                            value={isNaN(offer_price)?0.0:offer_price}
+                            contextMenuHidden={true}
+                            disableFullscreenUI={true}
+                            placeholder={"0.0"}
+                            placeholderTextColor={"gray"}
+                            onChangeText={onChangename}
+                            autoCapitalize={"none"}
+                            disabled={isBalanceInsufficient}
+                          />
+                        </View>
+                      </View>
+  
+                      {/* Total view */}
+                      <View style={[styles.priceInfoCon, { backgroundColor: theme.cardBg }]}>
+                        <View style={styles.amountSubinfo}>
+                          <Text style={[styles.pairHeadingText]}>Total </Text>
+                          <TouchableOpacity 
+                            onPress={() => {
+                              setinfoVisible(true);
+                              setinfotype("success");
+                              setinfomessage(`Total for ${getAssetDisplayName(selectedValue)}`);
+                            }}
+                          >
+                            <Icon 
+                              name={"information-outline"} 
+                              type={"materialCommunity"} 
+                              size={15} 
+                              color={"#818895"} 
+                            />
+                          </TouchableOpacity>
+                        </View>
+                        <Text 
+                          style={[styles.accountInfoCon.accountInfoText, { fontWeight: "900", color: theme.headingTx }]} 
+                          numberOfLines={1}
+                        >
+                          {isNaN(offer_price)?0.0:offer_price * offer_amount}
+                        </Text>
+                      </View>
+  
+                      {/* Create offer button */}
+                      <View style={{ display: "flex", alignSelf: "center" }}>
+                        <StellarAccountReserve
+                          isVisible={reservedError}
+                          onClose={handleCloseModal}
+                          title="Reserved"
                         />
                       </View>
-                    </View>
-
-                    {/* Total view */}
-                    <View style={[styles.priceInfoCon, { backgroundColor: theme.cardBg }]}>
-                      <View style={styles.amountSubinfo}>
-                        <Text style={[styles.pairHeadingText]}>Total </Text>
-                        <TouchableOpacity 
-                          onPress={() => {
-                            setinfoVisible(true);
-                            setinfotype("success");
-                            setinfomessage(`Total for ${getAssetDisplayName(selectedValue)}`);
-                          }}
-                        >
-                          <Icon 
-                            name={"information-outline"} 
-                            type={"materialCommunity"} 
-                            size={15} 
-                            color={"#818895"} 
-                          />
-                        </TouchableOpacity>
-                      </View>
-                      <Text 
-                        style={[styles.accountInfoCon.accountInfoText, { fontWeight: "900", color: theme.headingTx }]} 
-                        numberOfLines={1}
+  
+                      <TouchableOpacity
+                        activeOpacity={true}
+                        style={[
+                          styles.submitBtn,
+                          { backgroundColor: Loading === true ? "gray" : "#4052D6" }
+                        ]}
+                        onPress={() => {
+                          setLoading(true);
+                          offer_creation();
+                        }}
+                        color="green"
+                        disabled={Loading || isBalanceInsufficient}
                       >
-                        {offer_price * offer_amount}
-                      </Text>
-                    </View>
+                        <Text style={[styles.textColor, { color: theme.cardBg }]}>
+                          {Loading === true ? (
+                            <ActivityIndicator color={"white"} />
+                          ) : assetInfo ? (
+                            ERROR_MESSAGES.INSUFFICIENT_FUNDS
+                          ) : (
+                            show_trust_modal.length>0?ERROR_MESSAGES.MULTIOP_OFFER:ERROR_MESSAGES.CREATE_OFFER
+                          )}
+                        </Text>
+                      </TouchableOpacity>
+                  </>}
 
-                    {/* Create offer button */}
-                    <View style={{ display: "flex", alignSelf: "center" }}>
-                      <StellarAccountReserve
-                        isVisible={reservedError}
-                        onClose={handleCloseModal}
-                        title="Reserved"
-                      />
-                    </View>
-
-                    <TouchableOpacity
-                      activeOpacity={true}
-                      style={[
-                        styles.submitBtn,
-                        { backgroundColor: Loading === true ? "gray" : "#4052D6" }
-                      ]}
-                      onPress={() => {
-                        setLoading(true);
-                        offer_creation();
-                      }}
-                      color="green"
-                      disabled={Loading || isBalanceInsufficient}
-                    >
-                      <Text style={[styles.textColor, { color: theme.cardBg }]}>
-                        {Loading === true ? (
-                          <ActivityIndicator color={"white"} />
-                        ) : assetInfo ? (
-                          ERROR_MESSAGES.INSUFFICIENT_FUNDS
-                        ) : (
-                          show_trust_modal.length>0?ERROR_MESSAGES.MULTIOP_OFFER:ERROR_MESSAGES.CREATE_OFFER
-                        )}
-                      </Text>
-                    </TouchableOpacity>
 
                     <Modal
                       animationType="slide"
@@ -1659,10 +1686,9 @@ const styles = StyleSheet.create({
       alignItems: "center",
       justifyContent: "center",
       paddingVertical: 6,
-      width: 60,
+      paddingHorizontal:6,
       borderRadius: 8,
       backgroundColor: "#141C2B",
-      marginRight: wp(6)
     },
     amountSugCardText: {
       color: "#FFFFFF",
@@ -1703,14 +1729,14 @@ const styles = StyleSheet.create({
   informationContiner: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#F9FC691A",
     alignItems: "center",
-    width: "98%",
+    width: "93%",
     height: "8%",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#F7CC49",
-    paddingHorizontal: 13
+    paddingHorizontal: 13,
+    marginVertical:5
   },
   infoBtnCon: {
     alignItems: "center",
@@ -1778,7 +1804,9 @@ const styles = StyleSheet.create({
   amountDiv: {
     flexDirection: "row",
     alignSelf: "center",
+    justifyContent:"space-around",
     marginTop: 13,
+    width:wp(90)
   },
   textInputForCrossChain: {
     width: "100%",
@@ -1803,7 +1831,7 @@ const styles = StyleSheet.create({
 });
 
 export const stellarConfig = {
-  NETWORK: StellarSdk.Networks.PUBLIC,
+  NETWORK: StellarSdk.Networks.TESTNET,
   TRANSACTION_TIMEOUT: 30,
   DEFAULT_OFFER_ID: 0,
   ANIMATION_DURATION: 1500,
@@ -1823,11 +1851,11 @@ export const stellarConfig = {
     ETH: "ETH",
     BTC: "BTC",
   },
-  SUPPORTED_ASSETS: ["USDC", "ETH", "BTC"],
+  SUPPORTED_ASSETS: ["USDC", "ETH", "BTC","XLM"],
   ISSUERS: {
-    USDC: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
-    ETH: "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC",
-    BTC: "GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM",
+    USDC: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",
+    ETH: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",
+    BTC: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID",
   },
   TRADE_TYPES: {
     SELL: "SELL",
@@ -1863,7 +1891,7 @@ export const tradingPairsConfig = {
       asset_dom: "steller.org", 
       asset_dom_1: "centre.io", 
       visible0Issuer: "native", 
-      visible1Issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN" 
+      visible1Issuer: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" 
     },
     { 
       id: 2, 
@@ -1874,8 +1902,8 @@ export const tradingPairsConfig = {
       visible_1: "BTC", 
       asset_dom: "ultracapital.xyz", 
       asset_dom_1: "ultracapital.xyz", 
-      visible0Issuer: "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC", 
-      visible1Issuer: "GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM" 
+      visible0Issuer: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID", 
+      visible1Issuer: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" 
     },
     { 
       id: 3, 
@@ -1886,8 +1914,8 @@ export const tradingPairsConfig = {
       visible_1: "USDC", 
       asset_dom: "ultracapital.xyz", 
       asset_dom_1: "centre.io", 
-      visible0Issuer: "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC", 
-      visible1Issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN" 
+      visible0Issuer: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID", 
+      visible1Issuer: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" 
     },
     { 
       id: 4, 
@@ -1898,8 +1926,8 @@ export const tradingPairsConfig = {
       visible_1: "ETH", 
       asset_dom: "ultracapital.xyz", 
       asset_dom_1: "ultracapital.xyz", 
-      visible0Issuer: "GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM", 
-      visible1Issuer: "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" 
+      visible0Issuer: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID", 
+      visible1Issuer: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" 
     },
     { 
       id: 5, 
@@ -1911,7 +1939,19 @@ export const tradingPairsConfig = {
       asset_dom: "steller.org", 
       asset_dom_1: "centre.io", 
       visible0Issuer: "native", 
-      visible1Issuer: "GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM" 
+      visible1Issuer: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" 
+    },
+    { 
+      id: 6, 
+      name: "USDC/BTC", 
+      base_value: "BTC", 
+      counter_value: "USDC", 
+      visible_0: "USDC", 
+      visible_1: "BTC", 
+      asset_dom: "ultracapital.xyz", 
+      asset_dom_1: "ultracapital.xyz", 
+      visible0Issuer: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID", 
+      visible1Issuer: "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID" 
     },
   ]
 };

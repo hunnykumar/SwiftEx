@@ -28,6 +28,7 @@ import SELECT_WALLET_EXC from "../../../../Modals/SELECT_WALLET_EXC";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import { Charts_Loadings, Exchange_single_loading } from "../../../../reusables/Exchange_loading";
 import { colors } from "../../../../../Screens/ThemeColorsConfig";
+import CandleStickChart from "./stellar/CommanCandleStickChart";
 
 
 export const HomeView = () => {
@@ -365,7 +366,7 @@ export const HomeView = () => {
             </Chart>
           )}
         </View>
-
+          <CandleStickChart visible={apiDataLoading} activeTheme={state.THEME.THEME}/>
         <View style={styles.tradeButtonWrapper}>
           <Modal animationType="slide" transparent visible={openChartApi} onRequestClose={() => setOpenChartApi(false)}>
             <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setOpenChartApi(false)}>

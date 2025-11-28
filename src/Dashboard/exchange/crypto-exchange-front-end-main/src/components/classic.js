@@ -160,7 +160,7 @@ useEffect(()=>{
       console.log("activeNetwork",activeNetwork)
       if(activeNetwork==="Ethereum")
       {
-        const usdtAddress = activeAsset==="USDT"?"0xdAC17F958D2ee523a2206206994597C13D831ec7":"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+        const usdtAddress = activeAsset==="USDT"?"0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0":"0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
         if (usdtAddress && addresses) {
           const resposeBalance = await fetchTokenInfo(usdtAddress, addresses)
           const balance = resposeBalance[0].tokenBalance;
@@ -306,44 +306,48 @@ const getOffersData = async () => {
 
   const sendEthToContract = async () => {
     try {
-      const activeNetwork=chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
-      const activeAsset=chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho;
-      console.log("active -",activeNetwork,activeAsset)
+      const usdtAbi = [
+        "function transfer(address to, uint256 value) public returns (bool)"
+      ];
+      // Load wallet with private key
       const wallet = new ethers.Wallet(state?.wallet?.privateKey);
-     if(activeNetwork==="Ethereum"){
-      const respoExe = await swap_prepare(state?.wallet?.privateKey, wallet.address, state.STELLAR_PUBLICK_KEY, amount, activeAsset, "USDC", "ETH",payFeeType)
-      console.log("classic last ui res ---->", respoExe)
-      if (respoExe?.status_task) {
-        setfianl_modal_text("Transaction Successful");
-        setfianl_modal_loading(false);
-        setfianl_modal_error(true);
-        setshowTx(true)
-        setshowTxHash([{ chain: "ETH", hash: respoExe.res.transferTxHash }]);
-      }
-      if (!respoExe.status_task) {
+      const usdtAddress = OneTapUSDCAddress.Address;
+      // Load ERC-20 contract
+      const tokenContract = new ethers.Contract("0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0", usdtAbi, wallet);
+      // Convert amount to correct format
+      const formattedAmount = ethers.utils.parseUnits(resQuotes.minimumAmountOut, 6);
+      const unsigned = await tokenContract.populateTransaction.transfer(usdtAddress, formattedAmount);
+      // Send transaction
+      const preInfo = await proxyRequest("/v1/eth/transaction/prepare", PPOST, { unsignedTx: unsigned, walletAddress: wallet.address });
+      if (preInfo?.err) {
         setfianl_modal_text("Transaction Failed");
-        console.log("Transaction Failed", respoExe);
+        console.log("Transaction Failed", preInfo);
         setfianl_modal_loading(false);
         setfianl_modal_error(true);
       }
-     }
-     if(activeNetwork==="BNB"){
-      const respoExe = await SwapPepare(state?.wallet?.privateKey, wallet.address, state.STELLAR_PUBLICK_KEY, amount, activeAsset, "USDC", "BNB",payFeeType)
-      console.log("bnb last ui response ---->", respoExe)
-      if (respoExe?.status_task) {
+      const upgradedTx = {
+        ...unsigned,
+        nonce: preInfo.res.nonce,
+        gasLimit: ethers.BigNumber.from(preInfo.res.gasLimit),
+        gasPrice: ethers.BigNumber.from(preInfo.res.gasPrice),
+        value: preInfo.res.value ? ethers.BigNumber.from(preInfo.res.value) : ethers.BigNumber.from(0),
+        chainId: Number(preInfo.res.chainId),
+      };
+      const signedTx = await wallet.signTransaction(upgradedTx);
+      const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:signedTx});
+      if (respoExe?.res?.txHash) {
         setfianl_modal_text("Transaction Successful");
         setfianl_modal_loading(false);
         setfianl_modal_error(true);
         setshowTx(true)
         setshowTxHash([{ chain: "BSC", hash: respoExe.res.transferTxHash }]);
       }
-      if (!respoExe.status_task) {
+      if (respoExe?.err) {
         setfianl_modal_text("Transaction Failed");
         console.log("Transaction Failed", respoExe);
         setfianl_modal_loading(false);
         setfianl_modal_error(true);
       }
-     }
 
     } catch (error) {
       setfianl_modal_text("Transaction Failed");
@@ -982,9 +986,9 @@ const getOffersData = async () => {
           </TouchableWithoutFeedback>
         </Modal>
       </ScrollView>
-      <View style={styles.allBridgeTxCon}>
+      {/* <View style={styles.allBridgeTxCon}>
         <AllbridgeTxTrack txs={showTxHash} isDarkMode={state?.THEME?.THEME} showTx={showTx} closeTx={() => { setshowTx(false) }} />
-      </View>
+      </View> */}
     </View>
   );
 };

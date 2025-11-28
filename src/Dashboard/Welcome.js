@@ -16,7 +16,6 @@ import {
 import W1 from "../../assets/W1.png";
 import W2 from "../../assets/W2.png";
 import W3 from "../../assets/W3.png";
-import W4 from "../../assets/W4.png";
 import CustomImageSlider from '../../Custom_scroller'; // Make sure to create this file
 import { createGuestUser } from "./exchange/crypto-exchange-front-end-main/src/api";
 import { useDispatch } from "react-redux";
@@ -33,7 +32,7 @@ const Welcome = (props) => {
   const [enableUserAccess,setenableUserAccess]=useState(false);
   const dispatch = useDispatch();
   const navigation=useNavigation();
-  const images = [W4, W2, W3, W1];
+  const images = [ W1, W2, W3];
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const Spin = new Animated.Value(0);

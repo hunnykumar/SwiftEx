@@ -300,8 +300,29 @@ const KycComponent = ({ route }) => {
 
   useEffect(()=>{
     setamountSend(0.00);
-    setSelectedCrypto(null);
-    setSelectedfiat(null);
+    setSelectedCrypto({
+      "crypto": "ETH",
+      "network": "ETH",
+      "buyEnable": 1,
+      "sellEnable": 1,
+      "minPurchaseAmount": 15.00,
+      "maxPurchaseAmount": 2000.00,
+      "address": null,
+      "icon": "https://static.alchemypay.org/alchemypay/crypto-images/ETH.png",
+      "minSellAmount": 0.006061000,
+      "maxSellAmount": 1.242230886
+  });
+    setSelectedfiat({
+      "country": "IN",
+      "currency": "INR",
+      "payWayCode": "10001",
+      "payWayName": "Credit Card",
+      "fixedFee": 33.150000,
+      "feeRate": 0.039900,
+      "payMin": 900.000000,
+      "payMax": 165763.000000,
+      "countryName": "India"
+  });
     setbtnLoading(false);
     setVisibleAlert(false);
     setVisibleAlertLoading(false)

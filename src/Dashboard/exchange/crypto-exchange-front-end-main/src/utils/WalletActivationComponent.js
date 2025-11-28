@@ -145,7 +145,7 @@ const WalletActivationComponent = ({
       if (resultApi.success) {
         const keypair = StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY);
         const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(resultApi.data.wallet.xdr, "base64");
-        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.PUBLIC);
+        const tx = new StellarSdk.Transaction(envelope, StellarSdk.Networks.TESTNET);
         tx.sign(keypair);
         const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
         const result = await server.submitTransaction(tx);
@@ -172,8 +172,10 @@ const WalletActivationComponent = ({
                 duration: Snackbar.LENGTH_SHORT,
                 backgroundColor:'green',
             });
-            setWallet_activation(false);
-            onActivate()
+            setTimeout(()=>{
+              setWallet_activation(false);
+              onActivate()
+            },2000);
             });
         })
         .catch(error => {

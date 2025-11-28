@@ -152,7 +152,7 @@ export async function HandleStellarTrustLine(secretKey, assetCode, assetIssuer, 
     const asset = new StellarSdk.Asset(assetCode, assetIssuer);
     const transaction = new TransactionBuilder(account, {
       fee: await server.fetchBaseFee(),
-      networkPassphrase: StellarSdk.Networks.PUBLIC,
+      networkPassphrase: StellarSdk.Networks.TESTNET,
     })
       .addOperation(
         addTrustline
