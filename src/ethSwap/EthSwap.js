@@ -314,7 +314,15 @@ const EthSwap = () => {
     {
       try {
         const result = await swapUSDCtoWETH(PRIVATE_KEY, amount, "EthToUsdc",quoteInfo.fee);
-        
+        if(!result.success&&result?.error?.message==="Swap under proccess."){
+          Snackbar.show({
+            text: result?.error?.message,
+            duration: Snackbar.LENGTH_LONG,
+            backgroundColor: 'orange',
+          });
+          setSwapExecution(false);
+            console.log('Swap failed insider logerr:', result.message);
+        }
         if (result.success) {
             setSwapExecution(false);
             Snackbar.show({

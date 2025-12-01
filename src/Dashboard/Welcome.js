@@ -87,10 +87,14 @@ const Welcome = (props) => {
         if (response) {
           console.log("respoms:",response)
           const result = await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
-            "multiChainAddress":response.wallet.address,
-            "stellarAddress": response.wallet.stellarWallet.publicKey,
+            "addresses": {
+                "eth": response.wallet.address,
+                "xlm": response.wallet.stellarWallet.publicKey,
+                "bnb": response.wallet.address,
+                "multi": response.wallet.address
+            },
             "isPrimary": true
-          });
+        });
           
           if (result.success) {
              alert("success","wallet synced!");

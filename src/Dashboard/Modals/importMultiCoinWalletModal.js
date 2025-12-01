@@ -320,10 +320,14 @@ const ImportMultiCoinWalletModal = ({
                   },
                 ];
                 const resultApi =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
-                  "multiChainAddress":wallet.address,
-                  "stellarAddress": wallet.stellarWallet.publicKey,
+                  "addresses": {
+                      "eth": wallet.address,
+                      "xlm": wallet.stellarWallet.publicKey,
+                      "bnb": wallet.address,
+                      "multi": wallet.address
+                  },
                   "isPrimary": true
-                });
+              });
                 console.log("result---result",resultApi)
                 
                 if (resultApi.success) {

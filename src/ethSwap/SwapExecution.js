@@ -250,6 +250,18 @@ const WETH_ABI = [
     
         const { res, err } = await proxyRequest("/v1/eth/swap-transaction/execute", PPOST,  {txs:signedTxs});
         console.log("swap-exe---",res,err)
+        if(err?.status===504)
+        {
+            return new SwapResult(
+                false,
+                'Swap under proccess.',
+                null,
+                {
+                    message: "Swap under proccess.",
+                    code: false
+                }
+            );
+        }
         if(err?.status===500)
         {
             return new SwapResult(
@@ -262,7 +274,7 @@ const WETH_ABI = [
                 }
             );
         }
-        if(res?.[0]?.status===1)
+        if(res?.[0]?.receipt?.status===1)
             {
                 return new SwapResult(
                     true,

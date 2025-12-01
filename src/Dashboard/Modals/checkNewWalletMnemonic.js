@@ -313,11 +313,15 @@ const CheckNewWalletMnemonic = ({
                               setLoading(false);
                               return;
                             } else if (response.status === "success") {
-                              const result =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
-                                "multiChainAddress":Wallet.address,
-                                "stellarAddress": Wallet.stellarWallet.publicKey,
+                              const result =await apiHelper.post(REACT_APP_HOST+'/v1/wallet',{
+                                "addresses": {
+                                    "eth": Wallet.address,
+                                    "xlm": Wallet.stellarWallet.publicKey,
+                                    "bnb": Wallet.address,
+                                    "multi": Wallet.address
+                                },
                                 "isPrimary": true
-                              });
+                            });
                               console.log("result---result",result)
                               
                               if (result.success) {
