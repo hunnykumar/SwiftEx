@@ -14,7 +14,6 @@ import {
 } from "react-native-responsive-screen";
 import { useDispatch, useSelector } from "react-redux";
 import ToggleSwitch from "toggle-switch-react-native";
-import { REACT_APP_LOCAL_TOKEN } from "./src/Dashboard/exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import Icon from "./src/icon";
 import { SET_APP_THEME } from "./src/components/Redux/actions/type";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
