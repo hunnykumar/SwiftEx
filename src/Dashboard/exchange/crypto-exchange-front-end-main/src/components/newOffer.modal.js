@@ -700,7 +700,7 @@ export const NewOfferModal = () => {
     <View style={[styles.scrollView0, { backgroundColor: theme.bg }]}>
       <Exchange_screen_header 
         title="Trade" 
-        onLeftIconPress={() => navigation.goBack()} 
+        onLeftIconPress={() => {showOneTap?setshowOneTap(false):navigation.goBack()}} 
         onRightIconPress={() => console.log('Pressed')} 
       />
         

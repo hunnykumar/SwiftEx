@@ -56,8 +56,8 @@ export const HomeView = () => {
   ]
 
   const quickActions = [
-    { name: `Import\nUSDC`, icon: "generating-tokens", iconProvider: "material" },
-    { name: `Export\nUSDC`, icon: "currency-exchange", iconProvider: "material" },
+    { name: `Deposit\nUSDC`, icon: "generating-tokens", iconProvider: "material" },
+    { name: `Withdrawal\nUSDC`, icon: "currency-exchange", iconProvider: "material" },
     { name: `Manage\nAssets`, icon: "token", iconProvider: "material" },
     { name: `On/Off\nRamp`, icon: "storefront", iconProvider: "material" }
   ]

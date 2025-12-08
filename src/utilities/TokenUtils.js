@@ -166,9 +166,10 @@ import axios from "axios";
 import UniSwapTokenList from "../Dashboard/tokens/tokenList.json";
 import PancakeTokenList from "../Dashboard/tokens/pancakeSwap/PancakeList.json";
 import StellarTokenList from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/stellar/Tokens.json";
-import { STELLAR_URL } from "../Dashboard/constants";
+import { RPC, STELLAR_URL } from "../Dashboard/constants";
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { BSC_BASE_RPC, ETHPLORER, MULTICHIAN_BASE_RPC, REACT_APP_COIN_GECKO_SIMPLE_PRICE_URL } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
+import { ethers } from "ethers";
 
 const CONFIG = {
   TIMEOUT: 10000,
@@ -187,6 +188,7 @@ const CONFIG = {
     XLM: StellarTokenList
   }
 };
+const provider = new ethers.providers.JsonRpcProvider(RPC.ETHRPC);
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -434,6 +436,14 @@ const getEthereumTokens = async (walletAddress) => {
     };
 
   } catch (error) {
+    if (
+      error?.response?.data?.error?.code === 999 ||
+      error?.response?.data?.error?.message?.includes("Service temporary unavailable")
+    ) {
+      console.warn("Ethplorer down switching Fallback to RPC.");
+      return await getEthereumFallback(walletAddress);
+    }
+
     return { tokens: [], totalValueUSD: 0 };
   }
 };
@@ -631,3 +641,157 @@ export async function GetWalletTokens(evmAddress = null, stellarAddress = null) 
     throw new Error(`Failed to fetch wallet tokens: ${error.message}`);
   }
 }
+
+async function getERC20Balance(tokenAddress, wallet) {
+  try {
+    const ERC20_ABI = [
+      "function balanceOf(address) view returns (uint256)",
+      "function decimals() view returns (uint8)",
+      "function symbol() view returns (string)",
+      "function name() view returns (string)"
+    ];
+
+    const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+    const [raw, decimals, symbol, name] = await Promise.all([
+      contract.balanceOf(wallet),
+      contract.decimals(),
+      contract.symbol(),
+      contract.name()
+    ]);
+    return {
+      name,
+      symbol,
+      balance: Number(raw) / 10 ** decimals,
+      decimals,
+      contractAddress: tokenAddress
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function getEthereumFallback(wallet) {
+  const USDT = "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0";
+  const USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
+  const tokens = [];
+  let totalValueUSD = 0;
+
+  const nativeWei = await provider.getBalance(wallet);
+  const native = Number(nativeWei) / 1e18;
+
+  tokens.push({
+    chain: "ETH",
+    name: "Ethereum",
+    symbol: "ETH",
+    balance: native,
+    balanceUSD: 0,
+    decimals: 18,
+    contractAddress: "Native",
+    price: 0,
+    imageUrl: getTokenImage('0xfff9976782d46cc05630d1f6ebab18b2324d6b14', 'ETH')
+  });
+
+  const usdt = await getERC20Balance(USDT, wallet);
+  if (usdt && usdt.balance > 0) {
+    tokens.push({
+      chain: "ETH",
+      name: usdt.name,
+      symbol: usdt.symbol,
+      balance: usdt.balance,
+      balanceUSD: 0,
+      decimals: usdt.decimals,
+      contractAddress: usdt.contractAddress,
+      price: 0,
+      imageUrl: getTokenImage(USDT, "ETH")
+    });
+  }
+
+  const usdc = await getERC20Balance(USDC, wallet);
+  if (usdc && usdc.balance > 0) {
+    tokens.push({
+      chain: "ETH",
+      name: usdc.name,
+      symbol: usdc.symbol,
+      balance: usdc.balance,
+      balanceUSD: 0,
+      decimals: usdc.decimals,
+      contractAddress: usdc.contractAddress,
+      price: 0,
+      imageUrl: getTokenImage(USDC, "ETH")
+    });
+  }
+
+  return {
+    tokens,
+    totalValueUSD: 0
+  };
+}
+
+export const TemporaryTokens=[
+  {
+      "balance": 0.000,
+      "balanceUSD": 0.000,
+      "chain": "Stellar",
+      "contractAddress": "Native",
+      "decimals": 7,
+      "imageUrl": "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq",
+      "name": "Stellar Lumens",
+      "price": 0.000,
+      "symbol": "XLM"
+  },
+  {
+      "balance": 0.000,
+      "balanceUSD": 0,
+      "chain": "ETH",
+      "contractAddress": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0",
+      "decimals": 6,
+      "imageUrl": null,
+      "name": "USDT",
+      "price": 0,
+      "symbol": "USDT"
+  },
+  {
+      "balance": 0.000,
+      "balanceUSD": 0,
+      "chain": "ETH",
+      "contractAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "decimals": 6,
+      "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+      "name": "USDC",
+      "price": 0,
+      "symbol": "USDC"
+  },
+  {
+      "balance": 0.000,
+      "balanceUSD": 0,
+      "chain": "ETH",
+      "contractAddress": "Native",
+      "decimals": 18,
+      "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+      "name": "Ethereum",
+      "price": 0,
+      "symbol": "ETH"
+  },
+  {
+      "balance": 0,
+      "balanceUSD": 0,
+      "chain": "BSC",
+      "contractAddress": "Native",
+      "decimals": 18,
+      "imageUrl": "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png",
+      "name": "Binance Coin",
+      "price": 0.000,
+      "symbol": "BNB"
+  },
+  {
+      "balance": 0,
+      "balanceUSD": 0,
+      "chain": "BTC",
+      "contractAddress": "Native",
+      "decimals": 7,
+      "imageUrl": "https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png",
+      "name": "Bitcoin",
+      "price": 0,
+      "symbol": "BTC"
+  }
+]

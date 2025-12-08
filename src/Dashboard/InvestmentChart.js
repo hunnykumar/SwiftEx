@@ -14,7 +14,7 @@ import LinearGradient from "react-native-linear-gradient";
 import * as StellarSdk from '@stellar/stellar-sdk';
 import Modal from "react-native-modal";
 import { colors } from '../Screens/ThemeColorsConfig';
-import { GetWalletTokens } from '../utilities/TokenUtils';
+import { GetWalletTokens, TemporaryTokens } from '../utilities/TokenUtils';
 import CustomInfoProvider from './exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -43,7 +43,6 @@ function InvestmentChart() {
   useEffect(() => {
     let isMounted = true;
     async function checkBiometric() {
-      setLoading(true);
       try {
         const biometric = await AsyncStorage.getItem('Biometric');
         if (isMounted) {
@@ -77,7 +76,7 @@ function InvestmentChart() {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
+    setTokenInfoList(TemporaryTokens);
     const initService = async () => {
       await fetchDataDispatch();
       if (wallet?.address && state?.STELLAR_PUBLICK_KEY) {
@@ -209,12 +208,19 @@ function InvestmentChart() {
                 {state&&state.isTotalInUSDVisible?"$"+balanceUSD:"$X.XXXXX"}
               </Text>
             </View>
-            {item.chain==="BTC"?<TouchableOpacity style={styles.avilableSoonBtnCon} disabled={true}>
-              <Text style={styles.avilableSoonBtnTxt}>{`Arriving\nsoon`}</Text>
-            </TouchableOpacity>:
-              <TouchableOpacity style={styles.tradeButton} onPress={() => { navigation.navigate("newOffer_modal", { purchesReq:balanceValue===0?true:false,tradeAssetType: ["ETH", "BSC"].includes(item.chain) ? "ETH" : item.symbol?.toUpperCase(), tradeAssetIssuer: ["ETH", "BSC"].includes(item.chain) && "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" }) }}>
+            <TouchableOpacity style={styles.tradeButton} onPress={() => {
+              navigation.navigate("newOffer_modal", {
+                purchesReq: balanceValue === 0,
+                tradeAssetType:
+                  item.chain === "BSC"
+                    ? "ETH"
+                    : ["ETH", "BTC"].includes(item.chain)
+                      ? item.chain
+                      : item.symbol?.toUpperCase(), tradeAssetIssuer: ["ETH", "BTC", "BSC"].includes(item.chain) ? "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" : null
+              })
+            }}>
               <Text style={styles.tradeButtonText}>Trade</Text>
-            </TouchableOpacity>}
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       );

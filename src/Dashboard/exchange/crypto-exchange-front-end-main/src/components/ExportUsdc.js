@@ -344,7 +344,7 @@ console.log("resQuotes-",resQuotes)
       <ScrollView style={[styles.scrollCon,{backgroundColor:theme.bg}]}>
         <View style={[styles.card,{backgroundColor:theme.cardBg,flexDirection:"column"}]}>
         
-        <Text style={[styles.headingText,{color:theme.headingTx}]}>Export USDC to Wallet</Text>
+        <Text style={[styles.headingText,{color:theme.headingTx}]}>Withdrawal USDC to Wallet</Text>
         {/* Select network */}
         <TouchableOpacity style={[styles.modalOpen,{backgroundColor:theme.bg}]} onPress={() => { setchooseNetwork(true); }}>
           <View style={{ flexDirection: "row" }}>

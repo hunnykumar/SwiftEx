@@ -357,7 +357,7 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
       fontSize: 28,
       color: theme.headingTx,
       marginTop: 2,
-      maxWidth: "58%"
+      maxWidth: "60%"
     },
     usdValue: {
       color: theme.inactiveTx,
@@ -477,12 +477,6 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
   return (
     <>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingHorizontal: 15 }}>
-        {showPurchase ? <View style={{ alignItems: "center", justifyContent: "center", marginTop: hp(15) }}>
-          <Text style={{ color: theme.headingTx, fontSize: 16, textAlign: "center" }}>Your balance  is not enough. Deposit more funds to continue.</Text>
-          <TouchableOpacity style={{ backgroundColor: "#4052D6", color: theme.headingTx, marginTop: hp(2), borderRadius: 10 }} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
-            <Text style={{ color: theme.headingTx, fontSize: 16, width: wp(50), textAlign: "center", padding: 14 }}>Deposit ETH</Text>
-          </TouchableOpacity>
-        </View> : <>
           <Text style={styles.topHeading}>{isTokenHaveBalances ? "Deposit instantly from your available balance.":"Oops! You don't own this asset yet. Buy to get started."}</Text>
           {
             isTokenHaveBalances &&
@@ -490,10 +484,10 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
               <View style={styles.card}>
                 <View style={styles.rowBetween}>
                   <Text style={styles.label}>From</Text>
-                  {!isTokenHaveBalances && <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: "#FFA800",marginBottom:hp(0.8)}]} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
+                    <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: "#FFA800",marginBottom:hp(0.8)}]} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
                     <Icon name="arrow-right-thin" type={"materialCommunity"} size={25} color={theme.bg} />
                     <Text style={[styles.tokenText, { marginLeft: wp(0.1), color: theme.bg }]}>Buy Now</Text>
-                  </TouchableOpacity>}
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.rowBetween}>
@@ -525,11 +519,11 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
 
           <View style={styles.card}>
             <View style={styles.rowBetween}>
-              <Text style={styles.label}>To</Text>
-              {!isTokenHaveBalances && <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: "#FFA800",marginBottom:hp(0.8) }]} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
+              <Text style={styles.label}>{!isTokenHaveBalances?"":"To"}</Text>
+               <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: "#FFA800",marginBottom:hp(0.8) }]} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
                 <Icon name="arrow-right-thin" type={"materialCommunity"} size={25} color={theme.bg} />
                 <Text style={[styles.tokenText, { marginLeft: wp(0.1), color: theme.bg }]}>Buy Now</Text>
-              </TouchableOpacity>}
+              </TouchableOpacity>
             </View>
 
             <View style={styles.rowBetween}>
@@ -541,7 +535,7 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
                   keyboardType="numeric"
                   returnKeyType="done"
                   editable={false}
-                  value={quotesResponse === null ? "0.00" : quotesResponse.minimumAmountOut}
+                  value={quotesResponse === null ? "0.0" : quotesResponse.minimumAmountOut}
                 />
                 {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : <Text style={styles.balance}>Balance: {usdcBalance}</Text>}
               </View>
@@ -636,9 +630,6 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
                     <Text style={styles.buttonText}>Continue</Text>
                   </TouchableOpacity>
                 </> : <></>}
-
-
-        </>}
 
 
         <Modal visible={sheetVisible} transparent animationType="slide">

@@ -474,7 +474,7 @@ const getOffersData = async () => {
             setgetInfo(false)
             setresQuotes(null)
             console.log("---err->",result)
-           CustomInfoProvider.show("Info", result?.message==="Amount must be greater than zero"?result?.message:"An error occurred. Please try again later.")
+           CustomInfoProvider.show("Info", result?.message==="Amount must be greater than zero"?"Oops! You need to enter at least 0.01.":"An error occurred. Please try again later.")
           }
         })
         .catch((error) => {
@@ -528,7 +528,7 @@ const getOffersData = async () => {
                  /> */}
       <ScrollView style={{marginBottom:hp(5),paddingHorizontal:wp(3.5)}}>
         <View style={[styles.card,{backgroundColor:theme.cardBg,flexDirection:"column"}]}>
-            <Text style={[styles.headingText,{color:theme.headingTx}]}>Import USDC on Trade Wallet</Text>
+            <Text style={[styles.headingText,{color:theme.headingTx}]}>Deposit USDC on Trade Wallet</Text>
           <View style={[styles.exportBottomCon,{backgroundColor:theme.cardBg}]}>
               <TouchableOpacity style={[styles.exportCon,{backgroundColor:theme.bg}]} onPress={() => { setChooseModalVisible(true); setIdIndex(1); }}>
                <View style={{flexDirection:"row"}}>
@@ -555,6 +555,7 @@ const getOffersData = async () => {
           </View>
           
                   <View style={[styles.card,{backgroundColor:theme.cardBg,flexDirection:"column",borderBottomLeftRadius:0,borderBottomRightRadius:0}]}>
+                  <Text style={[styles.infoText,{color:theme.inactiveTx}]}> <Icon name={"information-outline"} type={"materialCommunity"} size={16} color={theme.inactiveTx} /> Any token except (USDC/USDT) will be auto-converted to USDC on the Stellar network.</Text>
                   <View style={[styles.rowBtnCon, { paddingVertical: hp(-0.5),backgroundColor:theme.cardBg }]}>
                       <Text style={[styles.subInputText,{color:theme.inactiveTx,marginTop: hp(0)}]}>Amount</Text>
                       <TouchableOpacity style={styles.maxCon} onPress={()=>{parseFloat(WALLETBALANCE)===0?alert("error","Invalid amount."):handleInputChange(parseFloat(WALLETBALANCE)===0?null:WALLETBALANCE,chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho)}}>
@@ -1446,6 +1447,13 @@ const styles = StyleSheet.create({
     width:"100%",
     paddingHorizontal: wp(2),
     paddingVertical:  Platform.OS=="android"?hp(1):hp(2),
+  },
+  infoText: {
+    color: "#94A3B8",
+    fontSize: 13,
+    marginHorizontal:wp(1),
+    textAlign:"center",
+    marginBottom:hp(1)
   },
 });
 export default classic;
