@@ -7,15 +7,9 @@ import {
   Animated, 
   Dimensions,
   Platform,
-  useColorScheme,
   BackHandler,
   ActivityIndicator
 } from 'react-native';
-import DeviceInfo from 'react-native-device-info';
-import Ionicons from "react-native-vector-icons/Ionicons";
-import useFirebaseCloudMessaging from '../../../../notifications/firebaseNotifications';
-import { authRequest, GET, getToken, POST } from '../api';
-import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { useDispatch, useSelector } from 'react-redux';
 import { RAPID_STELLAR, SET_ASSET_DATA } from '../../../../../components/Redux/actions/type';
 import { REACT_APP_HOST } from '../ExchangeConstants';
@@ -23,6 +17,7 @@ import Snackbar from 'react-native-snackbar';
 import { STELLAR_URL } from '../../../../constants';
 import apiHelper from '../apiHelper';
 import * as StellarSdk from '@stellar/stellar-sdk';
+import Icon from '../../../../../icon';
 
 const { height } = Dimensions.get('window');
 
@@ -37,8 +32,8 @@ const WalletActivationComponent = ({
     const dispatch_ = useDispatch()
     const state = useSelector((state) => state);
   
-  const [Wallet_activation,setWallet_activation]=useState(false)
-  const { FCM_getToken } = useFirebaseCloudMessaging();
+  const [Wallet_activation,setWallet_activation]=useState(false);
+  const [visibleBuyUi,setVisibleBuyUi]=useState(false);
   const isDarkMode = appTheme;
   
   // Use refs to avoid re-creating animation instances
@@ -109,6 +104,7 @@ const WalletActivationComponent = ({
     
     if (isVisible) {
       // Make sure component is rendered first
+      setVisibleBuyUi(false);
       setShowSheet(true);
       
       // Use requestAnimationFrame to avoid layout thrashing
@@ -196,10 +192,18 @@ const WalletActivationComponent = ({
 
         // setWallet_activation(false);
         // handleClose()
-      } else{
-        console.log("Error: Funding account failed.",resultApi);
+      } else {
+        console.log("Error: Funding account failed.", resultApi);
         setWallet_activation(false);
-        handleClose()
+        // handleClose()
+        Snackbar.show({
+          text: "Oops! We couldn't claim your XLM.",
+          duration: Snackbar.LENGTH_LONG,
+          backgroundColor: '#4F8EF7',
+        });
+        if (resultApi.status !== 200 && resultApi.status !== 201 && resultApi.success === false) {
+          setVisibleBuyUi(true);
+        }
       }
   
     } catch (error) {
@@ -213,6 +217,10 @@ const WalletActivationComponent = ({
   const ActivationHandle=async()=>{
     setWallet_activation(true)
     await active_account()
+  }
+
+  const HandleTokensBuy=()=>{
+    navigation.navigate("payout",{cryptoRequest:"XLM"});
   }
 
   return (
@@ -234,23 +242,23 @@ const WalletActivationComponent = ({
         
         <View style={styles.content}>
           <View style={[styles.iconContainer, { backgroundColor: theme.accentBackground }]}>
-          <Ionicons name="warning-outline" size={40} color={theme.accentColor} />
+          <Icon type={"materialCommunity"} name={!visibleBuyUi?"shield-alert":"cart"} size={40} color={theme.accentColor} />
           </View>
           
           <Text style={[styles.title, { color: theme.text }]}>
-          Activate and Trust USDC
+          {!visibleBuyUi?"Activate Trade Wallet":"Buy Stellar Lumens Easily"}
           </Text>
           
           <Text style={[styles.description, { color: theme.secondaryText }]}>
-          Your Stellar wallet isn’t activated yet. Activate it now to automatically trust USDC and start using all features seamlessly!
+          {!visibleBuyUi?"Your Stellar wallet isn’t activated yet. Activate it now to automatically trust USDC and start using all features seamlessly!":"Start trading with near-zero fees and lightning-fast transactions, unlocking seamless access to Stellar's network and maximum efficiency for all your crypto activities."}
           </Text>
           
           <TouchableOpacity 
             style={[styles.activateButton,{backgroundColor:Wallet_activation?"gray":"#4F8EF7"}]}
-            onPress={()=>{ActivationHandle()}}
+            onPress={()=>{!visibleBuyUi?ActivationHandle():HandleTokensBuy()}}
             disabled={Wallet_activation}
           >
-            {Wallet_activation?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={styles.buttonText}>Claim 5 XLM Now!</Text>}
+            {Wallet_activation?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={styles.buttonText}>{!visibleBuyUi?"Claim 5 XLM Now!":"Buy XLM"}</Text>}
           </TouchableOpacity>
           
           <TouchableOpacity 

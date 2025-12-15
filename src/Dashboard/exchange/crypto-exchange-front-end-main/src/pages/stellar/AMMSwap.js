@@ -503,7 +503,7 @@ const AMMSwap = () => {
               {isLoading||tokenBurn ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={styles.swapActionButtonText}>{parseFloat(fromBal)===0||parseFloat(fromAmount)>=parseFloat(fromBal)?"Insufficient balance":assetTrustRequired.length>0?"Trust and Swap":"Swap Tokens"}</Text>
+                <Text style={styles.swapActionButtonText}>{parseFloat(fromBal)===0||parseFloat(fromAmount)>=parseFloat(fromBal)?"Insufficient balance":assetTrustRequired.length>0?`Trust ${assetTrustRequired[0].tokenSymbole} and Swap`:"Swap Tokens"}</Text>
               )}
           </TouchableOpacity>
 

@@ -631,3 +631,72 @@ export async function GetWalletTokens(evmAddress = null, stellarAddress = null) 
     throw new Error(`Failed to fetch wallet tokens: ${error.message}`);
   }
 }
+
+export const TemporaryTokens=[
+  {
+      "balance": 0.000,
+      "balanceUSD": 0.000,
+      "chain": "Stellar",
+      "contractAddress": "Native",
+      "decimals": 7,
+      "imageUrl": "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq",
+      "name": "Stellar Lumens",
+      "price": 0.000,
+      "symbol": "XLM"
+  },
+  {
+      "balance": 0.000,
+      "balanceUSD": 0,
+      "chain": "ETH",
+      "contractAddress": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0",
+      "decimals": 6,
+      "imageUrl": null,
+      "name": "USDT",
+      "price": 0,
+      "symbol": "USDT"
+  },
+  {
+      "balance": 0.000,
+      "balanceUSD": 0,
+      "chain": "ETH",
+      "contractAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "decimals": 6,
+      "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+      "name": "USDC",
+      "price": 0,
+      "symbol": "USDC"
+  },
+  {
+      "balance": 0.000,
+      "balanceUSD": 0,
+      "chain": "ETH",
+      "contractAddress": "Native",
+      "decimals": 18,
+      "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+      "name": "Ethereum",
+      "price": 0,
+      "symbol": "ETH"
+  },
+  {
+      "balance": 0,
+      "balanceUSD": 0,
+      "chain": "BSC",
+      "contractAddress": "Native",
+      "decimals": 18,
+      "imageUrl": "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png",
+      "name": "Binance Coin",
+      "price": 0.000,
+      "symbol": "BNB"
+  },
+  {
+      "balance": 0,
+      "balanceUSD": 0,
+      "chain": "BTC",
+      "contractAddress": "Native",
+      "decimals": 7,
+      "imageUrl": "https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png",
+      "name": "Bitcoin",
+      "price": 0,
+      "symbol": "BTC"
+  }
+]

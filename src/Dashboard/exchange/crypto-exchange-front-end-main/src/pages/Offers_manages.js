@@ -205,9 +205,19 @@ const Offers_manages = () => {
     fetchAvilableBalance(offer?.selling?.asset_type,offer?.selling?.asset_code,offer?.selling?.asset_issuer)
     setSelectedIndex(index)
     setSelectedOffer(offer);
-    setNewAmount(Number(offer.amount).toFixed(5));
-    setNewPrice(Number(offer.price).toFixed(5));
+    setNewAmount(Number(offer.amount).toFixed(7));
+    setNewPrice(Number(offer.price).toFixed(7));
     setModalVisible(true);
+  };
+
+  const isValidNumber = (value) => {
+    if (value === null || value === undefined) return false;
+    if (value === "" || value === ".") return false;
+    const num = new BigNumber(value);
+    if (!num.isFinite() || num.isNaN()) return false;
+    if (num.lte(0)) return false;
+    if (num.decimalPlaces() > 7) return false;
+    return true;
   };
 
   const updateOffer = async () => {
@@ -225,17 +235,15 @@ const Offers_manages = () => {
       });
       return;
     }
-    if (newAmountBN.isZero() || BigNumber(newPrice || 0).isZero()) {
+    if (!isValidNumber(newAmountBN) || !isValidNumber(newPrice)) {
       Snackbar.show({
         text: 'Invalid value provided',
         duration: Snackbar.LENGTH_SHORT,
         backgroundColor: 'red',
       });
-      setNewAmount('');
-      setNewPrice('');
       return;
     }
-  
+    
     setloading_edi(true);
     const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
   

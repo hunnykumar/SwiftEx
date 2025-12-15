@@ -28,6 +28,7 @@ import SELECT_WALLET_EXC from "../../../../Modals/SELECT_WALLET_EXC";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import { Charts_Loadings, Exchange_single_loading } from "../../../../reusables/Exchange_loading";
 import { colors } from "../../../../../Screens/ThemeColorsConfig";
+import CandleStickChart from "./stellar/CommanCandleStickChart";
 
 
 export const HomeView = () => {
@@ -54,15 +55,58 @@ export const HomeView = () => {
     { id: 3, name: "USDC", name_0: "EURC", url: "https://horizon.stellar.org/trade_aggregations?base_asset_type=credit_alphanum4&base_asset_code=USDC&base_asset_issuer=GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN&counter_asset_type=credit_alphanum4&counter_asset_code=EURC&counter_asset_issuer=GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2&start_time=1722229906000&resolution=900000&offset=0&limit=30&order=desc", img: "https://assets.coingecko.com/coins/images/26045/thumb/euro-coin.png?1655394420", img_0: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" },
   ]
 
+  const PAIRS = [
+    {
+      id: 1,
+      name: "XLM/USDC",
+      base_value: "USDC",
+      counter_value: "native",
+      visible_0: "XLM",
+      visible_1: "USDC",
+      visible0Issuer: "native",
+      visible1Issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+    },
+    {
+      id: 2,
+      name: "ETH/USDC",
+      base_value: "USDC",
+      counter_value: "ETH",
+      visible_0: "ETH",
+      visible_1: "USDC",
+      visible0Issuer: "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC",
+      visible1Issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+    },
+    {
+      id: 3,
+      name: "XLM/EURC",
+      base_value: "EURC",
+      counter_value: "native",
+      visible_0: "XLM",
+      visible_1: "EURC",
+      visible0Issuer: "native",
+      visible1Issuer: "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2"
+    },
+    {
+      id: 4,
+      name: "USDC/EURC",
+      base_value: "EURC",
+      counter_value: "USDC",
+      visible_0: "USDC",
+      visible_1: "EURC",
+      visible0Issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+      visible1Issuer: "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2"
+    },
+  ]
+
   const quickActions = [
-    { name: `Import\nUSDC`, icon: "generating-tokens", iconProvider: "material" },
-    { name: `Export\nUSDC`, icon: "currency-exchange", iconProvider: "material" },
-    { name: `Manage\nAssets`, icon: "token", iconProvider: "material" },
-    { name: `On/Off\nRamp`, icon: "storefront", iconProvider: "material" }
+    { name: `Spot\nTrade`, icon: "candlestick-chart", iconProvider: "material" },
+    { name: `Deposit\nUSDC`, icon: "generating-tokens", iconProvider: "material" },
+    { name: `Withdrawal\nUSDC`, icon: "currency-exchange", iconProvider: "material" },
   ]
   const quickTradeActions = [
-    { name: `Trade`, icon: "candlestick-chart", iconProvider: "material" },
-    { name: `Offers`, icon: "insights", iconProvider: "material" },
+    { name: `Manage\nAssets`, icon: "token", iconProvider: "material" },
+    { name: `On/Off\nRamp`, icon: "storefront", iconProvider: "material" },
+    { name: `Trade\nOffers`, icon: "insights", iconProvider: "material" },
     { name: `Transaction\nHistory`, icon: "restore", iconProvider: "material" },
   ]
   useEffect(() => {
@@ -187,16 +231,13 @@ export const HomeView = () => {
   const manageAssetNav = (itemIndex) => {
     switch (itemIndex) {
       case 0:
-        navigation.navigate("classic", { Asset_type: "ETH" })
+        navigation.navigate("newOffer_modal")
         break;
       case 1:
-        navigation.navigate("ExportUSDC", { Asset_type: "ETH" })
+        navigation.navigate("classic", { Asset_type: "ETH" })
         break;
       case 2:
-        navigation.navigate("Assets_manage")
-        break;
-      case 3:
-        navigation.navigate("payout")
+        navigation.navigate("ExportUSDC", { Asset_type: "ETH" })
         break;
     }
   }
@@ -204,15 +245,16 @@ export const HomeView = () => {
   const manageTradeNav = (itemIndex) => {
     switch (itemIndex) {
       case 0:
-        navigation.navigate("newOffer_modal")
+        navigation.navigate("Assets_manage")
         break;
       case 1:
-        navigation.navigate("StellarOffers")
+        navigation.navigate("payout")
         break;
       case 2:
-        navigation.navigate("StellarTransactions")
+        navigation.navigate("StellarOffers")
         break;
       case 3:
+        navigation.navigate("StellarTransactions")
         break;
     }
   }
@@ -229,7 +271,7 @@ export const HomeView = () => {
 
       <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ backgroundColor: theme.bg }}>
         <View style={[styles.quickActionWrapper, { backgroundColor: theme.cardBg, borderColor: theme.smallCardBorderColor }]}>
-          <Text style={[styles.headingTx, { color: theme.headingTx }]}>Manage Assets</Text>
+          <Text style={[styles.headingTx, { color: theme.headingTx }]}>Manage Trade</Text>
           <View style={[styles.quickActionRow]}>
             {quickActions.map((item, index) => {
               return (
@@ -241,13 +283,9 @@ export const HomeView = () => {
                 </View>
               )
             })}
-          </View>
-          <View style={styles.bottmLine} />
-          <View style={[styles.accountDetils]}>
-            <View style={styles.walletContainer}>
-              <Text style={[styles.textColor, { color: theme.headingTx }]}>Active Stellar Wallet</Text>
+            <View style={styles.infoCon}>
               <View style={{ flexDirection: "row" }}>
-                <Text style={{ color: theme.cardSubTx }}>USDC: </Text>
+                <Text style={[styles.infoText, { color: theme.headingTx }]}>USDC : </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(8) }}>
                   <Text style={{ color: theme.cardSubTx }}>
                     {state?.STELLAR_ADDRESS_STATUS === false
@@ -259,6 +297,19 @@ export const HomeView = () => {
                   </Text>
                 </ScrollView>
               </View>
+              <View style={{ flexDirection: "row" }}>
+                <Text style={[styles.infoText, { color: theme.headingTx }]}>Trade Fee : </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(8) }}>
+                  <Text style={[styles.infoText, { color: theme.headingTx }]}>${state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens.find(d => d.chain.toLowerCase() === "stellar" && d.symbol === "XLM")?.price * 0.00001 || "0.0000002"}</Text>
+                </ScrollView>
+              </View>
+              <Text style={[styles.infoText, { color: theme.headingTx }]}>Avg Fee : 0.00001</Text>
+            </View>
+          </View>
+          <View style={styles.bottmLine} />
+          <View style={[styles.accountDetils]}>
+            <View style={styles.walletContainer}>
+              <Text style={[styles.textColor, { color: theme.headingTx }]}>Active Stellar Wallet</Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               {loadingKey && !stellarKey ? (
@@ -286,7 +337,7 @@ export const HomeView = () => {
         )}
 
         <View style={[styles.quickActionWrapper, { backgroundColor: theme.cardBg, borderColor: theme.smallCardBorderColor }]}>
-          <Text style={[styles.headingTx, { color: theme.headingTx }]}>Manage Trade</Text>
+          <Text style={[styles.headingTx, { color: theme.headingTx }]}>Manage Assets</Text>
           <View style={[styles.quickActionRow, { alignSelf: "flex-start" }]}>
             {quickTradeActions.map((item, index) => {
               return (
@@ -365,7 +416,7 @@ export const HomeView = () => {
             </Chart>
           )}
         </View>
-
+        <CandleStickChart visible={apiDataLoading} activeTheme={state.THEME.THEME} pair={PAIRS[chartIndex]}/>
         <View style={styles.tradeButtonWrapper}>
           <Modal animationType="slide" transparent visible={openChartApi} onRequestClose={() => setOpenChartApi(false)}>
             <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setOpenChartApi(false)}>
@@ -526,5 +577,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: wp(4)
+  },
+  infoCon:{
+    width:wp(29),
+    justifyContent:"center",
+    alignItems:"flex-start"
+  },
+  infoText:{
+    fontSize: 13,
+    textAlign: "center"
   }
 });
