@@ -388,7 +388,7 @@ export const NewOfferModal = () => {
   }, [checkAssetTrust, state.STELLAR_PUBLICK_KEY]);
 
   const proceedToBridgeValidation = useCallback(async () => {
-      setassetInfo(false);
+      // setassetInfo(false);
       setshowOneTap(true);
   }, [checkAssetTrust, navigation]);
 
@@ -576,9 +576,75 @@ const selectTradingPair = useCallback((item) => {
   ]);
 
   useEffect(() => {
-    setactiveTradeType(back_data?.params?.tradeAssetType ? TAB_CONFIG.LARGE_ORDER_TRADE.id : TAB_CONFIG.INSTANT_TRADE.id)
-  }, [isFocused])
-
+    if (!back_data?.params?.tradeAssetType) {
+      setactiveTradeType(TAB_CONFIG.INSTANT_TRADE.id);
+    }
+  }, [isFocused, back_data?.params?.tradeAssetType]);
+  
+  useEffect(() => {
+  if (back_data?.params?.tradeAssetType && isFocused) {
+    const assetType = back_data.params.tradeAssetType;
+    const matchingPair = tradingPairsConfig.PAIRS.find(pair => 
+      (pair.visible_0 === assetType && pair.visible_1 === "USDC") ||
+      (pair.visible_1 === assetType && pair.visible_0 === "USDC")
+    );
+    
+    if (matchingPair) {
+      if (matchingPair.visible_0 === assetType) {
+        settop_value(matchingPair.visible_0);
+        settop_value_0(matchingPair.visible_1);
+        setAssetIssuerPublicKey(matchingPair.visible0Issuer);
+        setAssetIssuerPublicKey1(matchingPair.visible1Issuer);
+        setSelectedValue(matchingPair.base_value);
+        setSelectedBaseValue(matchingPair.counter_value);
+        settop_domain(matchingPair.asset_dom);
+        settop_domain_0(matchingPair.asset_dom_1);
+      } else {
+        settop_value(matchingPair.visible_1);
+        settop_value_0(matchingPair.visible_0);
+        setAssetIssuerPublicKey(matchingPair.visible1Issuer);
+        setAssetIssuerPublicKey1(matchingPair.visible0Issuer);
+        setSelectedValue(matchingPair.counter_value);
+        setSelectedBaseValue(matchingPair.base_value);
+        settop_domain(matchingPair.asset_dom_1);
+        settop_domain_0(matchingPair.asset_dom);
+      }
+      setactiveTradeType(TAB_CONFIG.LARGE_ORDER_TRADE.id);
+      setActiveTab(SUB_TAB_CONFIG.TRADE.id);
+      setTimeout(() => {
+        const assetCodeToCheck = assetType === "XLM" ? "native" : assetType;
+        get_stellar(assetCodeToCheck);
+        getLastTradePrice(
+          assetType === "XLM" ? "native" : assetType,
+          matchingPair.visible_0 === assetType ? matchingPair.visible0Issuer : matchingPair.visible1Issuer,
+          "USDC",
+          matchingPair.visible_1 === "USDC" ? matchingPair.visible1Issuer : matchingPair.visible0Issuer
+        );
+      }, 300);
+      
+    } else {
+      const anyPair = tradingPairsConfig.PAIRS.find(pair => 
+        pair.visible_0 === assetType || pair.visible_1 === assetType
+      );
+      if (anyPair) {
+        console.log(`${assetType}/USDC pair not found, using ${anyPair.name}`);
+        selectTradingPair(anyPair);
+        setTimeout(() => {
+          CustomInfoProvider.show(
+            "Trading Pair Info", 
+            `${assetType}/USDC pair not available. Showing ${anyPair.name} instead.`
+          );
+        }, 500);
+      } else {
+        console.log(`No trading pair found for ${assetType}`);
+        CustomInfoProvider.show(
+          "Asset Not Found", 
+          `No trading pair found for ${assetType}. Please select a pair manually.`
+        );
+      }
+    }
+  }
+}, [back_data?.params?.tradeAssetType, isFocused, selectTradingPair, get_stellar, getLastTradePrice]);
   return (
     <View style={[styles.scrollView0, { backgroundColor: theme.bg }]}>
       <Exchange_screen_header 
@@ -593,7 +659,7 @@ const selectTradingPair = useCallback((item) => {
             styles.tradetab, 
             activeTradeType === TAB_CONFIG.INSTANT_TRADE.id && [
               styles.tradeactiveTab, 
-              { backgroundColor: "#4052D6" }
+              { backgroundColor: "#4f5dc8ff" }
             ]
           ]}
           onPress={() => {
@@ -614,7 +680,7 @@ const selectTradingPair = useCallback((item) => {
             styles.tradetab, 
             activeTradeType === TAB_CONFIG.LARGE_ORDER_TRADE.id && [
               styles.tradeactiveTab, 
-              { backgroundColor: "#4052D6" }
+              { backgroundColor: "#4f5dc8ff" }
             ]
           ]}
           onPress={() => {
@@ -719,7 +785,7 @@ const selectTradingPair = useCallback((item) => {
                   <AMMSwap />
                 ) : (
                   <>
-                    {assetInfo && (
+                    {assetInfo && !showOneTap  && (
                       <LinearGradient
                       colors={['#4052D6', '#242426']}
                       start={{ x: 0, y: 0.5 }}

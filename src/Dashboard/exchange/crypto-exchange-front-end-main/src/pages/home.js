@@ -286,7 +286,7 @@ export const HomeView = () => {
             <View style={styles.infoCon}>
               <View style={{ flexDirection: "row" }}>
                 <Text style={[styles.infoText, { color: theme.headingTx }]}>USDC : </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(8) }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(16.9) }}>
                   <Text style={{ color: theme.cardSubTx }}>
                     {state?.STELLAR_ADDRESS_STATUS === false
                       ? "0.00"
@@ -299,7 +299,7 @@ export const HomeView = () => {
               </View>
               <View style={{ flexDirection: "row" }}>
                 <Text style={[styles.infoText, { color: theme.headingTx }]}>Trade Fee : </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(8) }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(11) }}>
                   <Text style={[styles.infoText, { color: theme.headingTx }]}>${state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens.find(d => d.chain.toLowerCase() === "stellar" && d.symbol === "XLM")?.price * 0.00001 || "0.0000002"}</Text>
                 </ScrollView>
               </View>

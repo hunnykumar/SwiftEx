@@ -168,7 +168,7 @@ import PancakeTokenList from "../Dashboard/tokens/pancakeSwap/PancakeList.json";
 import StellarTokenList from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/stellar/Tokens.json";
 import { STELLAR_URL } from "../Dashboard/constants";
 import * as StellarSdk from '@stellar/stellar-sdk';
-import { BSC_BASE_RPC, ETHPLORER, MULTICHIAN_BASE_RPC, REACT_APP_COIN_GECKO_SIMPLE_PRICE_URL } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
+import { BINPLORER, BSC_BASE_RPC, ETHPLORER, MULTICHIAN_BASE_RPC, REACT_APP_COIN_GECKO_SIMPLE_PRICE_URL } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 
 const CONFIG = {
   TIMEOUT: 10000,
@@ -176,7 +176,7 @@ const CONFIG = {
   RETRY_DELAY: 1000,
   APIS: {
     ETHPLORER: ETHPLORER,
-    ANKR: MULTICHIAN_BASE_RPC,
+    BINPLORER: BINPLORER,
     BSC_RPC: BSC_BASE_RPC,
     COINGECKO: REACT_APP_COIN_GECKO_SIMPLE_PRICE_URL,
     STELLAR_HORIZON:STELLAR_URL.URL
@@ -191,12 +191,8 @@ const CONFIG = {
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const isValidAddress = (address) => {
-  if (/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    return true;
-  }
-  if (/^G[A-Z2-7]{55}$/.test(address)) {
-    return true;
-  }
+  if (/^0x[a-fA-F0-9]{40}$/.test(address)) return true;
+  if (/^G[A-Z2-7]{55}$/.test(address)) return true;
   return false;
 };
 
@@ -221,7 +217,6 @@ let tokenImageCache = { eth: {}, bnb: {}, xlm: {}, symbols: {} };
 
 const loadTokenLists = () => {
   try {
-
     if (Array.isArray(CONFIG.TOKEN_LISTS.ETH)) {
       CONFIG.TOKEN_LISTS.ETH.forEach(token => {
         const address = (token.address || '').toLowerCase();
@@ -258,7 +253,6 @@ const loadTokenLists = () => {
         }
       });
     }
-
   } catch (error) {
     console.log("error-existsSync", error)
   }
@@ -316,60 +310,7 @@ const getXLMPrice = async () => {
   }
 };
 
-const getStellarTokens = async (walletAddress) => {
-  try {
-    const server = new StellarSdk.Horizon.Server(CONFIG.APIS.STELLAR_HORIZON);
-    const account = await server.accounts().accountId(walletAddress).call();
-    const tokens = [];
-    let totalValueUSD = 0;
-    const xlmPrice = await getXLMPrice();
-    for (const balance of account.balances) {
-      if (balance.asset_type === 'native') {
-        const xlmBalance = parseNumber(balance.balance);
-        const xlmValue = xlmBalance * xlmPrice;
-
-        tokens.push({
-          chain: 'Stellar',
-          name: 'Stellar Lumens',
-          symbol: 'XLM',
-          balance: xlmBalance,
-          balanceUSD: parseNumber(xlmValue, 2),
-          decimals: 7,
-          contractAddress: 'Native',
-          price: parseNumber(xlmPrice, 2),
-          imageUrl: getTokenImage('Native', 'Stellar', 'XLM') || null
-        });
-        totalValueUSD += xlmValue;
-        break;
-      }
-    }
-
-    return {
-      tokens,
-      totalValueUSD: parseNumber(totalValueUSD, 2)
-    };
-
-  } catch (error) {
-    const xlmPrice = await getXLMPrice();
-    
-    return {
-      tokens: [{
-        chain: 'Stellar',
-        name: 'Stellar Lumens',
-        symbol: 'XLM',
-        balance: 0,
-        balanceUSD: 0,
-        decimals: 7,
-        contractAddress: 'Native',
-        price: parseNumber(xlmPrice, 2),
-        imageUrl: getTokenImage('Native', 'Stellar', 'XLM') || null
-      }],
-      totalValueUSD: 0
-    };
-  }
-};
-
-const getEthereumTokens = async (walletAddress) => {
+const getEthereumTokens = async (walletAddress, onProgress = null) => {
   if (!isValidAddress(walletAddress)) {
     throw new Error('Invalid Ethereum address');
   }
@@ -390,7 +331,7 @@ const getEthereumTokens = async (walletAddress) => {
       const ethPrice = data.ETH.price?.rate || 0;
       const ethValue = ethBalance * ethPrice;
 
-      tokens.push({
+      const ethToken = {
         chain: 'ETH',
         name: 'Ethereum',
         symbol: 'ETH',
@@ -400,8 +341,17 @@ const getEthereumTokens = async (walletAddress) => {
         contractAddress: 'Native',
         price: parseNumber(ethPrice, 2),
         imageUrl: getTokenImage('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', 'ETH') || null
-      });
+      };
+      tokens.push(ethToken);
       totalValueUSD += ethValue;
+      if (onProgress) {
+        onProgress({
+          chain: 'ETH',
+          tokens: [ethToken],
+          totalValueUSD: parseNumber(ethValue, 2),
+          isPartial: true
+        });
+      }
     }
 
     if (Array.isArray(data.tokens) && data.tokens.length > 0) {
@@ -426,84 +376,125 @@ const getEthereumTokens = async (walletAddress) => {
           totalValueUSD += tokenValue;
         }
       }
+      if (onProgress) {
+        onProgress({
+          chain: 'ETH',
+          tokens: tokens,
+          totalValueUSD: parseNumber(totalValueUSD, 2),
+          isPartial: false
+        });
+      }
     }
 
-    return {
-      tokens,
-      totalValueUSD: parseNumber(totalValueUSD, 2)
-    };
-
+    return { tokens, totalValueUSD: parseNumber(totalValueUSD, 2) };
   } catch (error) {
+    console.log('Ethereum fetch failed:', error);
     return { tokens: [], totalValueUSD: 0 };
   }
 };
-const getBSCTokensFromAnkr = async (walletAddress) => {
-  const response = await axios.post(CONFIG.APIS.ANKR, {
-    jsonrpc: '2.0',
-    method: 'ankr_getAccountBalance',
-    params: {
-      blockchain: 'bsc',
-      walletAddress: walletAddress
-    },
-    id: 1
-  }, {
-    timeout: CONFIG.TIMEOUT,
-    headers: { 'Content-Type': 'application/json' }
-  });
-
-  const tokens = [];
-  let totalValueUSD = 0;
-  let hasNativeToken = false;
-
-  if (response.data?.result?.assets) {
-    for (const asset of response.data.result.assets) {
-      const balance = parseNumber(asset.balance);
-      const balanceUSD = parseNumber(asset.balanceUsd || 0, 2);
-      const price = balance > 0 && balanceUSD > 0 ? balanceUSD / balance : 0;
-
-      if (!asset.contractAddress || asset.contractAddress === 'Native') {
-        hasNativeToken = true;
-      }
-
-      if (balance > 0 || !asset.contractAddress || asset.contractAddress === 'Native') {
-        tokens.push({
-          chain: 'BSC',
-          name: asset.tokenName || asset.tokenSymbol || 'Unknown',
-          symbol: asset.tokenSymbol || '???',
-          balance,
-          balanceUSD,
-          decimals: asset.tokenDecimals || 18,
-          contractAddress: asset.contractAddress || 'Native',
-          price: parseNumber(price, 2),
-          imageUrl: getTokenImage(asset.contractAddress || 'Native', 'BSC', asset.tokenSymbol) || null
-        });
-        totalValueUSD += balanceUSD;
-      }
-    }
+const getBSCTokensFromBinplorer = async (walletAddress, onProgress = null) => {
+  if (!isValidAddress(walletAddress)) {
+    throw new Error('Invalid BSC address');
   }
 
-  return { tokens, totalValueUSD: parseNumber(totalValueUSD, 2), hasNativeToken };
+  try {
+    const url = `${CONFIG.APIS.BINPLORER}/getAddressInfo/${walletAddress}?apiKey=freekey`;
+    const response = await withRetry(() =>
+      axios.get(url, { timeout: CONFIG.TIMEOUT })
+    );
+
+    const data = response.data;
+    const tokens = [];
+    let totalValueUSD = 0;
+
+    if (data.ETH) {
+      const bnbBalance = parseNumber(data.BNB.balance || 0);
+      const bnbPrice = data.BNB.price?.rate || 0;
+      const bnbValue = bnbBalance * bnbPrice;
+
+      const bnbToken = {
+        chain: 'BSC',
+        name: 'Binance Coin',
+        symbol: 'BNB',
+        balance: bnbBalance,
+        balanceUSD: parseNumber(bnbValue, 2),
+        decimals: 18,
+        contractAddress: 'Native',
+        price: parseNumber(bnbPrice, 2),
+        imageUrl: getTokenImage('Native', 'BSC', 'BNB') || null
+      };
+
+      tokens.push(bnbToken);
+      totalValueUSD += bnbValue;
+      if (onProgress) {
+        onProgress({
+          chain: 'BSC',
+          tokens: [bnbToken],
+          totalValueUSD: parseNumber(bnbValue, 2),
+          isPartial: true
+        });
+      }
+    }
+
+    if (Array.isArray(data.tokens) && data.tokens.length > 0) {
+      for (const token of data.tokens) {
+        const balance = token.balance / Math.pow(10, token.tokenInfo.decimals);
+
+        if (balance > 0) {
+          const tokenPrice = token.tokenInfo.price?.rate || 0;
+          const tokenValue = balance * tokenPrice;
+
+          tokens.push({
+            chain: 'BSC',
+            name: token.tokenInfo.name || 'Unknown',
+            symbol: token.tokenInfo.symbol || '???',
+            balance: parseNumber(balance),
+            balanceUSD: parseNumber(tokenValue, 2),
+            decimals: token.tokenInfo.decimals,
+            contractAddress: token.tokenInfo.address,
+            price: parseNumber(tokenPrice, 2),
+            imageUrl: getTokenImage(token.tokenInfo.address, 'BSC') || null
+          });
+          totalValueUSD += tokenValue;
+        }
+      }
+
+      if (onProgress) {
+        onProgress({
+          chain: 'BSC',
+          tokens: tokens,
+          totalValueUSD: parseNumber(totalValueUSD, 2),
+          isPartial: false
+        });
+      }
+    }
+
+    return { tokens, totalValueUSD: parseNumber(totalValueUSD, 2) };
+  } catch (error) {
+    console.error('Binplorer failed, using RPC fallback:', error);
+    return await getBNBBalanceViaRPC(walletAddress, onProgress);
+  }
 };
 
-const getBNBBalanceViaRPC = async (walletAddress) => {
-  const response = await axios.post(CONFIG.APIS.BSC_RPC, {
-    jsonrpc: '2.0',
-    method: 'eth_getBalance',
-    params: [walletAddress, 'latest'],
-    id: 1
-  }, {
-    timeout: CONFIG.TIMEOUT,
-    headers: { 'Content-Type': 'application/json' }
-  });
+const getBNBBalanceViaRPC = async (walletAddress, onProgress = null) => {
+  try {
+    const response = await axios.post(CONFIG.APIS.BSC_RPC, {
+      jsonrpc: '2.0',
+      method: 'eth_getBalance',
+      params: [walletAddress, 'latest'],
+      id: 1
+    }, {
+      timeout: CONFIG.TIMEOUT,
+      headers: { 'Content-Type': 'application/json' }
+    });
 
-  if (response.data?.result) {
-    const balanceWei = parseInt(response.data.result, 16);
-    const balance = parseNumber(balanceWei / 1e18);
-    const bnbPrice = await getBNBPrice();
-    const balanceUSD = parseNumber(balance * bnbPrice, 2);
+    if (response.data?.result) {
+      const balanceWei = parseInt(response.data.result, 16);
+      const balance = parseNumber(balanceWei / 1e18);
+      const bnbPrice = await getBNBPrice();
+      const balanceUSD = parseNumber(balance * bnbPrice, 2);
 
-    return {
-      tokens: [{
+      const bnbToken = {
         chain: 'BSC',
         name: 'Binance Coin',
         symbol: 'BNB',
@@ -513,69 +504,123 @@ const getBNBBalanceViaRPC = async (walletAddress) => {
         contractAddress: 'Native',
         price: parseNumber(bnbPrice, 2),
         imageUrl: getTokenImage('0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', 'BSC', 'BNB') || null
-      }],
-      totalValueUSD: balanceUSD
-    };
+      };
+
+      if (onProgress) {
+        onProgress({
+          chain: 'BSC',
+          tokens: [bnbToken],
+          totalValueUSD: balanceUSD,
+          isPartial: false
+        });
+      }
+
+      return { tokens: [bnbToken], totalValueUSD: balanceUSD };
+    }
+  } catch (error) {
+    console.error('RPC fallback failed:', error);
   }
 
   const bnbPrice = await getBNBPrice();
-  return {
-    tokens: [{
+  const emptyToken = {
+    chain: 'BSC',
+    name: 'Binance Coin',
+    symbol: 'BNB',
+    balance: 0,
+    balanceUSD: 0,
+    decimals: 18,
+    contractAddress: 'Native',
+    price: parseNumber(bnbPrice, 2),
+    imageUrl: getTokenImage('0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', 'BSC', 'BNB') || null
+  };
+
+  if (onProgress) {
+    onProgress({
       chain: 'BSC',
-      name: 'Binance Coin',
-      symbol: 'BNB',
+      tokens: [emptyToken],
+      totalValueUSD: 0,
+      isPartial: false
+    });
+  }
+
+  return { tokens: [emptyToken], totalValueUSD: 0 };
+};
+
+const getBSCTokens = async (walletAddress, onProgress = null) => {
+  return await getBSCTokensFromBinplorer(walletAddress, onProgress);
+};
+
+const getStellarTokens = async (walletAddress, onProgress = null) => {
+  try {
+    const server = new StellarSdk.Horizon.Server(CONFIG.APIS.STELLAR_HORIZON);
+    const account = await server.accounts().accountId(walletAddress).call();
+    const tokens = [];
+    let totalValueUSD = 0;
+    const xlmPrice = await getXLMPrice();
+
+    for (const balance of account.balances) {
+      if (balance.asset_type === 'native') {
+        const xlmBalance = parseNumber(balance.balance);
+        const xlmValue = xlmBalance * xlmPrice;
+
+        const xlmToken = {
+          chain: 'Stellar',
+          name: 'Stellar Lumens',
+          symbol: 'XLM',
+          balance: xlmBalance,
+          balanceUSD: parseNumber(xlmValue, 2),
+          decimals: 7,
+          contractAddress: 'Native',
+          price: parseNumber(xlmPrice, 2),
+          imageUrl: getTokenImage('Native', 'Stellar', 'XLM') || null
+        };
+
+        tokens.push(xlmToken);
+        totalValueUSD += xlmValue;
+
+        if (onProgress) {
+          onProgress({
+            chain: 'Stellar',
+            tokens: [xlmToken],
+            totalValueUSD: parseNumber(totalValueUSD, 2),
+            isPartial: false
+          });
+        }
+        break;
+      }
+    }
+
+    return { tokens, totalValueUSD: parseNumber(totalValueUSD, 2) };
+  } catch (error) {
+    console.error('Stellar fetch failed:', error);
+    const xlmPrice = await getXLMPrice();
+    const emptyToken = {
+      chain: 'Stellar',
+      name: 'Stellar Lumens',
+      symbol: 'XLM',
       balance: 0,
       balanceUSD: 0,
-      decimals: 18,
+      decimals: 7,
       contractAddress: 'Native',
-      price: parseNumber(bnbPrice, 2),
-      imageUrl: getTokenImage('0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', 'BSC', 'BNB') || null
-    }],
-    totalValueUSD: 0
-  };
-};
+      price: parseNumber(xlmPrice, 2),
+      imageUrl: getTokenImage('Native', 'Stellar', 'XLM') || null
+    };
 
-const getBSCTokens = async (walletAddress) => {
-  if (!isValidAddress(walletAddress)) {
-    throw new Error('Invalid BSC address');
-  }
-
-  try {
-    const result = await withRetry(() => getBSCTokensFromAnkr(walletAddress));
-    if (!result.hasNativeToken) {
-      const bnbBalance = await getBNBBalanceViaRPC(walletAddress);
-      return {
-        tokens: [...bnbBalance.tokens, ...result.tokens],
-        totalValueUSD: parseNumber(result.totalValueUSD + bnbBalance.totalValueUSD, 2)
-      };
+    if (onProgress) {
+      onProgress({
+        chain: 'Stellar',
+        tokens: [emptyToken],
+        totalValueUSD: 0,
+        isPartial: false
+      });
     }
 
-    return { tokens: result.tokens, totalValueUSD: result.totalValueUSD };
-  } catch (error) {
-    try {
-      return await getBNBBalanceViaRPC(walletAddress);
-    } catch (fallbackError) {
-      const bnbPrice = await getBNBPrice();
-      return {
-        tokens: [{
-          chain: 'BSC',
-          name: 'Binance Coin',
-          symbol: 'BNB',
-          balance: 0,
-          balanceUSD: 0,
-          decimals: 18,
-          contractAddress: 'Native',
-          price: parseNumber(bnbPrice, 2),
-          imageUrl: getTokenImage('0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', 'BSC', 'BNB') || null
-        }],
-        totalValueUSD: 0
-      };
-    }
+    return { tokens: [emptyToken], totalValueUSD: 0 };
   }
 };
 
-export async function GetWalletTokens(evmAddress = null, stellarAddress = null) {
-  console.log("GetWalletTokens",evmAddress,stellarAddress);
+export async function GetWalletTokens(evmAddress = null, stellarAddress = null, onProgress = null) {
+  console.log("GetWalletTokens", evmAddress, stellarAddress);
   if (!evmAddress && !stellarAddress) {
     throw new Error('At least one wallet address is required');
   }
@@ -592,14 +637,36 @@ export async function GetWalletTokens(evmAddress = null, stellarAddress = null) 
         );
       };
     }
-    const promises = [];
+    const allTokens = [];
+    let totalValueUSD = 0;
+    const fetchPromises = [];
+
     if (evmAddress) {
       if (!/^0x[a-fA-F0-9]{40}$/.test(evmAddress)) {
         throw new Error('Invalid EVM address format');
       }
-      promises.push(
-        getEthereumTokens(evmAddress),
-        getBSCTokens(evmAddress)
+      fetchPromises.push(
+        getEthereumTokens(evmAddress, (update) => {
+          if (onProgress) {
+            onProgress({
+              ...update,
+              allTokens: [...allTokens, ...update.tokens],
+              totalValueUSD: totalValueUSD + update.totalValueUSD
+            });
+          }
+        })
+      );
+
+      fetchPromises.push(
+        getBSCTokens(evmAddress, (update) => {
+          if (onProgress) {
+            onProgress({
+              ...update,
+              allTokens: [...allTokens, ...update.tokens],
+              totalValueUSD: totalValueUSD + update.totalValueUSD
+            });
+          }
+        })
       );
     }
 
@@ -607,15 +674,20 @@ export async function GetWalletTokens(evmAddress = null, stellarAddress = null) 
       if (!/^G[A-Z2-7]{55}$/.test(stellarAddress)) {
         throw new Error('Invalid Stellar address format');
       }
-      promises.push(
-        getStellarTokens(stellarAddress)
+      fetchPromises.push(
+        getStellarTokens(stellarAddress, (update) => {
+          if (onProgress) {
+            onProgress({
+              ...update,
+              allTokens: [...allTokens, ...update.tokens],
+              totalValueUSD: totalValueUSD + update.totalValueUSD
+            });
+          }
+        })
       );
     }
 
-    const results = await Promise.allSettled(promises);
-    const allTokens = [];
-    let totalValueUSD = 0;
-
+    const results = await Promise.allSettled(fetchPromises);
     results.forEach(result => {
       if (result.status === 'fulfilled' && result.value) {
         allTokens.push(...result.value.tokens);

@@ -484,7 +484,7 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
               <View style={styles.card}>
                 <View style={styles.rowBetween}>
                   <Text style={styles.label}>From</Text>
-                    <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: "#FFA800",marginBottom:hp(0.8)}]} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
+                    <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: "#76d351ff",marginBottom:hp(0.8)}]} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
                     <Icon name="arrow-right-thin" type={"materialCommunity"} size={25} color={theme.bg} />
                     <Text style={[styles.tokenText, { marginLeft: wp(0.1), color: theme.bg }]}>Buy Now</Text>
                   </TouchableOpacity>
@@ -520,7 +520,7 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
           <View style={styles.card}>
             <View style={styles.rowBetween}>
               <Text style={styles.label}>{!isTokenHaveBalances?"":"To"}</Text>
-               <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: "#FFA800",marginBottom:hp(0.8) }]} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
+               <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: "#76d351ff",marginBottom:hp(0.8) }]} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
                 <Icon name="arrow-right-thin" type={"materialCommunity"} size={25} color={theme.bg} />
                 <Text style={[styles.tokenText, { marginLeft: wp(0.1), color: theme.bg }]}>Buy Now</Text>
               </TouchableOpacity>
