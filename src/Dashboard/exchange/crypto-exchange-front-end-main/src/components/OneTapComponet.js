@@ -51,8 +51,8 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
 
   const assets = [
     { symbol: "ETH", address: "native", assetType: "NATIVE", name: "Ethereum", logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
-    { symbol: "USDT", address: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0", assetType: "ERC", name: "Tether", logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" },
-    { symbol: "USDC", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238", assetType: "ERC", name: "USD Coin", logoURI: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png" },
+    { symbol: "USDT", address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", assetType: "ERC", name: "Tether", logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" },
+    { symbol: "USDC", address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", assetType: "ERC", name: "USD Coin", logoURI: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png" },
   ];
   const [selectedAsset, setSelectedAsset] = useState(assets[0]);
   const state = useSelector((state) => state);
@@ -98,7 +98,7 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
       const result = await GetStellarUSDCAvilabelBalance(
         state?.STELLAR_PUBLICK_KEY,
         "USDC",
-        "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"
+        "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
       );
       if (result.status) {
         setusdcBalance(result.availableBalance)
@@ -124,7 +124,7 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
       const result = await GetStellarUSDCAvilabelBalance(
         state?.STELLAR_PUBLICK_KEY,
         "USDC",
-        "GALANI4WK6ZICIQXLRSBYNGJMVVH3XTZYFNIVIDZ4QA33GJLSFH2BSID"
+        "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
       );
       if (result.status) {
         setusdcBalance(result.availableBalance)
@@ -133,6 +133,7 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
       }
       if (selectedAsset.assetType === "ERC") {
         const walletNativeBala = await getTokenBalancesUsingAddress(selectedAsset.address, state && state.wallet && state.wallet.address, "ETH");
+        console.log("walletNativeBala",walletNativeBala)
         if (walletNativeBala.status&&parseFloat(walletNativeBala.tokenInfo[0].balance)>0) {
           setisTokenHaveBalances(true);
           setfromAssetBalance(walletNativeBala.tokenInfo[0].balance);
@@ -270,7 +271,8 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
 
     const raw = JSON.stringify({
       "amount": value,
-      "chainType": typeOfchain
+      "chainType": typeOfchain,
+      "sourceToken":selectedAsset.symbol==="ETH"?"USDT":selectedAsset.symbol
     });
 
     const requestOptions = {
@@ -283,7 +285,8 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
     fetch(REACT_PROXY_HOST + `/v1/bridge/swap-quotes`, requestOptions)
       .then((response) => response.json())
       .then((result) => {
-        console.log("---swap-quotes-->", result)
+        console.log("---swap-quotes-->",JSON.stringify(result, null, 2));
+
         if (result?.quotes) {
           setquotesResponse(result?.quotes)
           setquotesLoading(false);
@@ -314,35 +317,9 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
       borderRadius: 14,
       marginBottom: 16
     },
-    rowBetween: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center"
-    },
-    label: {
-      color: theme.inactiveTx,
-      fontSize: 14
-    },
     balance: {
       color: theme.inactiveTx,
-      fontSize: 13
-    },
-    tokenSelector: {
-      alignSelf: "flex-end",
-      justifyContent: "center",
-      alignItems: "center",
-      flexDirection: "row",
-      backgroundColor: theme.bg,
-      paddingVertical: 12,
-      paddingHorizontal: 15,
-      borderRadius: 10,
-      width: wp(32),
-      maxHeight:hp(6)
-    },
-    tokenText: {
-      color: theme.headingTx,
-      fontSize: 16,
-      fontWeight: "500"
+      fontSize: 15
     },
     topHeading: {
       color: theme.headingTx,
@@ -352,16 +329,6 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
       fontWeight: "500",
       paddingVertical: 10,
       bottom: 3
-    },
-    amountInput: {
-      fontSize: 28,
-      color: theme.headingTx,
-      marginTop: 2,
-      maxWidth: "60%"
-    },
-    usdValue: {
-      color: theme.inactiveTx,
-      marginTop: 4
     },
     arrowCircle: {
       alignSelf: "center",
@@ -401,12 +368,6 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
       height: 1,
       backgroundColor: theme.inactiveTx,
       marginVertical: 12
-    },
-    totalValue: {
-      textAlign: "right",
-      color: theme.headingTx,
-      fontSize: 20,
-      marginTop: 10
     },
     button: {
       backgroundColor: "#4052D6",
@@ -458,10 +419,6 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
       width: 40,
       height: 40,
     },
-    selectedAssetImg: {
-      width: 29,
-      height: 29,
-    },
     quoteTextCon: {
       flexDirection: "row",
       padding: 9,
@@ -473,6 +430,70 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
       color: theme.headingTx,
       borderRadius: 8,
     },
+    topRow: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      gap: 12,
+    },
+    inputContainer: {
+      flex: 1,
+    },
+    input: {
+      borderWidth: 0.5,
+      borderColor: theme.inactiveTx,
+      borderRadius: 14,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      fontSize: 19,
+      color: theme.headingTx,
+      backgroundColor: theme.cardBg,
+    },
+    actionButton: {
+      backgroundColor: theme.bg,
+      paddingHorizontal: 24,
+      paddingVertical: 15,
+      borderRadius: 14,
+      justifyContent: "center",
+    },
+    actionButtonText: {
+      color: theme.headingTx,
+      fontSize: 15,
+      fontWeight: "600",
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginTop: 16,
+    },
+    tokenRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      backgroundColor: theme.bg,
+      paddingVertical: 12,
+      paddingHorizontal: 15,
+      borderRadius: 10,
+      width: wp(32),
+      maxHeight:hp(6)
+    },
+    tokenIcon: {
+      width: 37,
+      height: 37,
+      borderRadius: 90,
+      backgroundColor: "#2775CA",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    tokenName: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: theme.headingTx,
+    },
+    subText: {
+      fontSize: 12,
+      color: theme.inactiveTx,
+    },
   });
   return (
     <>
@@ -481,35 +502,48 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
           {
             isTokenHaveBalances &&
             <>
-              <View style={styles.card}>
-                <View style={styles.rowBetween}>
-                  <Text style={styles.label}>From</Text>
-                    <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: "#76d351ff",marginBottom:hp(0.8)}]} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
-                    <Icon name="arrow-right-thin" type={"materialCommunity"} size={25} color={theme.bg} />
-                    <Text style={[styles.tokenText, { marginLeft: wp(0.1), color: theme.bg }]}>Buy Now</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.rowBetween}>
-                  <View style={{ flexDirection: "column" }}>
-                    <TextInput
+             <View style={styles.card}>
+          <View style={styles.topRow}>
+            <View style={styles.inputContainer}>
+             <TextInput
                       placeholder="0.0"
                       placeholderTextColor="#777"
-                      style={styles.amountInput}
+                      style={styles.input}
+                      value={swapAbleAmount}
                       onChangeText={handleInputChange}
                       keyboardType="numeric"
                       returnKeyType="done"
                     />
-                    {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : <Text style={styles.balance}>Balance: {parseFloat(fromAssetBalance).toFixed(13)}</Text>}
-                  </View>
-                  <TouchableOpacity style={styles.tokenSelector} onPress={openSheet}>
-                    <Image source={{ uri: selectedAsset.logoURI }} style={styles.selectedAssetImg} />
-                    <Text style={[styles.tokenText, { marginLeft: wp(2) }]}>{selectedAsset.symbol}{" "}</Text>
-                    <Icon name="chevron-down" type={"materialCommunity"} size={25} color={theme.headingTx} />
-                  </TouchableOpacity>
+            </View>
 
-                </View>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}
+            >
+              <Text style={styles.actionButtonText}>Buy USDC
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.tokenRow} onPress={openSheet}>
+              <View style={styles.tokenIcon}>
+                <Image source={{ uri: selectedAsset.logoURI }} width={"90%"} height={"90%"} />
               </View>
+              <View style={{flexDirection:"row"}}>
+                <Text style={styles.tokenName}>{selectedAsset.symbol}{" "}</Text>
+                <Icon name="chevron-down" type={"materialCommunity"} size={25} color={theme.headingTx} />
+              </View>
+            </TouchableOpacity>
+
+            <View style={{ alignItems: "flex-end" }}>
+              {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : <Text style={styles.balance}>{parseFloat(fromAssetBalance).toFixed(13)}</Text>}
+              <Text style={styles.subText}>Available</Text>
+            </View>
+          </View>
+        </View>
+
+
+        
 
               <View style={styles.arrowCircle}>
                 <Icon name="swap-vertical" type={"materialCommunity"} size={25} color={theme.headingTx} />
@@ -517,35 +551,44 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
             </>
           }
 
-          <View style={styles.card}>
-            <View style={styles.rowBetween}>
-              <Text style={styles.label}>{!isTokenHaveBalances?"":"To"}</Text>
-               <TouchableOpacity style={[styles.tokenSelector, { backgroundColor: "#76d351ff",marginBottom:hp(0.8) }]} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
-                <Icon name="arrow-right-thin" type={"materialCommunity"} size={25} color={theme.bg} />
-                <Text style={[styles.tokenText, { marginLeft: wp(0.1), color: theme.bg }]}>Buy Now</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.rowBetween}>
-              <View style={{ flexDirection: "column" }}>
-                <TextInput
+        <View style={styles.card}>
+          <View style={styles.topRow}>
+            <View style={styles.inputContainer}>
+             <TextInput
                   placeholder="0.0"
                   placeholderTextColor="#777"
-                  style={styles.amountInput}
+                  style={[styles.input,{color:"#777"}]}
                   keyboardType="numeric"
                   returnKeyType="done"
                   editable={false}
                   value={quotesResponse === null ? "0.0" : quotesResponse.minimumAmountOut}
                 />
-                {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : <Text style={styles.balance}>Balance: {usdcBalance}</Text>}
-              </View>
-              <TouchableOpacity style={styles.tokenSelector} disabled={true}>
-                <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png" }} style={styles.selectedAssetImg} />
-                <Text style={[styles.tokenText, { marginLeft: wp(2), color: theme.inactiveTx }]}>USDC</Text>
-              </TouchableOpacity>
+            </View>
 
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}
+            >
+              <Text style={styles.actionButtonText}>Buy USDC
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.header}>
+            <View style={styles.tokenRow}>
+              <View style={styles.tokenIcon}>
+                <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png" }} width={"90%"} height={"90%"} />
+              </View>
+              <View>
+                <Text style={styles.tokenName}>USDC</Text>
+              </View>
+            </View>
+
+            <View style={{ alignItems: "flex-end" }}>
+              {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : <Text style={styles.balance}>{usdcBalance}</Text>}
+              <Text style={styles.subText}>Available</Text>
             </View>
           </View>
+        </View>
 
           {showFlow ?
             <TokenTransferFlow visible={showFlow} fistToken={"WETH"} statusMap={statusMap} onClose={() => { setshowFlow(false) }} /> :
@@ -603,8 +646,12 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
                     </View>
 
                     {quotesResponse.fee && <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Fee</Text>
-                      <Text style={styles.summaryValue}>{quotesResponse.fee}</Text>
+                      <Text style={styles.summaryLabel}>Fee in ETH</Text>
+                      <View style={{alignSelf:"flex-end"}}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      <Text style={styles.summaryValue}>{quotesResponse?.fee?.native?.amount}</Text>
+                      </ScrollView>
+                      </View>
                     </View>}
 
                     {quotesResponse.outputAmount && <View style={styles.summaryRow}>
@@ -642,7 +689,14 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
               <TouchableOpacity
                 key={asset.symbol}
                 style={styles.assetRow}
-                onPress={() => selectAsset(asset)}
+                onPress={() => {
+                  setswapAbleAmount('');
+                  setquotesResponse(null);
+                  setswapquotesResponse(null);
+                  setquotesLoading(false);
+                  setshowFlow(false); 
+                  selectAsset(asset)
+                }}
               >
                 <Image source={{ uri: asset.logoURI }} style={styles.assetImage} />
                 <View style={{ flexDirection: "column", marginLeft: wp(2) }}>

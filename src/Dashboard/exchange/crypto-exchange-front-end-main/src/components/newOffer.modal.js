@@ -10,6 +10,7 @@ import {
   FlatList,
   TextInput,
   KeyboardAvoidingView,
+  Animated,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -35,7 +36,6 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 import { colors } from "../../../../../Screens/ThemeColorsConfig";
 import stellarTokens from "../pages/stellar/Tokens.json";
 import OneTapComponet from "./OneTapComponet";
-import LinearGradient from "react-native-linear-gradient";
 import CustomInfoProvider from "./CustomInfoProvider";
 // Initialize Stellar server
 const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
@@ -67,8 +67,8 @@ const SUCCESS_MESSAGES = {
 
 // Tab configuration
 const TAB_CONFIG = {
-  INSTANT_TRADE: { id: 1, label: "Instant Swap" },
-  LARGE_ORDER_TRADE: { id: 0, label: "Large Order Trade" },
+  INSTANT_TRADE: { id: 1, label: "Instant Swap", iconName:"lightning-bolt" },
+  LARGE_ORDER_TRADE: { id: 0, label: "Large Order Trade", iconName:"chart-timeline-variant" },
 };
 
 const SUB_TAB_CONFIG = {
@@ -645,6 +645,35 @@ const selectTradingPair = useCallback((item) => {
     }
   }
 }, [back_data?.params?.tradeAssetType, isFocused, selectTradingPair, get_stellar, getLastTradePrice]);
+
+  const glow = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glow, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: false,
+        }),
+        Animated.timing(glow, {
+          toValue: 2,
+          duration: 1200,
+          useNativeDriver: false,
+        }),
+        Animated.timing(glow, {
+          toValue: 0,
+          duration: 1200,
+          useNativeDriver: false,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const borderColor = glow.interpolate({
+    inputRange: [0, 1, 2],
+    outputRange: ["transparent", "#3b82f6", "#8b5cf6"],
+  });
+
   return (
     <View style={[styles.scrollView0, { backgroundColor: theme.bg }]}>
       <Exchange_screen_header 
@@ -667,6 +696,7 @@ const selectTradingPair = useCallback((item) => {
             setactiveTradeType(TAB_CONFIG.INSTANT_TRADE.id);
           }}
         >
+          <Icon name={TAB_CONFIG.INSTANT_TRADE.iconName} type={"materialCommunity"} size={19} color={"#F7CC49"} style={{ marginHorizontal: 4 }} />
           <Text style={[
             [styles.tabText, { color: theme.headingTx }], 
             activeTradeType === TAB_CONFIG.INSTANT_TRADE.id && styles.tradeactiveTabText
@@ -688,6 +718,7 @@ const selectTradingPair = useCallback((item) => {
             setactiveTradeType(TAB_CONFIG.LARGE_ORDER_TRADE.id);
           }}
         >
+          <Icon name={TAB_CONFIG.LARGE_ORDER_TRADE.iconName} type={"materialCommunity"} size={19} color={"#F7CC49"} style={{ marginHorizontal: 4 }} />
           <Text style={[
             [styles.tabText, { color: theme.headingTx }], 
             activeTradeType === TAB_CONFIG.LARGE_ORDER_TRADE.id && styles.tradeactiveTabText
@@ -780,37 +811,32 @@ const selectTradingPair = useCallback((item) => {
 
           <View>
             <ScrollView contentContainerStyle={styles.scrollView}>
+              {!showOneTap && (
+                <Animated.View
+                  style={[styles.glowContainer, { borderColor }]}
+                >
+                  <View style={[styles.informationContiner, { backgroundColor: theme.cardBg }]}>
+                    <View >
+                      <Text style={[styles.amountSugCon.amountSugCardText,{color:theme.headingTx}]}>
+                        Deposit USDC to start trading.
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.amountSugCon.amountSugCard, { backgroundColor: theme.bg, paddingHorizontal: 16.9 }]}
+                      onPress={proceedToBridgeValidation}
+                    >
+                      <Text style={[styles.amountSugCon.amountSugCardText,{color:theme.headingTx}]}>Deposit</Text>
+                    </TouchableOpacity>
+                  </View>
+                </Animated.View>
+              )}
               {activeTab === SUB_TAB_CONFIG.TRADE.id && (
+                showOneTap?<OneTapComponet showInfo={showOneTap} showPurchase={back_data?.params?.purchesReq}/>:
                 activeTradeType === TAB_CONFIG.INSTANT_TRADE.id ? (
                   <AMMSwap />
                 ) : (
                   <>
-                    {assetInfo && !showOneTap  && (
-                      <LinearGradient
-                      colors={['#4052D6', '#242426']}
-                      start={{ x: 0, y: 0.5 }}
-                      end={{ x: 1, y: 0.5 }}
-                      style={styles.informationContiner}
-                    >
-                        <View >
-                        <Text style={[styles.amountSugCon.amountSugCardText,{color:"red"}]}>
-                          * Low balance!
-                        </Text>
-                        <Text style={styles.amountSugCon.amountSugCardText}>
-                          Click Deposit to add token.
-                        </Text>
-                        </View>
-                        <TouchableOpacity 
-                          style={styles.amountSugCon.amountSugCard} 
-                          onPress={proceedToBridgeValidation}
-                        >
-                          <Text style={styles.amountSugCon.amountSugCardText}>Deposit</Text>
-                        </TouchableOpacity>
-                      </LinearGradient>
-                    )}
-
                     {/* Pair selection container */}
-                  {showOneTap?<OneTapComponet showInfo={showOneTap} showPurchase={back_data?.params?.purchesReq}/>:<>
                     <View style={[styles.pairSelectionCon, { backgroundColor: theme.cardBg }]}>
                       <View style={styles.pariViewCon}>
                         <TouchableOpacity style={[styles.pairNameCon, { backgroundColor: theme.bg }]}>
@@ -1167,7 +1193,6 @@ const selectTradingPair = useCallback((item) => {
                           )}
                         </Text>
                       </TouchableOpacity>
-                  </>}
 
 
                     <Modal
@@ -1679,13 +1704,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    width: "93%",
-    height: "8%",
+    width: wp(92),
+    height: hp(6.9),
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#F7CC49",
     paddingHorizontal: 13,
-    marginVertical:5
   },
   infoBtnCon: {
     alignItems: "center",
@@ -1719,6 +1741,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.6),
     alignItems: 'center',
     justifyContent: "center",
+    flexDirection:"row"
   },
   tradeactiveTab: {
     width: wp(45),
@@ -1776,7 +1799,12 @@ const styles = StyleSheet.create({
       fontSize: 16,
       color: "#FFFFFF"
     }
-  }
+  },
+  glowContainer: {
+    borderWidth: 1.5,
+    borderRadius: 18,
+    marginVertical: hp(0.5)
+  },
 });
 
 export const stellarConfig = {

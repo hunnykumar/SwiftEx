@@ -181,6 +181,7 @@ function InvestmentChart() {
           style={[styles.coinCard, { backgroundColor: theme.cardBg }]}
           onPress={() => navigation.navigate('Asset_info', { asset_type: item })}
           key={index.toString()}
+          disabled={item.chain==="BTC"}
         >
           <View style={styles.coinContent}>
             <View style={[styles.coinIcon, { backgroundColor: '#F7931A1A' }]}>

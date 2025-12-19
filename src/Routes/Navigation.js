@@ -85,6 +85,8 @@ import TxDetails from "../Dashboard/exchange/crypto-exchange-front-end-main/src/
 import FloatingScreen from "../../FloatingComponet/FloatingScreen";
 import ExportUSDC from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/ExportUsdc";
 import { TransactionView } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/transaction";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { colors } from "../Screens/ThemeColorsConfig";
 
 const Stack = createNativeStackNavigator();
 
@@ -736,6 +738,7 @@ const NavigationProvider = () => {
   }
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: statee && statee.THEME && statee.THEME.THEME === false ? colors.light.bg : colors.dark.bg }}>
     <AuthStack
       getHeaderTitle={getHeaderTitle}
       extended={extended}
@@ -744,6 +747,7 @@ const NavigationProvider = () => {
       Header2={Header2}
       dispatch={dispatch}
     />
+    </SafeAreaView>
   );
 };
 export default NavigationProvider;

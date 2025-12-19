@@ -212,7 +212,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
             </View>
             <View style={styles.walletSubCon}>
               <Text style={[styles.walletBalText, { color: themeColors.text }]}>
-                {state&&state.isTotalInUSDVisible? `$ ${state&&state.totalInUSD}`: "$ X.XX"}
+                {state&&state.isTotalInUSDVisible? `$ ${state&&state.totalInUSD===undefined?"0.0":state&&state.totalInUSD}`: "$ X.XX"}
               </Text>
               <Icon
                 name={state&&state.isTotalInUSDVisible ? "eye-off" : "eye"}

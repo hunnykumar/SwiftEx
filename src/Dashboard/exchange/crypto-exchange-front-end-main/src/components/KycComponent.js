@@ -581,7 +581,7 @@ const KycComponent = ({ route }) => {
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={[styles.infoText,{color:theme.headingTx}]}>Network fee</Text>
-                  <Text style={[styles.infoText,{color:theme.headingTx}]}>{QoutesRes?.networkFee||0.0} {QoutesRes?.crypto||selectedCrypto?.crypto}</Text>
+                  <Text style={[styles.infoText,{color:theme.headingTx}]}>{QoutesRes?.cryptoNetworkFee||0.0} {QoutesRes?.crypto||selectedCrypto?.crypto}</Text>
                 </View>
                 </View>
                  </View>}

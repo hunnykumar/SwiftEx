@@ -89,13 +89,13 @@ const Dashboard = ({ navigation }) => {
 
   return (
     <Tab.Navigator
-      shifting={false}
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size = 25 }) => {
-          let iconName;
-          let iconProvider;
+  shifting={false}
+  screenOptions={({ route }) => ({
+    tabBarIcon: ({ focused, color, size = 25 }) => {
+      let iconName;
+      let iconProvider;
 
-          switch (route.name) {
+      switch (route.name) {
             case "Home":
               iconName = focused?"home":"home-outline";
               iconProvider = "ionicon";
@@ -126,41 +126,40 @@ const Dashboard = ({ navigation }) => {
           }
 
           return <Icon name={iconName} type={iconProvider} size={size} color={color} />;
-        },
+    },
 
-        tabBarLabel: ({ focused }) => {
-          const iconColor = focused
-            ? statee.THEME.THEME === false
-              ? "#5B65E1" : "#4052D6"
-            : statee.THEME.THEME === false
-            ? "black" : "#FFF"
+    tabBarLabel: ({ focused }) => {
+      const iconColor = focused
+        ? (statee.THEME.THEME === false ? "#5B65E1" : "#4052D6")
+        : (statee.THEME.THEME === false ? "black" : "#FFF");
 
-          return (
-            <Text
-              style={{
-                color: iconColor,
-                fontSize: 16,
-                textAlign: "center",
-                marginBottom: Platform.OS === "android" ? 10 : 1,
-                marginHorizontal:1
-              }}
-            >
-              {route.name==="ExchangeHome"?"Exchange":route.name}
-            </Text>
-          );
-        },
+      return (
+        <Text
+          style={{
+            color: iconColor,
+            fontSize: 16,
+            marginTop: 4,
+            marginBottom: Platform.OS === "android" ? 8 : 1,
+          }}
+        >
+          {route.name==="ExchangeHome"?"Exchange":route.name}
+        </Text>
+      );
+    },
 
-        tabBarActiveTintColor:
+    tabBarActiveTintColor:
           statee.THEME.THEME === false ? "#5B65E1" : "#4052D6",
         tabBarInactiveTintColor:
           statee.THEME.THEME === false ? "black" : "#FFFF",
-        tabBarStyle: {
-          backgroundColor: statee.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C",
-          height: Platform.OS === "android" ? 70 : 80,
-        },
-        headerTitleAlign: "center",
-      })}
-    >
+    tabBarStyle: {
+      backgroundColor: statee.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C",
+      height: Platform.OS === "android" ? 70 : 80,
+      paddingBottom: Platform.OS === "android" ? 1 : 20,
+      paddingTop: 8,
+    },
+    headerTitleAlign: "center",
+  })}
+>
       <Tab.Screen
         name="Home"
         component={Home2}

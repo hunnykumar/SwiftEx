@@ -269,14 +269,14 @@ const classic = ({ route }) => {
           <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.balance || "0.0"}</Text>
           <Text style={[styles.chooseItemSymbol, { color: theme.inactiveTx, fontSize: 12 }]}>${item.balanceUSD || "0.0"}</Text>
         </> :
-          <TouchableOpacity style={styles.buyBtnCon} onPress={() => {
+          <TouchableOpacity style={[styles.buyBtnCon,{backgroundColor:theme.bg}]} onPress={() => {
             setchooseModalVisible_choose(false),
               setTimeout(() => {
                 navigation.navigate("KycComponent", { tabName: "Buy" })
               },300)
           }
           }>
-            <Text style={styles.buyBtnTxt}>Buy Now</Text>
+            <Text style={[styles.buyBtnTxt,{color:theme.headingTx}]}>Buy Now</Text>
           </TouchableOpacity>}
       </View>
     </TouchableOpacity>
@@ -1218,7 +1218,6 @@ const styles = StyleSheet.create({
   buyBtnCon: {
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#76d351ff",
     paddingVertical: 9,
     paddingHorizontal: 16,
     borderRadius: 10,

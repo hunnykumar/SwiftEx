@@ -204,8 +204,8 @@ const ExportUSDC = () => {
     debounce(async (sourceChain,destChain,sourceToken,destToken,value) => {
       const qoutesRep = await getChainTokenData(sourceChain,destChain,sourceToken,destToken,value);
       if (qoutesRep.success) {
-        Keyboard.dismiss();
-        setgetInfo(false);
+        // Keyboard.dismiss();
+        // setgetInfo(false);
         const respo = await convertMultiple([
           {
             token:
@@ -236,6 +236,7 @@ const ExportUSDC = () => {
           }
         }
         setresQuotes(mergedQuotes);
+        Keyboard.dismiss();
         setgetInfo(false);
       } else {
         Keyboard.dismiss();

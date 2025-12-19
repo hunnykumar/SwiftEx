@@ -152,6 +152,29 @@ const EthSwap = () => {
   }, [amount, fromToken, toToken]);
 
 
+
+    useEffect(() => {
+    const updateQuote = async () => {
+      setallblnLoading(true);
+      try {
+        if (currentNetwork === 0) {
+        await getTokesBalance(fromToken.address,toToken.address)
+        setallblnLoading(false);
+        }
+        if (currentNetwork === 1) {
+         await getBSCTokenBalance(fromToken.address, toToken.address)
+         setallblnLoading(false);
+        }
+      } catch (error) {
+        console.log(error);
+        setallblnLoading(false);
+      }
+    };
+
+    updateQuote();
+  }, [fromToken, toToken]);
+
+
   useEffect(() => {
     setAmount('');
     setQuoteInfo(null);
