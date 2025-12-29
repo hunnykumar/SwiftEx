@@ -408,8 +408,8 @@ const getBSCTokensFromBinplorer = async (walletAddress, onProgress = null) => {
     let totalValueUSD = 0;
 
     if (data.ETH) {
-      const bnbBalance = parseNumber(data.BNB.balance || 0);
-      const bnbPrice = data.BNB.price?.rate || 0;
+      const bnbBalance = parseNumber(data.ETH.balance || 0);
+      const bnbPrice = data.ETH.price?.rate || 0;
       const bnbValue = bnbBalance * bnbPrice;
 
       const bnbToken = {
@@ -421,7 +421,7 @@ const getBSCTokensFromBinplorer = async (walletAddress, onProgress = null) => {
         decimals: 18,
         contractAddress: 'Native',
         price: parseNumber(bnbPrice, 2),
-        imageUrl: getTokenImage('Native', 'BSC', 'BNB') || null
+        imageUrl: getTokenImage('0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', 'BSC') || null
       };
 
       tokens.push(bnbToken);

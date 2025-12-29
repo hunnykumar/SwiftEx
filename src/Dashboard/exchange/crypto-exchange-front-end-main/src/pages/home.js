@@ -99,7 +99,7 @@ export const HomeView = () => {
   ]
 
   const quickActions = [
-    { name: `Spot\nTrade`, icon: "candlestick-chart", iconProvider: "material" },
+    { name: `Spot\nTrading`, icon: "candlestick-chart", iconProvider: "material" },
     { name: `Deposit\nUSDC`, icon: "generating-tokens", iconProvider: "material" },
     { name: `Withdrawal\nUSDC`, icon: "currency-exchange", iconProvider: "material" },
   ]

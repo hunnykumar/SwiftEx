@@ -37,6 +37,7 @@ import { colors } from "../../../../../Screens/ThemeColorsConfig";
 import stellarTokens from "../pages/stellar/Tokens.json";
 import OneTapComponet from "./OneTapComponet";
 import CustomInfoProvider from "./CustomInfoProvider";
+import CrossChainTx from "./CrossChainTx";
 // Initialize Stellar server
 const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
@@ -831,7 +832,7 @@ const selectTradingPair = useCallback((item) => {
                 </Animated.View>
               )}
               {activeTab === SUB_TAB_CONFIG.TRADE.id && (
-                showOneTap?<OneTapComponet showInfo={showOneTap} showPurchase={back_data?.params?.purchesReq}/>:
+                showOneTap?<CrossChainTx />:
                 activeTradeType === TAB_CONFIG.INSTANT_TRADE.id ? (
                   <AMMSwap />
                 ) : (

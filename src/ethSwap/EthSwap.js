@@ -681,6 +681,7 @@ const EthSwap = () => {
                 <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}> {quoteInfo.outputToken}</Text>
               </View>
             </View>
+            <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>* This transaction may include extra fees if it involves multiple hops.</Text>
           </View>
         )}
 
