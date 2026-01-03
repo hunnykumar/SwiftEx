@@ -269,7 +269,7 @@ const classic = ({ route }) => {
           <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.balance || "0.0"}</Text>
           <Text style={[styles.chooseItemSymbol, { color: theme.inactiveTx, fontSize: 12 }]}>${item.balanceUSD || "0.0"}</Text>
         </> :
-          <TouchableOpacity style={[styles.buyBtnCon,{backgroundColor:theme.bg}]} onPress={() => {
+          <TouchableOpacity style={[styles.buyBtnCon,{backgroundColor:"#4052D6"}]} onPress={() => {
             setchooseModalVisible_choose(false),
               setTimeout(() => {
                 navigation.navigate("KycComponent", { tabName: "Buy" })
@@ -304,7 +304,6 @@ const classic = ({ route }) => {
           setfianl_modal_text("Transaction Successful");
           setfianl_modal_loading(false);
           setfianl_modal_error(true);
-          setshowTx(true);
           setshowTxHash([{ chain: "ETH", hash: respoExe.res.transferTxHash }]);
         } else {
           throw new Error("Transaction failed");
@@ -327,7 +326,6 @@ const classic = ({ route }) => {
           setfianl_modal_text("Transaction Successful");
           setfianl_modal_loading(false);
           setfianl_modal_error(true);
-          setshowTx(true);
           setshowTxHash([{ chain: "BSC", hash: respoExe.res.transferTxHash }]);
         } else {
           throw new Error("Transaction failed");
@@ -541,7 +539,8 @@ const classic = ({ route }) => {
   };
 
   useEffect(() => {
-    if (!resQuotes) return;
+    const init=async()=>{
+      if (!resQuotes) return;
 
     const feeAmount = payFeeType === "native"
       ? parseFloat(resQuotes?.fee?.native?.amount || "0")
@@ -550,11 +549,13 @@ const classic = ({ route }) => {
     const minReceive = parseFloat(resQuotes?.minimumAmountOut || "0");
     const netReceive = Math.max(0, minReceive - feeAmount);
 
-    if (netReceive <= 0 || (payFeeType === "stable" && feeAmount > parseFloat(WALLETBALANCE))) {
+    if (netReceive <= 0 || (payFeeType === "stable" && feeAmount > parseFloat(await WALLETBALANCE)) || (payFeeType === "native" && feeAmount > parseFloat(await WALLETBALANCE))) {
       seterrorMsg("Insufficient funds to pay gas.");
     } else {
       seterrorMsg(null);
     }
+    }
+    init()
   }, [payFeeType, resQuotes, WALLETBALANCE]);
 
   const feeData = payFeeType === "native"
@@ -973,7 +974,7 @@ const classic = ({ route }) => {
                     setfianl_modal_error(false);
                   } else {
                     setfianl_modal_error(false);
-                    navigation.navigate("Assets_manage");
+                    setshowTx(true);
                   }
                 }}
               >
@@ -1128,6 +1129,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginVertical: 16,
+    marginBottom:hp(5)
   },
   nextButtonText: {
     color: 'white',

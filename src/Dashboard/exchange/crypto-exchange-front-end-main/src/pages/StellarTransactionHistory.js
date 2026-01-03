@@ -206,9 +206,9 @@ console.log(operation)
     amountTo = operation.amount;
   }
 
-  const txViewrManager = (txId, txType) => {
-    console.log("txId, txType",txId, txType)
-    if (txType === "invoke_host_function") {
+  const txViewrManager = (txId, txType, isReceived) => {
+    console.log("txId, txType",txId, txType, isReceived)
+    if (txType === "invoke_host_function"&&!isReceived) {
       setshowTxHash([{ chain: "SRB", hash: txId }])
       setshowTx(true);
     }
@@ -226,7 +226,7 @@ console.log(operation)
         { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }
       ]}
       disabled={operation.type === 'sellCry' || operation.type === 'buyCry'}
-      onPress={()=>{txViewrManager(item?.operations?.records[0]?.transaction_hash,operation.type)}}
+      onPress={()=>{txViewrManager(item?.operations?.records[0]?.transaction_hash,operation.type,isReceived)}}
     >
       <View style={[styles.iconContainer, { backgroundColor: colors.iconBackground }]}>
         <Icon

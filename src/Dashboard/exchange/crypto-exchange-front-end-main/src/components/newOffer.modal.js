@@ -11,6 +11,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Animated,
+  BackHandler,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -674,6 +675,21 @@ const selectTradingPair = useCallback((item) => {
     inputRange: [0, 1, 2],
     outputRange: ["transparent", "#3b82f6", "#8b5cf6"],
   });
+
+  useEffect(() => {
+    const handleNativeBackAction = () => {
+      if (showOneTap) {
+        setshowOneTap(false);
+        return true;
+      }
+      return false;
+    };
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleNativeBackAction
+    );
+    return () => backHandler.remove();
+  }, [showOneTap]);
 
   return (
     <View style={[styles.scrollView0, { backgroundColor: theme.bg }]}>

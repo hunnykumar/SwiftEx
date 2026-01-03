@@ -86,10 +86,10 @@ export default function AllbridgeTxTrack({ txs, isDarkMode, showTx, closeTx }) {
 
 
   useEffect(() => {
-    if (txs.length < 2) {
+    if (showTx && txs.length === 1) {
       openModal(txs[0], 0)
     }
-  }, [txs])
+  }, [txs, showTx])
 
   const getThemedColor = (lightColor, darkColor) => {
     return isDarkMode ? darkColor : lightColor;
@@ -100,27 +100,29 @@ export default function AllbridgeTxTrack({ txs, isDarkMode, showTx, closeTx }) {
     setLoading(true);
     setModalVisible(true);
     const res = await getAllbridgeTxStatus(item.chain, item.hash);
-    if (res.currentStatus === "Error") {
+    if (res.currentStatus !== "Error") {
+      setTxData(res);
       setLoading(false);
-      CustomInfoProvider.show("Transaction Status", "Unable to determine transaction status.")
+    } else {
+      setLoading(false);
+      CustomInfoProvider.show("Transaction Status", "Transaction under process wait for confirmation.")
       setModalVisible(false);
       setTxData(null);
     }
-    setTxData(res);
-    setLoading(false);
   };
 
   const refreshTx = async (txData) => {
     setLoading(true);
     const res = await getAllbridgeTxStatus(txData.sourceChain, txData?.response?.txId);
-    if (res.currentStatus === "Error") {
+    if (res.currentStatus !== "Error") {
+      setTxData(res);
       setLoading(false);
-      CustomInfoProvider.show("Transaction Status", "Unable to determine transaction status.")
+    } else {
+      setLoading(false);
+      CustomInfoProvider.show("Transaction Status", "This transaction under process wait for confirmation.")
       setModalVisible(false);
       setTxData(null);
     }
-    setTxData(res);
-    setLoading(false);
   };
 
   const closeModal = () => {

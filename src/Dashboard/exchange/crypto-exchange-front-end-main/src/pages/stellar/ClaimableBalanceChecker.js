@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Dimensions,
   StyleSheet,
+  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import FAIcon from "react-native-vector-icons/FontAwesome";
@@ -190,7 +191,11 @@ const ClaimableBalanceChecker = ({
         <View style={styles.assetBtnCon}>
           <TouchableOpacity
             style={[styles.assetAcceptBtnCon,{borderColor:theme.smallCardBorderColor}]}
-            onPress={() => { }}
+            onPress={() => {
+              Alert.alert("info", "Comming Soon")
+              setIsVisible(false);
+              onClose();
+            }}
             activeOpacity={0.8}
           >
             <Text style={[styles.assetAcceptBtnTxt, {color:theme.bg}]}>Claim Balance</Text>

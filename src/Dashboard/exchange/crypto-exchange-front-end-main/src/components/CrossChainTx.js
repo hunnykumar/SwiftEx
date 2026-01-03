@@ -54,7 +54,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
             justifyContent: 'space-between',
             padding: 10,
             borderRadius: 10,
-            width: wp(40),
+            width: wp(42),
             backgroundColor: theme.bg
         },
         assetLogo: {
@@ -77,7 +77,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
             textAlign: "right"
         },
         textInputForCrossChain: {
-            width: wp(53),
+            width: wp(85),
             fontSize: 18,
             color: theme.headingTx,
             borderRadius: 15,
@@ -261,21 +261,57 @@ const CrossChainTx = ({ route = "ETH" }) => {
             textAlign: "center"
         },
         actionButton: {
-            backgroundColor: theme.bg,
+            backgroundColor: "#4052D6",
             paddingHorizontal: 24,
             paddingVertical: 16,
             borderRadius: 14,
             justifyContent: "center",
         },
         actionButtonText: {
-            color: theme.headingTx,
+            color: theme.cardSubTx,
             fontSize: 16,
             fontWeight: "500",
         },
         subHeadingCon: {
             flexDirection: "row",
             alignItems: "center"
-        }
+        },
+        suggestActionCon:{
+            backgroundColor:theme.cardBg,
+            alignItems:"flex-start",
+            width:wp(100),
+            paddingHorizontal:wp(5),
+            paddingVertical:hp(1.4),
+            alignSelf:"center",
+            marginVertical:hp(0.8)
+        },
+        suggestActionTxt:{
+            color: theme.headingTx,
+            fontSize: 16,
+            fontWeight: "500",
+            textAlign: "left",
+            marginLeft:hp(0.6)
+        },
+        purcheseBtn: {
+            borderWidth:0.4,
+            borderColor:theme.smallCardBorderColor,
+            backgroundColor: theme.bg,
+            flexDirection:"row",
+            borderRadius: 20,
+            justifyContent: "space-around",
+            alignItems:"center",
+            height:hp(5.3),
+            width:wp(53),
+            marginTop:hp(1)
+        },
+        purcheseSubCon: {
+            backgroundColor: "#4052D6",
+            borderRadius: 14,
+            justifyContent:"center",
+            alignItems:"center",
+            height:hp(3),
+            width:wp(20)
+        },
     });
     const toast = useToast();
     const navigation = useNavigation();
@@ -537,7 +573,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                     <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.balance || "0.0"}</Text>
                     <Text style={[styles.chooseItemSymbol, { color: theme.inactiveTx, fontSize: 12 }]}>${item.balanceUSD || "0.0"}</Text>
                 </> :
-                    <TouchableOpacity style={[styles.buyBtnCon, { backgroundColor: theme.bg }]} onPress={() => {
+                    <TouchableOpacity style={[styles.buyBtnCon, { backgroundColor: "#4052D6" }]} onPress={() => {
                         setchooseModalVisible_choose(false),
                             setTimeout(() => {
                                 navigation.navigate("KycComponent", { tabName: "Buy" })
@@ -572,7 +608,6 @@ const CrossChainTx = ({ route = "ETH" }) => {
                     setfianl_modal_text("Transaction Successful");
                     setfianl_modal_loading(false);
                     setfianl_modal_error(true);
-                    setshowTx(true);
                     setshowTxHash([{ chain: "ETH", hash: respoExe.res.transferTxHash }]);
                 } else {
                     throw new Error("Transaction failed");
@@ -595,7 +630,6 @@ const CrossChainTx = ({ route = "ETH" }) => {
                     setfianl_modal_text("Transaction Successful");
                     setfianl_modal_loading(false);
                     setfianl_modal_error(true);
-                    setshowTx(true);
                     setshowTxHash([{ chain: "BSC", hash: respoExe.res.transferTxHash }]);
                 } else {
                     throw new Error("Transaction failed");
@@ -818,7 +852,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
         const minReceive = parseFloat(resQuotes?.minimumAmountOut || "0");
         const netReceive = Math.max(0, minReceive - feeAmount);
 
-        if (netReceive <= 0 || (payFeeType === "stable" && feeAmount > parseFloat(WALLETBALANCE))) {
+        if (netReceive <= 0 || (payFeeType === "stable" && feeAmount > parseFloat(WALLETBALANCE)) || (payFeeType === "native" && feeAmount > parseFloat(WALLETBALANCE))) {
             seterrorMsg("Insufficient funds to pay gas.");
         } else {
             seterrorMsg(null);
@@ -909,7 +943,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                 </View>
             </View> :
 
-            <View style={{ backgroundColor: theme.bg, width: wp(100), height: hp(130) }}>
+            <View style={{ backgroundColor: theme.bg, width: wp(100)}}>
                 <WalletActivationComponent
                     isVisible={ACTIVATION_MODAL_PROD}
                     onClose={() => setACTIVATION_MODAL_PROD(false)}
@@ -918,9 +952,16 @@ const CrossChainTx = ({ route = "ETH" }) => {
                     appTheme={true}
                     shouldNavigateBack={true}
                 />
-
-                <Text style={[styles.headingText, { color: theme.headingTx }]}>Deposit instantly from your available balance.</Text>
-                <ScrollView style={{ marginBottom: hp(5), paddingHorizontal: wp(3.5) }}>
+                <View style={styles.suggestActionCon}>
+                    <Text style={styles.suggestActionTxt}>{`Deposit instantly from your available balance or Buy USDC`}</Text>
+                    <TouchableOpacity style={styles.purcheseBtn} onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}>
+                        <Text style={styles.actionButtonText}>Buy USDC</Text>
+                       <View style={styles.purcheseSubCon}>
+                        <Text style={{fontSize:14,fontWeight:"400",color:"#fff",textAlign:"center"}}>Low Rates</Text>
+                       </View>
+                    </TouchableOpacity>
+                </View>
+                <ScrollView style={{ paddingHorizontal: wp(3.5) }}>
 
                     <View style={styles.card}>
                         <View style={styles.subCon}>
@@ -939,13 +980,6 @@ const CrossChainTx = ({ route = "ETH" }) => {
                                 )}
                                 returnKeyType="done"
                             />
-                            <TouchableOpacity
-                                style={styles.actionButton}
-                                onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}
-                            >
-                                <Text style={styles.actionButtonText}>Buy USDC
-                                </Text>
-                            </TouchableOpacity>
                         </View>
 
                         <View style={[styles.subCon, { marginBottom: hp(0) }]}>
@@ -953,7 +987,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                                 style={styles.exportCon}
                                 onPress={() => { resetState(), setchooseModalVisible_choose(true) }}
                             >
-                                <View style={{ flexDirection: "row" }}>
+                                <View style={{ flexDirection: "row",marginRight:wp(0.5) }}>
                                     <Image
                                         source={{ uri: selectedToken?.logoURI || currentTokenList[0]?.logoURI }}
                                         style={styles.assetLogo}
@@ -993,13 +1027,6 @@ const CrossChainTx = ({ route = "ETH" }) => {
                                 style={[styles.textInputForCrossChain, { color: theme.inactiveTx }]}
                                 editable={false}
                             />
-                            <TouchableOpacity
-                                style={styles.actionButton}
-                                onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}
-                            >
-                                <Text style={styles.actionButtonText}>Buy USDC
-                                </Text>
-                            </TouchableOpacity>
                         </View>
 
                         <View style={[styles.subCon, { marginBottom: hp(0) }]}>
@@ -1323,7 +1350,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                                             setfianl_modal_error(false);
                                         } else {
                                             setfianl_modal_error(false);
-                                            navigation.navigate("Assets_manage");
+                                            setshowTx(true);
                                         }
                                     }}
                                 >
