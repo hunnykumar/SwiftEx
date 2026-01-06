@@ -105,7 +105,7 @@ export default function AllbridgeTxTrack({ txs, isDarkMode, showTx, closeTx }) {
       setLoading(false);
     } else {
       setLoading(false);
-      CustomInfoProvider.show("Transaction Status", "Transaction under process wait for confirmation.")
+      CustomInfoProvider.show("Transaction Status", "Transaction under process please wait for confirmation.")
       setModalVisible(false);
       setTxData(null);
     }
@@ -119,7 +119,7 @@ export default function AllbridgeTxTrack({ txs, isDarkMode, showTx, closeTx }) {
       setLoading(false);
     } else {
       setLoading(false);
-      CustomInfoProvider.show("Transaction Status", "This transaction under process wait for confirmation.")
+      CustomInfoProvider.show("Transaction Status", "This transaction under process please wait for confirmation.")
       setModalVisible(false);
       setTxData(null);
     }

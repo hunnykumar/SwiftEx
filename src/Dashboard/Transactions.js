@@ -256,7 +256,7 @@ const TransactionHistory = () => {
 
     return (
       <TouchableOpacity style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-        <TouchableOpacity style={[styles.card, { backgroundColor: colors.cardBackground }]}  onPress={()=>{navigation.navigate("TxDetail",{transactionPath:activeChainNetwork==="ETH"?"https://sepolia.etherscan.io/tx/"+item.hash:"https://testnet.bscscan.com/tx/"+item.hash})}}>
+        <TouchableOpacity style={[styles.card, { backgroundColor: colors.cardBackground }]}  onPress={()=>{navigation.navigate("TxDetail",{transactionPath:activeChainNetwork==="ETH"?"https://etherscan.io/tx/"+item.hash:"https://bscscan.com/tx/"+item.hash})}}>
           <View style={styles.leftSection}>
             <View style={[styles.iconContainer, { backgroundColor: colors.iconContainer }]}>
               <Text style={{ fontSize: 25, fontWeight: "500", color: '#3b82f6' }}>{item?.asset?.charAt(0)?.toLocaleUpperCase() || "E"}</Text>

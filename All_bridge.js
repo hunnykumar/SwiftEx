@@ -73,7 +73,7 @@ export async function swap_prepare(privateKey, fromAddress, toAddress, amount, s
       };
     }
 
-    const firstTxHash = firstTxResult.transactionHash;
+    const firstTxHash = firstTxResult.res.txHash;
     console.log(`${transactionType} completed, hash:`, firstTxHash);
     if (transactionType === 'approve') {
       console.log("Approval completed, now executing transfer...");

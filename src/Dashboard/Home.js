@@ -153,8 +153,8 @@ const Dashboard = ({ navigation }) => {
           statee.THEME.THEME === false ? "black" : "#FFFF",
     tabBarStyle: {
       backgroundColor: statee.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C",
-      height: Platform.OS === "android" ? 70 : 96,
-      paddingBottom: Platform.OS === "android" ? 1 : 30,
+      height: Platform.OS === "android" ? 70 : 56,
+      paddingBottom: Platform.OS === "android" ? 1 : 1,
       paddingTop: 8,
     },
     headerTitleAlign: "center",

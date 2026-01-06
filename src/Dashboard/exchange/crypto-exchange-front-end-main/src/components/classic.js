@@ -25,6 +25,8 @@ import { convertMultiple } from '../utils/UsdPriceHandler';
 import { colors } from '../../../../../Screens/ThemeColorsConfig';
 import tokenList from "../../../../../Dashboard/tokens/tokenList.json";
 import PancakeList from "../../../../../Dashboard/tokens/pancakeSwap/PancakeList.json";
+import LocalTxManager from '../../../../../utilities/LocalTxManager';
+import RecentCrossChainTx from '../../../../reusables/RecentCrossChainTx';
 
 const classic = ({ route }) => {
   const toast = useToast();
@@ -37,6 +39,16 @@ const classic = ({ route }) => {
     { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
     { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
   ];
+  const reciverAsset = {
+        imageUrl: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png",
+        assetNetwork: "Stellar",
+        assetName: "USDC"
+    }
+    const feeAsset = {
+        imageUrl: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+        assetNetwork: "Stellar",
+        assetName: "USDC"
+    }
 
   const defaultUsdts = [
     {
@@ -261,14 +273,10 @@ const classic = ({ route }) => {
     >
       <Image style={styles.chooseItemImage} source={{ uri: item.logoURI }} />
       <View style={{ flex: 1 }}>
-        <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.name}</Text>
-        <Text style={[styles.chooseItemSymbol, { color: theme.inactiveTx, fontSize: 12 }]}>{item.symbol}</Text>
+        <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.symbol}</Text>
+          <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.balance || "0.0"}</Text>
       </View>
       <View style={{alignSelf:"flex-end",alignItems:"flex-end"}}>
-        {item.balance ? <>
-          <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.balance || "0.0"}</Text>
-          <Text style={[styles.chooseItemSymbol, { color: theme.inactiveTx, fontSize: 12 }]}>${item.balanceUSD || "0.0"}</Text>
-        </> :
           <TouchableOpacity style={[styles.buyBtnCon,{backgroundColor:"#4052D6"}]} onPress={() => {
             setchooseModalVisible_choose(false),
               setTimeout(() => {
@@ -277,7 +285,7 @@ const classic = ({ route }) => {
           }
           }>
             <Text style={[styles.buyBtnTxt,{color:theme.headingTx}]}>Buy Now</Text>
-          </TouchableOpacity>}
+          </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -299,9 +307,10 @@ const classic = ({ route }) => {
           "ETH",
           payFeeType
         );
-
+        console.log("respoExe-=-=-=",respoExe);
         if (respoExe?.status_task) {
           setfianl_modal_text("Transaction Successful");
+          await LocalTxManager.saveTx(state && state.wallet && state.wallet.address,{ chain: "ETH", hash: respoExe.res.transferTxHash, status:"pending",statusColor:"#eec14fff"  });
           setfianl_modal_loading(false);
           setfianl_modal_error(true);
           setshowTxHash([{ chain: "ETH", hash: respoExe.res.transferTxHash }]);
@@ -321,9 +330,10 @@ const classic = ({ route }) => {
           "BNB",
           payFeeType
         );
-
+        console.log("respoExe-=-=BNB-=",respoExe);
         if (respoExe?.status_task) {
           setfianl_modal_text("Transaction Successful");
+          await LocalTxManager.saveTx(state && state.wallet && state.wallet.address,{ chain: "BSC", hash: respoExe.res.transferTxHash, status:"pending",statusColor:"#eec14fff"  });
           setfianl_modal_loading(false);
           setfianl_modal_error(true);
           setshowTxHash([{ chain: "BSC", hash: respoExe.res.transferTxHash }]);
@@ -710,8 +720,8 @@ const classic = ({ route }) => {
               style={[styles.feePayCon, { backgroundColor: payFeeType === "stable" ? "#4052D6" : theme.bg }]}
               onPress={() => setPayFeeType("stable")}
             >
-              <Icon name={"fire"} type={"materialCommunity"} size={25} color={payFeeType === "stable" ? "#fff" : "#4052D6"} />
-              <Text style={[styles.feePayTx, { color: payFeeType === "stable" ? "#fff" : theme.headingTx }]}>Stable-Coin</Text>
+            <Image source={{ uri: selectedToken?.symbol==="USDC"?reciverAsset.imageUrl:feeAsset.imageUrl }} style={styles.feeImage}/>
+            <Text style={[styles.feePayTx, { color: payFeeType === "stable" ? "#fff" : theme.headingTx }]}>{selectedToken?.symbol==="USDC"?"USDC":"USDT"}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -875,6 +885,7 @@ const classic = ({ route }) => {
             <Text style={styles.nextButtonText}>{errorMsg !== null ? errorMsg : "Confirm Transaction"}</Text>
           )}
         </TouchableOpacity>
+        <RecentCrossChainTx activeWalletPublicKey={state && state.wallet && state.wallet.address} theme={state?.THEME?.THEME}/>
 
         <Modal animationType="slide" transparent={true} visible={chooseModalVisible}>
           <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setChooseModalVisible(false)}>
@@ -1230,7 +1241,13 @@ const styles = StyleSheet.create({
     fontSize:16,
     fontWeight:"600",
     textAlign:"center"
-  }
+  },
+  feeImage: {
+    width: 25,
+    height: 25,
+    borderRadius: 20,
+    marginRight: 3,
+  },
 });
 
 export default classic

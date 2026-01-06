@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { AppState, View } from "react-native";
+import { AppState, Platform, View } from "react-native";
 import "react-native-gesture-handler";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -738,7 +738,7 @@ const NavigationProvider = () => {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: statee && statee.THEME && statee.THEME.THEME === false ? colors.light.bg : colors.dark.bg }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: statee && statee.THEME && statee.THEME.THEME === false ? colors.light.bg : colors.dark.bg,marginTop:Platform.OS==="ios"&&-50 }}>
     <AuthStack
       getHeaderTitle={getHeaderTitle}
       extended={extended}

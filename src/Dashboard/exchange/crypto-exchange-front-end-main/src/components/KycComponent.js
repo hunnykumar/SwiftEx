@@ -315,12 +315,12 @@ const KycComponent = ({ route }) => {
     setSelectedfiat({
       "country": "IN",
       "currency": "INR",
-      "payWayCode": "10001",
-      "payWayName": "Credit Card",
-      "fixedFee": 33.150000,
-      "feeRate": 0.039900,
-      "payMin": 900.000000,
-      "payMax": 165763.000000,
+      "payWayCode": "90001",
+      "payWayName": "UPI",
+      "fixedFee": 0.000000,
+      "feeRate": 0.055000,
+      "payMin": 1000.000000,
+      "payMax": 50000.000000,
       "countryName": "India"
   });
     setbtnLoading(false);
