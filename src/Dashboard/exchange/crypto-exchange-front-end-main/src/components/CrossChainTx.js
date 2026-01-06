@@ -404,8 +404,11 @@ const CrossChainTx = ({ route = "ETH" }) => {
 
     if (Array.isArray(state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens) && state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens.length > 0) {
         state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens.forEach(t => {
-            const addr = t.contractAddress?.toLowerCase();
+            let addr = t.contractAddress?.toLowerCase();
             if (!addr) return;
+            if (addr === "native") {
+                addr = "0x0000000000000000000000000000000000000000";
+            }
             prioritySet.add(addr);
             balanceMap[addr] = {
                 balance: t.balance,

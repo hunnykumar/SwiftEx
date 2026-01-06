@@ -38,8 +38,27 @@ export async function getTokenBalancesUsingAddress(tokenAddresses, walletAddress
         const walletBalance = ethers.utils.formatEther(walletRawBalance);
         const tokens = Array.isArray(tokenAddresses) ? tokenAddresses : [tokenAddresses];
         const results = [];
+        const nativeTokenInfo = {
+            ETH: { symbol: "ETH", name: "Ethereum" },
+            BSC: { symbol: "BNB", name: "Binance Coin" }
+        };
         for (const tokenAddress of tokens) {
             try {
+                if (tokenAddress === "0X0000000000000000000000000000000000000000" || 
+                    tokenAddress.toLowerCase() === "0x0000000000000000000000000000000000000000") {
+                    const nativeInfo = nativeTokenInfo[network]; 
+                    results.push({
+                        name: nativeInfo.name,
+                        symbol: nativeInfo.symbol,
+                        balance: walletBalance,
+                        address: tokenAddress,
+                        imageUrl: "",
+                        decimals: "18",
+                        walletBalance,
+                        tokenBalance: walletBalance
+                    });
+                    
+                } else {
                 const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
 
                 const [rawBalance, decimals, symbol, name] = await Promise.all([
@@ -61,6 +80,7 @@ export async function getTokenBalancesUsingAddress(tokenAddresses, walletAddress
                     walletBalance,
                     tokenBalance
                 });
+                }
             } catch (tokenErr) {
                 console.error(
                     `Error fetching token ${tokenAddress} on ${network}:`,

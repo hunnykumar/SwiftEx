@@ -39,10 +39,10 @@ import { getTokenBalancesUsingAddress, getWalletBalance } from '../Dashboard/exc
 // Token List
 const TOKENS = [
   {
-    symbol: 'WETH',
-    name: 'Wrapped Ethereum',
+    symbol: 'ETH',
+    name: 'ETH',
     decimals: 18,
-    address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', 
+    address: '0X0000000000000000000000000000000000000000', 
     balance: '1.5',
     logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
 
