@@ -46,7 +46,7 @@ const sendEth = async (
     maxFeePerGas: res.gasFeeData.maxFeePerGas,
     nonce: res.transactionCount,
     type: 2,
-    chainId: 11155111,
+    chainId: 1,
   };
 
   let rawTransaction = await walletPrivateKey.signTransaction(transaction);

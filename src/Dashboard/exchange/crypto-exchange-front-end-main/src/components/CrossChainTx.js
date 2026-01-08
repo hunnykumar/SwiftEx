@@ -593,7 +593,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                             }, 300)
                     }
                     }>
-                        <Text style={[styles.buyBtnTxt, { color: theme.headingTx }]}>Buy Now</Text>
+                        <Text style={[styles.buyBtnTxt, { color: "#fff" }]}>Buy Now</Text>
                     </TouchableOpacity>
             </View>
         </TouchableOpacity>
@@ -909,7 +909,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                             placeholder='0.0'
                             placeholderTextColor={"gray"}
                             value={finalAmount ? finalAmount.toFixed(6) : "0.0"}
-                            style={[styles.textInputForCrossChain, { color: theme.inactiveTx }]}
+                            style={[styles.textInputForCrossChain, { color: theme.inactiveTx, width: wp(50) }]}
                             editable={false}
                         />
                         <TouchableOpacity
@@ -1366,6 +1366,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                                         } else {
                                             setfianl_modal_error(false);
                                             setshowTx(true);
+                                            navigation.navigate("StellarTransactions")
                                         }
                                     }}
                                 >

@@ -65,27 +65,55 @@ const TokenSend = ({ route }) => {
         "function transfer(address to, uint256 value) public returns (bool)"
       ];
       // Load wallet with private key
-      const wallet = new ethers.Wallet(state?.wallet?.privateKey);
+      const wallet = new ethers.Wallet(state.wallet.privateKey);
       // Load ERC-20 contract
-      const tokenContract = new ethers.Contract(tokenAddress, BNBERC20ABI, wallet);
-      // Fetch token decimals
-      const decimals = tokenDecimals;
-      // Convert amount to correct format
-      const formattedAmount = ethers.utils.parseUnits(amount, decimals);
-      const unsigned = await tokenContract.populateTransaction.transfer(address, formattedAmount);
-      // Send transaction
-      const {res,err} = await proxyRequest("/v1/bsc/transaction/prepare", PPOST, { unsignedTx:unsigned,walletAddress:wallet.address });
+      const tokenInterface = new ethers.utils.Interface(BNBERC20ABI);
+      const formattedAmount = ethers.utils.parseUnits(amount, tokenDecimals);
+      const data = tokenInterface.encodeFunctionData("transfer", [address, formattedAmount]);
+      const unsignedTx = {
+        to: tokenAddress,
+        data: data,
+        from: wallet.address
+      };
+      const { res, err } = await proxyRequest(
+        "/v1/bsc/transaction/prepare",
+        PPOST,
+        {
+          unsignedTx: unsignedTx,
+          walletAddress: wallet.address
+        }
+      );
+      if (err) {
+      CustomInfoProvider.show("error", "Transaction failed try again.");
+      }
+      if (!res) {
+      CustomInfoProvider.show("error", "Transaction failed try again.");
+      }
       const upgradedTx = {
         ...res,
         gasLimit: ethers.BigNumber.from(res.gasLimit),
         gasPrice: ethers.BigNumber.from(res.gasPrice),
+        nonce: res.nonce,
+        chainId: res.chainId || 56,
         value: res.value ? ethers.BigNumber.from(res.value) : ethers.BigNumber.from(0),
       };
+
+      console.log("Transaction to sign:", upgradedTx);
       const signedTx = await wallet.signTransaction(upgradedTx);
-      const respoExe = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {signedTx:signedTx});
-      if(respoExe?.res?.txHash)
-      {
+      console.log("Signed transaction:", signedTx);
+      const respoExe = await proxyRequest(
+        "/v1/bsc/transaction/broadcast",
+        PPOST,
+        { signedTx: signedTx }
+      );
+      console.log("Broadcast response:", respoExe);
+      if (respoExe?.err) {
+        CustomInfoProvider.show("error", "Transaction failed try again.");
+      }
+      if (respoExe?.res?.txHash) {
         CustomInfoProvider.show("Info", "Transaction successful!");
+      } else {
+             CustomInfoProvider.show("error", "Transaction failed try again.");
       }
     } catch (error) {
       console.log("Transaction Error:", error);
@@ -108,31 +136,31 @@ const TokenSend = ({ route }) => {
         // Load wallet with private key
         const wallet = new ethers.Wallet(state?.wallet?.privateKey);
         // Load ERC-20 contract
-        const tokenContract = new ethers.Contract(tokenAddress, usdtAbi, wallet);
-        // Fetch token decimals
-        const decimals = tokenDecimals;
-        // Convert amount to correct format
-        const formattedAmount = ethers.utils.parseUnits(amount, decimals);
-        const unsigned = await tokenContract.populateTransaction.transfer(address, formattedAmount);
-        // Send transaction
+        const tokenInterface = new ethers.utils.Interface(usdtAbi);
+        const formattedAmount = ethers.utils.parseUnits(amount, tokenDecimals);
+        const data = tokenInterface.encodeFunctionData("transfer", [address, formattedAmount]);
       const preInfo = await proxyRequest(`/v1/eth/wallet-address/${wallet.address}/info`, PGET);
       if (preInfo.err) {
         alert("error", "Something went wrong...")
       }
       const upgradedTx = {
-        ...unsigned,
-        gasLimit: ethers.BigNumber.from(60000),
+        to: tokenAddress,
+        data: data,
+        gasLimit: ethers.BigNumber.from(100000),
         gasPrice: ethers.BigNumber.from(preInfo.res.gasFeeData.gasPrice),
         nonce: preInfo.res.transactionCount,
         chainId: 1,
         value: ethers.BigNumber.from(0)
       };
-      const signedTx = await wallet.signTransaction(upgradedTx);
-      console.log("signedTx", upgradedTx)
+    const signedTx = await wallet.signTransaction(upgradedTx);
+      console.log("signedTx", signedTx)
       const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, { signedTx: signedTx });
       console.log("respoExe:00---", respoExe)
       if (respoExe?.res?.txHash) {
         alert("success", `Transaction successful!`);
+        navigation.navigate("Transactions");
+      }else{
+        CustomInfoProvider.show("Error", "Transaction failed. Check logs.");
       }
     } catch (error) {
       console.error("Transaction Error:", error);

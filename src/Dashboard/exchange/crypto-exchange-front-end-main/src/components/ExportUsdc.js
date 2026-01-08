@@ -20,6 +20,7 @@ import AllbridgeTxTrack from './AllbridgeTxTrack';
 import CustomInfoProvider from './CustomInfoProvider';
 import { convertMultiple } from '../utils/UsdPriceHandler';
 import { colors } from '../../../../../Screens/ThemeColorsConfig';
+import RecentCrossChainTx from '../../../../reusables/RecentCrossChainTx';
 
 const ExportUSDC = () => {
   const Focused = useIsFocused();
@@ -275,6 +276,7 @@ const ExportUSDC = () => {
           duration: Snackbar.LENGTH_SHORT,
           backgroundColor: 'green',
         });
+        navigation.navigate("StellarTransactions")
         console.log("USDC Exported:-", result);
         setbtnLoading(false);
       } else {
@@ -362,7 +364,7 @@ console.log("resQuotes-",resQuotes)
         {/* perfect stellar usdc balance componet */}
         <View style={[styles.card,{backgroundColor:theme.cardBg,flexDirection:"column",borderBottomLeftRadius:0,borderBottomRightRadius:0}]}>
         <View style={[styles.rowBtnCon, { paddingVertical: hp(-0.5),backgroundColor:theme.cardBg }]}>
-            <Text style={[styles.subInputText,{color:theme.inactiveTx,marginTop: hp(0)}]}>Amount</Text>
+            <Text style={[styles.subInputText,{color:theme.inactiveTx,marginTop: hp(0)}]}>USDC Amount</Text>
             <TouchableOpacity style={styles.maxCon} onPress={() => {
             if (parseFloat(walletBalance) === 0) {
              CustomInfoProvider.show("Info", "Insuficint Balance.")
@@ -375,7 +377,7 @@ console.log("resQuotes-",resQuotes)
           </TouchableOpacity>
             </View>
          <View style={[styles.modalOpen, { paddingVertical: hp(0.5),backgroundColor:theme.bg }]}>
-            <TextInput maxLength={10} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" value={amount} style={[styles.textInputForCrossChain,{fontSize: 18, color: theme.headingTx}]} onChangeText={(value) => { handleInputChange(value) }} returnKeyType="done" />
+            <TextInput maxLength={10} placeholder='Enter USDC Amount' placeholderTextColor={"gray"} keyboardType="number-pad" value={amount} style={[styles.textInputForCrossChain,{fontSize: 18, color: theme.headingTx}]} onChangeText={(value) => { handleInputChange(value) }} returnKeyType="done" />
         </View>
         </View>
 
@@ -391,10 +393,18 @@ console.log("resQuotes-",resQuotes)
          </View>
 
          <View style={styles.accountDetailsCon}>
-          <Text style={[styles.subInputText, { color:theme.inactiveTx }]}>Balance :</Text>
+          <Text style={[styles.subInputText, { color:theme.inactiveTx }]}>USDC Balance :</Text>
           <View style={{ minWidth:wp(15) }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%" }}>
-              {basicProccesing ? <ActivityIndicator color={"green"} /> : <Text style={{ color: theme.headingTx, fontSize: 14 }}>{payFeeType==="stable"?walletBalance:XLMAvlBal}</Text>}
+              {basicProccesing ? <ActivityIndicator color={"green"} /> : <Text style={{ color: theme.headingTx, fontSize: 14 }}>{walletBalance}</Text>}
+            </ScrollView>
+          </View>
+          </View>
+          <View style={styles.accountDetailsCon}>
+          <Text style={[styles.subInputText, { color:theme.inactiveTx }]}>Native Balance :</Text>
+          <View style={{ minWidth:wp(15) }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%" }}>
+              {basicProccesing ? <ActivityIndicator color={"green"} /> : <Text style={{ color: theme.headingTx, fontSize: 14 }}>{XLMAvlBal}</Text>}
             </ScrollView>
           </View>
           </View>
@@ -515,7 +525,7 @@ console.log("resQuotes-",resQuotes)
           <View style={[styles.quoteTextCon,{borderColor:theme.inactiveTx}]}>
             <Text style={[styles.quoteText,{color:theme.headingTx}]}>≈</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <Text style={[styles.quoteText,{color:theme.headingTx}]}>{resQuotes.minimumAmountOut}</Text>
+              <Text style={[styles.quoteText,{color:theme.headingTx}]}> {feeData?.symbole==="Native"?resQuotes.minimumAmountOut:Math.max(0,parseFloat(resQuotes.minimumAmountOut || "0")-parseFloat(resQuotes?.fee?.stablecoin?.amount || "0"))}</Text>
             </ScrollView>
             <Text style={[styles.quoteText,{color:theme.headingTx}]}>{!selectedReciveAssetDetils?reciveAsset[0].symbole:selectedReciveAssetDetils.symbole}</Text>
           </View>
@@ -587,6 +597,7 @@ console.log("resQuotes-",resQuotes)
             </View>
           </TouchableOpacity>
         </Modal>
+        <RecentCrossChainTx activeWalletPublicKey={state && state.wallet && state.wallet.address} theme={state?.THEME?.THEME}/>
         </ScrollView>
       <View style={styles.allBridgeTxCon}>
         <AllbridgeTxTrack txs={showTxHash} isDarkMode={state?.THEME?.THEME} showTx={showTx} closeTx={()=>{setshowTx(false)}} />

@@ -281,7 +281,7 @@ const Assets_manage = ({ route }) => {
                                     </View>
                                 </View>
                                 {assets.some((list_item) => list_item.asset_code === list.name) ?
-                                    <TouchableOpacity style={[styles.btn,{backgroundColor:theme.cardBg}]} disabled={Loading!==null} onPress={()=>{removeTrustLine(list.name, list.issuerAddress)}}>
+                                    <TouchableOpacity style={[styles.btn,{backgroundColor:"#4052D6"}]} disabled={Loading!==null} onPress={()=>{removeTrustLine(list.name, list.issuerAddress)}}>
                                         {Loading === list.name ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:"#fff"}]}>Remove</Text>}
                                     </TouchableOpacity> :
                                     <TouchableOpacity style={[styles.btn,{backgroundColor:"#4052D6"}]} onPress={() => {

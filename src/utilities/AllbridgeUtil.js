@@ -9,6 +9,7 @@ import {
 } from "@allbridge/bridge-core-sdk";
 import * as StellarSdk from '@stellar/stellar-sdk';
 import CustomInfoProvider from '../Dashboard/exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
+import LocalTxManager from './LocalTxManager';
 
 export async function getChainTokenData(sourceChain, destChain, sourceToken, destToken, amount) {
     console.log("Allbridge-Info--", sourceChain, destChain, sourceToken, destToken, amount)
@@ -151,6 +152,7 @@ export async function swapPepare(
         return { success: false };
       }
       if (sent.status === "PENDING") {
+          await LocalTxManager.saveTx(recipientAddress,{ chain: "SRB", hash: sent.hash, status:"pending",statusColor:"#eec14fff"  });
           const matchedTx = await waitForTransferStatus(sdk, "SRB", sent.hash, 60000, 5000);
           if (matchedTx?.txId) {
             return { success: true, txHash: sent.hash };

@@ -287,7 +287,7 @@ const classic = ({ route }) => {
               },300)
           }
           }>
-            <Text style={[styles.buyBtnTxt,{color:theme.headingTx}]}>Buy Now</Text>
+            <Text style={[styles.buyBtnTxt,{color:"#fff"}]}>Buy Now</Text>
           </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -989,6 +989,7 @@ const classic = ({ route }) => {
                   } else {
                     setfianl_modal_error(false);
                     setshowTx(true);
+                    navigation.navigate("StellarTransactions")
                   }
                 }}
               >

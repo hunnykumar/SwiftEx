@@ -33,7 +33,7 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
           index === self.findIndex((t) => (
             t.hash === tx.hash && t.chain === tx.chain
           ))
-        );
+        ).reverse();
         setTransactions(uniqueTransactions);
       }
     } catch (error) {
@@ -105,7 +105,11 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
       setshowTxHash([{chain:chain,hash:hash}])
       setshowTx(true);
     } else {
-      navigation.navigate("TxDetail", { transactionPath: chain === "ETH" ? "https://etherscan.io/tx/" + hash : "https://bscscan.com/tx/" + hash })
+      if(chain === "SRB"){
+        navigation.navigate("TxDetail", { transactionPath: "https://stellar.expert/explorer/public/tx/" + hash})
+      }else{
+        navigation.navigate("TxDetail", { transactionPath: chain === "ETH" ? "https://etherscan.io/tx/" + hash : "https://bscscan.com/tx/" + hash })
+      }
     }
   }
 

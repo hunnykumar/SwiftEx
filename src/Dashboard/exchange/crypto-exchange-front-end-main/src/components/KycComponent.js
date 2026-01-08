@@ -429,13 +429,13 @@ const KycComponent = ({ route }) => {
                 ]}
                 onPress={()=>{setoperationType("BUY")}}
               >
-                <Text style={[styles.pairNameText,{color:operationType==="BUY"?theme.inactiveTx:theme.headingTx}]}>Buy</Text>
+                <Text style={[styles.pairNameText,{color:operationType==="BUY"?"#fff":theme.headingTx}]}>Buy</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.pairNameCon, { backgroundColor: operationType==="SELL"?"#4052D6":theme.cardBg,width: getPairButtonWidth() }]}
                 onPress={()=>{setoperationType("SELL")}}
               >
-                <Text style={[styles.pairNameText,{color:operationType==="SELL"?theme.inactiveTx:theme.headingTx}]}>Sell</Text>
+                <Text style={[styles.pairNameText,{color:operationType==="SELL"?"#fff":theme.headingTx}]}>Sell</Text>
               </TouchableOpacity>
             </View>
 
