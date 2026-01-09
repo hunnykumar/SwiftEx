@@ -217,7 +217,7 @@ const TransactionPinModal = ({
               setLoader(false);
               setLoading(false);
               console.log(err);
-              alert("error","Something went wrong...")
+              alert("error",err.message||"Something went wrong...")
             }
       
          if (res.txHash) {

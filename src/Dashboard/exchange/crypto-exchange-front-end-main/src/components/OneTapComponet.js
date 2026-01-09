@@ -195,7 +195,7 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
       // Send transaction
       const preInfo = await proxyRequest("/v1/eth/transaction/prepare", PPOST, { unsignedTx: unsigned, walletAddress: wallet.address });
       if (preInfo.err) {
-        CustomInfoProvider.show("error", "OneTap Faild", "something went wrong.");
+        CustomInfoProvider.show("error", "OneTap Faild", preInfo.err.message||"something went wrong.");
       }
       console.log("Send transaction--- ", preInfo);
       if (preInfo?.err?.status) {
@@ -214,7 +214,7 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
       const signedTx = await wallet.signTransaction(upgradedTx);
       const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, { signedTx: signedTx });
       if (respoExe.err) {
-        CustomInfoProvider.show("error", "OneTap Faild to brodcast", "something went wrong.");
+        CustomInfoProvider.show("error", "OneTap Faild to brodcast", respoExe.err.message||"something went wrong.");
       }
       if (respoExe?.res?.txHash) {
         handleStepUpdate("USDT→USDC", "done")

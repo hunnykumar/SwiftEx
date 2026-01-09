@@ -366,42 +366,54 @@ const classic = ({ route }) => {
       console.log("perpare:---:payload", payload)
       const respo = await proxyRequest("/v1/eth/swap-transaction/prepare", PPOST, payload);
       console.log("perpare:", respo)
-      if (respo.err?.status === 500) {
+      if (respo.err?.status) {
         return {
           status: false,
-          message: "Swap failed",
-          details: "faild to swap"
+          message: respo.err.message||"Swap failed",
+          details: respo.err.message||"faild to swap"
         };
       }
       const rawTxs = respo.res;
       const signedTxs = [];
 
-      for (const tx of rawTxs) {
+     for (let i = 0; i < rawTxs.length; i++) {
+        const tx = rawTxs[i];
         if (tx.value) tx.value = BigInt(tx.value);
         if (tx.gasLimit) tx.gasLimit = BigInt(tx.gasLimit);
         if (tx.maxFeePerGas) tx.maxFeePerGas = BigInt(tx.maxFeePerGas);
         if (tx.maxPriorityFeePerGas) tx.maxPriorityFeePerGas = BigInt(tx.maxPriorityFeePerGas);
-        const signedTx = await wallet.signTransaction(tx);
-        signedTxs.push(signedTx);
+        if (tx.chainId) tx.chainId = BigInt(tx.chainId);
+        if (tx.nonce) tx.nonce = BigInt(tx.nonce);
+
+        console.log(`Signing transaction ${i + 1}/${rawTxs.length}:`, tx);
+
+        try {
+          const signedTx = await wallet.signTransaction(tx);
+          signedTxs.push(signedTx);
+          console.log(`Transaction ${i + 1} signed successfully`);
+        } catch (signError) {
+          console.error(`Failed to sign transaction ${i + 1}:`, signError);
+          return {
+            status: false,
+            message: "Transaction signing failed",
+            details: signError.message || "User rejected transaction"
+          };
+        }
       }
+       console.log("All transactions signed. Broadcasting...");
       const { res, err } = await proxyRequest("/v1/eth/swap-transaction/execute", PPOST, { txs: signedTxs });
       console.log("=====execute-----", res)
-      if (err?.status === 500) {
+      if (err?.status) {
         return {
           status: false,
-          message: "Swap failed",
-          details: "faild to swap"
+          message: err.message||"Swap failed",
+          details: err.message||"faild to swap"
         };
-      } if (res?.[0]?.receipt.status === 1) {
+      } if (res?.[0]?.txResponse?.hash) {
         console.log("=====execute0-----", res)
         return {
           status: true,
-          message: "Swap completed successfully",
-          inputAmount: `${amount} ETH`,
-          transactions: {
-            approve: res?.[0]?.receipt.hash
-          },
-          swap: res?.[1]?.receipt.hash,
+          message: "Swap completed successfully"
         }
       }
     } catch (error) {
@@ -481,7 +493,7 @@ const classic = ({ route }) => {
   const collectNonDefaultTokenQuotes = async (tokenIn, tokenOut, amountIn, type) => {
     const { res, err } = await proxyRequest(`/v1/${type}/swap-quote`, PPOST, { tokenIn: tokenIn, tokenOut: tokenOut, amount: amountIn });
     console.log(res, err)
-    if (err?.status === 500) {
+    if (err?.status) {
       setgetInfo(false);
       setresQuotes(null);
       setnonDirectQoutes(null);
@@ -541,7 +553,7 @@ const classic = ({ route }) => {
           setresQuotes(null);
           CustomInfoProvider.show("Info", result?.message === "Amount must be greater than zero"
             ? "Oops! You need to enter at least 0.01."
-            : "An error occurred. Please try again later.");
+            : result.message||"An error occurred. Please try again later.");
         }
       })
       .catch((error) => {

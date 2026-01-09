@@ -19,9 +19,9 @@ const getCUSTOMSwapQuote = async (tokenIn,amountIn, tokenName,tokenOut="0xdAC17F
 
 
  const { res, err } = await proxyRequest("/v1/eth/swap-quote", PPOST, { tokenIn: tokens[0], tokenOut: tokens[1], amount: amountIn });
-    if (err?.status === 500) {
+    if (err?.status) {
         console.error(`Failed to get swap quote: ${err}`);
-        return { status: false, error: err };
+        return { status: false, error: err.message };
     }
     else {
       const formattedAmountOut = res.outputAmount; // Assuming USDT has 6 decimals

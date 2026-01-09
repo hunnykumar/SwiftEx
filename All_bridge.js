@@ -271,7 +271,7 @@ async function sendEvmRawTransaction(privateKey, rawTransaction) {
     }
     if (respoExe?.err) {
       console.log("Transaction Failed", respoExe);
-      return { res: respoExe.err, status: false};
+      return { res: respoExe.err.message, status: false};
     }
   } catch (error) {
     console.error("Error sending transaction:", error);

@@ -26,7 +26,7 @@ const sendEth = async (
   const { res, err } = await proxyRequest(`/v1/eth/wallet-address/${walletPrivateKey.address}/info`, PGET);
    if(err)
    {
-    alert("error","Something went wrong...")
+    alert("error",err.message||"Something went wrong...")
    }
 
   let fee = ethers.utils.formatEther(res.gasFeeData.maxFeePerGas)
@@ -75,7 +75,7 @@ const sendBNB = async (
   const { res, err } = await proxyRequest(`/v1/bsc/wallet-address/${walletPrivateKey.address}/info`, PGET);
   if(err)
   {
-   alert("error","Something went wrong...")
+   alert("error",err.message||"Something went wrong...")
   }  
   let fee = ethers.utils.formatEther(res.gasFeeData.gasPrice)
 

@@ -84,7 +84,7 @@ const TokenSend = ({ route }) => {
         }
       );
       if (err) {
-      CustomInfoProvider.show("error", "Transaction failed try again.");
+      CustomInfoProvider.show("error",err.message|| "Transaction failed try again.");
       }
       if (!res) {
       CustomInfoProvider.show("error", "Transaction failed try again.");
@@ -108,7 +108,7 @@ const TokenSend = ({ route }) => {
       );
       console.log("Broadcast response:", respoExe);
       if (respoExe?.err) {
-        CustomInfoProvider.show("error", "Transaction failed try again.");
+        CustomInfoProvider.show("error", respoExe.err.message||"Transaction failed try again.");
       }
       if (respoExe?.res?.txHash) {
         CustomInfoProvider.show("Info", "Transaction successful!");
@@ -141,7 +141,7 @@ const TokenSend = ({ route }) => {
         const data = tokenInterface.encodeFunctionData("transfer", [address, formattedAmount]);
       const preInfo = await proxyRequest(`/v1/eth/wallet-address/${wallet.address}/info`, PGET);
       if (preInfo.err) {
-        alert("error", "Something went wrong...")
+        alert("error", preInfo.err.message||"Something went wrong...")
       }
       const upgradedTx = {
         to: tokenAddress,
@@ -160,7 +160,7 @@ const TokenSend = ({ route }) => {
         alert("success", `Transaction successful!`);
         navigation.navigate("Transactions");
       }else{
-        CustomInfoProvider.show("Error", "Transaction failed. Check logs.");
+        CustomInfoProvider.show("Error", respoExe.err.message||"Transaction failed. Check logs.");
       }
     } catch (error) {
       console.error("Transaction Error:", error);

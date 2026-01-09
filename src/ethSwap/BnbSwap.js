@@ -72,8 +72,8 @@ const initializeWallet = async () => {
 const updateBalances = async (address) => {
   try {
     const {res,err} = await proxyRequest(`/v1/bsc/${address}/token/${toToken.address}/balance`, PGET);
-    if (err?.status === 500) {
-     CustomInfoProvider.show("Balance fetch","somthing went wrong...")
+    if (err?.status) {
+     CustomInfoProvider.show("Balance fetch",err.message||"somthing went wrong...")
     }
     const tokenBal=await ethers.utils.formatEther(res?.tokenBalance);
     const walletBal=await ethers.utils.formatEther(res?.walletBalance);
@@ -93,7 +93,7 @@ const getQuote = async (inputAmount) => {
     const {res,err} = await proxyRequest("/v1/bsc/swap-quote", PPOST, {tokenIn:fromToken,tokenOut:toToken,amount:inputAmount}
     );
     console.log(res)
-    if (err?.status === 500) {
+    if (err?.status) {
       setEstimatedUsdt('0');
       setQuoteLoading(false);
     }
@@ -119,8 +119,8 @@ const executeSwap = async () => {
     
     const {res,err} = await proxyRequest("/v1/bsc/swap-transaction/prepare", PPOST, {address:userAddress,bnbAmount:bnbAmount,tokenIn:fromToken,tokenOut:toToken});
     console.log(res)
-    if (err?.status === 500) {
-      CustomInfoProvider.show('error', 'Swap failed');
+    if (err?.status) {
+      CustomInfoProvider.show('error', err.message||'Swap failed');
     }
     const wallet = new ethers.Wallet(state?.wallet?.privateKey);
     const txObj = {
@@ -135,8 +135,8 @@ const executeSwap = async () => {
     
     const signedTxs = await wallet.signTransaction(txObj);
     const respo = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {signedTx:signedTxs});
-    if (respo?.err?.status === 500) {
-      CustomInfoProvider.show('error', 'Swap failed');
+    if (respo?.err?.status) {
+      CustomInfoProvider.show('error', respo.err.message||'Swap failed');
     }
     console.log("respo",respo?.res?.swapInfo)
     if(respo?.res?.txHash)

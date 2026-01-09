@@ -71,7 +71,7 @@ const ConfirmTransaction = (props) => {
        const { res, err } = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {signedTx:rawTransaction});
          if(err)
          {
-          alert("error","Something went wrong...")
+          alert("error",err.message||"Something went wrong...")
           console.log(err);
           setLoading(false);
           setDisable(false);
@@ -131,7 +131,7 @@ const ConfirmTransaction = (props) => {
         setDisable(false);
         setLoading(false);
         console.log(err);
-        alert("error","Something went wrong...")
+        alert("error",err.message||"Something went wrong...")
       }
 
    if (res.txHash) {
