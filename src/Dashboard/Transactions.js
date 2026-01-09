@@ -22,6 +22,7 @@ import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native'
 import StellarTransactionHistory from './exchange/crypto-exchange-front-end-main/src/pages/StellarTransactionHistory';
 import { PGET, PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';
 import CustomInfoProvider from './exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
+import ShortTermStorage from '../utilities/ShortTermStorage';
 
 const ThemeContext = React.createContext();
 
@@ -40,7 +41,7 @@ const themes = {
     divider: '#E0E0E0',
     success: '#4ECB71',
     error: '#FF6B6B',
-    warning: '#FFCC00',
+    warning: '#ffc400c5',
     cardShadow: 'rgba(0, 0, 0, 0.05)',
   },
   dark: {
@@ -81,18 +82,18 @@ const ThemeProvider = ({ children }) => {
 const useTheme = () => useContext(ThemeContext);
 
 const formatNumber = (num) => {
-    if (num === 0) return "0";
-    if (Math.abs(num) < 0.0001 || Math.abs(num) > 1000000) {
-      return num.toExponential(2);
-    }
-    return num.toLocaleString(undefined, { maximumSignificantDigits: 6 });
+  if (num === 0) return "0";
+  if (Math.abs(num) < 0.0001 || Math.abs(num) > 1000000) {
+    return num.toExponential(2);
+  }
+  return num.toLocaleString(undefined, { maximumSignificantDigits: 6 });
 };
 
 const TransactionHistory = () => {
-  const backData=useRoute();
-  const [selectedTab,setselectedTab]=useState(null);
-  const isFocusedTab=useIsFocused();
-  const navigation=useNavigation();
+  const backData = useRoute();
+  const [selectedTab, setselectedTab] = useState(null);
+  const isFocusedTab = useIsFocused();
+  const navigation = useNavigation();
   const { theme, colors } = useTheme();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,20 +101,21 @@ const TransactionHistory = () => {
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const state = useSelector((state) => state);
-  const walletAddress = state?.wallet?.address;;
+  const walletAddress = state?.wallet?.address;
   const [activeChainNetwork, setactiveChainNetwork] = useState('ETH');
   const [selectChainOpen, setSelectChainOpen] = useState(false);
-  const supportedChains=[
-    { id: 1, name: "Ethereum", imgUrl: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",value:"ETH" },
-    { id: 2, name: "Binance", imgUrl: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png",value:"BSC" },
-    { id: 2, name: "Stellar", imgUrl: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq",value:"STR" },
+
+  const supportedChains = [
+    { id: 1, name: "Ethereum", imgUrl: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png", value: "ETH" },
+    { id: 2, name: "Binance", imgUrl: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png", value: "BSC" },
+    { id: 3, name: "Stellar", imgUrl: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq", value: "STR" },
   ];
 
-  useEffect(()=>{
+  useEffect(() => {
     setselectedTab(backData?.params?.txType || "ETH");
     setactiveChainNetwork("ETH");
     setSelectChainOpen(false);
-  },[isFocusedTab])
+  }, [isFocusedTab]);
 
   useEffect(() => {
     chainManage();
@@ -127,7 +129,7 @@ const TransactionHistory = () => {
     filterTransactions();
   }, [activeTab, transactions]);
 
-  const chainManage=()=>{
+  const chainManage = () => {
     if (activeChainNetwork === "ETH") {
       fetchAllTransactions();
     }
@@ -135,22 +137,69 @@ const TransactionHistory = () => {
       fetchBNBAllTransactions();
     }
     if (activeChainNetwork === "STR") {
-        setselectedTab("STR")
+      setselectedTab("STR");
     }
-  }
+  };
 
   const fetchAllTransactions = async () => {
     try {
       setLoading(true);
-       const {res,err} = await proxyRequest(`/v1/transaction-history/${walletAddress}/eth`, PGET);
+      const { res, err } = await proxyRequest(`/v1/transaction-history/${walletAddress}/eth`, PGET);
+
       if (err?.status) {
-        CustomInfoProvider.show("Info","Oops! Something went wrong while fetching wallet transaction history.");
+        CustomInfoProvider.show("Info", "Oops! Something went wrong while fetching wallet transaction history.");
         console.log('Error fetching transactions:', err);
         setLoading(false);
         setRefreshing(false);
+        return;
       }
-      if(res){
-        setTransactions(res);
+
+      if (res) {
+        // Get pending transactions from ShortTermStorage
+        const pendingResponse = await ShortTermStorage.getWalletTx(walletAddress);
+        const pendingTxs = pendingResponse.status ? pendingResponse.data : [];
+
+        // Create a Set of hashes from API response for quick lookup
+        const confirmedHashes = new Set(res.map(tx => tx.hash?.toLowerCase()));
+
+        // Remove confirmed transactions from ShortTermStorage
+        for (const pendingTx of pendingTxs) {
+          if (confirmedHashes.has(pendingTx.hash?.toLowerCase())) {
+            await ShortTermStorage.removeTxByHash(
+              walletAddress,
+              pendingTx.hash,
+              pendingTx.chain
+            );
+          }
+        }
+
+        // Get updated pending transactions after cleanup
+        const updatedPendingResponse = await ShortTermStorage.getWalletTx(walletAddress);
+        const updatedPendingTxs = updatedPendingResponse.status ? updatedPendingResponse.data : [];
+
+        // Filter pending txs for ETH chain only
+        const ethPendingTxs = updatedPendingTxs.filter(
+          tx => tx.chain === 'ETH' && tx.status === 'Pending'
+        );
+
+        // Transform pending txs to match the transaction format
+        const formattedPendingTxs = ethPendingTxs.map(tx => ({
+          hash: tx.hash,
+          from: tx.typeTx === 'Send' ? walletAddress : 'Unknown',
+          to: tx.typeTx === 'Receive' ? walletAddress : 'Unknown',
+          value: 0, // Amount store karo ShortTermStorage me agar chahiye
+          asset: 'ETH',
+          isPending: true,
+          timestamp: tx.createdAt,
+          typeTx: tx.typeTx,
+          chain: tx.chain,
+          formattedAmount: 0,
+        }));
+
+        // Combine pending and confirmed transactions (pending first)
+        const combinedTxs = [...formattedPendingTxs, ...res];
+
+        setTransactions(combinedTxs);
         setLoading(false);
         setRefreshing(false);
       }
@@ -164,15 +213,62 @@ const TransactionHistory = () => {
   const fetchBNBAllTransactions = async () => {
     try {
       setLoading(true);
-       const {res,err} = await proxyRequest(`/v1/transaction-history/${walletAddress}/bsc`, PGET);
-       if (err?.status) {
-        CustomInfoProvider.show("Info","Oops! Something went wrong while fetching wallet transaction history.");
+      const { res, err } = await proxyRequest(`/v1/transaction-history/${walletAddress}/bsc`, PGET);
+
+      if (err?.status) {
+        CustomInfoProvider.show("Info", "Oops! Something went wrong while fetching wallet transaction history.");
         console.log('Error fetching transactions:', err);
         setLoading(false);
         setRefreshing(false);
+        return;
       }
+
       if (res) {
-        setTransactions(res);
+        // Get pending transactions from ShortTermStorage
+        const pendingResponse = await ShortTermStorage.getWalletTx(walletAddress);
+        const pendingTxs = pendingResponse.status ? pendingResponse.data : [];
+
+        // Create a Set of hashes from API response
+        const confirmedHashes = new Set(res.map(tx => tx.hash?.toLowerCase()));
+
+        // Remove confirmed transactions from ShortTermStorage
+        for (const pendingTx of pendingTxs) {
+          if (confirmedHashes.has(pendingTx.hash?.toLowerCase())) {
+            await ShortTermStorage.removeTxByHash(
+              walletAddress,
+              pendingTx.hash,
+              pendingTx.chain
+            );
+          }
+        }
+
+        // Get updated pending transactions
+        const updatedPendingResponse = await ShortTermStorage.getWalletTx(walletAddress);
+        const updatedPendingTxs = updatedPendingResponse.status ? updatedPendingResponse.data : [];
+
+        // Filter pending txs for BSC chain only
+        const bscPendingTxs = updatedPendingTxs.filter(
+          tx => tx.chain === 'BSC' && tx.status === 'Pending'
+        );
+
+        // Transform pending txs to match the transaction format
+        const formattedPendingTxs = bscPendingTxs.map(tx => ({
+          hash: tx.hash,
+          from: tx.typeTx === 'Send' ? walletAddress : 'Unknown',
+          to: tx.typeTx === 'Receive' ? walletAddress : 'Unknown',
+          value: 0,
+          asset: 'BNB',
+          isPending: true,
+          timestamp: tx.createdAt,
+          typeTx: tx.typeTx,
+          chain: tx.chain,
+          formattedAmount: 0,
+        }));
+
+        // Combine transactions (pending first)
+        const combinedTxs = [...formattedPendingTxs, ...res];
+
+        setTransactions(combinedTxs);
         setLoading(false);
         setRefreshing(false);
       }
@@ -184,6 +280,11 @@ const TransactionHistory = () => {
   };
 
   const getTransactionType = (tx) => {
+    // Handle pending transactions with typeTx
+    if (tx.isPending && tx.typeTx) {
+      return tx.typeTx;
+    }
+
     if (tx.from?.toLowerCase() === walletAddress.toLowerCase()) return 'Send';
     if (tx.to?.toLowerCase() === walletAddress.toLowerCase()) return 'Receive';
     return 'UNKNOWN';
@@ -237,15 +338,15 @@ const TransactionHistory = () => {
   const renderChianList = ({ item }) => (
     <TouchableOpacity
       style={styles.chainItem}
-      onPress={() => { setactiveChainNetwork(item.value),setSelectChainOpen(false) }}
+      onPress={() => { setactiveChainNetwork(item.value), setSelectChainOpen(false) }}
     >
       <Image
         source={{ uri: item.imgUrl }}
         style={styles.chainIcon}
       />
       <View style={styles.chainInfo}>
-        <Text style={[styles.chainSymbol,{color:colors.textPrimary}]}>{item.value}</Text>
-        <Text style={[styles.chainName,{color:colors.textSecondary}]}>{item.name}</Text>
+        <Text style={[styles.chainSymbol, { color: colors.textPrimary }]}>{item.value}</Text>
+        <Text style={[styles.chainName, { color: colors.textSecondary }]}>{item.name}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -253,23 +354,47 @@ const TransactionHistory = () => {
   const renderItem = ({ item }) => {
     const txType = getTransactionType(item);
     const statusColor = txType === 'Send' ? colors.error : colors.success;
+    const isPending = item.isPending === true;
 
     return (
       <TouchableOpacity style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-        <TouchableOpacity style={[styles.card, { backgroundColor: colors.cardBackground }]}  onPress={()=>{navigation.navigate("TxDetail",{transactionPath:activeChainNetwork==="ETH"?"https://etherscan.io/tx/"+item.hash:"https://bscscan.com/tx/"+item.hash})}}>
+        <TouchableOpacity
+          style={[
+            styles.card,
+            { backgroundColor: colors.cardBackground },
+          ]}
+          onPress={() => {
+            navigation.navigate("TxDetail", {
+              transactionPath: activeChainNetwork === "ETH"
+                ? "https://etherscan.io/tx/" + item.hash
+                : "https://bscscan.com/tx/" + item.hash
+            })
+          }}
+        >
           <View style={styles.leftSection}>
             <View style={[styles.iconContainer, { backgroundColor: colors.iconContainer }]}>
-              <Text style={{ fontSize: 25, fontWeight: "500", color: '#3b82f6' }}>{item?.asset?.charAt(0)?.toLocaleUpperCase() || "E"}</Text>
+                <Text style={{ fontSize: 25, fontWeight: "500", color: '#3b82f6' }}>
+                  {item?.asset?.charAt(0)?.toLocaleUpperCase() || "E"}
+                </Text>
             </View>
           </View>
 
           <View style={styles.rightSection}>
             <View style={styles.headerRow}>
               <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-                {txType === 'Send' ? `To: XXXXX${item.to.slice(-10)}` : `From: XXXXX${item.from.slice(-10)}`}
+                {isPending?
+                  `XXXXX${item?.hash?.slice(-13)}`
+                :txType === 'Send'
+                  ? `To: XXXXX${item.to?.slice(-10) || 'Unknown'}`
+                  : `From: XXXXX${item.from?.slice(-10) || 'Unknown'}`}
               </Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                <Text style={styles.statusText}>{txType}</Text>
+              <View style={[
+                styles.statusBadge,
+                { backgroundColor: isPending ? colors.warning : statusColor }
+              ]}>
+                <Text style={styles.statusText}>
+                  {isPending ? 'Pending' : txType}
+                </Text>
               </View>
             </View>
 
@@ -277,9 +402,13 @@ const TransactionHistory = () => {
               <Text style={[styles.assetName, { color: colors.textPrimary }]}>
                 {item.asset || 'ETH'}
               </Text>
-              <Text numberOfLines={1} style={[styles.amountText, { color: statusColor }]}>
-                {txType === 'Send' ? '-' : '+'}
-                {formatNumber(item.value ||item?.formattedAmount || 0,item?.rawContract?.decimal)}
+              <Text numberOfLines={1} style={[
+                styles.amountText,
+                { color: isPending ? colors.textSecondary : statusColor }
+              ]}>
+                {isPending ? '' : (
+                  `${txType === 'Send' ? '-' : '+'}${formatNumber(item.value || item?.formattedAmount || 0)}`
+                )}
               </Text>
             </View>
           </View>
@@ -291,10 +420,15 @@ const TransactionHistory = () => {
   const HeaderComponent = () => (
     <>
       <View style={styles.tabContainer}>
-      <TouchableOpacity style={[styles.activeChainButton,{backgroundColor:colors.cardBackground}]} onPress={()=>{setSelectChainOpen(true)}}>
-        <Text style={[styles.activeChainBtnTxt,{color:colors.textPrimary}]}>{activeChainNetwork}</Text>
-        <Icon name="menu-down" size={19} color={colors.textPrimary} />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.activeChainButton, { backgroundColor: colors.cardBackground }]}
+          onPress={() => { setSelectChainOpen(true) }}
+        >
+          <Text style={[styles.activeChainBtnTxt, { color: colors.textPrimary }]}>
+            {activeChainNetwork}
+          </Text>
+          <Icon name="menu-down" size={19} color={colors.textPrimary} />
+        </TouchableOpacity>
         <TabButton title="All" isActive={activeTab === 'All'} />
         <TabButton title="Send" isActive={activeTab === 'Send'} />
         <TabButton title="Receive" isActive={activeTab === 'Receive'} />
@@ -304,57 +438,83 @@ const TransactionHistory = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-
-      {selectedTab==="ETH"||selectedTab==="BSC"?<>
-      <Wallet_screen_header title="Transactions" onLeftIconPress={() => navigation.goBack()} />
-      <HeaderComponent />
-      {loading && !refreshing ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={[styles.loaderText, { color: colors.textSecondary }]}>
-            Loading transactions...
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredTransactions}
-          keyExtractor={(item, index) => `${item.hash || ''}-${index}`}
-          renderItem={renderItem}
-          contentContainerStyle={[
-            styles.listContent,
-            filteredTransactions.length === 0 && styles.emptyList
-          ]}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={EmptyListComponent}
-          refreshControl={
-            <RefreshControl
+      {selectedTab === "ETH" || selectedTab === "BSC" ? (
+        <>
+          <Wallet_screen_header title="Transactions" onLeftIconPress={() => navigation.goBack()} />
+          <HeaderComponent />
+          {loading && !refreshing ? (
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color={colors.accent} />
+              <Text style={[styles.loaderText, { color: colors.textSecondary }]}>
+                Loading transactions...
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredTransactions}
+              keyExtractor={(item, index) => `${item.hash || ''}-${index}`}
+              renderItem={renderItem}
+              contentContainerStyle={[
+                styles.listContent,
+                filteredTransactions.length === 0 && styles.emptyList
+              ]}
+              showsVerticalScrollIndicator={false}
               ListEmptyComponent={EmptyListComponent}
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={["#3b82f6"]}
-              tintColor="#3b82f6"
-              title="Updating..."
-              titleColor="#3b82f6"
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={["#3b82f6"]}
+                  tintColor="#3b82f6"
+                  title="Updating..."
+                  titleColor="#3b82f6"
+                />
+              }
             />
-          }
-        />
+          )}
+        </>
+      ) : (
+        <>
+          <TransactionForStellar
+            title="Transactions"
+            onLeftIconPress={() => navigation.goBack()}
+            activeBackgroundColor={state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C"}
+            activeTxColor={state.THEME.THEME === false ? "#1B1B1C" : "#FFFFFF"}
+          />
+          <StellarTransactionHistory
+            publicKey={state.STELLAR_PUBLICK_KEY}
+            isDarkMode={state.THEME.THEME}
+          />
+        </>
       )}
-      </>: 
-      <>
-      <TransactionForStellar title="Transactions" onLeftIconPress={() => navigation.goBack()} activeBackgroundColor={state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C"} activeTxColor={state.THEME.THEME === false ? "#1B1B1C":"#FFFFFF"}/>
-      <StellarTransactionHistory publicKey={state.STELLAR_PUBLICK_KEY} isDarkMode={state.THEME.THEME}/>
-      </>}
-      <Modal transparent animationType="slide" visible={selectChainOpen} onRequestClose={() => { setSelectChainOpen(false) }}>
+
+      <Modal
+        transparent
+        animationType="slide"
+        visible={selectChainOpen}
+        onRequestClose={() => { setSelectChainOpen(false) }}
+      >
         <View style={styles.chainSelectionContainer}>
-          <View style={[styles.chainSelectionSubContainer, { backgroundColor: state.THEME.THEME === false ? "#fff" : "#18181C", height: "37%" }]}>
+          <View style={[
+            styles.chainSelectionSubContainer,
+            { backgroundColor: state.THEME.THEME === false ? "#fff" : "#18181C", height: "37%" }
+          ]}>
             <View style={styles.headingCon}>
-              <Text style={[styles.chainHeading,{color:colors.textPrimary}]}>Select Chain</Text>
-              <Icon name="close-circle-outline" size={35} color={state.THEME.THEME === false ? "#080a0a" : "#fff"} style={{ alignSelf: "flex-end" }} onPress={() => { setSelectChainOpen(false) }} />
+              <Text style={[styles.chainHeading, { color: colors.textPrimary }]}>
+                Select Chain
+              </Text>
+              <Icon
+                name="close-circle-outline"
+                size={35}
+                color={state.THEME.THEME === false ? "#080a0a" : "#fff"}
+                style={{ alignSelf: "flex-end" }}
+                onPress={() => { setSelectChainOpen(false) }}
+              />
             </View>
             <FlatList
               data={supportedChains}
               renderItem={renderChianList}
-              keyExtractor={item => item.id}
+              keyExtractor={item => item.id.toString()}
               showsVerticalScrollIndicator={false}
             />
           </View>
@@ -418,7 +578,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 12,
     overflow: 'hidden',
-    alignContent:"center"
+    alignContent: "center"
   },
   leftSection: {
     width: 70,
@@ -435,9 +595,9 @@ const styles = StyleSheet.create({
   },
   rightSection: {
     flex: 1,
-    alignItems:"stretch",
-    justifyContent:"center",
-    paddingRight:14
+    alignItems: "stretch",
+    justifyContent: "center",
+    paddingRight: 14
   },
   headerRow: {
     flexDirection: 'row',
@@ -459,11 +619,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   statusBadge: {
-    width:69,
+    width: 75,
     paddingHorizontal: 11,
     paddingVertical: 6,
     borderRadius: 15,
-    alignItems:"center"
+    alignItems: "center"
   },
   statusText: {
     color: 'white',
@@ -473,8 +633,8 @@ const styles = StyleSheet.create({
   amountText: {
     fontSize: 15,
     fontWeight: 'bold',
-    textAlign:"right",
-    maxWidth:"35%"
+    textAlign: "right",
+    maxWidth: "35%"
   },
   addressRow: {
     marginTop: 4,
@@ -508,28 +668,28 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
   },
   activeChainButton: {
-    flexDirection:"row",
+    flexDirection: "row",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 25,
     minWidth: 90,
-    justifyContent:"center",
+    justifyContent: "center",
     alignItems: 'center',
   },
-  activeChainBtnTxt:{
-    textAlign:"center",
-     fontWeight:"600"
+  activeChainBtnTxt: {
+    textAlign: "center",
+    fontWeight: "600"
   },
   chainSelectionContainer: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.1)',
     justifyContent: 'flex-end'
   },
-  chainSelectionSubContainer:{
-    bottom:0,
-    borderTopLeftRadius:30,
-    borderTopRightRadius:30,
-    padding:10,
+  chainSelectionSubContainer: {
+    bottom: 0,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 10,
   },
   chainItem: {
     flexDirection: 'row',
@@ -537,7 +697,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
-    paddingLeft:10
+    paddingLeft: 10
   },
   chainIcon: {
     width: 35,
@@ -558,13 +718,23 @@ const styles = StyleSheet.create({
   chainHeading: {
     fontSize: 18,
     fontWeight: '500',
-    marginLeft:10,
+    marginLeft: 10,
   },
-  headingCon:{
-    flexDirection:"row",
-    justifyContent:"space-between",
-    alignItems:"center"
-  }
+  headingCon: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  pendingInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  pendingInfoText: {
+    fontSize: 11,
+    marginLeft: 4,
+    fontStyle: 'italic',
+  },
 });
 
 const Transactions = () => (

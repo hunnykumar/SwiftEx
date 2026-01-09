@@ -37,6 +37,7 @@ import CustomInfoProvider from "./CustomInfoProvider";
 import QRScannerComponent from "../../../../Modals/QRScannerComponent";
 import TokenTxDetails from "./TokenTxDetails";
 import LinearGradient from "react-native-linear-gradient";
+import ShortTermStorage from "../../../../../utilities/ShortTermStorage";
 const TokenSend = ({ route }) => {
   const toast = useToast();
   const FOCUSED = useIsFocused()
@@ -158,6 +159,7 @@ const TokenSend = ({ route }) => {
       console.log("respoExe:00---", respoExe)
       if (respoExe?.res?.txHash) {
         alert("success", `Transaction successful!`);
+        await ShortTermStorage.saveTx(state && state.wallet && state.wallet.address,{chain: "ETH",typeTx: "Token Send",status: "Pending",hash: respoExe?.res?.txHash});
         navigation.navigate("Transactions");
       }else{
         CustomInfoProvider.show("Error", respoExe.err.message||"Transaction failed. Check logs.");

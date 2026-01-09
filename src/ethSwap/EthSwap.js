@@ -35,6 +35,7 @@ import { PGET, PPOST, proxyRequest } from '../Dashboard/exchange/crypto-exchange
 import EtherTokens from "../Dashboard/tokens/tokenList.json";
 import BNBTokens from "../Dashboard/tokens/pancakeSwap/PancakeList.json";
 import { getTokenBalancesUsingAddress, getWalletBalance } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/utils/getWalletInfo/EtherWalletService';
+import ShortTermStorage from '../utilities/ShortTermStorage';
 
 // Token List
 const TOKENS = [
@@ -182,7 +183,7 @@ const EthSwap = () => {
       if (currentNetwork === 0) {
         setallblnLoading(true);
         setFromToken(EtherTokens[0])
-        setToToken(EtherTokens[1])
+        setToToken(EtherTokens[2])
         await getTokesBalance(EtherTokens[0].address,EtherTokens[1].address)
         if (Number(amount)===0) {
           if (!amount) {
@@ -570,8 +571,19 @@ const EthSwap = () => {
           message: err.message||"Swap failed",
           details: err.message||"faild to swap"
         };
-      } if (res?.[0]?.txResponse?.hash) {
-        console.log("=====execute0-----", res)
+      } if (Array.isArray(res) && res.length > 0) {
+          console.log("=====execute0-----", res)
+          const validTxs = res.filter(
+            item => item?.txResponse?.hash
+          );
+          for (const tx of validTxs) {
+            await ShortTermStorage.saveTx(state && state.wallet && state.wallet.address, {
+              chain: "ETH",
+              typeTx: "Swap",
+              status: "Pending",
+              hash: tx.txResponse.hash,
+            });
+          }
         return {
           status: true,
           message: "Swap completed successfully",

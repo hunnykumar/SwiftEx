@@ -30,6 +30,7 @@ import { EthereumSecret } from "./constants";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { PPOST, proxyRequest } from "./exchange/crypto-exchange-front-end-main/src/api";
 import { error } from "console";
+import ShortTermStorage from "../utilities/ShortTermStorage";
 const { Alchemy, Network, Wallet, Utils } = require("alchemy-sdk");
 
 var ethers = require("ethers");
@@ -80,6 +81,7 @@ const ConfirmTransaction = (props) => {
       if (res.txHash) {
         try {
           ShowToast(toast, "Transaction Successful");
+          await ShortTermStorage.saveTx(state && state.wallet && state.wallet.address,{chain: "ETH",typeTx: "Send",status: "Pending",hash: res?.txHash});
           setLoading(false);
           setDisable(false);
           Navigate();
