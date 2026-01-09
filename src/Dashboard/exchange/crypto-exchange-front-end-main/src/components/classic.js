@@ -310,15 +310,66 @@ const classic = ({ route }) => {
           "ETH",
           payFeeType
         );
-        console.log("respoExe-=-=-=",respoExe);
+
+        console.log("Bridge swap response:", respoExe);
+
         if (respoExe?.status_task) {
+          const { res } = respoExe;
+          const txHashes = [];
+
+          if (res.approvalTxHash) {
+            console.log("Approval transaction:", res.approvalTxHash);
+
+            await LocalTxManager.saveTx(
+              state && state.wallet && state.wallet.address,
+              {
+                chain: "ETH",
+                hash: res.approvalTxHash,
+                status: "pending",
+                statusColor: "#eec14fff",
+                type: "approval",
+                timestamp: Date.now()
+              }
+            );
+
+            txHashes.push({
+              chain: "ETH",
+              hash: res.approvalTxHash,
+              type: "Approval"
+            });
+          }
+
+          console.log("Transfer transaction:", res.transferTxHash);
+
+          await LocalTxManager.saveTx(
+            state && state.wallet && state.wallet.address,
+            {
+              chain: "ETH",
+              hash: res.transferTxHash,
+              status: "pending",
+              statusColor: "#eec14fff",
+              type: "transfer",
+              timestamp: Date.now()
+            }
+          );
+
+          txHashes.push({
+            chain: "ETH",
+            hash: res.transferTxHash,
+            type: "Transfer"
+          });
+
           setfianl_modal_text("Transaction Successful");
-          await LocalTxManager.saveTx(state && state.wallet && state.wallet.address,{ chain: "ETH", hash: respoExe.res.transferTxHash, status:"pending",statusColor:"#eec14fff"  });
           setfianl_modal_loading(false);
           setfianl_modal_error(true);
-          setshowTxHash([{ chain: "ETH", hash: respoExe.res.transferTxHash }]);
+          setshowTxHash(txHashes);
+
         } else {
-          throw new Error("Transaction failed");
+          console.log("Transaction failed:", respoExe?.res);
+          setfianl_modal_text("Transaction Failed");
+          setfianl_modal_loading(false);
+          setfianl_modal_error(true);
+          throw new Error(respoExe?.res || "Transaction failed");
         }
       }
 
@@ -1000,7 +1051,7 @@ const classic = ({ route }) => {
                     setfianl_modal_error(false);
                   } else {
                     setfianl_modal_error(false);
-                    setshowTx(true);
+                    // setshowTx(true);
                     navigation.navigate("StellarTransactions")
                   }
                 }}

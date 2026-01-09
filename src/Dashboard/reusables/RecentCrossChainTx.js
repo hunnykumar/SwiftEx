@@ -14,6 +14,8 @@ import Icon from '../../icon';
 import { colors } from '../../Screens/ThemeColorsConfig';
 import { AllbridgeCoreSdk, nodeRpcUrlsDefault } from "@allbridge/bridge-core-sdk";
 import AllbridgeTxTrack from '../exchange/crypto-exchange-front-end-main/src/components/AllbridgeTxTrack';
+import { RPC } from '../constants';
+import Web3 from 'web3';
 
 const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
   const navigation = useNavigation();
@@ -47,11 +49,9 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
     loadTransactions();
   }, [loadTransactions]);
 
-  const refreshSingleTx = async (chainSymbol, txHash) => {
+  const refreshSingleTx = async (chainSymbol, txHash, type) => {
     try {
       setRefreshing(true);
-      const sdk = new AllbridgeCoreSdk(nodeRpcUrlsDefault);
-      const matchedTx = await sdk.getTransferStatus(chainSymbol, txHash);
 
       let updatedStatus = {
         chain: chainSymbol,
@@ -60,44 +60,97 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
         statusColor: "#eec14fff"
       };
 
-      if (matchedTx.isSuspended) {
-        updatedStatus = {
-          chain: chainSymbol,
-          hash: txHash,
-          status: "failed",
-          statusColor: "#de2727ff"
-        };
-      } else if (matchedTx.receive?.txId) {
-        const confirmed = matchedTx.receive.confirmations >= (matchedTx.receive.confirmationsNeeded || 0);
-        updatedStatus = {
-          chain: chainSymbol,
-          hash: txHash,
-          status: confirmed ? "completed" : "pending",
-          statusColor: confirmed ? "#09b317ff" : "#eec14fff"
-        };
-      } else if (matchedTx.send?.txId) {
-        updatedStatus = {
-          chain: chainSymbol,
-          hash: txHash,
-          status: "processing",
-          statusColor: "#eec14fff"
-        };
+      if (type === "Approval") {
+        const receipt = await getTxReceiptByChain(chainSymbol, txHash);
+
+        if (receipt?.status === true || receipt?.status === 1) {
+          updatedStatus = {
+            ...updatedStatus,
+            status: "completed",
+            statusColor: "#09b317ff"
+          };
+        } else if (receipt?.status === false || receipt?.status === 0) {
+          updatedStatus = {
+            ...updatedStatus,
+            status: "failed",
+            statusColor: "#de2727ff"
+          };
+        } else {
+          updatedStatus = {
+            ...updatedStatus,
+            status: "pending",
+            statusColor: "#eec14fff"
+          };
+        }
       }
+      else {
+        const sdk = new AllbridgeCoreSdk(nodeRpcUrlsDefault);
+        const matchedTx = await sdk.getTransferStatus(chainSymbol, txHash);
+
+        if (matchedTx.isSuspended) {
+          updatedStatus = {
+            ...updatedStatus,
+            status: "failed",
+            statusColor: "#de2727ff"
+          };
+        } else if (matchedTx.receive?.txId) {
+          const confirmed =
+            matchedTx.receive.confirmations >=
+            (matchedTx.receive.confirmationsNeeded || 0);
+
+          updatedStatus = {
+            ...updatedStatus,
+            status: confirmed ? "completed" : "pending",
+            statusColor: confirmed ? "#09b317ff" : "#eec14fff"
+          };
+        } else if (matchedTx.send?.txId) {
+          updatedStatus = {
+            ...updatedStatus,
+            status: "processing",
+            statusColor: "#eec14fff"
+          };
+        }
+      }
+
       await LocalTxManager.updateTxStatus(activeWalletPublicKey, updatedStatus);
-      setTransactions(prevTransactions =>
-        prevTransactions.map(tx =>
+
+      setTransactions(prev =>
+        prev.map(tx =>
           tx.hash === txHash && tx.chain === chainSymbol
             ? { ...tx, status: updatedStatus.status, statusColor: updatedStatus.statusColor }
             : tx
         )
       );
+
       setRefreshing(false);
-      return { status: updatedStatus.status, statusColor: updatedStatus.statusColor };
+      return updatedStatus;
+
     } catch (err) {
-      console.error('error in refreshing tx:', err);
+      console.error("error in refreshing tx:", err);
       setRefreshing(false);
       return { status: "pending", statusColor: "#eec14fff" };
     }
+  };
+
+  const getTxReceiptByChain = async (chainSymbol, txHash) => {
+    let rpcUrl;
+
+    switch (chainSymbol) {
+      case "ETH":
+        rpcUrl = RPC.ETHRPC;
+        break;
+
+      case "BNB":
+      case "BSC":
+        rpcUrl =  RPC.BSCRPC;
+        break;
+
+      default:
+        return null;
+    }
+
+    const web3 = new Web3(rpcUrl);
+    return await web3.eth.getTransactionReceipt(txHash);
   };
 
   const txViewManager = (status, chain, hash) => {
@@ -123,7 +176,7 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
       <View style={styles.rightSection}>
         <View style={styles.headerRow}>
           <Text style={[styles.assetName, { color: activeTheme.headingTx, marginBottom: -16 }]}>
-            Cross-Chain
+            {item?.type === "Approval" ? "Approval" : "Cross-Chain"}
           </Text>
           <View style={[styles.statusBadge, { backgroundColor: item.statusColor }]}>
             <Text style={[styles.statusText, { color: activeTheme.headingTx }]}>{item.status}</Text>
@@ -135,7 +188,7 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
               {`XXXXXXXX${item.hash.slice(-15)}`}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={async () => { await refreshSingleTx(item.chain, item.hash) }}>
+          <TouchableOpacity onPress={async () => { await refreshSingleTx(item.chain, item.hash ,item?.type) }}>
             <Icon name={"refresh-circle"} type={"materialCommunity"} size={30} color={"#3b82f6"} />
           </TouchableOpacity>
         </View>

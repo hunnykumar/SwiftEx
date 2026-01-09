@@ -187,10 +187,18 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
     amountText = operation.amount;
   } else if (operation.type === 'create_account') {
     amountText = operation.starting_balance;
-  }  else if (operation.type === 'invoke_host_function') {
-    const resBal= operation.asset_balance_changes?.find(resObj => resObj.to === userPublicKey || resObj.from === userPublicKey && resObj.type === 'transfer') || null;
-    amountText = resBal?resBal.amount:'0';
-  } else if (operation.type === 'manage_sell_offer' || operation.type === 'manage_buy_offer') {
+  } else if (operation.type === 'invoke_host_function') {
+    const transfers = operation.asset_balance_changes?.filter(
+      resObj =>
+        resObj.type === 'transfer' &&
+        (resObj.to === userPublicKey || resObj.from === userPublicKey)
+    ) || [];
+
+    amountText = transfers.length > 1
+      ? transfers[1].amount
+      : transfers[0]?.amount || '0';
+  }
+ else if (operation.type === 'manage_sell_offer' || operation.type === 'manage_buy_offer') {
     amountText = operation.amount;
   } else if (operation.type === 'buyCry'||operation.type === 'sellCry') {
     amountText = operation.amount;
@@ -448,7 +456,7 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
         
         if (walletResponse?.status && walletResponse?.data && Array.isArray(walletResponse.data)) {
           // Filter out completed transactions
-          const filteredWalletTxs = walletResponse.data.filter(tx => tx.status !== 'completed');
+          const filteredWalletTxs = walletResponse.data.filter(tx => tx.status !== 'completed' && tx.type !== 'Approval');
           
           // Remove duplicates based on hash
           const uniqueWalletTxs = [];
