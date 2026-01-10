@@ -402,20 +402,30 @@ const CrossChainTx = ({ route = "ETH" }) => {
     let balanceMap = {};
     let prioritySet = new Set();
 
-    if (Array.isArray(state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens) && state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens.length > 0) {
-        state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens.forEach(t => {
+    if (
+        Array.isArray(state?.activeWalletPortFolio?.tokens) &&
+        state.activeWalletPortFolio.tokens.length > 0
+    ) {
+        state.activeWalletPortFolio.tokens.forEach(t => {
             let addr = t.contractAddress?.toLowerCase();
             if (!addr) return;
+
             if (addr === "native") {
                 addr = "0x0000000000000000000000000000000000000000";
             }
+
             prioritySet.add(addr);
             balanceMap[addr] = {
                 balance: t.balance,
                 balanceUSD: t.balanceUSD,
+                decimals: t.decimals,
+                address: addr,
+                name: t.name,
+                symbol: t.symbol
             };
         });
     }
+
     const filteredTokenList = currentTokenList.filter(item => {
         const name = item.name?.toLowerCase() || "";
         const symbol = item.symbol?.toLowerCase() || "";
@@ -423,20 +433,35 @@ const CrossChainTx = ({ route = "ETH" }) => {
 
         return name.includes(query) || symbol.includes(query);
     });
+
     const mergedList = filteredTokenList.map(item => {
         const addr = item.address?.toLowerCase() || "";
 
         return {
             ...item,
+            decimals: item.decimals ?? balanceMap[addr]?.decimals,
             ...(balanceMap[addr] || {})
         };
     });
-    const sortedTokenList = mergedList.sort((a, b) => {
-        if (prioritySet.size === 0) return 0;
 
+    const tokenListAddressSet = new Set(
+        currentTokenList.map(t => t.address?.toLowerCase())
+    );
+
+    const extraWalletTokens = Object.keys(balanceMap)
+        .filter(addr => {
+            return (
+                addr !== "0x0000000000000000000000000000000000000000" &&
+                !tokenListAddressSet.has(addr)
+            );
+        })
+        .map(addr => balanceMap[addr]);
+
+    const finalTokenList = [...mergedList, ...extraWalletTokens];
+
+    const sortedTokenList = finalTokenList.sort((a, b) => {
         const aPri = prioritySet.has(a.address?.toLowerCase()) ? 1 : 0;
         const bPri = prioritySet.has(b.address?.toLowerCase()) ? 1 : 0;
-
         return bPri - aPri;
     });
 
@@ -851,6 +876,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
         const { res, err } = await proxyRequest(`/v1/${type}/swap-quote`, PPOST, { tokenIn: tokenIn, tokenOut: tokenOut, amount: amountIn });
         console.log(res, err)
         if (err?.status) {
+            CustomInfoProvider.show("error",err?.message||"Unable to get swap quotes");
             setgetInfo(false);
             setresQuotes(null);
             setnonDirectQoutes(null);
@@ -909,7 +935,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                     setgetInfo(false);
                     setresQuotes(null);
                     CustomInfoProvider.show("Info", result?.message === "Amount must be greater than zero"
-                        ? "Oops! You need to enter at least 0.01."
+                        ? "Oops! Invalid amount."
                         : "An error occurred. Please try again later.");
                 }
             })

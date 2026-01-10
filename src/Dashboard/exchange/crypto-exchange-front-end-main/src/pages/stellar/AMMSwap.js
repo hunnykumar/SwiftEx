@@ -191,9 +191,10 @@ const AMMSwap = () => {
         setIsLoading(false)
       }
       else{
+        setexchangeRes(null);
         setToAmount('');
         setIsLoading(false)
-        setmessageError("Unable to fetch quote");
+        CustomInfoProvider.show("Info",res?.error||"Unable to fetch quotes");
       }
   }
   function URLBuilder(
@@ -369,7 +370,7 @@ const AMMSwap = () => {
     const respo=await AMMSWAPTESTNET(fromToken.code,fromToken.issuer,toToken.code,toToken.issuer,state?.STELLAR_SECRET_KEY,toAmount,assetTrustRequired)
     if(respo.status===true)
     {
-      setmessageError("Transaction successful!")
+      CustomInfoProvider.show("success","Transaction successful!");
       console.log("--Success--,",respo.tx)
       settokenBurn(false)
       setTimeout(()=>{
@@ -379,7 +380,7 @@ const AMMSwap = () => {
     else{
       settokenBurn(false)
       console.log("--Error--",respo.error)
-      setmessageError("Transaction Faild.")
+      CustomInfoProvider.show("error","Transaction Faild.");
     }
   }
 

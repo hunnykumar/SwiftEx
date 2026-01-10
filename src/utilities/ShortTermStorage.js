@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { RPC } from '../Dashboard/constants';
+import Web3 from 'web3';
 
 const ShortTermStorage = {
   async saveTx(activeWalletPublicKey, data) {
@@ -36,11 +38,45 @@ const ShortTermStorage = {
   async getWalletTx(activeWalletPublicKey) {
     try {
       const key = `App_+_+Storage${activeWalletPublicKey}`;
-      const data = await AsyncStorage.getItem(key);
+      const storedData = await AsyncStorage.getItem(key);
+      const txList = storedData ? JSON.parse(storedData) : [];
+
+      const updatedTxList = [];
+
+      for (const tx of txList) {
+        if (tx.status === "pending"||tx.status === "Pending") {
+          const receipt = await this.getTxReceiptByChain(tx.chain, tx.hash);
+          if (receipt?.status === true || receipt?.status === 1) {
+            await this.removeTxByHash(key, tx.hash, tx.chain);
+            continue;
+          }
+
+          if (receipt?.status === false || receipt?.status === 0) {
+            updatedTxList.push({
+              ...tx,
+              status: "failed",
+              statusColor: "#de2727ff",
+              updatedAt: Date.now(),
+            });
+            continue;
+          }
+
+          updatedTxList.push({
+            ...tx,
+            status: "pending",
+            statusColor: "#eec14fff",
+            updatedAt: Date.now(),
+          });
+        } else {
+          updatedTxList.push(tx);
+        }
+      }
+
+      await AsyncStorage.setItem(key, JSON.stringify(updatedTxList));
 
       return {
-        status: !!data,
-        data: data ? JSON.parse(data) : [],
+        status: true,
+        data: updatedTxList,
       };
     } catch (error) {
       console.log('ShortTermStorage get error', error);
@@ -104,7 +140,27 @@ const ShortTermStorage = {
     console.log("removeTxByHash error", error);
     return { status: false };
   }
-}
+  },
+  async getTxReceiptByChain(chainSymbol, txHash) {
+    let rpcUrl;
+
+    switch (chainSymbol) {
+      case "ETH":
+        rpcUrl = RPC.ETHRPC;
+        break;
+
+      case "BNB":
+      case "BSC":
+        rpcUrl = RPC.BSCRPC;
+        break;
+
+      default:
+        return null;
+    }
+
+    const web3 = new Web3(rpcUrl);
+    return await web3.eth.getTransactionReceipt(txHash);
+  }
 
 };
 

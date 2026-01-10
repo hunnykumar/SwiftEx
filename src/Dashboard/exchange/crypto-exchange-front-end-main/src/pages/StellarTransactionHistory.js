@@ -46,6 +46,12 @@ function formatDate(dateString) {
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 }
 
+const getAssetName = (code, type) => {
+  if (type === 'native') return 'XLM';
+  return code || 'XLM';
+};
+
+
 const getTransactionType = (operation) => {
   if (operation.type === 'payment') {
       return operation.asset_code || operation.asset_type;
@@ -65,9 +71,17 @@ const getTransactionType = (operation) => {
       case 'invoke_host_function':
           return 'Chain Bridge';    
       case 'path_payment_strict_send':
-          return `${operation.source_asset_code || 'XLM'}`;
-      case 'path_payment_strict_receive':
-          return `${operation.destination_asset_code || 'XLM'}`;
+      case 'path_payment_strict_receive': {
+        const fromAsset = getAssetName(
+          operation.source_asset_code,
+          operation.source_asset_type
+        );
+        const toAsset = getAssetName(
+          operation.asset_code,
+          operation.asset_type
+        );
+       return `${fromAsset} to ${toAsset}`;
+      }
       case 'setOptions':
           return 'Settings Update';
       case 'buyCry':
@@ -159,24 +173,27 @@ const TabBar = ({ selectedTab, onTabPress, isDarkMode }) => {
 };
 
 const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
-  const navigation=useNavigation();
+  const navigation = useNavigation();
   const colors = getThemeColors(isDarkMode);
-  const operation = item.operations.records[0];
-  const [showTx,setshowTx]=useState(false);
-  const [showTxHash,setshowTxHash]=useState([]);
+  const operations = item?.operations?.records || [];
+  const operation = operations.find(op =>
+    ['payment',
+      'path_payment_strict_receive',
+      'path_payment_strict_send',
+      'invoke_host_function'
+    ].includes(op.type)
+  ) || operations[0];
+  const multiTxType = [
+    ...new Set(operations.map(op => getTransactionType(op)))
+  ].join(' & ');
+  const transactionType = multiTxType
+  const [showTx, setshowTx] = useState(false);
+  const [showTxHash, setshowTxHash] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const txType = operation.asset_balance_changes?.find(resObj => resObj.to === userPublicKey);
-  const isReceived = 
+  const isReceived =
     operation?.to === userPublicKey ||
-    operation.type === 'create_account'||operation.type === 'change_trust'||operation.type==='invoke_host_function' && txType ? true : false;
-  const transactionType =
-    operation.type === 'payment' 
-      ? operation.asset_type === 'native' 
-        ? 'XLM'
-        : operation.asset_code || operation.asset_type
-      : getTransactionType(operation);
-
- 
+      operation.type === 'create_account' || operation.type === 'change_trust' || operation.type === 'invoke_host_function' && txType ? true : false;
   let iconName = getTransactionIcon(operation.type);
 
  
@@ -274,7 +291,7 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
                  operation.type === 'sellCry' || 
                  operation.type === 'buyCry' || 
                  operation.type === 'create_claimable_balance' ? '' : '-'}
-                {amountText}
+                {operation.type!=="change_trust"&&amountText}
               </Text>
             </View>
           )}
@@ -298,8 +315,8 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
           {isPathPayment ? (
             <View style={[styles.transactionDetails, { paddingVertical: 5 }]}>
               <View style={{ marginTop: -3 }}>
-                <Text style={[styles.type, { color: colors.primaryText }]}>
-                  {`${assetFrom} to ${assetTo}`}
+                <Text style={[styles.type, { color: colors.primaryText,maxWidth:140 }]}>
+                   {transactionType}
                 </Text>
                 <Text style={[styles.date, { color: colors.secondaryText }]}>
                   {item.date}
@@ -313,7 +330,7 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
           ) : (
             <View style={styles.transactionDetails}>
               <View style={{ marginTop: -33 }}>
-                <Text style={[styles.type, { color: colors.primaryText }]}>
+                <Text style={[styles.type, { color: colors.primaryText,maxWidth:140 }]}>
                   {transactionType}
                 </Text>
                 <Text style={[styles.date, { color: colors.secondaryText }]}>

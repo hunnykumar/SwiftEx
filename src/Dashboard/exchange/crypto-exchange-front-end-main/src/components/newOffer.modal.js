@@ -101,8 +101,6 @@ export const NewOfferModal = () => {
   const [Loading, setLoading] = useState(false);
   const [show_trust_modal, setshow_trust_modal] = useState([]);
   const [titel, settitel] = useState("UPDATING..");
-  const [PublicKey, setPublicKey] = useState("");
-  const [SecretKey, setSecretKey] = useState("");
   const [reserveLoading, setreserveLoading] = useState(false);
   const [chooseModalPair, setchooseModalPair] = useState(false);
   const [priceType, setpriceType] = useState(0);
@@ -170,12 +168,17 @@ export const NewOfferModal = () => {
     return parseFloat(amount) <= parseFloat(balance);
   }, []);
 
-  const createStellarAsset = useCallback((assetCode, issuer) => {
-    if (assetCode === stellarConfig.ASSET_TYPES.NATIVE || assetCode === stellarConfig.ASSET_TYPES.XLM) {
-      return new StellarSdk.Asset.native();
-    }
-    return new StellarSdk.Asset(assetCode, issuer);
-  }, []);
+  const createStellarAsset= (code, issuer) => {
+  if (!code || code === "XLM" || code === "native") {
+    return StellarSdk.Asset.native();
+  }
+
+  if (!issuer) {
+    throw new Error(`Missing issuer for asset ${code}`);
+  }
+
+  return new StellarSdk.Asset(code, issuer);
+};
 
   const handleTransactionError = useCallback((error, offerType) => {
     setoffer_amount('');
@@ -211,10 +214,18 @@ export const NewOfferModal = () => {
         return;
       }
 
-      const sourceKeypair = StellarSdk.Keypair.fromSecret(SecretKey);
+      const secretKey = state.STELLAR_SECRET_KEY;
+
+      if (!secretKey || !secretKey.startsWith("S")) {
+        ShowErrotoast(toast, "Invalid Stellar Secret Key");
+        setLoading(false);
+        return;
+      }
+
+      const sourceKeypair = StellarSdk.Keypair.fromSecret(secretKey);
       const account = await server.loadAccount(sourceKeypair.publicKey());
-      const base_asset_sell = createStellarAsset(SelectedBaseValue, AssetIssuerPublicKey);
-      const counter_asset_buy = createStellarAsset(selectedValue, AssetIssuerPublicKey1);
+      const base_asset_sell = createStellarAsset(top_value, AssetIssuerPublicKey);
+      const counter_asset_buy  = createStellarAsset(top_value_0, AssetIssuerPublicKey1);
 
       const offerTx = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
@@ -222,10 +233,10 @@ export const NewOfferModal = () => {
       })
       if (Array.isArray(show_trust_modal) && show_trust_modal.length > 0) {
         show_trust_modal.forEach(trustReq => {
-          const asset = new StellarSdk.Asset(
-            trustReq.code,
-            trustReq.issuer
-          );
+          const asset =
+            trustReq.code === "native" || trustReq.code === "XLM"
+              ? StellarSdk.Asset.native()
+              : new StellarSdk.Asset(trustReq.code, trustReq.issuer);
       
           offerTx.addOperation(
             StellarSdk.Operation.changeTrust({
@@ -256,7 +267,7 @@ export const NewOfferModal = () => {
       console.log("----err-or--",error)
       handleTransactionError(error, stellarConfig.TRADE_TYPES.SELL);
     }
-  }, [offer_amount, offer_price, SecretKey, SelectedBaseValue, selectedValue, AssetIssuerPublicKey, AssetIssuerPublicKey1, validateAmount, validatePrice, createStellarAsset, toast, navigation, handleTransactionError]);
+  }, [offer_amount, offer_price, SelectedBaseValue, selectedValue, AssetIssuerPublicKey, AssetIssuerPublicKey1, validateAmount, validatePrice, createStellarAsset, toast, navigation, handleTransactionError]);
 
   const Buy = useCallback(async () => {
     try {
@@ -269,17 +280,19 @@ export const NewOfferModal = () => {
         return;
       }
 
-      const sourceKeypair = StellarSdk.Keypair.fromSecret(SecretKey);
+      const secretKey = state.STELLAR_SECRET_KEY;
+      if (!secretKey || !secretKey.startsWith("S")) {
+        ShowErrotoast(toast, "Invalid Stellar Secret Key");
+        setLoading(false);
+        return;
+      }
+
+      const sourceKeypair = StellarSdk.Keypair.fromSecret(secretKey);
       const account = await server.loadAccount(sourceKeypair.publicKey());
       
-      const counter_asset_buy = createStellarAsset(
-        top_value === stellarConfig.ASSET_TYPES.XLM ? stellarConfig.ASSET_TYPES.NATIVE : top_value, 
-        AssetIssuerPublicKey
-      );
-      const base_asset_sell = createStellarAsset(
-        top_value_0 === stellarConfig.ASSET_TYPES.XLM ? stellarConfig.ASSET_TYPES.NATIVE : top_value_0, 
-        AssetIssuerPublicKey1
-      );
+      const base_asset_sell = createStellarAsset(top_value_0, AssetIssuerPublicKey1);
+      const counter_asset_buy = createStellarAsset(top_value, AssetIssuerPublicKey);
+
       const offerTx = new StellarSdk.TransactionBuilder(account, {
         fee: StellarSdk.BASE_FEE,
         networkPassphrase: stellarConfig.NETWORK
@@ -287,11 +300,11 @@ export const NewOfferModal = () => {
 
       if (Array.isArray(show_trust_modal) && show_trust_modal.length > 0) {
         show_trust_modal.forEach(trustReq => {
-          const asset = new StellarSdk.Asset(
-            trustReq.code,
-            trustReq.issuer
-          );
-      
+          const asset =
+            trustReq.code === "native" || trustReq.code === "XLM"
+              ? StellarSdk.Asset.native()
+              : new StellarSdk.Asset(trustReq.code, trustReq.issuer);
+
           offerTx.addOperation(
             StellarSdk.Operation.changeTrust({
               asset: asset
@@ -321,16 +334,8 @@ export const NewOfferModal = () => {
     } catch (error) {
       handleTransactionError(error, stellarConfig.TRADE_TYPES.BUY);
     }
-  }, [offer_amount, offer_price, SecretKey, top_value, top_value_0, AssetIssuerPublicKey, AssetIssuerPublicKey1, validateAmount, validatePrice, createStellarAsset, toast, navigation, handleTransactionError]);
+  }, [offer_amount, offer_price, top_value, top_value_0, AssetIssuerPublicKey, AssetIssuerPublicKey1, validateAmount, validatePrice, createStellarAsset, toast, navigation, handleTransactionError]);
 
-  const getData = useCallback(async () => {
-    try {
-      setPublicKey(state.STELLAR_PUBLICK_KEY);
-      setSecretKey(state.STELLAR_SECRET_KEY);
-    } catch (error) {
-      console.error('Error getting data for stellar keys:', error);
-    }
-  }, [state.STELLAR_PUBLICK_KEY, state.STELLAR_SECRET_KEY]);
 
   const checkAssetTrust = useCallback((asset) => {
     const existsAsset = ALL_STELLER_BALANCES.some(
@@ -411,7 +416,6 @@ export const NewOfferModal = () => {
       return;
     }
 
-    getData();
     
     const invalidInputs = [
       offer_amount === "",
@@ -433,7 +437,7 @@ export const NewOfferModal = () => {
       ShowErrotoast(toast, message);
       setLoading(false);
     }
-  }, [checkAssetTrust, selectedValue, offer_amount, Balance, titel, offer_price, route, validateBalance, getData, Sell, Buy, toast]);
+  }, [checkAssetTrust, selectedValue, offer_amount, Balance, titel, offer_price, route, validateBalance, Sell, Buy, toast]);
 
   const getLastTradePrice = useCallback(async (codeA, issuerA, codeB, issuerB) => {
     return safeCall(async (signal) => {
@@ -472,16 +476,22 @@ export const NewOfferModal = () => {
   }, [Balance]);
 
 
-  const reves_fun = useCallback((fist_data, second_data, Issuer1, Issuer2) => {
-    settop_value_0(fist_data);
-    settop_value(second_data);
-    setAssetIssuerPublicKey1(Issuer1);
-    setAssetIssuerPublicKey(Issuer2);
-    settop_domain(top_domain_0);
-    settop_domain_0(top_domain);
-    setSelectedValue(SelectedBaseValue);
-    setSelectedBaseValue(selectedValue);
-  }, [top_domain, top_domain_0, SelectedBaseValue, selectedValue]);
+  const reves_fun = () => {
+  settop_value(prev => {
+    settop_value_0(prev0 => prev);
+    return prev0;
+  });
+
+  setAssetIssuerPublicKey(prev => {
+    setAssetIssuerPublicKey1(prev1 => prev);
+    return prev1;
+  });
+
+  settop_domain(prev => {
+    settop_domain_0(prev0 => prev);
+    return prev0;
+  });
+};
 
   const onChangename = useCallback((input) => {
     const formattedInput = input.replace(stellarConfig.INPUT_SANITIZE_REGEX, '');
@@ -971,7 +981,7 @@ const selectTradingPair = useCallback((item) => {
                             onPress={() => {
                               setRoute(stellarConfig.TRADE_TYPES.SELL);
                               setbtnRoot(0);
-                              reves_fun(top_value, top_value_0, AssetIssuerPublicKey, AssetIssuerPublicKey1);
+                              reves_fun()
                             }}
                           >
                             <Text style={[
@@ -994,7 +1004,7 @@ const selectTradingPair = useCallback((item) => {
                             onPress={() => {
                               setRoute(stellarConfig.TRADE_TYPES.BUY);
                               setbtnRoot(1);
-                              reves_fun(top_value, top_value_0, AssetIssuerPublicKey, AssetIssuerPublicKey1);
+                              reves_fun()
                             }}
                           >
                             <Text style={[
@@ -1200,7 +1210,7 @@ const selectTradingPair = useCallback((item) => {
                         color="green"
                         disabled={Loading || isBalanceInsufficient}
                       >
-                        <Text style={[styles.textColor, { color: theme.cardBg }]}>
+                        <Text style={[styles.textColor, { color: "#fff" }]}>
                           {Loading === true ? (
                             <ActivityIndicator color={"white"} />
                           ) : assetInfo ? (
@@ -1884,7 +1894,7 @@ export const tradingPairsConfig = {
       visible_1: "USDC", 
       asset_dom: "steller.org", 
       asset_dom_1: "centre.io", 
-      visible0Issuer: "native", 
+      visible0Issuer: null, 
       visible1Issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN" 
     },
     { 
@@ -1932,7 +1942,7 @@ export const tradingPairsConfig = {
       visible_1: "BTC", 
       asset_dom: "steller.org", 
       asset_dom_1: "ultracapital.xyz", 
-      visible0Issuer: "native", 
+      visible0Issuer: null, 
       visible1Issuer: "GDPJALI4AZKUU2W426U5WKMAT6CN3AJRPIIRYR2YM54TL2GDWO5O2MZM" 
     },
     { 
