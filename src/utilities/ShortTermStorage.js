@@ -47,7 +47,12 @@ const ShortTermStorage = {
         if (tx.status === "pending"||tx.status === "Pending") {
           const receipt = await this.getTxReceiptByChain(tx.chain, tx.hash);
           if (receipt?.status === true || receipt?.status === 1) {
-            await this.removeTxByHash(key, tx.hash, tx.chain);
+            updatedTxList.push({
+              ...tx,
+              status: "success",
+              statusColor: "#27ae60",
+              updatedAt: Date.now(),
+            });
             continue;
           }
 

@@ -20,7 +20,7 @@ import {
 } from "react-native-responsive-screen";
 import { ethers } from 'ethers';
 import { Wallet_screen_header } from '../Dashboard/reusables/ExchangeHeader';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/Ionicons";
 import { useSelector } from 'react-redux';
 import ErrorComponet from '../utilities/ErrorComponet';
@@ -45,6 +45,7 @@ const NETWORK = [
 
 const EthSwap = () => {
   const navigation = useNavigation();
+  const routeParam=useRoute();
   const FOCUSED = useIsFocused();
   const state = useSelector((state) => state);
   
@@ -217,28 +218,54 @@ const EthSwap = () => {
   useEffect(() => {
     setAmount('');
     setQuoteInfo(null);
-    
-    const updateNetwork = async () => {
+
+    const initByNetwork = async () => {
       if (currentNetwork === 0) {
-        setFromToken(EtherTokens[0]);
-        setToToken(EtherTokens[1]);
-        await getTokesBalance(EtherTokens[0].address, EtherTokens[2].address);
-      } else {
-        setFromToken(BNBTokens[0]);
-        setToToken(BNBTokens[1]);
-        await getBSCTokenBalance(BNBTokens[0].address, BNBTokens[1].address);
+        const from = EtherTokens[0];
+        const to =
+          routeParam.params?.activeNetwork === "Ethereum" &&
+            routeParam.params?.activeAsset
+            ? routeParam.params.activeAsset
+            : EtherTokens[1];
+
+        setFromToken(from);
+        setToToken(to);
+
+        await getTokesBalance(from.address, to.address);
+      }
+      if (currentNetwork === 1) {
+        const from = BNBTokens[0];
+
+        const to =
+          routeParam.params?.activeNetwork === "BNB" &&
+            routeParam.params?.activeAsset
+            ? routeParam.params.activeAsset
+            : BNBTokens[1];
+
+        setFromToken(from);
+        setToToken(to);
+
+        await getBSCTokenBalance(from.address, to.address);
       }
     };
 
-    updateNetwork();
+    initByNetwork();
   }, [currentNetwork]);
 
   // Focus handler
   useEffect(() => {
-    if (FOCUSED) {
-      setCurrentNetwork(0);
+    if (!FOCUSED) return;
+    if (routeParam.params?.activeNetwork === "BNB") {
+      setCurrentNetwork(1);
+      return;
     }
+    if (routeParam.params?.activeNetwork === "Ethereum") {
+      setCurrentNetwork(0);
+      return;
+    }
+    setCurrentNetwork(0);
   }, [FOCUSED]);
+
 
   // Token selector component
   const TokenSelector = ({ token, onPress, balance }) => (
@@ -469,8 +496,9 @@ const EthSwap = () => {
     setSwapExecuting(true);
 
     try {
-      const result = await swapForEth(amount, state?.wallet?.privateKey);
-      
+      // const result = await swapForEth(amount, state?.wallet?.privateKey);
+      const result = currentNetwork === 0 ? await swapForEth(amount, state?.wallet?.privateKey): await swapBnb(amount, state?.wallet?.privateKey);
+      console.log("swap result",result)
       if (result.status) {
         Snackbar.show({
           text: "Swap successful!",
@@ -608,6 +636,163 @@ const EthSwap = () => {
       return {
         status: false,
         message: error.message || "Swap failed",
+      };
+    }
+  };
+
+  // Bnb Swap execution function
+  const swapBnb = async (amount, privateKey) => {
+    try {
+      const wallet = new ethers.Wallet(privateKey);
+      const address = await wallet.getAddress();
+
+      const payload = {
+        tokenIn: fromToken,
+        tokenOut: toToken,
+        amount: amount,
+        recipient: address,
+        slippage: 1,
+      };
+
+      console.log("Preparing BSC swap:", payload);
+
+      const respo = await proxyRequest("/v1/bsc/swap-transaction/prepare", PPOST, payload);
+
+      if (respo.err?.status) {
+        return {
+          status: false,
+          message: respo.err.message || "Failed to prepare swap",
+        };
+      }
+
+      const rawTxs = respo.res;
+
+      if (!rawTxs || rawTxs.length === 0) {
+        return {
+          status: false,
+          message: "No transactions to sign",
+        };
+      }
+
+      console.log(`Signing ${rawTxs.length} transaction(s)...`);
+      const signedTxs = [];
+
+      for (let i = 0; i < rawTxs.length; i++) {
+        const tx = rawTxs[i];
+
+        const formattedTx = {
+          to: tx.to,
+          from: tx.from,
+          data: tx.data,
+          value: ethers.BigNumber.from(tx.value || 0),
+          chainId: Number(tx.chainId),
+          nonce: Number(tx.nonce),
+          gasLimit: ethers.BigNumber.from(tx.gasLimit),
+          gasPrice: ethers.BigNumber.from(tx.gasPrice),
+          type: 0,
+        };
+
+        console.log(`Signing tx ${i + 1}:`, {
+          to: formattedTx.to,
+          nonce: formattedTx.nonce,
+          gasLimit: formattedTx.gasLimit.toString(),
+          gasPrice: formattedTx.gasPrice.toString(),
+          value: formattedTx.value.toString(),
+        });
+
+        try {
+          const signedTx = await wallet.signTransaction(formattedTx);
+          signedTxs.push(signedTx);
+          console.log(`Transaction ${i + 1}/${rawTxs.length} signed`);
+        } catch (signError) {
+          console.log(`Sign error for tx ${i}:`, signError);
+          return {
+            status: false,
+            message: `Transaction ${i + 1} signing failed: ${signError.shortMessage || signError.message}`,
+          };
+        }
+      }
+
+      console.log("Broadcasting BSC transactions...");
+      const broadcastPayload = signedTxs.length === 1
+        ? { signedTx: signedTxs[0] }
+        : { signedTransactions: signedTxs };
+
+      const { res, err } = await proxyRequest(
+        "/v1/bsc/transaction/broadcast",
+        PPOST,
+        broadcastPayload
+      );
+
+      if (err?.status) {
+        return {
+          status: false,
+          message: err.message || "Broadcast failed",
+        };
+      }
+
+      console.log("Broadcast response:", res);
+
+      if (res?.txHash) {
+        await ShortTermStorage.saveTx(state?.wallet?.address, {
+          chain: "BNB",
+          typeTx: "Swap",
+          status: "Pending",
+          hash: res.txHash,
+        });
+
+        return {
+          status: true,
+          message: "Swap completed successfully",
+          txHash: res.txHash,
+        };
+      }
+
+      if (res?.success && res?.results && Array.isArray(res.results)) {
+        console.log(`Saving ${res.results.length} transactions...`);
+
+        for (let i = 0; i < res.results.length; i++) {
+          const result = res.results[i];
+
+          console.log(`Saving transaction ${i + 1}:`, {
+            hash: result.transactionHash,
+            type: result.type,
+            status: result.status,
+          });
+
+          try {
+            await ShortTermStorage.saveTx(state?.wallet?.address, {
+              chain: "BNB",
+              typeTx: result.type === 'approve' ? 'Approve' : 'Swap',
+              status: "Pending",
+              hash: result.transactionHash,
+            });
+
+            console.log(`Transaction ${i + 1} saved successfully`);
+          } catch (saveError) {
+            console.log(`Failed to save transaction ${i + 1}:`, saveError);
+          }
+        }
+
+        console.log('All transactions saved');
+
+        return {
+          status: true,
+          message: "Swap completed successfully",
+          txCount: res.totalTransactions,
+          results: res.results,
+        };
+      }
+
+      return {
+        status: false,
+        message: "No transaction hash received",
+      };
+    } catch (error) {
+      console.error("BSC swap execution error:", error);
+      return {
+        status: false,
+        message: error.message || "BSC swap failed",
       };
     }
   };

@@ -707,7 +707,7 @@ const style = StyleSheet.create({
   },
   bottomContainer: {
     position: 'absolute',
-    bottom: 10,
+    bottom: 20,
     left: 0,
     right: 0,
     paddingHorizontal: wp(4),

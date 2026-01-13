@@ -155,16 +155,12 @@ const TransactionHistory = () => {
       }
 
       if (res) {
-        // Get pending transactions from ShortTermStorage
         const pendingResponse = await ShortTermStorage.getWalletTx(walletAddress);
         const pendingTxs = pendingResponse.status ? pendingResponse.data : [];
 
-        // Create a Set of hashes from API response for quick lookup
-        const confirmedHashes = new Set(res.map(tx => tx.hash?.toLowerCase()));
-
-        // Remove confirmed transactions from ShortTermStorage
+        const confirmedEthHashes = new Set(res.map(tx => tx.hash?.toLowerCase()));
         for (const pendingTx of pendingTxs) {
-          if (confirmedHashes.has(pendingTx.hash?.toLowerCase())) {
+          if (pendingTx.chain === 'ETH' && confirmedEthHashes.has(pendingTx.hash?.toLowerCase())) {
             await ShortTermStorage.removeTxByHash(
               walletAddress,
               pendingTx.hash,
@@ -173,30 +169,33 @@ const TransactionHistory = () => {
           }
         }
 
-        // Get updated pending transactions after cleanup
         const updatedPendingResponse = await ShortTermStorage.getWalletTx(walletAddress);
         const updatedPendingTxs = updatedPendingResponse.status ? updatedPendingResponse.data : [];
 
-        // Filter pending txs for ETH chain only
-        const ethPendingTxs = updatedPendingTxs.filter(
-          tx => tx.chain === 'ETH' && tx.status === 'Pending'
-        );
+        const allChainPendingTxs = updatedPendingTxs.filter(tx => {
+          const status = tx.status?.toLowerCase();
+          return status === 'pending' || status === 'failed' || status === 'success' || tx.typeTx === 'Approve';
+        });
 
-        // Transform pending txs to match the transaction format
-        const formattedPendingTxs = ethPendingTxs.map(tx => ({
-          hash: tx.hash,
-          from: tx.typeTx === 'Send' ? walletAddress : 'Unknown',
-          to: tx.typeTx === 'Receive' ? walletAddress : 'Unknown',
-          value: 0, // Amount store karo ShortTermStorage me agar chahiye
-          asset: 'ETH',
-          isPending: true,
-          timestamp: tx.createdAt,
-          typeTx: tx.typeTx,
-          chain: tx.chain,
-          formattedAmount: 0,
-        }));
+        const formattedPendingTxs = allChainPendingTxs.map(tx => {
+          const status = tx.status?.toLowerCase();
+          return {
+            hash: tx.hash,
+            from: tx.typeTx === 'Send' ? walletAddress : 'Unknown',
+            to: tx.typeTx === 'Receive' ? walletAddress : 'Unknown',
+            value: tx.amount || 0,
+            asset: tx.asset || tx.chain,
+            isPending: status === 'pending',
+            isFailed: status === 'failed',
+            isSuccess: status === 'success',
+            isApprove: tx.typeTx === 'Approve',
+            timestamp: tx.createdAt,
+            typeTx: tx.typeTx,
+            chain: tx.chain,
+            formattedAmount: tx.amount || 0,
+          };
+        });
 
-        // Combine pending and confirmed transactions (pending first)
         const combinedTxs = [...formattedPendingTxs, ...res];
 
         setTransactions(combinedTxs);
@@ -224,16 +223,14 @@ const TransactionHistory = () => {
       }
 
       if (res) {
-        // Get pending transactions from ShortTermStorage
         const pendingResponse = await ShortTermStorage.getWalletTx(walletAddress);
+        console.debug("pendingResponseBSC", pendingResponse);
         const pendingTxs = pendingResponse.status ? pendingResponse.data : [];
 
-        // Create a Set of hashes from API response
-        const confirmedHashes = new Set(res.map(tx => tx.hash?.toLowerCase()));
+        const confirmedBscHashes = new Set(res.map(tx => tx.hash?.toLowerCase()));
 
-        // Remove confirmed transactions from ShortTermStorage
         for (const pendingTx of pendingTxs) {
-          if (confirmedHashes.has(pendingTx.hash?.toLowerCase())) {
+          if (pendingTx.chain === 'BSC' && confirmedBscHashes.has(pendingTx.hash?.toLowerCase())) {
             await ShortTermStorage.removeTxByHash(
               walletAddress,
               pendingTx.hash,
@@ -242,30 +239,33 @@ const TransactionHistory = () => {
           }
         }
 
-        // Get updated pending transactions
         const updatedPendingResponse = await ShortTermStorage.getWalletTx(walletAddress);
         const updatedPendingTxs = updatedPendingResponse.status ? updatedPendingResponse.data : [];
 
-        // Filter pending txs for BSC chain only
-        const bscPendingTxs = updatedPendingTxs.filter(
-          tx => tx.chain === 'BSC' && tx.status === 'Pending'
-        );
+        const allChainPendingTxs = updatedPendingTxs.filter(tx => {
+          const status = tx.status?.toLowerCase();
+          return status === 'pending' || status === 'failed' || status === 'success' || tx.typeTx === 'Approve';
+        });
 
-        // Transform pending txs to match the transaction format
-        const formattedPendingTxs = bscPendingTxs.map(tx => ({
-          hash: tx.hash,
-          from: tx.typeTx === 'Send' ? walletAddress : 'Unknown',
-          to: tx.typeTx === 'Receive' ? walletAddress : 'Unknown',
-          value: 0,
-          asset: 'BNB',
-          isPending: true,
-          timestamp: tx.createdAt,
-          typeTx: tx.typeTx,
-          chain: tx.chain,
-          formattedAmount: 0,
-        }));
+        const formattedPendingTxs = allChainPendingTxs.map(tx => {
+          const status = tx.status?.toLowerCase();
+          return {
+            hash: tx.hash,
+            from: tx.typeTx === 'Send' ? walletAddress : 'Unknown',
+            to: tx.typeTx === 'Receive' ? walletAddress : 'Unknown',
+            value: tx.amount || 0,
+            asset: tx.asset || tx.chain,
+            isPending: status === 'pending',
+            isFailed: status === 'failed',
+            isSuccess: status === 'success',
+            isApprove: tx.typeTx === 'Approve',
+            timestamp: tx.createdAt,
+            typeTx: tx.typeTx,
+            chain: tx.chain,
+            formattedAmount: tx.amount || 0,
+          };
+        });
 
-        // Combine transactions (pending first)
         const combinedTxs = [...formattedPendingTxs, ...res];
 
         setTransactions(combinedTxs);
@@ -280,15 +280,18 @@ const TransactionHistory = () => {
   };
 
   const getTransactionType = (tx) => {
-    // Handle pending transactions with typeTx
-    if (tx.isPending && tx.typeTx) {
-      return tx.typeTx;
-    }
+  if (tx.isApprove || tx.typeTx === 'Approve') {
+    return 'Approve';
+  }
+  
+  if ((tx.isPending || tx.isFailed || tx.isSuccess) && tx.typeTx) {
+    return tx.typeTx;
+  }
 
-    if (tx.from?.toLowerCase() === walletAddress.toLowerCase()) return 'Send';
-    if (tx.to?.toLowerCase() === walletAddress.toLowerCase()) return 'Receive';
-    return 'UNKNOWN';
-  };
+  if (tx.from?.toLowerCase() === walletAddress.toLowerCase()) return 'Send';
+  if (tx.to?.toLowerCase() === walletAddress.toLowerCase()) return 'Receive';
+  return 'UNKNOWN';
+};
 
   const filterTransactions = () => {
     if (activeTab === 'All') {
@@ -350,11 +353,42 @@ const TransactionHistory = () => {
       </View>
     </TouchableOpacity>
   );
+  const getExplorerUrl = (item) => {
+    const chain = item.chain || activeChainNetwork;
+
+    switch (chain) {
+      case 'ETH':
+        return `https://etherscan.io/tx/${item.hash}`;
+      case 'BSC':
+      case 'BNB':
+        return `https://bscscan.com/tx/${item.hash}`;
+    }
+  }
 
   const renderItem = ({ item }) => {
     const txType = getTransactionType(item);
     const statusColor = txType === 'Send' ? colors.error : colors.success;
     const isPending = item.isPending === true;
+    const isFailed = item.isFailed === true;
+    const isSuccess = item.isSuccess === true;
+    const isApprove = item.isApprove === true || item.typeTx === 'Approve';
+
+    let statusText = txType;
+    let badgeColor = statusColor;
+
+    if (isFailed) {
+      statusText = 'Failed';
+      badgeColor = colors.error;
+    } else if (isPending) {
+      statusText = 'Pending';
+      badgeColor = colors.warning;
+    } else if (isApprove) {
+      statusText = 'Approve';
+      badgeColor = colors.accent;
+    } else if (isSuccess) {
+      statusText = 'Success';
+      badgeColor = colors.success;
+    }
 
     return (
       <TouchableOpacity style={[styles.cardContainer, { backgroundColor: colors.background }]}>
@@ -365,49 +399,55 @@ const TransactionHistory = () => {
           ]}
           onPress={() => {
             navigation.navigate("TxDetail", {
-              transactionPath: activeChainNetwork === "ETH"
-                ? "https://etherscan.io/tx/" + item.hash
-                : "https://bscscan.com/tx/" + item.hash
-            })
+              transactionPath: getExplorerUrl(item)
+            });
           }}
         >
           <View style={styles.leftSection}>
             <View style={[styles.iconContainer, { backgroundColor: colors.iconContainer }]}>
-                <Text style={{ fontSize: 25, fontWeight: "500", color: '#3b82f6' }}>
-                  {item?.asset?.charAt(0)?.toLocaleUpperCase() || "E"}
-                </Text>
+              <Text style={{ fontSize: 25, fontWeight: "500", color: '#3b82f6' }}>
+                {item?.asset?.charAt(0)?.toLocaleUpperCase() || "E"}
+              </Text>
             </View>
           </View>
 
           <View style={styles.rightSection}>
             <View style={styles.headerRow}>
               <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-                {isPending?
-                  `XXXXX${item?.hash?.slice(-13)}`
-                :txType === 'Send'
-                  ? `To: XXXXX${item.to?.slice(-10) || 'Unknown'}`
-                  : `From: XXXXX${item.from?.slice(-10) || 'Unknown'}`}
+                {isPending || isFailed || isApprove || isSuccess
+                  ? `XXXXX${item?.hash?.slice(-13)}`
+                  : txType === 'Send'
+                    ? `To: XXXXX${item.to?.slice(-10) || 'Unknown'}`
+                    : `From: XXXXX${item.from?.slice(-10) || 'Unknown'}`}
               </Text>
               <View style={[
                 styles.statusBadge,
-                { backgroundColor: isPending ? colors.warning : statusColor }
+                { backgroundColor: badgeColor }
               ]}>
                 <Text style={styles.statusText}>
-                  {isPending ? 'Pending' : txType}
+                  {statusText}
                 </Text>
               </View>
             </View>
 
             <View style={styles.detailsRow}>
-              <Text style={[styles.assetName, { color: colors.textPrimary }]}>
-                {item.asset || 'ETH'}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.assetName, { color: colors.textPrimary }]}>
+                  {item.asset || 'ETH'}
+                </Text>
+              </View>
               <Text numberOfLines={1} style={[
                 styles.amountText,
-                { color: isPending ? colors.textSecondary : statusColor }
+                {
+                  color: isFailed ? colors.textTertiary
+                    : isPending ? colors.textSecondary
+                      : isApprove ? colors.accent
+                        : isSuccess ? colors.success
+                          : statusColor
+                }
               ]}>
-                {isPending ? '' : (
-                  `${txType === 'Send' ? '-' : '+'}${formatNumber(item.value || item?.formattedAmount || 0)}`
+                {(isPending || isFailed || isApprove || isSuccess) && item.value === 0 ? '' : (
+                  `${txType === 'Send' ? '-' : txType === 'Approve' ? '' : '+'}${formatNumber(item.value || item?.formattedAmount || 0)}`
                 )}
               </Text>
             </View>

@@ -349,7 +349,7 @@ console.log("resQuotes-",resQuotes)
         
         <Text style={[styles.headingText,{color:theme.headingTx}]}>Withdrawal USDC to Wallet</Text>
         {/* Select network */}
-        <TouchableOpacity style={[styles.modalOpen,{backgroundColor:theme.bg}]} onPress={() => { setchooseNetwork(true); }}>
+        <TouchableOpacity disabled={true} style={[styles.modalOpen,{backgroundColor:theme.bg}]} onPress={() => { setchooseNetwork(true); }}>
           <View style={{ flexDirection: "row" }}>
             <Image source={{ uri: !selectedNetworkDetils?sendNetworks[0].image:selectedNetworkDetils.image }} style={styles.iconCon} />
             <View>
@@ -357,7 +357,7 @@ console.log("resQuotes-",resQuotes)
               <Text style={[styles.networkHeading,{color:theme.headingTx}]}>{!selectedNetworkDetils?sendNetworks[0].name:selectedNetworkDetils.name}</Text>
             </View>
           </View>
-          <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30} />
+          {/* <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30} /> */}
         </TouchableOpacity>
         </View>
 

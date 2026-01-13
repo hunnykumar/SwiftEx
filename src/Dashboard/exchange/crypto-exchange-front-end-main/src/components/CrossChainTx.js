@@ -320,12 +320,41 @@ const CrossChainTx = ({ route = "ETH" }) => {
             borderRadius: 90,
             marginRight: wp(0.4),
         },
+        swapSuggestCon: {
+            marginTop: hp(1),
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center"
+        },
+        swapSuggestTex: {
+            fontSize: 15,
+            color: "#fff"
+        },
+        swapSuggestBtn: {
+            borderRadius: 10,
+            paddingHorizontal: wp(6),
+            paddingVertical: hp(1.5),
+            backgroundColor: "#4052D6"
+        },
+        InsufficientActionsCon: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-around",
+            marginTop: hp(1.5)
+        },
+        InsufficientActionsBtn: {
+            borderColor: "#fff",
+            borderWidth: 1,
+            borderRadius: 8,
+            paddingHorizontal: wp(9),
+            paddingVertical: hp(1.1)
+        }
     });
     const toast = useToast();
     const navigation = useNavigation();
     const Asset_type = route;
     console.log("---route", route)
-    const TEMPCHOSE = Asset_type === "ETH" ? "Ethereum" : Asset_type === "BNB" ? "BNB" : Asset_type;
+    const TEMPCHOSE = Asset_type === "ETH" ? "Ethereum" : Asset_type === "BNB" ? "BNB" : "Ethereum";
     const reciverAsset = {
         imageUrl: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png",
         assetNetwork: "Stellar",
@@ -372,6 +401,88 @@ const CrossChainTx = ({ route = "ETH" }) => {
             "logoURI": "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png"
         },
     ]
+      
+  const bscSupportTokens = [
+    {
+      "name": "Binance USDT",
+      "symbol": "USDT",
+      "address": "0x55d398326f99059fF775485246999027B3197955",
+      "chainId": 56,
+      "decimals": 18,
+      "logoURI": "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png"
+    },
+    {
+      "name": "Binance USDC",
+      "symbol": "USDC",
+      "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+      "chainId": 56,
+      "decimals": 18,
+      "logoURI": "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png"
+    }
+  ];
+  const ethSupportTokens = [
+    {
+      "name": "Tether USD",
+      "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "symbol": "USDT",
+      "decimals": 6,
+      "chainId": 1,
+      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+      "extensions": {
+        "bridgeInfo": {
+          "10": {
+            "tokenAddress": "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58"
+          },
+          "137": {
+            "tokenAddress": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+          },
+          "42161": {
+            "tokenAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+          }
+        }
+      }
+    },
+    {
+      "name": "USDCoin",
+      "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "symbol": "USDC",
+      "decimals": 6,
+      "chainId": 1,
+      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+      "extensions": {
+        "bridgeInfo": {
+          "10": {
+            "tokenAddress": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85"
+          },
+          "56": {
+            "tokenAddress": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"
+          },
+          "130": {
+            "tokenAddress": "0x078D782b760474a361dDA0AF3839290b0EF57AD6"
+          },
+          "137": {
+            "tokenAddress": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+          },
+          "143": {
+            "tokenAddress": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603"
+          },
+          "1868": {
+            "tokenAddress": "0xbA9986D2381edf1DA03B0B9c1f8b00dc4AacC369"
+          },
+          "42161": {
+            "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+          },
+          "42220": {
+            "tokenAddress": "0xcebA9300f2b948710d2653dD7B07f33A8B32118C"
+          },
+          "43114": {
+            "tokenAddress": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"
+          }
+        }
+      }
+    }
+  ]
+
     const isFocused=useIsFocused();
     const [isTokenHaveBalances, setisTokenHaveBalances] = useState(true);
     const [chooseModalVisible, setChooseModalVisible] = useState(false);
@@ -396,74 +507,70 @@ const CrossChainTx = ({ route = "ETH" }) => {
     const [tokenSearchQuery, setTokenSearchQuery] = useState('');
 
     const currentWalletType = chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
-    const currentTokenList = currentWalletType === "Ethereum" ? tokenList : PancakeList;
+    const currentTokenList = currentWalletType === "Ethereum" ? ethSupportTokens : bscSupportTokens;
 
 
-    let balanceMap = {};
-    let prioritySet = new Set();
+    // let balanceMap = {};
+    // let prioritySet = new Set();
 
-    if (
-        Array.isArray(state?.activeWalletPortFolio?.tokens) &&
-        state.activeWalletPortFolio.tokens.length > 0
-    ) {
-        state.activeWalletPortFolio.tokens.forEach(t => {
-            let addr = t.contractAddress?.toLowerCase();
-            if (!addr) return;
+    // if (
+    //     Array.isArray(state?.activeWalletPortFolio?.tokens) &&
+    //     state.activeWalletPortFolio.tokens.length > 0
+    // ) {
+    //     state.activeWalletPortFolio.tokens.forEach(t => {
+    //         let addr = t.contractAddress?.toLowerCase();
+    //         if (!addr) return;
 
-            if (addr === "native") {
-                addr = "0x0000000000000000000000000000000000000000";
-            }
+    //         if (addr === "native") {
+    //             addr = "0x0000000000000000000000000000000000000000";
+    //         }
 
-            prioritySet.add(addr);
-            balanceMap[addr] = {
-                balance: t.balance,
-                balanceUSD: t.balanceUSD,
-                decimals: t.decimals,
-                address: addr,
-                name: t.name,
-                symbol: t.symbol
-            };
-        });
-    }
+    //         prioritySet.add(addr);
+    //         balanceMap[addr] = {
+    //             balance: t.balance,
+    //             balanceUSD: t.balanceUSD,
+    //             decimals: t.decimals,
+    //             address: addr,
+    //             name: t.name,
+    //             symbol: t.symbol
+    //         };
+    //     });
+    // }
 
-    const filteredTokenList = currentTokenList.filter(item => {
-        const name = item.name?.toLowerCase() || "";
-        const symbol = item.symbol?.toLowerCase() || "";
-        const query = tokenSearchQuery.toLowerCase();
+    // const hasAnyWalletMatch = currentTokenList.some(item =>
+    //     prioritySet.has(item.address?.toLowerCase())
+    // );
 
-        return name.includes(query) || symbol.includes(query);
-    });
+    // const filteredTokenList = currentTokenList.filter(item => {
+    //     const addr = item.address?.toLowerCase();
+    //     if (!addr) return false;
+    //     const name = item.name?.toLowerCase() || "";
+    //     const symbol = item.symbol?.toLowerCase() || "";
+    //     const query = tokenSearchQuery.toLowerCase();
 
-    const mergedList = filteredTokenList.map(item => {
-        const addr = item.address?.toLowerCase() || "";
+    //     const matchesSearch = name.includes(query) || symbol.includes(query);
+    //     if (hasAnyWalletMatch) {
+    //         return prioritySet.has(addr) && matchesSearch;
+    //     }
+    //     return matchesSearch;
+    // });
 
-        return {
-            ...item,
-            decimals: item.decimals ?? balanceMap[addr]?.decimals,
-            ...(balanceMap[addr] || {})
-        };
-    });
+    // const finalTokenList = filteredTokenList.map(item => {
+    //     const addr = item.address?.toLowerCase();
 
-    const tokenListAddressSet = new Set(
-        currentTokenList.map(t => t.address?.toLowerCase())
-    );
+    //     return {
+    //         ...item,
+    //         ...(balanceMap[addr] || {}),
+    //         address: addr,
+    //         decimals: item.decimals ?? balanceMap[addr]?.decimals
+    //     };
+    // });
 
-    const extraWalletTokens = Object.keys(balanceMap)
-        .filter(addr => {
-            return (
-                addr !== "0x0000000000000000000000000000000000000000" &&
-                !tokenListAddressSet.has(addr)
-            );
-        })
-        .map(addr => balanceMap[addr]);
-
-    const finalTokenList = [...mergedList, ...extraWalletTokens];
-
-    const sortedTokenList = finalTokenList.sort((a, b) => {
-        const aPri = prioritySet.has(a.address?.toLowerCase()) ? 1 : 0;
-        const bPri = prioritySet.has(b.address?.toLowerCase()) ? 1 : 0;
-        return bPri - aPri;
-    });
+    // const sortedTokenList = finalTokenList.sort((a, b) => {
+    //     const aPri = prioritySet.has(a.address?.toLowerCase()) ? 1 : 0;
+    //     const bPri = prioritySet.has(b.address?.toLowerCase()) ? 1 : 0;
+    //     return bPri - aPri;
+    // });
 
     useEffect(() => {
         setbalanceLoading(true);
@@ -486,28 +593,27 @@ const CrossChainTx = ({ route = "ETH" }) => {
         }
     }, [currentTokenList]);
 
-    useEffect(() => {
-        resetState();
-        fetchUSDCBalnce(currentTokenList[0],state?.wallet?.address);
-        setWALLETBALANCE(state?.EthBalance);
-        setWALLETADDRESS(state?.wallet?.address);
-    }, []);
 
     useEffect(() => {
-        resetState();
-        fetchUSDCBalnce(state?.wallet?.address);
-        setWALLETBALANCE(state?.EthBalance);
-        setWALLETADDRESS(state?.wallet?.address);
+        if (!state?.wallet?.address) return;
+
+        const token = selectedToken || currentTokenList[0];
+        if (!token) return;
+
+        fetchUSDCBalnce(token, state.wallet.address);
+        setWALLETADDRESS(state.wallet.address);
     }, [state?.wallet?.address]);
 
     useEffect(() => {
         resetState();
-        if (currentTokenList.length > 0) {
-            setSelectedToken(currentTokenList[0]);
-        }
-        fetchUSDCBalnce(state?.wallet?.address);
-        setWALLETBALANCE(state?.EthBalance);
-        setWALLETADDRESS(state?.wallet?.address);
+
+        if (currentTokenList.length === 0 || !state?.wallet?.address) return;
+
+        const newToken = currentTokenList[0];
+        setSelectedToken(newToken);
+
+        fetchUSDCBalnce(newToken, state.wallet.address);
+        setWALLETADDRESS(state.wallet.address);
     }, [chooseSelectedItemId]);
 
     const resetState = () => {
@@ -607,7 +713,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
             <Image style={styles.chooseItemImage} source={{ uri: item.logoURI }} />
             <View style={{ flex: 1 }}>
                 <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.symbol}</Text>
-                <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.balance || "0.0"}</Text>
+                {/* <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.balance || "0.0"}</Text> */}
             </View>
             <View style={{ alignSelf: "flex-end", alignItems: "flex-end" }}>
                 
@@ -717,11 +823,55 @@ const CrossChainTx = ({ route = "ETH" }) => {
                 );
                 console.log("respoExe-=-BNB=-=",respoExe);
                 if (respoExe?.status_task) {
-                    await LocalTxManager.saveTx(state && state.wallet && state.wallet.address,{ chain: "BSC", hash: respoExe.res.transferTxHash, status:"pending",statusColor:"#eec14fff"  });
+                     const { res } = respoExe;
+                    const txHashes = [];
+
+                    if (res.approvalTxHash) {
+                        console.log("Approval transaction (BNB):", res.approvalTxHash);
+
+                        await LocalTxManager.saveTx(
+                            state && state.wallet && state.wallet.address,
+                            {
+                                chain: "BSC",
+                                hash: res.approvalTxHash,
+                                status: "pending",
+                                statusColor: "#eec14fff",
+                                type: "approval",
+                                timestamp: Date.now()
+                            }
+                        );
+
+                        txHashes.push({
+                            chain: "BSC",
+                            hash: res.approvalTxHash,
+                            type: "Approval"
+                        });
+                    }
+
+                    console.log("Transfer transaction (BSC):", res.transferTxHash);
+
+                    await LocalTxManager.saveTx(
+                        state && state.wallet && state.wallet.address,
+                        {
+                            chain: "BSC",
+                            hash: res.transferTxHash,
+                            status: "pending",
+                            statusColor: "#eec14fff",
+                            type: "transfer",
+                            timestamp: Date.now()
+                        }
+                    );
+
+                    txHashes.push({
+                        chain: "BSC",
+                        hash: res.transferTxHash,
+                        type: "Transfer"
+                    });
+
                     setfianl_modal_text("Transaction Successful");
                     setfianl_modal_loading(false);
                     setfianl_modal_error(true);
-                    setshowTxHash([{ chain: "BSC", hash: respoExe.res.transferTxHash }]);
+                    setshowTxHash(txHashes);
                 } else {
                     throw new Error("Transaction failed");
                 }
@@ -1116,8 +1266,21 @@ const CrossChainTx = ({ route = "ETH" }) => {
                                         )}
                                     </ScrollView>
                                 </View>
-                                <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Available  {selectedToken?.symbol}</Text>
+                                <View style={{flexDirection:"row"}}>
+                                    <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Available {selectedToken?.symbol}</Text>
+                                    <TouchableOpacity onPress={async () => { await fetchUSDCBalnce(selectedToken || currentTokenList[0], state?.wallet?.address) }}>
+                                        <Icon name={"refresh"} type={"materialCommunity"} size={21} color={theme.headingTx} />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
+                        </View>
+                        <View style={styles.swapSuggestCon}>
+                            <Text style={[styles.swapSuggestTex, { color: theme.headingTx }]}>
+                                {" "}Swap another asset to {selectedToken?.symbol}
+                            </Text>
+                            <TouchableOpacity style={styles.swapSuggestBtn} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId, activeAsset: selectedToken }) }}>
+                                <Text style={styles.swapSuggestTex}>Swap Now</Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
 
@@ -1171,6 +1334,25 @@ const CrossChainTx = ({ route = "ETH" }) => {
 
 
                     {/* paymethod Gas selecter */}
+                    {parseFloat(WALLETBALANCE) <= 0&&<View style={[styles.card, { backgroundColor: "#4052D6", flexDirection: "column" }]}>
+                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                            <Icon name={"information-outline"} type={"materialCommunity"} size={20} color={theme.headingTx} />
+                            <Text style={{ color: theme.headingTx, fontSize: 16, fontWeight: "600" }}>
+                                {" "}Insufficient {selectedToken?.symbol} Balance
+                            </Text>
+                        </View>
+                        <Text style={{ color: theme.headingTx, fontSize: 13.5, marginLeft: wp(6), fontWeight: "400" }}>
+                            You need {selectedToken?.symbol} to complete this bridge. Quickly swap your current tokens or buy more to continue.
+                        </Text>
+                        <View style={styles.InsufficientActionsCon}>
+                            <TouchableOpacity style={styles.InsufficientActionsBtn} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId, activeAsset: selectedToken }) }}>
+                                <Text style={{ color: theme.headingTx, fontSize: 16, fontWeight: "600" }}>Swap Now</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.InsufficientActionsBtn, { backgroundColor: "#fff" }]} onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}>
+                                <Text style={{ color: "#4052D6", fontSize: 16, fontWeight: "600" }}>Buy Now</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>}
                     <View style={styles.card}>
                         <View style={styles.subHeadingCon}>
                             <Icon name={"fire"} type={"materialCommunity"} size={25} color={"#4052D6"} />
@@ -1306,6 +1488,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                                         {resQuotes.completionTime ? (resQuotes.completionTime / (1000 * 60) + " Min") : "getting.."}
                                     </Text>
                                 </View>
+                                    {payFeeType === "stable"&&<Text style={[styles.quoteLabel, { color: "orange",fontStyle:"italic" }]}>Note: The amount you enter includes the network fee, which will be deducted automatically.</Text>}
                             </View>
 
                             <View style={[styles.quoteTextCon, { borderColor: theme.inactiveTx }]}>
@@ -1413,7 +1596,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                                         </View>
 
                                         <FlatList
-                                            data={sortedTokenList}
+                                            data={currentTokenList}
                                             renderItem={tokenRenderItem}
                                             keyExtractor={(item, index) => `${index}`}
                                             keyboardShouldPersistTaps="handled"
