@@ -14,7 +14,7 @@ export async function SwapPepare(
   feePayType
 ) {
   try {
-    console.log("starting bridge swap process");
+    console.log("Starting bridge swap process");
     const prepareResponse = await proxyRequest("/v1/bridge/swap-transaction/prepare", PPOST, {
       fromAddress,
       toAddress,
@@ -25,7 +25,7 @@ export async function SwapPepare(
       feePayType: feePayType === "native" ? "native" : "stablecoin"
     });
 
-    console.log("swap prepare response:", prepareResponse);
+    console.log("Swap prepare response:", prepareResponse);
 
     if (prepareResponse.err) {
       return {
@@ -38,17 +38,17 @@ export async function SwapPepare(
 
     if (!transactions || transactions.length === 0) {
       return {
-        res: "no transaction data received from server",
+        res: "No transaction data received from server",
         status_task: false
       };
     }
 
-    console.log(`transactions to process: ${transactions.length}`);
+    console.log(`Transactions to process: ${transactions.length}`);
     if (needsApproval) {
-      console.log("approval transaction required");
+      console.log("Approval transaction required");
     }
 
-    console.log("signing all transactions");
+    console.log("Signing all transactions");
     const signedTransactions = [];
 
     for (const txData of transactions) {
@@ -57,6 +57,7 @@ export async function SwapPepare(
         signedTransactions.push(signedTx);
         console.log(`${txData.type} transaction signed`);
       } catch (signError) {
+        console.error(`Failed to sign ${txData.type}:`, signError);
         return {
           res: `Failed to sign ${txData.type} transaction: ${signError.message}`,
           status_task: false
@@ -66,57 +67,56 @@ export async function SwapPepare(
 
     console.log("Broadcasting transactions");
 
-    // const broadcastResponse = {success:true}
-    // // await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {
-    // //   signedTransactions
-    // // });
+    const broadcastResponse = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {
+      signedTransactions
+    });
 
-    // console.log("broadcast response:", broadcastResponse);
+    console.log("Broadcast response:", broadcastResponse);
 
-    // if (broadcastResponse.err) {
-    //   return {
-    //     res: broadcastResponse.err?.message || "Transaction broadcast failed",
-    //     status_task: false,
-    //     partialResults: broadcastResponse.err?.completedTransactions
-    //   };
-    // }
+    if (broadcastResponse.err) {
+      return {
+        res: broadcastResponse.err?.message || "Transaction broadcast failed",
+        status_task: false,
+        partialResults: broadcastResponse.err?.completedTransactions
+      };
+    }
 
-    // const { success, results, totalTransactions } = broadcastResponse.res;
+    const { success, results, totalTransactions } = broadcastResponse.res;
 
-    // if (success) {
-    //   const response = {
-    //     message: "Swap completed successfully!",
-    //     totalTransactions
-    //   };
+    if (success) {
+      const response = {
+        message: "Swap completed successfully!",
+        totalTransactions
+      };
 
-    //   results.forEach((result) => {
-    //     if (result.type === 'approve') {
-    //       response.approvalTxHash = result.transactionHash;
-    //       response.approvalBlock = result.blockNumber;
-    //       response.approvalGasUsed = result.gasUsed;
-    //     } else if (result.type === 'transfer') {
-    //       response.transferTxHash = result.transactionHash;
-    //       response.transferBlock = result.blockNumber;
-    //       response.transferGasUsed = result.gasUsed;
-    //     }
-    //   });
+      results.forEach((result) => {
+        if (result.type === 'approve') {
+          response.approvalTxHash = result.transactionHash;
+          response.approvalBlock = result.blockNumber;
+          response.approvalGasUsed = result.gasUsed;
+        } else if (result.type === 'transfer') {
+          response.transferTxHash = result.transactionHash;
+          response.transferBlock = result.blockNumber;
+          response.transferGasUsed = result.gasUsed;
+        }
+      });
 
-    //   console.log("all transactions completed successfully:", response);
+      console.log("All transactions completed successfully:", response);
 
-    //   return {
-    //     res: response,
-    //     status_task: true
-    //   };
-    // } else {
-    //   return {
-    //     res: "Broadcast completed but some transactions failed",
-    //     status_task: false,
-    //     results
-    //   };
-    // }
+      return {
+        res: response,
+        status_task: true
+      };
+    } else {
+      return {
+        res: "Broadcast completed but some transactions failed",
+        status_task: false,
+        results
+      };
+    }
 
   } catch (error) {
-    console.error("error in swap_prepare:", error);
+    console.log("Error in swap_prepare:", error);
     return {
       res: error.message || "Unknown error occurred during swap",
       status_task: false
@@ -130,25 +130,72 @@ async function signTransaction(privateKey, txData) {
     const tx = txData.transaction;
     const meta = txData.txMeta;
 
-    if (!tx.from) {
-      throw new Error("Transaction 'from' address is missing");
-    }
+    if (!tx.from) throw new Error("Transaction 'from' address is missing");
+    if (!tx.to) throw new Error("Transaction 'to' address is missing");
+    if (!meta?.gasLimit) throw new Error("Gas limit is missing");
+    if (!meta?.feeData) throw new Error("Fee data is missing");
+    if (meta.nonce === undefined) throw new Error("Nonce is missing");
 
-    if (!tx.to) {
-      throw new Error("Transaction 'to' address is missing");
-    }
+    const toBigNumber = (value, fieldName = "value") => {
+      if (value === null || value === undefined) {
+        return ethers.BigNumber.from(0);
+      }
+      
+      if (ethers.BigNumber.isBigNumber(value)) {
+        return value;
+      }
+      
+      try {
+        return ethers.BigNumber.from(value);
+      } catch (err) {
+        console.error(`Error converting ${fieldName}:`, value);
+        throw new Error(`Invalid ${fieldName}: ${value}`);
+      }
+    };
 
-    const { gas, ...cleanTx } = tx;
+    const isEIP1559 = meta.feeData.maxFeePerGas !== null && 
+                      meta.feeData.maxPriorityFeePerGas !== null;
 
-    const txToSign = {
-      ...cleanTx,
-      gasLimit: ethers.BigNumber.from(meta.gasLimit),
-      maxFeePerGas: ethers.BigNumber.from(meta.feeData.maxFeePerGas),
-      maxPriorityFeePerGas: ethers.BigNumber.from(meta.feeData.maxPriorityFeePerGas),
+    const baseTx = {
+      from: tx.from,
+      to: tx.to,
+      data: tx.data || "0x",
+      value: toBigNumber(tx.value, "value"),
+      gasLimit: toBigNumber(meta.gasLimit, "gasLimit"),
       nonce: meta.nonce,
       chainId: Number(meta.network.chainId),
-      type: 2,
     };
+
+    let txToSign;
+
+    if (isEIP1559) {
+      console.log(` Signing EIP-1559 transaction (${txData.type})`);
+      txToSign = {
+        ...baseTx,
+        maxFeePerGas: toBigNumber(meta.feeData.maxFeePerGas, "maxFeePerGas"),
+        maxPriorityFeePerGas: toBigNumber(meta.feeData.maxPriorityFeePerGas, "maxPriorityFeePerGas"),
+        type: 2,
+      };
+    } else {
+      console.log(` Signing Legacy transaction (${txData.type})`);
+      txToSign = {
+        ...baseTx,
+        gasPrice: toBigNumber(meta.feeData.gasPrice, "gasPrice"),
+        type: 0,
+      };
+    }
+
+    console.log(`Transaction to sign (${txData.type}):`, {
+      from: txToSign.from,
+      to: txToSign.to,
+      value: txToSign.value.toString(),
+      gasLimit: txToSign.gasLimit.toString(),
+      gasPrice: txToSign.gasPrice?.toString(),
+      maxFeePerGas: txToSign.maxFeePerGas?.toString(),
+      nonce: txToSign.nonce,
+      chainId: txToSign.chainId,
+      type: txToSign.type,
+    });
 
     const signedTx = await account.signTransaction(txToSign);
 
@@ -156,14 +203,15 @@ async function signTransaction(privateKey, txData) {
       throw new Error("Transaction signing failed - no signed transaction returned");
     }
 
+    console.log(` ${txData.type} transaction signed (${signedTx.length} bytes)`);
     return signedTx;
 
   } catch (error) {
-    console.error("Error signing transaction:", error);
+    console.error(`Error signing ${txData.type} transaction:`, error);
+    console.error("Full transaction data:", JSON.stringify(txData, null, 2));
     throw error;
   }
 }
-
 
 export async function getWalletBalance(address) {
   try {
@@ -181,7 +229,7 @@ export async function getWalletBalance(address) {
       balance: balance
     };
   } catch (error) {
-    console.error("Error fetching wallet balance:", error);
+    console.log("Error fetching wallet balance:", error);
     throw error;
   }
 }

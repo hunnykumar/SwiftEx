@@ -270,7 +270,7 @@ const ExportUSDC = () => {
       console.log("swap-result----", result)
       if (result.success) {
         setshowTxHash([{ chain: "SRB", hash: showTxHash }]);
-        setshowTx(true);
+        // setshowTx(true);
         Snackbar.show({
           text: "USDC Exported successfully.",
           duration: Snackbar.LENGTH_SHORT,
