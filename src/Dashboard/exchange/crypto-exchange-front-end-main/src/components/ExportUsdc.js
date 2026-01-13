@@ -210,13 +210,13 @@ const ExportUSDC = () => {
         const respo = await convertMultiple([
           {
             token:
-              qoutesRep.info.fee.native.symbole === "Native"
+              qoutesRep.info.fee.native.symbol === "Native"
                 ? "XLM"
-                : qoutesRep.info.fee.native.symbole,
+                : qoutesRep.info.fee.native.symbol,
             amount: qoutesRep.info.fee.native.amount,
           },
           {
-            token: qoutesRep.info.fee.stablecoin.symbole,
+            token: qoutesRep.info.fee.stablecoin.symbol,
             amount: qoutesRep.info.fee.stablecoin.amount,
           },
         ]);
@@ -224,10 +224,10 @@ const ExportUSDC = () => {
         for (const item of respo) {
           if (item.success) {
             const nativeToken =
-              qoutesRep.info.fee.native.symbole === "Native"
+              qoutesRep.info.fee.native.symbol === "Native"
                 ? "XLM"
-                : qoutesRep.info.fee.native.symbole;
-            const stableToken = qoutesRep.info.fee.stablecoin.symbole;
+                : qoutesRep.info.fee.native.symbol;
+            const stableToken = qoutesRep.info.fee.stablecoin.symbol;
 
             if (item.token === nativeToken) {
               mergedQuotes.fee.native = { ...mergedQuotes.fee.native, ...item };
@@ -501,7 +501,7 @@ console.log("resQuotes-",resQuotes)
             <Text style={[styles.quoteLabel,{color:theme.inactiveTx}]}>Network Fee</Text>
             <TouchableOpacity onPress={manageFeeViewer}>
               <Text style={[styles.quoteValue,{color:theme.headingTx}]}>
-                {`${feeData?.amount} ${feeData?.symbole}`}
+                {`${feeData?.amount} ${feeData?.symbol}`}
               </Text>
             </TouchableOpacity>
           </View>
@@ -525,7 +525,7 @@ console.log("resQuotes-",resQuotes)
           <View style={[styles.quoteTextCon,{borderColor:theme.inactiveTx}]}>
             <Text style={[styles.quoteText,{color:theme.headingTx}]}>≈</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <Text style={[styles.quoteText,{color:theme.headingTx}]}> {feeData?.symbole==="Native"?resQuotes.minimumAmountOut:Math.max(0,parseFloat(resQuotes.minimumAmountOut || "0")-parseFloat(resQuotes?.fee?.stablecoin?.amount || "0"))}</Text>
+              <Text style={[styles.quoteText,{color:theme.headingTx}]}> {feeData?.symbol==="Native"?resQuotes.minimumAmountOut:Math.max(0,parseFloat(resQuotes.minimumAmountOut || "0")-parseFloat(resQuotes?.fee?.stablecoin?.amount || "0"))}</Text>
             </ScrollView>
             <Text style={[styles.quoteText,{color:theme.headingTx}]}>{!selectedReciveAssetDetils?reciveAsset[0].symbole:selectedReciveAssetDetils.symbole}</Text>
           </View>

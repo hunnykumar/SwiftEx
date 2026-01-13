@@ -26,9 +26,20 @@ const LocalTxManager = {
       const key = `walletCrossChainTx${activeWalletPublicKey}`;
       const data = await AsyncStorage.getItem(key);
       if (data) {
+        const parsedData = JSON.parse(data);
+        const filteredData = parsedData.filter(tx => {
+          const status = tx.status?.toLowerCase();
+          return status !== 'completed';
+        });
+
+        if (filteredData.length < parsedData.length) {
+          await AsyncStorage.setItem(key, JSON.stringify(filteredData));
+          console.log(`Removed ${parsedData.length - filteredData.length} completed transactions from storage`);
+        }
+
         return {
           status: true,
-          data: JSON.parse(data)
+          data: filteredData
         };
       } else {
         return {

@@ -297,6 +297,16 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
           )}
 
           {isWalletTx && (
+            item.success === false || item.success === "failed" || item.success === "Failed"?
+            <View style={styles.transactionHeader}>
+              <TouchableOpacity 
+                onPress={()=>{navigation.navigate("ExportUSDC")}}
+                style={styles.tryAgainBtn}
+              >
+                  <Text style={{fontSize:14,color:"#fff"}}>Try Again</Text>
+              </TouchableOpacity>
+            </View>
+            :
             <View style={styles.transactionHeader}>
               <TouchableOpacity 
                 onPress={handleRefreshTx}
@@ -343,7 +353,7 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
                 {
                   backgroundColor: item.success === true || item.success === "completed"
                     ? colors.success
-                    : item.success === false
+                    : item.success === false || item.success === "failed" || item.success === "Failed"
                     ? colors.error
                     : item.success === "processing" || item.success === "process"
                     ? "#f0a313d3"
@@ -361,7 +371,7 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
                     ? "Processing"
                     : item.success === "process"
                     ? "Process"
-                    : item.success === false
+                    : item.success === false || ["failed", "Failed", "FAILED"].includes(item.success)
                     ? "Failed"
                     : typeof item.success === "string"
                     ? item.success.charAt(0).toUpperCase() + item.success.slice(1)
@@ -466,36 +476,63 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
 
   const fetchTransactions = async () => {
     try {
-      // Fetch wallet transactions
       let walletTxs = [];
       try {
         const walletResponse = await LocalTxManager.getWalletTx(state?.wallet?.address);
-        
+
         if (walletResponse?.status && walletResponse?.data && Array.isArray(walletResponse.data)) {
-          // Filter out completed transactions
-          const filteredWalletTxs = walletResponse.data.filter(tx => tx.status !== 'completed' && tx.type !== 'Approval');
-          
-          // Remove duplicates based on hash
+
+          for (const tx of walletResponse.data) {
+            const txTimestamp = tx.timestamp || tx.lastUpdated || Date.now();
+            const currentTime = Date.now();
+            const isOlderThan10Min = (currentTime - txTimestamp) > 10 * 60 * 1000;
+            const isSRBPending = tx.chain === "SRB" && tx.status === "pending";
+
+            if (isSRBPending && isOlderThan10Min && tx.hash) {
+              await LocalTxManager.updateTxStatus(state?.wallet?.address, {
+                chain: tx.chain,
+                hash: tx.hash,
+                status: "failed",
+                statusColor: "#de2727ff"
+              });
+            }
+          }
+        
+        const filteredWalletTxs = walletResponse.data.filter(tx =>
+          tx.status !== 'completed' &&
+          !['approval', 'Approval'].includes(tx.type)
+        );
+
           const uniqueWalletTxs = [];
           const seenHashes = new Set();
           
           filteredWalletTxs.forEach(tx => {
-            const txHash = tx.hash || `${tx.chain}_${tx.lastUpdated}`;
+            const txHash = tx.hash || `${tx.chain}_${tx.timestamp || tx.lastUpdated}`;
             if (!seenHashes.has(txHash)) {
               seenHashes.add(txHash);
               uniqueWalletTxs.push(tx);
             }
           });
 
-          // Sort by lastUpdated (latest first)
-          uniqueWalletTxs.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+          uniqueWalletTxs.sort((a, b) => {
+            const timeA = a.timestamp || a.lastUpdated || 0;
+            const timeB = b.timestamp || b.lastUpdated || 0;
+            return timeB - timeA;
+          });
 
-          // Convert to transaction format
-          walletTxs = uniqueWalletTxs.map((tx) => ({
-            id: `wallet_tx_${tx.hash || tx.lastUpdated}`,
-            date: tx.lastUpdated ? formatDate(new Date(tx.lastUpdated)) : `${tx.chain} - ${tx.symbol || 'Cross-chain'}`,
+          walletTxs = uniqueWalletTxs.map((tx) => {
+            const txTimestamp = tx.timestamp || tx.lastUpdated || Date.now();
+            const currentTime = Date.now();
+            const isOlderThan10Min = (currentTime - txTimestamp) > 10 * 60 * 1000;
+            const isSRBPending = tx.chain === "SRB" && tx.status === "pending";
+            const finalStatus = isSRBPending && isOlderThan10Min ? "failed" : tx.status;
+            const finalStatusColor = isSRBPending && isOlderThan10Min ? "#de2727ff" : tx.statusColor;
+
+          return {
+            id: `wallet_tx_${tx.hash || txTimestamp}`,
+            date: txTimestamp ? formatDate(new Date(txTimestamp)) : `${tx.chain} - ${tx.symbol || 'Cross-chain'}`,
             amount: '0',
-            success: tx.status,
+            success: finalStatus,
             memo: "",
             operations: {
               records: [{
@@ -503,14 +540,16 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
                 symbol: tx.symbol,
                 chain: tx.chain,
                 hash: tx.hash,
-                status: tx.status,
-                statusColor: tx.statusColor,
+                status: finalStatus,
+                statusColor: finalStatusColor,
                 transaction_hash: tx.hash,
+                timestamp: txTimestamp, 
               }]
             },
             isReceived: true,
-            sortTime: tx.lastUpdated || Date.now(),
-          }));
+            sortTime: txTimestamp,
+          };
+         });
         }
       } catch (walletError) {
         console.error('Error fetching wallet transactions:', walletError);
@@ -571,7 +610,7 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
 
       setTransactions(allTransactions);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.log('Error fetching transactions:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -804,6 +843,12 @@ const styles = StyleSheet.create({
     width: "100%",
     maxHeight: "50%",
     bottom: 25
+  },
+  tryAgainBtn:{
+    backgroundColor:"#4052D6",
+    borderRadius:10,
+    paddingHorizontal:10,
+    paddingVertical:5
   }
 });
 
