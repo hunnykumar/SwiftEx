@@ -60,7 +60,7 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
         statusColor: "#eec14fff"
       };
 
-      if (type === "Approval") {
+      if (type === "Approval"||type === "approval") {
         const receipt = await getTxReceiptByChain(chainSymbol, txHash);
 
         if (receipt?.status === true || receipt?.status === 1) {
@@ -176,7 +176,7 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
       <View style={styles.rightSection}>
         <View style={styles.headerRow}>
           <Text style={[styles.assetName, { color: activeTheme.headingTx, marginBottom: -16 }]}>
-            {item?.type === "Approval" ? "Approval" : "Cross-Chain"}
+            {item?.type === "Approval"||item?.type === "approval" ? "Approval" : "Cross-Chain"}
           </Text>
           <View style={[styles.statusBadge, { backgroundColor: item.statusColor }]}>
             <Text style={[styles.statusText, { color: activeTheme.headingTx }]}>{item.status}</Text>

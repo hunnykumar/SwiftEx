@@ -85,17 +85,20 @@ const TokenSend = ({ route }) => {
         }
       );
       if (err) {
-      CustomInfoProvider.show("error",err.message|| "Transaction failed try again.");
+        CustomInfoProvider.show("error", err.message || "Transaction failed try again.");
+        return;
       }
       if (!res) {
-      CustomInfoProvider.show("error", "Transaction failed try again.");
+        CustomInfoProvider.show("error", "Transaction failed try again.");
+        return;
       }
       const upgradedTx = {
-        ...res,
+        to: res.unsignedTx?.to || tokenAddress,
+        data: res.unsignedTx?.data || data,
         gasLimit: ethers.BigNumber.from(res.gasLimit),
         gasPrice: ethers.BigNumber.from(res.gasPrice),
         nonce: res.nonce,
-        chainId: res.chainId || 56,
+        chainId: parseInt(res.chainId) || 56,
         value: res.value ? ethers.BigNumber.from(res.value) : ethers.BigNumber.from(0),
       };
 
@@ -109,10 +112,13 @@ const TokenSend = ({ route }) => {
       );
       console.log("Broadcast response:", respoExe);
       if (respoExe?.err) {
-        CustomInfoProvider.show("error", respoExe.err.message||"Transaction failed try again.");
+        CustomInfoProvider.show("error", respoExe.err.message || "Transaction failed try again.");
+        return;
       }
       if (respoExe?.res?.txHash) {
-        CustomInfoProvider.show("Info", "Transaction successful!");
+        CustomInfoProvider.show("success", "Transaction successful!");
+        await ShortTermStorage.saveTx(state && state.wallet && state.wallet.address,{chain: "BSC",typeTx: "Token Send",status: "Pending",hash: respoExe?.res?.txHash});
+        navigation.navigate("Transactions");
       } else {
              CustomInfoProvider.show("error", "Transaction failed try again.");
       }
