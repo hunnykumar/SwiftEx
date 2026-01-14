@@ -6,7 +6,12 @@ const LocalTxManager = {
       const key = `walletCrossChainTx${activeWalletPublicKey}`;
       const existingResponse = await this.getWalletTx(activeWalletPublicKey);
       const existingData = existingResponse.status ? existingResponse.data : [];
-      const updatedData = [...existingData, data];
+      const dataWithTimestamp = {
+        ...data,
+        timestamp: data?.timestamp ?? Date.now(),
+      };
+
+      const updatedData = [...existingData, dataWithTimestamp];
       await AsyncStorage.setItem(key, JSON.stringify(updatedData));
       console.log('LocalTxManager save true.');
       return {

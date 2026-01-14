@@ -483,12 +483,23 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
         if (walletResponse?.status && walletResponse?.data && Array.isArray(walletResponse.data)) {
 
           for (const tx of walletResponse.data) {
-            const txTimestamp = tx.timestamp || tx.lastUpdated || Date.now();
+            if (!tx.timestamp) continue;
+
             const currentTime = Date.now();
-            const isOlderThan10Min = (currentTime - txTimestamp) > 10 * 60 * 1000;
-            const isSRBPending = tx.chain === "SRB" && tx.status === "pending";
+            const isOlderThan10Min = (currentTime - tx.timestamp) > 10 * 60 * 1000;
+            const txStatus = tx.status?.toLowerCase();
+            const isSRBPending = tx.chain === "SRB" && txStatus === "pending";
 
             if (isSRBPending && isOlderThan10Min && tx.hash) {
+              console.log("Marking SRB tx as failed:", {
+                chain: tx.chain,
+                hash: tx.hash,
+                timestamp: tx.timestamp,
+                currentTime: currentTime,
+                ageInMinutes: (currentTime - tx.timestamp) / (60 * 1000),
+                status: tx.status
+              });
+
               await LocalTxManager.updateTxStatus(state?.wallet?.address, {
                 chain: tx.chain,
                 hash: tx.hash,
@@ -521,10 +532,36 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
           });
 
           walletTxs = uniqueWalletTxs.map((tx) => {
-            const txTimestamp = tx.timestamp || tx.lastUpdated || Date.now();
+            const txTimestamp = tx.timestamp;
+
+            if (!txTimestamp) {
+              return {
+                id: `wallet_tx_${tx.hash || Date.now()}`,
+                date: `${tx.chain} - ${tx.symbol || 'Cross-chain'}`,
+                amount: '0',
+                success: tx.status,
+                memo: "",
+                operations: {
+                  records: [{
+                    type: 'wallet_tx',
+                    symbol: tx.symbol,
+                    chain: tx.chain,
+                    hash: tx.hash,
+                    status: tx.status,
+                    statusColor: tx.statusColor,
+                    transaction_hash: tx.hash,
+                    timestamp: Date.now(),
+                  }]
+                },
+                isReceived: true,
+                sortTime: Date.now(),
+              };
+            }
+
             const currentTime = Date.now();
             const isOlderThan10Min = (currentTime - txTimestamp) > 10 * 60 * 1000;
-            const isSRBPending = tx.chain === "SRB" && tx.status === "pending";
+            const txStatus = tx.status?.toLowerCase();
+            const isSRBPending = tx.chain === "SRB" && txStatus === "pending";
             const finalStatus = isSRBPending && isOlderThan10Min ? "failed" : tx.status;
             const finalStatusColor = isSRBPending && isOlderThan10Min ? "#de2727ff" : tx.statusColor;
 

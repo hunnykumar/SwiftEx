@@ -477,21 +477,15 @@ export const NewOfferModal = () => {
 
 
   const reves_fun = () => {
-  settop_value(prev => {
-    settop_value_0(prev0 => prev);
-    return prev0;
-  });
+    settop_value_0(top_value);
+    settop_value(top_value_0);
 
-  setAssetIssuerPublicKey(prev => {
-    setAssetIssuerPublicKey1(prev1 => prev);
-    return prev1;
-  });
+    setAssetIssuerPublicKey1(AssetIssuerPublicKey);
+    setAssetIssuerPublicKey(AssetIssuerPublicKey1);
 
-  settop_domain(prev => {
-    settop_domain_0(prev0 => prev);
-    return prev0;
-  });
-};
+    settop_domain(top_domain_0);
+    settop_domain_0(top_domain);
+  };
 
   const onChangename = useCallback((input) => {
     const formattedInput = input.replace(stellarConfig.INPUT_SANITIZE_REGEX, '');

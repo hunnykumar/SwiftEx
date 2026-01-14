@@ -91,7 +91,7 @@ export async function swapPepare(
 
     const sdk = new AllbridgeCoreSdk({
       ...nodeRpcUrlsDefault,
-      SRB: "https://rpc.ankr.com/stellar_soroban",
+      SRB: "https://stellar-soroban-public.nodies.app",
       BNB: RPC.BSCRPC,
       ETH: RPC.ETHRPC
     });
