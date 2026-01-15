@@ -5,6 +5,7 @@ import {
   View,
   TouchableOpacity,
   Image,
+  Platform,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -69,8 +70,8 @@ const SelectWallet = ({ props, visible, setVisible, setModalVisible }) => {
       }}
     >
       <View style={[style.body, { backgroundColor: state.THEME.THEME === false ? "#fff" : "#1B1B1C" }]}>
-        <View style={{ marginTop: hp(3) }}>
-          <Wallet_screen_header title="Select Wallet" onLeftIconPress={() => navi.goBack()} />
+        <View style={{ marginTop: Platform.OS==="android"?hp(4.5):hp(3) }}>
+          <Wallet_screen_header title="Select Wallet" onLeftIconPress={() => setVisible(false)} />
         </View>
         <TouchableOpacity
           style={[style.box, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}

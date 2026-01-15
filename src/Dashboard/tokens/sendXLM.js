@@ -795,6 +795,7 @@ const style = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingVertical: hp(2.5),
     backgroundColor: 'transparent',
+    marginBottom:hp(2.3)
   },
   sendButton: {
     borderRadius: 16,

@@ -226,7 +226,7 @@ const ChainSelector = ({ activeChain, onSelect, colors }) => {
 
 // Filter Chips Component
 const FilterChips = ({ activeFilter, onFilterChange, colors }) => {
-  const filters = ['All', 'Send', 'Receive', 'Pending'];
+  const filters = ['All', 'Send', 'Receive', 'Recent'];
 
   return (
     <View style={styles.filterContainer}>
@@ -425,7 +425,7 @@ const EmptyState = ({ activeFilter, colors }) => {
     switch (activeFilter) {
       case 'Send': return 'No sent transactions yet';
       case 'Receive': return 'No received transactions yet';
-      case 'Pending': return 'No pending transactions';
+      case 'Recent': return 'No recent transactions';
       default: return 'No transactions found';
     }
   };
@@ -482,8 +482,7 @@ const TransactionHistory = () => {
       // Settings or TxDetail se aaye to 'All' select karo
       setActiveFilter('All');
     } else if (previousScreen) {
-      // Baaki kisi bhi screen se aaye to 'Pending' select karo
-      setActiveFilter('Pending');
+      setActiveFilter('Recent');
     }
   }, [route?.params?.txType, previousScreen]);
 
@@ -492,28 +491,29 @@ const TransactionHistory = () => {
     fetchTransactions();
   }, [activeChain]);
 
-  // Fetch all chains' pending transactions when Pending filter is active
+  // Fetch all chains' recent transactions when Recent filter is active
   useEffect(() => {
-    if (activeFilter === 'Pending') {
-      fetchAllChainsPendingTransactions();
+    if (activeFilter === 'Recent') {
+      fetchAllChainsRecentTransactions();
     }
   }, [activeFilter]);
 
-  const fetchAllChainsPendingTransactions = async () => {
+  const fetchAllChainsRecentTransactions = async () => {
     try {
-      // Get all pending transactions from storage
-      const pendingResponse = await ShortTermStorage.getWalletTx(walletAddress);
-      const allPendingTxs = pendingResponse.status ? pendingResponse.data : [];
+      // Get all recent transactions from storage
+      const recentResponse = await ShortTermStorage.getWalletTx(walletAddress);
+      const allRecentTxs = recentResponse.status ? recentResponse.data : [];
 
-      // Filter for all chains' pending/failed/approve transactions
-      const filteredPendingTxs = allPendingTxs.filter(tx => 
+      // Filter for all chains' pending/failed/approve/success transactions
+      const filteredRecentTxs = allRecentTxs.filter(tx => 
         tx.status?.toLowerCase() === 'pending' || 
         tx.status?.toLowerCase() === 'failed' || 
+        tx.status?.toLowerCase() === 'success' ||
         tx.typeTx?.toLowerCase() === 'approve'
       );
 
-      // Format pending transactions
-      const formattedAllPendingTxs = filteredPendingTxs.map(tx => ({
+      // Format recent transactions
+      const formattedAllRecentTxs = filteredRecentTxs.map(tx => ({
         hash: tx.hash,
         from: tx.typeTx === 'Send' ? walletAddress : 'Unknown',
         to: tx.typeTx === 'Receive' ? walletAddress : 'Unknown',
@@ -521,6 +521,7 @@ const TransactionHistory = () => {
         asset: tx.asset || tx.chain,
         isPending: tx.status?.toLowerCase() === 'pending',
         isFailed: tx.status?.toLowerCase() === 'failed',
+        isSuccess: tx.status?.toLowerCase() === 'success',
         isApprove: tx.typeTx?.toLowerCase() === 'approve',
         timestamp: tx.createdAt,
         typeTx: tx.typeTx,
@@ -529,7 +530,7 @@ const TransactionHistory = () => {
       }));
 
       // Sort by timestamp
-      formattedAllPendingTxs.sort((a, b) => {
+      formattedAllRecentTxs.sort((a, b) => {
         const dateA = new Date(a.timestamp || 0);
         const dateB = new Date(b.timestamp || 0);
         return dateB - dateA;
@@ -537,12 +538,12 @@ const TransactionHistory = () => {
 
       // Merge with existing transactions (remove duplicates)
       const existingHashes = new Set(transactions.map(tx => tx.hash?.toLowerCase()));
-      const newPendingTxs = formattedAllPendingTxs.filter(
+      const newRecentTxs = formattedAllRecentTxs.filter(
         tx => !existingHashes.has(tx.hash?.toLowerCase())
       );
 
-      if (newPendingTxs.length > 0) {
-        const updatedTransactions = [...newPendingTxs, ...transactions];
+      if (newRecentTxs.length > 0) {
+        const updatedTransactions = [...newRecentTxs, ...transactions];
         updatedTransactions.sort((a, b) => {
           const dateA = new Date(a.timestamp || 0);
           const dateB = new Date(b.timestamp || 0);
@@ -551,7 +552,7 @@ const TransactionHistory = () => {
         setTransactions(updatedTransactions);
       }
     } catch (error) {
-      console.error('Error fetching all pending transactions:', error);
+      console.error('Error fetching all recent transactions:', error);
     }
   };
 
@@ -576,32 +577,33 @@ const TransactionHistory = () => {
       }
 
       if (res) {
-        // Get pending transactions
-        const pendingResponse = await ShortTermStorage.getWalletTx(walletAddress);
-        const pendingTxs = pendingResponse.status ? pendingResponse.data : [];
+        // Get recent transactions
+        const recentResponse = await ShortTermStorage.getWalletTx(walletAddress);
+        const recentTxs = recentResponse.status ? recentResponse.data : [];
 
-        // Remove confirmed transactions from pending
+        // Remove confirmed transactions from recent
         const confirmedHashes = new Set(res.map(tx => tx.hash?.toLowerCase()));
-        for (const pendingTx of pendingTxs) {
-          if (pendingTx.chain === activeChain && confirmedHashes.has(pendingTx.hash?.toLowerCase())) {
-            await ShortTermStorage.removeTxByHash(walletAddress, pendingTx.hash, pendingTx.chain);
+        for (const recentTx of recentTxs) {
+          if (recentTx.chain === activeChain && confirmedHashes.has(recentTx.hash?.toLowerCase())) {
+            await ShortTermStorage.removeTxByHash(walletAddress, recentTx.hash, recentTx.chain);
           }
         }
 
-        // Get updated pending transactions
-        const updatedPendingResponse = await ShortTermStorage.getWalletTx(walletAddress);
-        const updatedPendingTxs = updatedPendingResponse.status ? updatedPendingResponse.data : [];
+        // Get updated recent transactions
+        const updatedRecentResponse = await ShortTermStorage.getWalletTx(walletAddress);
+        const updatedRecentTxs = updatedRecentResponse.status ? updatedRecentResponse.data : [];
 
         // Filter for current chain only
-        const chainPendingTxs = updatedPendingTxs.filter(tx => 
+        const chainRecentTxs = updatedRecentTxs.filter(tx => 
           tx.chain === activeChain && 
           (tx.status?.toLowerCase() === 'pending' || 
-           tx.status?.toLowerCase() === 'failed' || 
+           tx.status?.toLowerCase() === 'failed' ||
+           tx.status?.toLowerCase() === 'success' ||
            tx.typeTx?.toLowerCase() === 'approve')
         );
 
-        // Format pending transactions
-        const formattedPendingTxs = chainPendingTxs.map(tx => ({
+        // Format recent transactions
+        const formattedRecentTxs = chainRecentTxs.map(tx => ({
           hash: tx.hash,
           from: tx.typeTx === 'Send' ? walletAddress : 'Unknown',
           to: tx.typeTx === 'Receive' ? walletAddress : 'Unknown',
@@ -609,6 +611,7 @@ const TransactionHistory = () => {
           asset: tx.asset || tx.chain,
           isPending: tx.status?.toLowerCase() === 'pending',
           isFailed: tx.status?.toLowerCase() === 'failed',
+          isSuccess: tx.status?.toLowerCase() === 'success',
           isApprove: tx.typeTx?.toLowerCase() === 'approve',
           timestamp: tx.createdAt,
           typeTx: tx.typeTx,
@@ -617,11 +620,11 @@ const TransactionHistory = () => {
         }));
 
         // Deduplicate and combine
-        const uniquePendingTxs = formattedPendingTxs.filter(
+        const uniqueRecentTxs = formattedRecentTxs.filter(
           ptx => !confirmedHashes.has(ptx.hash?.toLowerCase())
         );
 
-        const combinedTxs = [...uniquePendingTxs, ...res];
+        const combinedTxs = [...uniqueRecentTxs, ...res];
         
         // Sort by timestamp
         combinedTxs.sort((a, b) => {
@@ -643,28 +646,48 @@ const TransactionHistory = () => {
     }
   };
 
+  // Updated filteredTransactions with auto-switch logic
   const filteredTransactions = useMemo(() => {
-    if (activeFilter === 'All') return transactions;
-    
-    if (activeFilter === 'Pending') {
-      // Show pending transactions from ALL chains, not just current chain
+    if (activeFilter === 'All') {
       return transactions.filter(tx => 
+        !(tx.isPending === true || 
+          tx.isFailed === true || 
+          tx.isApprove === true ||
+          tx.isSuccess === true)
+      );
+    }
+    
+    if (activeFilter === 'Recent') {
+      // Show pending, failed, approve, AND success transactions from ALL chains
+      const recentTxs = transactions.filter(tx => 
         tx.isPending === true || 
         tx.isFailed === true || 
-        tx.isApprove === true
+        tx.isApprove === true ||
+        tx.isSuccess === true
       );
+      
+      return recentTxs;
     }
 
     return transactions.filter(tx => {
-      if (tx.isApprove || tx.typeTx?.toLowerCase() === 'approve') return false;
-      if ((tx.isPending || tx.isFailed || tx.isSuccess) && tx.typeTx) {
-        return tx.typeTx === activeFilter;
+      if (tx.isPending === true || tx.isFailed === true || tx.isSuccess === true) {
+        return false;
       }
+      
+      if (tx.isApprove || tx.typeTx?.toLowerCase() === 'approve') return false;
+      
       if (tx.from?.toLowerCase() === walletAddress?.toLowerCase()) return activeFilter === 'Send';
       if (tx.to?.toLowerCase() === walletAddress?.toLowerCase()) return activeFilter === 'Receive';
       return false;
     });
   }, [transactions, activeFilter, walletAddress]);
+
+  // Auto-switch to 'All' if Recent filter is empty
+  useEffect(() => {
+    if (activeFilter === 'Recent' && filteredTransactions.length === 0 && !loading) {
+      setActiveFilter('All');
+    }
+  }, [filteredTransactions, activeFilter, loading]);
 
   const groupedTransactions = useMemo(() => {
     return groupTransactionsByDate(filteredTransactions);
