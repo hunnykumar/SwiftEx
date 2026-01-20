@@ -334,7 +334,7 @@ const SendXLM = (props) => {
             };
             
             const CHECK_LOGIN=async()=>{
-              token ?[setACTIVATION_MODAL(false),navigation.navigate("exchange")]:[setACTIVATION_MODAL(false),navigation.navigate("exchangeLogin")]
+              token ?[setACTIVATION_MODAL(false),navigation.navigate("Settings")]:[setACTIVATION_MODAL(false),navigation.navigate("exchangeLogin")]
             }
             const handleCloseModal = () => {
               setreservedError(false);

@@ -92,8 +92,11 @@ const formatDate = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(timestamp);
   const now = new Date();
-  const diff = now - date;
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const txDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  const diffMs = todayDate - txDate;
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   
   if (days === 0) return 'Today';
   if (days === 1) return 'Yesterday';
@@ -275,10 +278,10 @@ const TransactionCard = ({ item, walletAddress, activeChain, navigation, colors 
   const getStatusConfig = () => {
     if (isFailed) return { text: 'Failed', color: colors.error, icon: 'close-circle' };
     if (isPending) return { text: 'Pending', color: colors.pending, icon: 'clock-outline' };
-    if (isApprove) return { text: 'Approved', color: colors.accent, icon: 'check-circle' };
     if (isSuccess) return { text: 'Success', color: colors.success, icon: 'check-circle' };
     if (txType === 'Send') return { text: 'Sent', color: colors.error, icon: 'arrow-up' };
     if (txType === 'Receive') return { text: 'Received', color: colors.success, icon: 'arrow-down' };
+    if (txType === 'Approve') return { text: 'Approved', color: colors.accent, icon: 'check-circle' };
     return { text: 'Unknown', color: colors.textTertiary, icon: 'help-circle' };
   };
 
@@ -456,7 +459,8 @@ const TransactionHistory = () => {
 
   const [activeChain, setActiveChain] = useState('ETH');
   const [activeFilter, setActiveFilter] = useState('All');
-  const [transactions, setTransactions] = useState([]);
+  const [apiTransactions, setApiTransactions] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -478,8 +482,7 @@ const TransactionHistory = () => {
     }
     
     // Auto-select filter based on previous screen
-    if (previousScreen === 'Settings' || previousScreen === 'Setting' || previousScreen === 'TxDetail') {
-      // Settings or TxDetail se aaye to 'All' select karo
+    if (previousScreen === 'Settings' || previousScreen === 'Setting' || previousScreen === 'TxDetail' || previousScreen === 'HomeScreen') {
       setActiveFilter('All');
     } else if (previousScreen) {
       setActiveFilter('Recent');
@@ -491,29 +494,21 @@ const TransactionHistory = () => {
     fetchTransactions();
   }, [activeChain]);
 
-  // Fetch all chains' recent transactions when Recent filter is active
+  // Fetch recent transactions from ShortTermStorage for Recent filter
   useEffect(() => {
     if (activeFilter === 'Recent') {
-      fetchAllChainsRecentTransactions();
+      fetchRecentTransactions();
     }
   }, [activeFilter]);
 
-  const fetchAllChainsRecentTransactions = async () => {
+  const fetchRecentTransactions = async () => {
     try {
       // Get all recent transactions from storage
       const recentResponse = await ShortTermStorage.getWalletTx(walletAddress);
       const allRecentTxs = recentResponse.status ? recentResponse.data : [];
 
-      // Filter for all chains' pending/failed/approve/success transactions
-      const filteredRecentTxs = allRecentTxs.filter(tx => 
-        tx.status?.toLowerCase() === 'pending' || 
-        tx.status?.toLowerCase() === 'failed' || 
-        tx.status?.toLowerCase() === 'success' ||
-        tx.typeTx?.toLowerCase() === 'approve'
-      );
-
       // Format recent transactions
-      const formattedAllRecentTxs = filteredRecentTxs.map(tx => ({
+      const formattedRecentTxs = allRecentTxs.map(tx => ({
         hash: tx.hash,
         from: tx.typeTx === 'Send' ? walletAddress : 'Unknown',
         to: tx.typeTx === 'Receive' ? walletAddress : 'Unknown',
@@ -530,29 +525,15 @@ const TransactionHistory = () => {
       }));
 
       // Sort by timestamp
-      formattedAllRecentTxs.sort((a, b) => {
+      formattedRecentTxs.sort((a, b) => {
         const dateA = new Date(a.timestamp || 0);
         const dateB = new Date(b.timestamp || 0);
         return dateB - dateA;
       });
 
-      // Merge with existing transactions (remove duplicates)
-      const existingHashes = new Set(transactions.map(tx => tx.hash?.toLowerCase()));
-      const newRecentTxs = formattedAllRecentTxs.filter(
-        tx => !existingHashes.has(tx.hash?.toLowerCase())
-      );
-
-      if (newRecentTxs.length > 0) {
-        const updatedTransactions = [...newRecentTxs, ...transactions];
-        updatedTransactions.sort((a, b) => {
-          const dateA = new Date(a.timestamp || 0);
-          const dateB = new Date(b.timestamp || 0);
-          return dateB - dateA;
-        });
-        setTransactions(updatedTransactions);
-      }
+      setRecentTransactions(formattedRecentTxs);
     } catch (error) {
-      console.error('Error fetching all recent transactions:', error);
+      console.error('Error fetching recent transactions:', error);
     }
   };
 
@@ -577,63 +558,12 @@ const TransactionHistory = () => {
       }
 
       if (res) {
-        // Get recent transactions
-        const recentResponse = await ShortTermStorage.getWalletTx(walletAddress);
-        const recentTxs = recentResponse.status ? recentResponse.data : [];
-
-        // Remove confirmed transactions from recent
-        const confirmedHashes = new Set(res.map(tx => tx.hash?.toLowerCase()));
-        for (const recentTx of recentTxs) {
-          if (recentTx.chain === activeChain && confirmedHashes.has(recentTx.hash?.toLowerCase())) {
-            await ShortTermStorage.removeTxByHash(walletAddress, recentTx.hash, recentTx.chain);
-          }
-        }
-
-        // Get updated recent transactions
-        const updatedRecentResponse = await ShortTermStorage.getWalletTx(walletAddress);
-        const updatedRecentTxs = updatedRecentResponse.status ? updatedRecentResponse.data : [];
-
-        // Filter for current chain only
-        const chainRecentTxs = updatedRecentTxs.filter(tx => 
-          tx.chain === activeChain && 
-          (tx.status?.toLowerCase() === 'pending' || 
-           tx.status?.toLowerCase() === 'failed' ||
-           tx.status?.toLowerCase() === 'success' ||
-           tx.typeTx?.toLowerCase() === 'approve')
-        );
-
-        // Format recent transactions
-        const formattedRecentTxs = chainRecentTxs.map(tx => ({
-          hash: tx.hash,
-          from: tx.typeTx === 'Send' ? walletAddress : 'Unknown',
-          to: tx.typeTx === 'Receive' ? walletAddress : 'Unknown',
-          value: tx.amount || 0,
-          asset: tx.asset || tx.chain,
-          isPending: tx.status?.toLowerCase() === 'pending',
-          isFailed: tx.status?.toLowerCase() === 'failed',
-          isSuccess: tx.status?.toLowerCase() === 'success',
-          isApprove: tx.typeTx?.toLowerCase() === 'approve',
-          timestamp: tx.createdAt,
-          typeTx: tx.typeTx,
-          chain: tx.chain,
-          formattedAmount: tx.amount || 0,
-        }));
-
-        // Deduplicate and combine
-        const uniqueRecentTxs = formattedRecentTxs.filter(
-          ptx => !confirmedHashes.has(ptx.hash?.toLowerCase())
-        );
-
-        const combinedTxs = [...uniqueRecentTxs, ...res];
-        
-        // Sort by timestamp
-        combinedTxs.sort((a, b) => {
-          const dateA = new Date(a.timestamp || 0);
-          const dateB = new Date(b.timestamp || 0);
-          return dateB - dateA;
-        });
-
-        setTransactions(combinedTxs);
+        // Simply set API transactions - no matching, no removing
+        const formattedApiTxs = res.map(tx => ({
+        ...tx,
+        timestamp: tx.metadata?.blockTimestamp || tx.timestamp
+      }));
+        setApiTransactions(formattedApiTxs);
       }
 
       setLoading(false);
@@ -646,48 +576,28 @@ const TransactionHistory = () => {
     }
   };
 
-  // Updated filteredTransactions with auto-switch logic
+  // Updated filteredTransactions logic
   const filteredTransactions = useMemo(() => {
+    if (activeFilter === 'Recent') {
+      return recentTransactions;
+    }
     if (activeFilter === 'All') {
-      return transactions.filter(tx => 
-        !(tx.isPending === true || 
-          tx.isFailed === true || 
-          tx.isApprove === true ||
-          tx.isSuccess === true)
-      );
+      return apiTransactions;
     }
     
-    if (activeFilter === 'Recent') {
-      // Show pending, failed, approve, AND success transactions from ALL chains
-      const recentTxs = transactions.filter(tx => 
-        tx.isPending === true || 
-        tx.isFailed === true || 
-        tx.isApprove === true ||
-        tx.isSuccess === true
-      );
-      
-      return recentTxs;
-    }
-
-    return transactions.filter(tx => {
-      if (tx.isPending === true || tx.isFailed === true || tx.isSuccess === true) {
-        return false;
-      }
-      
-      if (tx.isApprove || tx.typeTx?.toLowerCase() === 'approve') return false;
-      
+    return apiTransactions.filter(tx => {
       if (tx.from?.toLowerCase() === walletAddress?.toLowerCase()) return activeFilter === 'Send';
       if (tx.to?.toLowerCase() === walletAddress?.toLowerCase()) return activeFilter === 'Receive';
       return false;
     });
-  }, [transactions, activeFilter, walletAddress]);
+  }, [apiTransactions, recentTransactions, activeFilter, walletAddress]);
 
-  // Auto-switch to 'All' if Recent filter is empty
-  useEffect(() => {
-    if (activeFilter === 'Recent' && filteredTransactions.length === 0 && !loading) {
-      setActiveFilter('All');
-    }
-  }, [filteredTransactions, activeFilter, loading]);
+  // // Auto-switch to 'All' if Recent filter is empty
+  // useEffect(() => {
+  //   if (activeFilter === 'Recent' && filteredTransactions.length === 0 && !loading) {
+  //     setActiveFilter('All');
+  //   }
+  // }, [filteredTransactions, activeFilter, loading]);
 
   const groupedTransactions = useMemo(() => {
     return groupTransactionsByDate(filteredTransactions);
@@ -695,7 +605,12 @@ const TransactionHistory = () => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchTransactions();
+    if (activeFilter === 'Recent') {
+      fetchRecentTransactions();
+      setRefreshing(false);
+    } else {
+      fetchTransactions();
+    }
   };
 
   const renderSectionHeader = ({ section }) => (
@@ -748,11 +663,14 @@ const TransactionHistory = () => {
 
       {/* Chain Selector & Filters */}
       <View style={styles.headerSection}>
-        <ChainSelector 
-          activeChain={activeChain} 
-          onSelect={setActiveChain}
-          colors={colors}
-        />
+        {/* Chain Selector - Hide when Recent filter is active */}
+        {activeFilter !== 'Recent' && (
+          <ChainSelector 
+            activeChain={activeChain} 
+            onSelect={setActiveChain}
+            colors={colors}
+          />
+        )}
         <FilterChips 
           activeFilter={activeFilter} 
           onFilterChange={setActiveFilter}

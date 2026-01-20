@@ -283,11 +283,13 @@ export const HomeView = () => {
                 </View>
               )
             })}
-            <View style={styles.infoCon}>
-              <View style={{ flexDirection: "row" }}>
-                <Text style={[styles.infoText, { color: theme.headingTx }]}>USDC : </Text>
+            <View style={[styles.infoCon,{backgroundColor:theme.smallCardBg}]}>
+              <View style={{ flexDirection: "row",paddingHorizontal:wp(1),alignItems:"center" }}>
+                <Image source={{uri:CHART_API[0].img}} width={wp(7)} height={hp(3.2)} />
+                <View>
+                  <Text style={[styles.infoText, { color: theme.headingTx }]}>USDC</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(16.9) }}>
-                  <Text style={{ color: theme.cardSubTx }}>
+                  <Text style={[styles.infoText,{ color: theme.cardSubTx }]}>
                     {state?.STELLAR_ADDRESS_STATUS === false
                       ? "0.00"
                       : state?.assetData
@@ -296,14 +298,17 @@ export const HomeView = () => {
                         ?.balance || "0.00"}
                   </Text>
                 </ScrollView>
+                </View>
               </View>
-              <View style={{ flexDirection: "row" }}>
-                <Text style={[styles.infoText, { color: theme.headingTx }]}>Trade Fee : </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(11) }}>
+              <View style={{ flexDirection: "row",marginTop:hp(1),paddingHorizontal:wp(1) }}>
+                <Image source={{uri:CHART_API[0].img_0}} width={wp(7)} height={hp(3.2)} />
+                 <View>
+                <Text style={[styles.infoText, { color: theme.headingTx }]}>Trade Fee</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(19) }}>
                   <Text style={[styles.infoText, { color: theme.headingTx }]}>${state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens.find(d => d.chain.toLowerCase() === "stellar" && d.symbol === "XLM")?.price * 0.00001 || "0.0000002"}</Text>
                 </ScrollView>
+                </View>
               </View>
-              <Text style={[styles.infoText, { color: theme.headingTx }]}>Avg Fee : 0.00001</Text>
             </View>
           </View>
           <View style={styles.bottmLine} />
@@ -463,7 +468,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8
+    marginBottom: hp(-1)
   },
   textColor: {
     color: "#fff",
@@ -579,12 +584,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4)
   },
   infoCon:{
-    width:wp(29),
+    paddingVertical:hp(1.2),
+    width:wp(32),
     justifyContent:"center",
-    alignItems:"flex-start"
+    alignItems:"flex-start",
+    borderRadius:15,
+    paddingHorizontal:5,
+    marginRight:hp(-1)
   },
   infoText:{
-    fontSize: 13,
-    textAlign: "center"
+    fontSize: 13.5,
+    fontWeight:"500",
+    textAlign: "left",
+    marginLeft:4
   }
 });

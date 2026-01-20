@@ -199,11 +199,11 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                   styles.bellCon,
                   { backgroundColor: isDark ? "#18181C" : "#F4F4F8" },
                 ]}
-                onPress={() => CustomInfoProvider.show("Info","Notifications will be added soon")}
+                onPress={() => {navigation.navigate("Transactions")}}
               >
                 <Icon
-                  name="notifications-outline"
-                  type="ionicon"
+                  name="history"
+                  type="material"
                   size={28}
                   color={isDark ? "gray" : "#272729"}
                 />

@@ -52,7 +52,7 @@ const getAssetName = (code, type) => {
 };
 
 
-const getTransactionType = (operation) => {
+const getTransactionType = (operation, userPublicKey, isReceived) => {
   if (operation.type === 'payment') {
       return operation.asset_code || operation.asset_type;
   }
@@ -69,7 +69,17 @@ const getTransactionType = (operation) => {
       case 'create_account':
           return 'Create Account';
       case 'invoke_host_function':
-          return 'Chain Bridge';    
+          if (isReceived) {
+            const assetSymbol = operation.asset_balance_changes?.find(
+              resObj => resObj.to === userPublicKey
+            )?.asset_code || 'USDC';
+            return `Deposit ${assetSymbol}`;
+          } else {
+            const assetSymbol = operation.asset_balance_changes?.find(
+              resObj => resObj.from === userPublicKey
+            )?.asset_code || 'USDC';
+            return `Withdrawal ${assetSymbol}`;
+          }
       case 'path_payment_strict_send':
       case 'path_payment_strict_receive': {
         const fromAsset = getAssetName(
@@ -91,7 +101,13 @@ const getTransactionType = (operation) => {
       case 'create_claimable_balance':
           return `${operation?.asset?.split(":")[0]||"Claimable Asset"}`;
       case 'wallet_tx':
-          return operation.symbol || 'Cross-Chain';
+          if (operation.chain === 'SRB') {
+            const assetSymbol = operation.symbol || 'USDC';
+            return `Withdrawal ${assetSymbol}`;
+          } else {
+            const assetSymbol = operation.symbol || 'USDC';
+            return `Deposit ${assetSymbol}`;
+          }
       default:
           return operation.type.replace(/([A-Z])/g, ' $1').trim();
   }
@@ -183,17 +199,21 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
       'invoke_host_function'
     ].includes(op.type)
   ) || operations[0];
-  const multiTxType = [
-    ...new Set(operations.map(op => getTransactionType(op)))
-  ].join(' & ');
-  const transactionType = multiTxType
-  const [showTx, setshowTx] = useState(false);
-  const [showTxHash, setshowTxHash] = useState([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  
   const txType = operation.asset_balance_changes?.find(resObj => resObj.to === userPublicKey);
   const isReceived =
     operation?.to === userPublicKey ||
       operation.type === 'create_account' || operation.type === 'change_trust' || operation.type === 'invoke_host_function' && txType ? true : false;
+  
+  const multiTxType = [
+    ...new Set(operations.map(op => getTransactionType(op, userPublicKey, isReceived)))
+  ].join(' & ');
+  const transactionType = multiTxType;
+  
+  const [showTx, setshowTx] = useState(false);
+  const [showTxHash, setshowTxHash] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
   let iconName = getTransactionIcon(operation.type);
 
  
@@ -518,7 +538,7 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
           const seenHashes = new Set();
           
           filteredWalletTxs.forEach(tx => {
-            const txHash = tx.hash || `${tx.chain}_${tx.timestamp || tx.lastUpdated}`;
+            const txHash = tx.hash || `${tx.chain}_${tx.timestamp}`;
             if (!seenHashes.has(txHash)) {
               seenHashes.add(txHash);
               uniqueWalletTxs.push(tx);
@@ -526,8 +546,8 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
           });
 
           uniqueWalletTxs.sort((a, b) => {
-            const timeA = a.timestamp || a.lastUpdated || 0;
-            const timeB = b.timestamp || b.lastUpdated || 0;
+            const timeA = a.timestamp || 0;
+            const timeB = b.timestamp || 0;
             return timeB - timeA;
           });
 

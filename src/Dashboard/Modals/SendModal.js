@@ -93,6 +93,7 @@ const SendModal = ({ modalVisible, setModalVisible }) => {
               color: "#ECB742",
               fontWeight: "400",
               marginLeft: 3,
+              width:wp(80)
             }}
           >
             Always double-check the wallet address before sending crypto.

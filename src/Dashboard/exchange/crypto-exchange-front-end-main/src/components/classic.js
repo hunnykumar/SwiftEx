@@ -27,6 +27,7 @@ import tokenList from "../../../../../Dashboard/tokens/tokenList.json";
 import PancakeList from "../../../../../Dashboard/tokens/pancakeSwap/PancakeList.json";
 import LocalTxManager from '../../../../../utilities/LocalTxManager';
 import RecentCrossChainTx from '../../../../reusables/RecentCrossChainTx';
+import { getWalletBalance } from '../utils/getWalletInfo/EtherWalletService';
 
 const classic = ({ route }) => {
   const toast = useToast();
@@ -183,6 +184,7 @@ const classic = ({ route }) => {
   const [showTx, setshowTx] = useState(false);
   const [showTxHash, setshowTxHash] = useState([]);
   const [tokenSearchQuery, setTokenSearchQuery] = useState('');
+  const [networkBalance,setNetworkBalance]=useState(0.0);
 
   const theme = state.THEME.THEME ? colors.dark : colors.light;
   const currentWalletType = chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
@@ -321,6 +323,8 @@ const classic = ({ route }) => {
           const resposeBalance = await fetchTokenInfo(tokenAddress, addresses);
           const balance = resposeBalance[0].tokenBalance;
           setWALLETBALANCE(balance);
+          const nativeBalance = await getWalletBalance(addresses,"ETH");
+          setNetworkBalance(nativeBalance.status?nativeBalance.balance:0.0);
         }
       }
 
@@ -329,6 +333,8 @@ const classic = ({ route }) => {
           const resposeBalance = await fetchBSCTokenInfo(tokenAddress, addresses);
           const balance = resposeBalance[0].tokenBalance;
           setWALLETBALANCE(balance);
+          const nativeBalance = await getWalletBalance(addresses,"BSC");
+          setNetworkBalance(nativeBalance.status?nativeBalance.balance:0.0);
         }
       }
 
@@ -852,9 +858,8 @@ const classic = ({ route }) => {
             </TouchableOpacity>
           </View>
           <View style={styles.swapSuggestCon}>
-              <Text style={[styles.swapSuggestTex, { color: theme.headingTx }]}>
-            <Icon name={"information-outline"} type={"materialCommunity"} size={16} color={theme.inactiveTx} />
-            {" "}Swap another asset to {selectedToken?.symbol}
+              <Text style={[styles.swapSuggestTex, { color: theme.headingTx,maxWidth:wp(49),marginLeft:wp(1.3) }]}>
+            Your assets can be easily converted into USDT/USDC.
           </Text>
           <TouchableOpacity style={styles.swapSuggestBtn} onPress={()=>{navigation.navigate("EthSwap",{activeNetwork:chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,activeAsset:selectedToken})}}>
             <Text style={styles.swapSuggestTex}>Swap Now</Text>
@@ -886,8 +891,8 @@ const classic = ({ route }) => {
 
           <View style={[styles.modalOpen, { paddingVertical: hp(1), backgroundColor: theme.bg }]}>
             <TextInput
-              maxLength={10}
-              placeholder='0.0'
+              maxLength={50}
+              placeholder={`Enter ${selectedToken?.symbol} amount`}
               placeholderTextColor={"gray"}
               keyboardType="decimal-pad"
               value={amount}
@@ -909,6 +914,17 @@ const classic = ({ route }) => {
                 <Text style={{ fontSize: 14, color: theme.headingTx }}>{WALLETADDRESS}</Text>
               </ScrollView>
             </View>
+          </View>
+           <View style={styles.accountDetailsCon}>
+            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Native Balance :</Text>
+             {balanceLoading ? (
+                    <ActivityIndicator color={"green"} />
+                  ):<View style={{ width: wp(30),flexDirection:"row" }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <Text style={{ fontSize: 14, color: theme.headingTx }}>{networkBalance}</Text>
+              </ScrollView>
+              <Text style={{ fontSize: 14, color: theme.headingTx }}> {currentWalletType}</Text>
+            </View>}
           </View>
         </View>
         
@@ -1159,7 +1175,7 @@ const classic = ({ route }) => {
                     </TouchableOpacity>
                   </View>
 
-                  <View style={[styles.searchContainer, { backgroundColor: theme.bg }]}>
+                  {/* <View style={[styles.searchContainer, { backgroundColor: theme.bg }]}>
                     <Icon name={"magnify"} type={"materialCommunity"} color={theme.inactiveTx} size={20} />
                     <TextInput
                       placeholder="Search token..."
@@ -1173,7 +1189,7 @@ const classic = ({ route }) => {
                         <Icon name={"close-circle"} type={"materialCommunity"} color={theme.inactiveTx} size={20} />
                       </TouchableOpacity>
                     )}
-                  </View>
+                  </View> */}
 
                   <FlatList
                     data={currentTokenList}

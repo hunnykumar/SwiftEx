@@ -176,7 +176,7 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
       <View style={styles.rightSection}>
         <View style={styles.headerRow}>
           <Text style={[styles.assetName, { color: activeTheme.headingTx, marginBottom: -16 }]}>
-            {item?.type === "Approval"||item?.type === "approval" ? "Approval" : "Cross-Chain"}
+            {item?.type === "Approval"||item?.type === "approval" ? "Approval" : item?.chain==="ETH"||item?.chain==="BSC"||item?.chain==="BNB"?"Deposit USDC":"Withdrawal USDC"}
           </Text>
           <View style={[styles.statusBadge, { backgroundColor: item.statusColor }]}>
             <Text style={[styles.statusText, { color: activeTheme.headingTx }]}>{item.status}</Text>
@@ -237,6 +237,7 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
         }
         ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}
+        style={{marginBottom:30}}
       />
       <AllbridgeTxTrack txs={showTxHash} isDarkMode={theme} showTx={showTx} closeTx={() => setshowTx(false)} />
     </View>

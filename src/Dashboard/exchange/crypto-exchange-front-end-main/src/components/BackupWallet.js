@@ -12,14 +12,17 @@ import {
 
 const BackupWallet = ({ open, close }) => {
   const state = useSelector((state) => state);
+  const [backupFileName,setbackupFileName]=useState("");
   const [backupLoading, setbackupLoading] = useState(false);
   const [backupStatus, setbackupStatus] = useState(false);
   useEffect(() => {
+    setbackupFileName("");
     setbackupLoading(false)
     setbackupStatus(false)
   }, [])
 
   const backupNowExe = async (fileName) => {
+    setbackupFileName(fileName)
     setbackupLoading(true)
     try {
       const iosFilePath=`${RNFS.DocumentDirectoryPath}/${fileName}.txt`
@@ -58,7 +61,7 @@ const BackupWallet = ({ open, close }) => {
         <Ionicons name="close-circle-outline" size={35} color={state.THEME.THEME === false ? "#080a0a" : "#fff"} style={{ alignSelf: "flex-end" }} onPress={() => { setbackupLoading(false), setbackupStatus(false), close() }} disabled={backupLoading} />
         <Ionicons name={backupStatus ? "cloud-done-sharp" : "shield-half-sharp"} size={89} color={"#4F8EF7"} style={{ alignSelf: "center", marginVertical: "5%" }} />
         <Text style={[styles.subHeading, { color: state.THEME.THEME === false ? "#080a0a" : "#fff" }]}>Back up your secret phrase to keep your keys safe and secure. Never share your keys with anyone.</Text>
-        {backupStatus ? <Text style={[styles.subHeading, { color: "#4F8EF7" }]}>Path: Internal storage/Download</Text> : <TouchableOpacity style={[styles.btnCon, { backgroundColor: backupLoading ? state.THEME.THEME === false ? "#fff" : "#18181C" : "green" }]} disabled={backupLoading} onPress={() => { backupNowExe(state.wallet.name+Math.floor(1000 + Math.random() * 9000).toString()) }}>
+        {backupStatus ? <Text style={[styles.subHeading, { color: "#4F8EF7" }]}>Path: Internal storage/Download/{backupFileName}.txt</Text> : <TouchableOpacity style={[styles.btnCon, { backgroundColor: backupLoading ? state.THEME.THEME === false ? "#fff" : "#18181C" : "green" }]} disabled={backupLoading} onPress={() => { backupNowExe(state.wallet.name+Math.floor(1000 + Math.random() * 9000).toString()) }}>
           {backupLoading ? <ActivityIndicator color={"green"} size={"large"} /> : <Text style={styles.btnText}>{"Start your backup now!"}</Text>}
         </TouchableOpacity>}
       </View>

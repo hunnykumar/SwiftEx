@@ -60,7 +60,8 @@ function InvestmentChart() {
         if (wallet && wallet.address && state && state.STELLAR_PUBLICK_KEY) {
         const walletInfo = await GetWalletTokens(wallet?.address,state.STELLAR_PUBLICK_KEY);
         if (walletInfo.tokens.length > 1) {
-          const margeArray=[...walletInfo.tokens,avilableSoonAsset]
+          const userCustomTokens=await getCustomTokens()
+          const margeArray=[...walletInfo.tokens,avilableSoonAsset,...(userCustomTokens.status ? userCustomTokens.data : [])]
           setTokenInfoList(margeArray);
           setLoading(false);
         }
@@ -75,6 +76,30 @@ function InvestmentChart() {
     return () => { isMounted = false; };
   }, []);
 
+  const getCustomTokens = async () => {
+    try {
+      const data = await AsyncStorage.getItem(`user-custom-tokens-${wallet?.address}`);
+      if (data) {
+        const allParsedToken = JSON.parse(data);
+        return {
+          status: true,
+          data: allParsedToken
+        };
+      } else {
+        return {
+          status: false,
+          data: []
+        };
+      }
+    } catch (error) {
+      console.log('getCustomTokens error get all data', error);
+      return {
+        status: false,
+        data: []
+      };
+    }
+  }
+
   useEffect(() => {
     setTokenInfoList(TemporaryTokens);
     const initService = async () => {
@@ -83,7 +108,8 @@ function InvestmentChart() {
         try {
           const walletInfo = await GetWalletTokens(wallet?.address,state?.STELLAR_PUBLICK_KEY);
           if (walletInfo.tokens.length > 1) {
-            const margeArray=[...walletInfo.tokens,avilableSoonAsset]
+            const userCustomTokens=await getCustomTokens()
+            const margeArray=[...walletInfo.tokens,avilableSoonAsset,...(userCustomTokens.status ? userCustomTokens.data : [])]
             setTokenInfoList(margeArray);
             setLoading(false);
             dispatch({
@@ -247,8 +273,8 @@ function InvestmentChart() {
             data={tokenInfoList}
             renderItem={renderTokens}
             keyExtractor={(item, index) => index.toString()}
-            initialNumToRender={19}
-            maxToRenderPerBatch={19}
+            initialNumToRender={39}
+            maxToRenderPerBatch={39}
             windowSize={10}
             refreshControl={
               <RefreshControl

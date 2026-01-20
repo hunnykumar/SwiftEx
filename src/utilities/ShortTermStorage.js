@@ -18,7 +18,10 @@ const ShortTermStorage = {
         updatedAt: Date.now(),
       };
 
-      const updatedData = [...existingData, txObject];
+      let updatedData = [txObject, ...existingData];
+      if (updatedData.length > 30) {
+        updatedData = updatedData.slice(0, 30);
+      }
 
       await AsyncStorage.setItem(key, JSON.stringify(updatedData));
 

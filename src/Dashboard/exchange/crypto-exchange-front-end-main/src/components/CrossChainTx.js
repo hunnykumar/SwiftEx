@@ -332,8 +332,8 @@ const CrossChainTx = ({ route = "ETH" }) => {
         },
         swapSuggestBtn: {
             borderRadius: 10,
-            paddingHorizontal: wp(6),
-            paddingVertical: hp(1.5),
+            paddingHorizontal: wp(5),
+            paddingVertical: hp(1),
             backgroundColor: "#4052D6"
         },
         InsufficientActionsCon: {
@@ -505,6 +505,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
     const [showTx, setshowTx] = useState(false);
     const [showTxHash, setshowTxHash] = useState([]);
     const [tokenSearchQuery, setTokenSearchQuery] = useState('');
+    const [networkBalance,setNetworkBalance]=useState(0.0);
 
     const currentWalletType = chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
     const currentTokenList = currentWalletType === "Ethereum" ? ethSupportTokens : bscSupportTokens;
@@ -652,6 +653,8 @@ const CrossChainTx = ({ route = "ETH" }) => {
                     const resposeBalance = await fetchTokenInfo(tokenAddress, addresses);
                     const balance = resposeBalance[0].tokenBalance;
                     setWALLETBALANCE(balance);
+                    const nativeBalance = await getWalletBalance(addresses,"ETH");
+                    setNetworkBalance(nativeBalance.status?nativeBalance.balance:0.0);
                 }
             }
 
@@ -660,6 +663,8 @@ const CrossChainTx = ({ route = "ETH" }) => {
                     const resposeBalance = await fetchBSCTokenInfo(tokenAddress, addresses);
                     const balance = resposeBalance[0].tokenBalance;
                     setWALLETBALANCE(balance);
+                    const nativeBalance = await getWalletBalance(addresses,"BSC");
+                    setNetworkBalance(nativeBalance.status?nativeBalance.balance:0.0);
                 }
             }
 
@@ -1220,8 +1225,8 @@ const CrossChainTx = ({ route = "ETH" }) => {
                     <View style={styles.card}>
                         <View style={styles.subCon}>
                             <TextInput
-                                maxLength={10}
-                                placeholder='0.0'
+                                maxLength={40}
+                                placeholder={`Enter ${selectedToken?.symbol} amount`}
                                 placeholderTextColor={"gray"}
                                 keyboardType="decimal-pad"
                                 value={amount}
@@ -1255,19 +1260,30 @@ const CrossChainTx = ({ route = "ETH" }) => {
                             </TouchableOpacity>
 
                             <View style={styles.accountDetailsCon}>
-                                <View style={{ minWidth: wp(15), alignItems: "flex-end" }}>
+                                <View style={{ minWidth: wp(15), alignItems: "flex-end",flexDirection:"row" }}>
                                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                                         {balanceLoading ? (
                                             <ActivityIndicator color={"green"} />
                                         ) : (
-                                            <Text style={{ color: theme.headingTx, fontSize: 16 }}>
+                                            <Text style={{ color: theme.headingTx, fontSize: 15 }}>{networkBalance}</Text>
+                                        )}
+                                    </ScrollView>
+                                        <Text style={{ color: theme.headingTx, fontSize: 15 }}> {currentWalletType}</Text>
+                                </View>
+                                <View style={{ minWidth: wp(15), alignItems: "flex-end",flexDirection:"row" }}>
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                        {balanceLoading ? (
+                                            <ActivityIndicator color={"green"} />
+                                        ) : (
+                                            <Text style={{ color: theme.headingTx, fontSize: 15 }}>
                                                 {Number.isFinite(Number(WALLETBALANCE))? Number(WALLETBALANCE).toFixed(13): "0.00"}
                                             </Text>
                                         )}
                                     </ScrollView>
+                                        <Text style={{ color: theme.headingTx, fontSize: 15 }}> {selectedToken?.symbol}</Text>
                                 </View>
-                                <View style={{flexDirection:"row"}}>
-                                    <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Available {selectedToken?.symbol}</Text>
+                                <View style={{flexDirection:"row",alignSelf:"flex-end"}}>
+                                    <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Available</Text>
                                     <TouchableOpacity onPress={async () => { await fetchUSDCBalnce(selectedToken || currentTokenList[0], state?.wallet?.address) }}>
                                         <Icon name={"refresh"} type={"materialCommunity"} size={21} color={theme.headingTx} />
                                     </TouchableOpacity>
@@ -1275,8 +1291,8 @@ const CrossChainTx = ({ route = "ETH" }) => {
                             </View>
                         </View>
                         <View style={styles.swapSuggestCon}>
-                            <Text style={[styles.swapSuggestTex, { color: theme.headingTx }]}>
-                                {" "}Swap another asset to {selectedToken?.symbol}
+                            <Text style={[styles.swapSuggestTex, { color: theme.headingTx,maxWidth:wp(49) }]}>
+                                Your assets can be easily converted into USDT/USDC.
                             </Text>
                             <TouchableOpacity style={styles.swapSuggestBtn} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId, activeAsset: selectedToken }) }}>
                                 <Text style={styles.swapSuggestTex}>Swap Now</Text>
@@ -1287,10 +1303,10 @@ const CrossChainTx = ({ route = "ETH" }) => {
                     <View style={styles.card}>
                         <View style={styles.subCon}>
                             <TextInput
-                                maxLength={19}
-                                placeholder='0.0'
+                                maxLength={49}
+                                placeholder='Estimated USDC to be received'
                                 placeholderTextColor={"gray"}
-                                value={finalAmount ? finalAmount.toFixed(6) : "0.0"}
+                                value={finalAmount ? finalAmount.toFixed(6) : "Estimated USDC to be received"}
                                 style={[styles.textInputForCrossChain, { color: theme.inactiveTx }]}
                                 editable={false}
                             />
@@ -1579,7 +1595,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                                             <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30} />
                                         </TouchableOpacity>
 
-                                        <View style={[styles.searchContainer, { backgroundColor: theme.bg }]}>
+                                        {/* <View style={[styles.searchContainer, { backgroundColor: theme.bg }]}>
                                             <Icon name={"magnify"} type={"materialCommunity"} color={theme.inactiveTx} size={20} />
                                             <TextInput
                                                 placeholder="Search token..."
@@ -1593,7 +1609,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                                                     <Icon name={"close-circle"} type={"materialCommunity"} color={theme.inactiveTx} size={20} />
                                                 </TouchableOpacity>
                                             )}
-                                        </View>
+                                        </View> */}
 
                                         <FlatList
                                             data={currentTokenList}

@@ -426,7 +426,7 @@ const AMMSwap = () => {
               </TouchableOpacity>
             </View>
             <Text style={[styles.balanceText,{color:theme.inactiveTx}]}>
-                Balance: {fromBal} {fromToken.code}
+                Balance: {isNaN(fromBal) || fromBal === null || fromBal === undefined ? '0.00' : fromBal} {fromToken.code}
               </Text>
           </View>
 
@@ -460,7 +460,7 @@ const AMMSwap = () => {
               </TouchableOpacity>
             </View>
             <Text style={[styles.balanceText,{color:theme.inactiveTx}]}>
-                Balance: {toBal} {toToken.code}
+                Balance: {isNaN(toBal) || toBal === null || toBal === undefined ? '0.00' : toBal} {toToken.code}
               </Text>
           </View>
           

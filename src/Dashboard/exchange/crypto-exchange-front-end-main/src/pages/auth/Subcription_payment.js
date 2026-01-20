@@ -129,7 +129,7 @@ const Subcription_payment = ({ route }) => {
                     <Text style={[styles.bottom_pay_price_txt, { fontSize: 15, fontWeight: "300" }]}>To be paid now</Text>
                 </View>
 
-                <TouchableOpacity style={styles.btn} onPress={()=>{navigation.navigate("exchange");}}>
+                <TouchableOpacity style={styles.btn} onPress={()=>{navigation.navigate("Settings");}}>
                     <Text style={styles.btn_txt}>Proceed to Pay</Text>
                 </TouchableOpacity>
             </View>

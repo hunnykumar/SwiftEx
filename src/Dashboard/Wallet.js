@@ -69,10 +69,10 @@ const Wallet = ({ navigation }) => {
         <View
           style={[styles.bigCard,{backgroundColor:state.THEME.THEME?"black":"#FFFFFF",}]}
         >
-          <Text style={{ fontSize: 20, color: state.THEME.THEME===false?"black":"#fff",fontWeight:"600"}}>
+          <Text style={{ fontSize: 18, color: state.THEME.THEME===false?"black":"#fff",fontWeight:"500"}}>
             Private and Secure
           </Text>
-          <Text style={{ color: state.THEME.THEME===false?"black":"#fff",fontWeight:"500",fontSize: 16 }}>
+          <Text style={{ color: state.THEME.THEME===false?"black":"#fff",fontWeight:"400",fontSize: 16 }}>
             Private Keys never leave your device
           </Text>
         </View>
@@ -273,24 +273,22 @@ const styles = StyleSheet.create({
     fontSize:14
   },
   topCon:{
-    height:hp(43),
     marginHorizontal:10,
-    borderRadius:20
+    borderRadius:20,
+    paddingVertical:hp(0.5),
+    marginBottom:hp(0.5)
   },
   imageCon:{
     width: wp("70"),
-    height: hp(24),
-    padding: 30,
-    marginTop: hp(4),
-    marginLeft: wp(15),
-    borderRadius: wp(10),
+    height: hp(25),
+    alignSelf:"center"
   },
   bigCard:{
-    marginTop: hp(0.1),
+    marginTop: hp(-2),
     alignItems: "center",
     alignSelf:"center",
-    paddingVertical:hp(4),
-    width:wp(90),
+    paddingVertical:hp(2),
+    width:wp(80),
     shadowColor: '#5B65E1',
     shadowOffset: { width: 10, height: 2 },
     shadowOpacity: 0.1,

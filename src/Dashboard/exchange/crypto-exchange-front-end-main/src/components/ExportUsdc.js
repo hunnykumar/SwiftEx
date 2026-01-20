@@ -347,7 +347,7 @@ console.log("resQuotes-",resQuotes)
       <ScrollView style={[styles.scrollCon,{backgroundColor:theme.bg}]}>
         <View style={[styles.card,{backgroundColor:theme.cardBg,flexDirection:"column"}]}>
         
-        <Text style={[styles.headingText,{color:theme.headingTx}]}>Withdrawal USDC to Wallet</Text>
+        <Text style={[styles.headingText,{color:theme.headingTx}]}>Withdrawal USDC to Trading Wallet</Text>
         {/* Select network */}
         <TouchableOpacity disabled={true} style={[styles.modalOpen,{backgroundColor:theme.bg}]} onPress={() => { setchooseNetwork(true); }}>
           <View style={{ flexDirection: "row" }}>
@@ -358,6 +358,28 @@ console.log("resQuotes-",resQuotes)
             </View>
           </View>
           {/* <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30} /> */}
+            <View style={{width:wp(26),alignItems:"flex-end"}}>
+              <View style={{flexDirection:"row",alignItems:"center"}}>
+                  {basicProccesing ? <ActivityIndicator color={"green"} /> :
+                  <View style={{ width: wp(13) }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                     <Text style={{ color: theme.headingTx, fontSize: 14 }}>{XLMAvlBal}</Text>
+                  </ScrollView>
+                  </View>
+                  }
+                <Text style={[ { color: theme.inactiveTx }]}> XLM</Text>
+              </View>
+              <View style={{flexDirection:"row",alignItems:"center"}}>
+                  {basicProccesing ? <ActivityIndicator color={"green"} /> :
+                  <View style={{ width: wp(14) }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                     <Text style={{ color: theme.headingTx, fontSize: 14 }}>{walletBalance}</Text>
+                  </ScrollView>
+                  </View>
+                  }
+                <Text style={[ { color: theme.inactiveTx }]}> USDC</Text>
+              </View>
+            </View>
         </TouchableOpacity>
         </View>
 
@@ -377,7 +399,7 @@ console.log("resQuotes-",resQuotes)
           </TouchableOpacity>
             </View>
          <View style={[styles.modalOpen, { paddingVertical: hp(0.5),backgroundColor:theme.bg }]}>
-            <TextInput maxLength={10} placeholder='Enter USDC Amount' placeholderTextColor={"gray"} keyboardType="number-pad" value={amount} style={[styles.textInputForCrossChain,{fontSize: 18, color: theme.headingTx}]} onChangeText={(value) => { handleInputChange(value) }} returnKeyType="done" />
+            <TextInput maxLength={50} placeholder='Enter USDC Amount' placeholderTextColor={"gray"} keyboardType="number-pad" value={amount} style={[styles.textInputForCrossChain,{fontSize: 18, color: theme.headingTx}]} onChangeText={(value) => { handleInputChange(value) }} returnKeyType="done" />
         </View>
         </View>
 
@@ -392,22 +414,6 @@ console.log("resQuotes-",resQuotes)
           </View>
          </View>
 
-         <View style={styles.accountDetailsCon}>
-          <Text style={[styles.subInputText, { color:theme.inactiveTx }]}>USDC Balance :</Text>
-          <View style={{ minWidth:wp(15) }}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%" }}>
-              {basicProccesing ? <ActivityIndicator color={"green"} /> : <Text style={{ color: theme.headingTx, fontSize: 14 }}>{walletBalance}</Text>}
-            </ScrollView>
-          </View>
-          </View>
-          <View style={styles.accountDetailsCon}>
-          <Text style={[styles.subInputText, { color:theme.inactiveTx }]}>Native Balance :</Text>
-          <View style={{ minWidth:wp(15) }}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%" }}>
-              {basicProccesing ? <ActivityIndicator color={"green"} /> : <Text style={{ color: theme.headingTx, fontSize: 14 }}>{XLMAvlBal}</Text>}
-            </ScrollView>
-          </View>
-          </View>
 
         </View>
 
@@ -419,7 +425,7 @@ console.log("resQuotes-",resQuotes)
             <View style={{flexDirection:"row"}}>
             <TouchableOpacity style={[styles.feePayCon,{backgroundColor:payFeeType==="native"?"#4052D6":theme.bg}]} onPress={()=>{setPayFeeType("native")}}>
               <Icon name={"fire"} type={"materialCommunity"} size={25} color={payFeeType==="native"?"#fff":"#4052D6"} />
-              <Text style={[styles.feePayTx,{color: payFeeType==="native"?"#fff":theme.headingTx}]}>Native </Text>
+              <Text style={[styles.feePayTx,{color: payFeeType==="native"?"#fff":theme.headingTx}]}>Native (XLM)</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.feePayCon,{backgroundColor:payFeeType==="stable"?"#4052D6":theme.bg}]} onPress={()=>{setPayFeeType("stable")}}>
               <Icon name={"fire"} type={"materialCommunity"} size={25} color={payFeeType==="stable"?"#fff":"#4052D6"} />

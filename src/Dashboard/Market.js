@@ -608,7 +608,7 @@ const Market = (props) => {
     <FlatList
       data={data}
       keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-      contentContainerStyle={{ marginBottom: hp(2) }}
+      style={{ marginBottom: hp(4) }}
       refreshControl={
         <RefreshControl
           tintColor={"#4CA6EA"}

@@ -15,6 +15,7 @@ import { GetPrivateKeyModal } from "./Modals/getPrivateKeyModal";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { useNavigation } from "@react-navigation/native";
 import BackupWallet from "./exchange/crypto-exchange-front-end-main/src/components/BackupWallet";
+import AuthRequest from "./reusables/AuthRequest";
 
 const MyWallet = (props) => {
   const navigation = useNavigation();
@@ -22,6 +23,7 @@ const MyWallet = (props) => {
   const [user, setUser] = useState("");
   const [visible, setVisible] = useState(false);
   const [backupVisible, setbackupVisible] = useState(false);
+  const [showAuthRequest,setshowAuthRequest] = useState(false);
 
   useEffect(() => {
     const fetch_wallet_name = async () => {
@@ -50,7 +52,7 @@ const MyWallet = (props) => {
         </View>
       </View>
       
-      <TouchableOpacity onPress={() => { setVisible(!visible) }} style={[styles.btnCard, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}>
+      <TouchableOpacity onPress={() => { setshowAuthRequest(!showAuthRequest) }} style={[styles.btnCard, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}>
         <View style={{ flexDirection: "row", }}>
           <View style={[styles.iconCon,{backgroundColor:"#5B65E133"}]}>
             <Icon name="eye" type={"materialCommunity"} color={"#5B65E1"} size={24} />
@@ -97,6 +99,7 @@ const MyWallet = (props) => {
           setVisible(false);
         }}
       />
+      <AuthRequest visible={showAuthRequest} heading={"Account Access"} subHeading={"Authentication required to view account information."} proccedNextStep={()=>{setshowAuthRequest(false),setVisible(!visible)}}/>
       <BackupWallet open={backupVisible} close={() => setbackupVisible(false)} />
     </View>
 
