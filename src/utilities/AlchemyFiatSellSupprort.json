@@ -13,28 +13,6 @@
     {
         "country": "AE",
         "currency": "AED",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 1.200000,
-        "feeRate": 0.035000,
-        "payMin": 5.000000,
-        "payMax": 190000.000000,
-        "countryName": "United Arab Emirates"
-    },
-    {
-        "country": "AE",
-        "currency": "AED",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 1.200000,
-        "feeRate": 0.035000,
-        "payMin": 5.000000,
-        "payMax": 190000.000000,
-        "countryName": "United Arab Emirates"
-    },
-    {
-        "country": "AE",
-        "currency": "AED",
         "payWayCode": "701",
         "payWayName": "Google Pay",
         "fixedFee": 1.470000,
@@ -42,6 +20,28 @@
         "payMin": 20.000000,
         "payMax": 18000.000000,
         "countryName": "United Arab Emirates"
+    },
+    {
+        "country": "AR",
+        "currency": "ARS",
+        "payWayCode": "1312",
+        "payWayName": "Rapipago",
+        "fixedFee": 0.000000,
+        "feeRate": 0.050000,
+        "payMin": 30.000000,
+        "payMax": 5000000.000000,
+        "countryName": "Argentina"
+    },
+    {
+        "country": "AR",
+        "currency": "ARS",
+        "payWayCode": "1313",
+        "payWayName": "Khipu",
+        "fixedFee": 0.000000,
+        "feeRate": 0.028000,
+        "payMin": 50.000000,
+        "payMax": 1257000.000000,
+        "countryName": "Argentina"
     },
     {
         "country": "AU",
@@ -57,34 +57,23 @@
     {
         "country": "AU",
         "currency": "AUD",
+        "payWayCode": "3001",
+        "payWayName": "bank transfer",
+        "fixedFee": 1.500000,
+        "feeRate": 0.015000,
+        "payMin": 1.000000,
+        "payMax": 20000.000000,
+        "countryName": "Australia"
+    },
+    {
+        "country": "AU",
+        "currency": "AUD",
         "payWayCode": "501",
         "payWayName": "Apple Pay",
         "fixedFee": 0.620000,
         "feeRate": 0.039900,
         "payMin": 23.270000,
         "payMax": 3102.600000,
-        "countryName": "Australia"
-    },
-    {
-        "country": "AU",
-        "currency": "AUD",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.500000,
-        "feeRate": 0.035000,
-        "payMin": 2.000000,
-        "payMax": 80000.000000,
-        "countryName": "Australia"
-    },
-    {
-        "country": "AU",
-        "currency": "AUD",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.500000,
-        "feeRate": 0.035000,
-        "payMin": 2.000000,
-        "payMax": 80000.000000,
         "countryName": "Australia"
     },
     {
@@ -108,61 +97,6 @@
         "payMin": 30.000000,
         "payMax": 3672.460000,
         "countryName": "Bulgaria"
-    },
-    {
-        "country": "BG",
-        "currency": "BGN",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.600000,
-        "feeRate": 0.035000,
-        "payMin": 2.000000,
-        "payMax": 90000.000000,
-        "countryName": "Bulgaria"
-    },
-    {
-        "country": "BG",
-        "currency": "BGN",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.600000,
-        "feeRate": 0.035000,
-        "payMin": 2.000000,
-        "payMax": 90000.000000,
-        "countryName": "Bulgaria"
-    },
-    {
-        "country": "BH",
-        "currency": "BHD",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.160000,
-        "feeRate": 0.035000,
-        "payMin": 0.400000,
-        "payMax": 20000.000000,
-        "countryName": "Bahrain"
-    },
-    {
-        "country": "BH",
-        "currency": "BHD",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.160000,
-        "feeRate": 0.035000,
-        "payMin": 0.400000,
-        "payMax": 20000.000000,
-        "countryName": "Bahrain"
-    },
-    {
-        "country": "BR",
-        "currency": "BRL",
-        "payWayCode": "10001",
-        "payWayName": "Credit Card",
-        "fixedFee": 1.970000,
-        "feeRate": 0.044900,
-        "payMin": 74.050000,
-        "payMax": 9873.400000,
-        "countryName": "Brazil"
     },
     {
         "country": "BR",
@@ -211,28 +145,6 @@
     {
         "country": "CA",
         "currency": "CAD",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.440000,
-        "feeRate": 0.035000,
-        "payMin": 2.000000,
-        "payMax": 70000.000000,
-        "countryName": "Canada"
-    },
-    {
-        "country": "CA",
-        "currency": "CAD",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.440000,
-        "feeRate": 0.035000,
-        "payMin": 2.000000,
-        "payMax": 70000.000000,
-        "countryName": "Canada"
-    },
-    {
-        "country": "CA",
-        "currency": "CAD",
         "payWayCode": "701",
         "payWayName": "Google Pay",
         "fixedFee": 0.540000,
@@ -266,90 +178,79 @@
     {
         "country": "CH",
         "currency": "CHF",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.290000,
-        "feeRate": 0.035000,
-        "payMin": 2.000000,
-        "payMax": 45000.000000,
-        "countryName": "Switzerland"
-    },
-    {
-        "country": "CH",
-        "currency": "CHF",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.290000,
-        "feeRate": 0.035000,
-        "payMin": 2.000000,
-        "payMax": 45000.000000,
+        "payWayCode": "701",
+        "payWayName": "Google Pay",
+        "fixedFee": 0.360000,
+        "feeRate": 0.039900,
+        "payMin": 13.600000,
+        "payMax": 1813.310000,
         "countryName": "Switzerland"
     },
     {
         "country": "CL",
         "currency": "CLP",
-        "payWayCode": "10001",
-        "payWayName": "Credit Card",
-        "fixedFee": 356.000000,
-        "feeRate": 0.039900,
-        "payMin": 13345.000000,
-        "payMax": 1779440.000000,
+        "payWayCode": "1310",
+        "payWayName": "BankTransfer",
+        "fixedFee": 0.000000,
+        "feeRate": 0.032000,
+        "payMin": 50.000000,
+        "payMax": 5000000.000000,
         "countryName": "Chile"
     },
     {
+        "country": "CL",
+        "currency": "CLP",
+        "payWayCode": "1311",
+        "payWayName": "Khipu",
+        "fixedFee": 0.000000,
+        "feeRate": 0.030000,
+        "payMin": 1.000000,
+        "payMax": 250000.000000,
+        "countryName": "Chile"
+    },
+    {
+        "country": "CM",
+        "currency": "XAF",
+        "payWayCode": "55002",
+        "payWayName": "Mobile Money",
+        "fixedFee": 0.000000,
+        "feeRate": 0.028000,
+        "payMin": 1000.000000,
+        "payMax": 9999999.000000,
+        "countryName": "Cameroon"
+    },
+    {
+        "country": "CM",
+        "currency": "XAF",
+        "payWayCode": "55012",
+        "payWayName": "Bank Transfer",
+        "fixedFee": 0.000000,
+        "feeRate": 0.028000,
+        "payMin": 1000.000000,
+        "payMax": 9999999.000000,
+        "countryName": "Cameroon"
+    },
+    {
         "country": "CO",
         "currency": "COP",
-        "payWayCode": "10001",
-        "payWayName": "Credit Card",
-        "fixedFee": 1578.000000,
-        "feeRate": 0.039900,
-        "payMin": 59152.000000,
-        "payMax": 7887000.000000,
+        "payWayCode": "1308",
+        "payWayName": "EFECTY",
+        "fixedFee": 0.000000,
+        "feeRate": 0.048000,
+        "payMin": 1.000000,
+        "payMax": 3000000.000000,
         "countryName": "Colombia"
     },
     {
         "country": "CO",
         "currency": "COP",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 1350.000000,
-        "feeRate": 0.035000,
-        "payMin": 10000.000000,
-        "payMax": 22000000.000000,
+        "payWayCode": "1309",
+        "payWayName": "BANCOLOMBIA",
+        "fixedFee": 0.000000,
+        "feeRate": 0.048000,
+        "payMin": 5000.000000,
+        "payMax": 3000000.000000,
         "countryName": "Colombia"
-    },
-    {
-        "country": "CO",
-        "currency": "COP",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 1350.000000,
-        "feeRate": 0.035000,
-        "payMin": 10000.000000,
-        "payMax": 22000000.000000,
-        "countryName": "Colombia"
-    },
-    {
-        "country": "CZ",
-        "currency": "CZK",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 7.500000,
-        "feeRate": 0.035000,
-        "payMin": 50.000000,
-        "payMax": 124420.000000,
-        "countryName": "Czechia"
-    },
-    {
-        "country": "CZ",
-        "currency": "CZK",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 7.500000,
-        "feeRate": 0.035000,
-        "payMin": 50.000000,
-        "payMax": 124420.000000,
-        "countryName": "Czechia"
     },
     {
         "country": "DE",
@@ -376,50 +277,6 @@
     {
         "country": "DE",
         "currency": "EUR",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.300000,
-        "feeRate": 0.035000,
-        "payMin": 1.000000,
-        "payMax": 5000.000000,
-        "countryName": "Germany"
-    },
-    {
-        "country": "DE",
-        "currency": "EUR",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.300000,
-        "feeRate": 0.035000,
-        "payMin": 1.000000,
-        "payMax": 5000.000000,
-        "countryName": "Germany"
-    },
-    {
-        "country": "DE",
-        "currency": "EUR",
-        "payWayCode": "60001",
-        "payWayName": "SEPA",
-        "fixedFee": 0.000000,
-        "feeRate": 0.011000,
-        "payMin": 2.000000,
-        "payMax": 5000.000000,
-        "countryName": "Germany"
-    },
-    {
-        "country": "DE",
-        "currency": "EUR",
-        "payWayCode": "60010",
-        "payWayName": "Pay by Bank",
-        "fixedFee": 0.500000,
-        "feeRate": 0.020000,
-        "payMin": 1.000000,
-        "payMax": 10000.000000,
-        "countryName": "Germany"
-    },
-    {
-        "country": "DE",
-        "currency": "EUR",
         "payWayCode": "701",
         "payWayName": "Google Pay",
         "fixedFee": 0.380000,
@@ -427,17 +284,6 @@
         "payMin": 14.100000,
         "payMax": 1880.300000,
         "countryName": "Germany"
-    },
-    {
-        "country": "DK",
-        "currency": "DKK",
-        "payWayCode": "10001",
-        "payWayName": "Credit Card",
-        "fixedFee": 2.800000,
-        "feeRate": 0.039900,
-        "payMin": 105.090000,
-        "payMax": 14012.120000,
-        "countryName": "Denmark"
     },
     {
         "country": "DK",
@@ -453,23 +299,12 @@
     {
         "country": "DK",
         "currency": "DKK",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 2.300000,
-        "feeRate": 0.035000,
-        "payMin": 15.000000,
-        "payMax": 37000.000000,
-        "countryName": "Denmark"
-    },
-    {
-        "country": "DK",
-        "currency": "DKK",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 2.300000,
-        "feeRate": 0.035000,
-        "payMin": 15.000000,
-        "payMax": 37000.000000,
+        "payWayCode": "701",
+        "payWayName": "Google Pay",
+        "fixedFee": 2.800000,
+        "feeRate": 0.039900,
+        "payMin": 105.130000,
+        "payMax": 14017.410000,
         "countryName": "Denmark"
     },
     {
@@ -497,23 +332,12 @@
     {
         "country": "GB",
         "currency": "GBP",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.260000,
-        "feeRate": 0.035000,
-        "payMin": 1.000000,
-        "payMax": 5000.000000,
-        "countryName": "United Kingdom"
-    },
-    {
-        "country": "GB",
-        "currency": "GBP",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.260000,
-        "feeRate": 0.035000,
-        "payMin": 1.000000,
-        "payMax": 5000.000000,
+        "payWayCode": "701",
+        "payWayName": "Google Pay",
+        "fixedFee": 0.330000,
+        "feeRate": 0.039900,
+        "payMin": 12.250000,
+        "payMax": 1633.860000,
         "countryName": "United Kingdom"
     },
     {
@@ -536,28 +360,6 @@
         "feeRate": 0.039900,
         "payMin": 117.000000,
         "payMax": 15640.000000,
-        "countryName": "Hong Kong"
-    },
-    {
-        "country": "HK",
-        "currency": "HKD",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 2.500000,
-        "feeRate": 0.035000,
-        "payMin": 15.000000,
-        "payMax": 41000.000000,
-        "countryName": "Hong Kong"
-    },
-    {
-        "country": "HK",
-        "currency": "HKD",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 2.500000,
-        "feeRate": 0.035000,
-        "payMin": 15.000000,
-        "payMax": 41000.000000,
         "countryName": "Hong Kong"
     },
     {
@@ -607,23 +409,12 @@
     {
         "country": "HU",
         "currency": "HUF",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 120.000000,
-        "feeRate": 0.035000,
-        "payMin": 400.000000,
-        "payMax": 2000000.000000,
-        "countryName": "Hungary"
-    },
-    {
-        "country": "HU",
-        "currency": "HUF",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 120.000000,
-        "feeRate": 0.035000,
-        "payMin": 400.000000,
-        "payMax": 2000000.000000,
+        "payWayCode": "701",
+        "payWayName": "Google Pay",
+        "fixedFee": 145.490000,
+        "feeRate": 0.039900,
+        "payMin": 5455.700000,
+        "payMax": 727427.000000,
         "countryName": "Hungary"
     },
     {
@@ -644,7 +435,7 @@
         "payWayName": "QRIS",
         "fixedFee": 1000.000000,
         "feeRate": 0.025000,
-        "payMin": 201700.000000,
+        "payMin": 201800.000000,
         "payMax": 10000000.000000,
         "countryName": "Indonesia"
     },
@@ -660,61 +451,6 @@
         "countryName": "Israel"
     },
     {
-        "country": "IL",
-        "currency": "ILS",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 1.200000,
-        "feeRate": 0.035000,
-        "payMin": 5.000000,
-        "payMax": 20000.000000,
-        "countryName": "Israel"
-    },
-    {
-        "country": "IL",
-        "currency": "ILS",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 1.200000,
-        "feeRate": 0.035000,
-        "payMin": 5.000000,
-        "payMax": 20000.000000,
-        "countryName": "Israel"
-    },
-    {
-        "country": "IN",
-        "currency": "INR",
-        "payWayCode": "10001",
-        "payWayName": "Credit Card",
-        "fixedFee": 33.150000,
-        "feeRate": 0.039900,
-        "payMin": 900.000000,
-        "payMax": 165763.000000,
-        "countryName": "India"
-    },
-    {
-        "country": "IN",
-        "currency": "INR",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 27.000000,
-        "feeRate": 0.035000,
-        "payMin": 90.000000,
-        "payMax": 450000.000000,
-        "countryName": "India"
-    },
-    {
-        "country": "IN",
-        "currency": "INR",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 27.000000,
-        "feeRate": 0.035000,
-        "payMin": 90.000000,
-        "payMax": 450000.000000,
-        "countryName": "India"
-    },
-    {
         "country": "IN",
         "currency": "INR",
         "payWayCode": "90001",
@@ -724,50 +460,6 @@
         "payMin": 1000.000000,
         "payMax": 50000.000000,
         "countryName": "India"
-    },
-    {
-        "country": "IS",
-        "currency": "ISK",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 45.000000,
-        "feeRate": 0.035000,
-        "payMin": 300.000000,
-        "payMax": 740000.000000,
-        "countryName": "Iceland"
-    },
-    {
-        "country": "IS",
-        "currency": "ISK",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 45.000000,
-        "feeRate": 0.035000,
-        "payMin": 300.000000,
-        "payMax": 740000.000000,
-        "countryName": "Iceland"
-    },
-    {
-        "country": "JO",
-        "currency": "JOD",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.230000,
-        "feeRate": 0.035000,
-        "payMin": 1.000000,
-        "payMax": 5000.000000,
-        "countryName": "Jordan"
-    },
-    {
-        "country": "JO",
-        "currency": "JOD",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.230000,
-        "feeRate": 0.035000,
-        "payMin": 1.000000,
-        "payMax": 5000.000000,
-        "countryName": "Jordan"
     },
     {
         "country": "JP",
@@ -789,28 +481,6 @@
         "feeRate": 0.039900,
         "payMin": 2222.580000,
         "payMax": 296343.890000,
-        "countryName": "Japan"
-    },
-    {
-        "country": "JP",
-        "currency": "JPY",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 52.000000,
-        "feeRate": 0.035000,
-        "payMin": 200.000000,
-        "payMax": 855400.000000,
-        "countryName": "Japan"
-    },
-    {
-        "country": "JP",
-        "currency": "JPY",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 52.000000,
-        "feeRate": 0.035000,
-        "payMin": 200.000000,
-        "payMax": 855400.000000,
         "countryName": "Japan"
     },
     {
@@ -838,28 +508,6 @@
     {
         "country": "KR",
         "currency": "KRW",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 450.000000,
-        "feeRate": 0.035000,
-        "payMin": 3000.000000,
-        "payMax": 7000000.000000,
-        "countryName": "Korea"
-    },
-    {
-        "country": "KR",
-        "currency": "KRW",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 450.000000,
-        "feeRate": 0.035000,
-        "payMin": 3000.000000,
-        "payMax": 7000000.000000,
-        "countryName": "Korea"
-    },
-    {
-        "country": "KR",
-        "currency": "KRW",
         "payWayCode": "701",
         "payWayName": "Google Pay",
         "fixedFee": 540.000000,
@@ -867,28 +515,6 @@
         "payMin": 2000.000000,
         "payMax": 650000.000000,
         "countryName": "Korea"
-    },
-    {
-        "country": "KW",
-        "currency": "KWD",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.100000,
-        "feeRate": 0.035000,
-        "payMin": 0.500000,
-        "payMax": 1600.000000,
-        "countryName": "Kuwait"
-    },
-    {
-        "country": "KW",
-        "currency": "KWD",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.100000,
-        "feeRate": 0.035000,
-        "payMin": 0.500000,
-        "payMax": 1600.000000,
-        "countryName": "Kuwait"
     },
     {
         "country": "KZ",
@@ -902,39 +528,6 @@
         "countryName": "Kazakhstan"
     },
     {
-        "country": "MA",
-        "currency": "MAD",
-        "payWayCode": "10001",
-        "payWayName": "Credit Card",
-        "fixedFee": 4.000000,
-        "feeRate": 0.039900,
-        "payMin": 50.000000,
-        "payMax": 49000.000000,
-        "countryName": "Morocco"
-    },
-    {
-        "country": "MA",
-        "currency": "MAD",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 3.200000,
-        "feeRate": 0.035000,
-        "payMin": 21.000000,
-        "payMax": 53000.000000,
-        "countryName": "Morocco"
-    },
-    {
-        "country": "MA",
-        "currency": "MAD",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 3.200000,
-        "feeRate": 0.035000,
-        "payMin": 21.000000,
-        "payMax": 53000.000000,
-        "countryName": "Morocco"
-    },
-    {
         "country": "MD",
         "currency": "MDL",
         "payWayCode": "10001",
@@ -946,28 +539,6 @@
         "countryName": "Republic of Moldova"
     },
     {
-        "country": "MW",
-        "currency": "MWK",
-        "payWayCode": "55005",
-        "payWayName": "Bank Transfer",
-        "fixedFee": 0.000000,
-        "feeRate": 0.012000,
-        "payMin": 2000.000000,
-        "payMax": 750000.000000,
-        "countryName": "Malawi"
-    },
-    {
-        "country": "MX",
-        "currency": "MXN",
-        "payWayCode": "10001",
-        "payWayName": "Credit Card",
-        "fixedFee": 6.880000,
-        "feeRate": 0.044900,
-        "payMin": 257.000000,
-        "payMax": 34391.000000,
-        "countryName": "Mexico"
-    },
-    {
         "country": "MX",
         "currency": "MXN",
         "payWayCode": "601",
@@ -975,7 +546,7 @@
         "fixedFee": 8.000000,
         "feeRate": 0.015000,
         "payMin": 10.000000,
-        "payMax": 190000.000000,
+        "payMax": 20000.000000,
         "countryName": "Mexico"
     },
     {
@@ -987,39 +558,6 @@
         "feeRate": 0.039900,
         "payMin": 70.310000,
         "payMax": 9374.990000,
-        "countryName": "Malaysia"
-    },
-    {
-        "country": "MY",
-        "currency": "MYR",
-        "payWayCode": "13000",
-        "payWayName": "Bank Transfer",
-        "fixedFee": 0.000000,
-        "feeRate": 0.035000,
-        "payMin": 100.000000,
-        "payMax": 100000.000000,
-        "countryName": "Malaysia"
-    },
-    {
-        "country": "MY",
-        "currency": "MYR",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 1.500000,
-        "feeRate": 0.035000,
-        "payMin": 6.000000,
-        "payMax": 250000.000000,
-        "countryName": "Malaysia"
-    },
-    {
-        "country": "MY",
-        "currency": "MYR",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 1.500000,
-        "feeRate": 0.035000,
-        "payMin": 6.000000,
-        "payMax": 250000.000000,
         "countryName": "Malaysia"
     },
     {
@@ -1058,23 +596,12 @@
     {
         "country": "NO",
         "currency": "NOK",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 3.400000,
-        "feeRate": 0.035000,
-        "payMin": 15.000000,
-        "payMax": 500000.000000,
-        "countryName": "Norway"
-    },
-    {
-        "country": "NO",
-        "currency": "NOK",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 3.400000,
-        "feeRate": 0.035000,
-        "payMin": 15.000000,
-        "payMax": 500000.000000,
+        "payWayCode": "701",
+        "payWayName": "Google Pay",
+        "fixedFee": 4.300000,
+        "feeRate": 0.039900,
+        "payMin": 161.140000,
+        "payMax": 21485.410000,
         "countryName": "Norway"
     },
     {
@@ -1102,28 +629,6 @@
     {
         "country": "NZ",
         "currency": "NZD",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.530000,
-        "feeRate": 0.035000,
-        "payMin": 2.000000,
-        "payMax": 80000.000000,
-        "countryName": "New Zealand"
-    },
-    {
-        "country": "NZ",
-        "currency": "NZD",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.530000,
-        "feeRate": 0.035000,
-        "payMin": 2.000000,
-        "payMax": 80000.000000,
-        "countryName": "New Zealand"
-    },
-    {
-        "country": "NZ",
-        "currency": "NZD",
         "payWayCode": "701",
         "payWayName": "Google Pay",
         "fixedFee": 0.660000,
@@ -1133,48 +638,26 @@
         "countryName": "New Zealand"
     },
     {
-        "country": "OM",
-        "currency": "OMR",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.130000,
-        "feeRate": 0.035000,
-        "payMin": 0.500000,
-        "payMax": 2000.000000,
-        "countryName": "Oman"
-    },
-    {
-        "country": "OM",
-        "currency": "OMR",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.130000,
-        "feeRate": 0.035000,
-        "payMin": 0.500000,
-        "payMax": 2000.000000,
-        "countryName": "Oman"
+        "country": "PE",
+        "currency": "PEN",
+        "payWayCode": "1306",
+        "payWayName": "QR_CODE",
+        "fixedFee": 0.000000,
+        "feeRate": 0.048000,
+        "payMin": 1.000000,
+        "payMax": 3700.000000,
+        "countryName": "Peru"
     },
     {
         "country": "PE",
         "currency": "PEN",
-        "payWayCode": "10001",
-        "payWayName": "Credit Card",
-        "fixedFee": 1.490000,
-        "feeRate": 0.039900,
-        "payMin": 55.810000,
-        "payMax": 7441.520000,
+        "payWayCode": "1307",
+        "payWayName": "BankTransfer",
+        "fixedFee": 0.000000,
+        "feeRate": 0.048000,
+        "payMin": 1.000000,
+        "payMax": 10000.000000,
         "countryName": "Peru"
-    },
-    {
-        "country": "PH",
-        "currency": "PHP",
-        "payWayCode": "10001",
-        "payWayName": "Credit Card",
-        "fixedFee": 22.720000,
-        "feeRate": 0.039900,
-        "payMin": 851.840000,
-        "payMax": 113579.010000,
-        "countryName": "Philippines"
     },
     {
         "country": "PH",
@@ -1190,17 +673,6 @@
     {
         "country": "PH",
         "currency": "PHP",
-        "payWayCode": "80059",
-        "payWayName": "GCASH",
-        "fixedFee": 22.500000,
-        "feeRate": 0.018000,
-        "payMin": 850.000000,
-        "payMax": 100000.000000,
-        "countryName": "Philippines"
-    },
-    {
-        "country": "PH",
-        "currency": "PHP",
         "payWayCode": "90007",
         "payWayName": "QRPH",
         "fixedFee": 22.500000,
@@ -1208,17 +680,6 @@
         "payMin": 850.000000,
         "payMax": 50000.000000,
         "countryName": "Philippines"
-    },
-    {
-        "country": "PK",
-        "currency": "PKR",
-        "payWayCode": "10001",
-        "payWayName": "Credit Card",
-        "fixedFee": 115.680000,
-        "feeRate": 0.039900,
-        "payMin": 4337.000000,
-        "payMax": 578390.000000,
-        "countryName": "Pakistan"
     },
     {
         "country": "PL",
@@ -1245,46 +706,13 @@
     {
         "country": "PL",
         "currency": "PLN",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 1.300000,
-        "feeRate": 0.035000,
-        "payMin": 8.000000,
-        "payMax": 20000.000000,
+        "payWayCode": "701",
+        "payWayName": "Google Pay",
+        "fixedFee": 1.730000,
+        "feeRate": 0.039900,
+        "payMin": 64.910000,
+        "payMax": 8654.400000,
         "countryName": "Poland"
-    },
-    {
-        "country": "PL",
-        "currency": "PLN",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 1.300000,
-        "feeRate": 0.035000,
-        "payMin": 8.000000,
-        "payMax": 20000.000000,
-        "countryName": "Poland"
-    },
-    {
-        "country": "QA",
-        "currency": "QAR",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 1.200000,
-        "feeRate": 0.035000,
-        "payMin": 8.000000,
-        "payMax": 20000.000000,
-        "countryName": "Qatar"
-    },
-    {
-        "country": "QA",
-        "currency": "QAR",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 1.200000,
-        "feeRate": 0.035000,
-        "payMin": 8.000000,
-        "payMax": 20000.000000,
-        "countryName": "Qatar"
     },
     {
         "country": "RO",
@@ -1298,28 +726,6 @@
         "countryName": "Romania"
     },
     {
-        "country": "RO",
-        "currency": "RON",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 1.500000,
-        "feeRate": 0.035000,
-        "payMin": 10.000000,
-        "payMax": 25000.000000,
-        "countryName": "Romania"
-    },
-    {
-        "country": "RO",
-        "currency": "RON",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 1.500000,
-        "feeRate": 0.035000,
-        "payMin": 10.000000,
-        "payMax": 25000.000000,
-        "countryName": "Romania"
-    },
-    {
         "country": "RW",
         "currency": "RWF",
         "payWayCode": "55007",
@@ -1329,17 +735,6 @@
         "payMin": 1500.000000,
         "payMax": 9999999.000000,
         "countryName": "Rwanda"
-    },
-    {
-        "country": "SA",
-        "currency": "SAR",
-        "payWayCode": "10001",
-        "payWayName": "Credit Card",
-        "fixedFee": 1.500000,
-        "feeRate": 0.039900,
-        "payMin": 4.000000,
-        "payMax": 18000.000000,
-        "countryName": "Saudi Arabia"
     },
     {
         "country": "SE",
@@ -1366,23 +761,12 @@
     {
         "country": "SE",
         "currency": "SEK",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 3.400000,
-        "feeRate": 0.035000,
-        "payMin": 20.000000,
-        "payMax": 55000.000000,
-        "countryName": "Sweden"
-    },
-    {
-        "country": "SE",
-        "currency": "SEK",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 3.400000,
-        "feeRate": 0.035000,
-        "payMin": 20.000000,
-        "payMax": 55000.000000,
+        "payWayCode": "701",
+        "payWayName": "Google Pay",
+        "fixedFee": 4.480000,
+        "feeRate": 0.039900,
+        "payMin": 168.000000,
+        "payMax": 22399.920000,
         "countryName": "Sweden"
     },
     {
@@ -1397,28 +781,6 @@
         "countryName": "Thailand"
     },
     {
-        "country": "TH",
-        "currency": "THB",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 12.000000,
-        "feeRate": 0.035000,
-        "payMin": 80.000000,
-        "payMax": 200000.000000,
-        "countryName": "Thailand"
-    },
-    {
-        "country": "TH",
-        "currency": "THB",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 12.000000,
-        "feeRate": 0.035000,
-        "payMin": 80.000000,
-        "payMax": 200000.000000,
-        "countryName": "Thailand"
-    },
-    {
         "country": "TR",
         "currency": "TRY",
         "payWayCode": "10001",
@@ -1427,28 +789,6 @@
         "feeRate": 0.039900,
         "payMin": 407.350000,
         "payMax": 54313.400000,
-        "countryName": "Turkey"
-    },
-    {
-        "country": "TR",
-        "currency": "TRY",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 11.000000,
-        "feeRate": 0.035000,
-        "payMin": 70.000000,
-        "payMax": 180000.000000,
-        "countryName": "Turkey"
-    },
-    {
-        "country": "TR",
-        "currency": "TRY",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 11.000000,
-        "feeRate": 0.035000,
-        "payMin": 70.000000,
-        "payMax": 180000.000000,
         "countryName": "Turkey"
     },
     {
@@ -1471,28 +811,6 @@
         "feeRate": 0.039900,
         "payMin": 482.310000,
         "payMax": 64308.600000,
-        "countryName": "Taiwan, Province of China"
-    },
-    {
-        "country": "TW",
-        "currency": "TWD",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 11.000000,
-        "feeRate": 0.035000,
-        "payMin": 70.000000,
-        "payMax": 180000.000000,
-        "countryName": "Taiwan, Province of China"
-    },
-    {
-        "country": "TW",
-        "currency": "TWD",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 11.000000,
-        "feeRate": 0.035000,
-        "payMin": 70.000000,
-        "payMax": 180000.000000,
         "countryName": "Taiwan, Province of China"
     },
     {
@@ -1542,28 +860,6 @@
     {
         "country": "US",
         "currency": "USD",
-        "payWayCode": "52004",
-        "payWayName": "Neteller",
-        "fixedFee": 0.320000,
-        "feeRate": 0.035000,
-        "payMin": 1.000000,
-        "payMax": 5000.000000,
-        "countryName": "United States of America"
-    },
-    {
-        "country": "US",
-        "currency": "USD",
-        "payWayCode": "52005",
-        "payWayName": "Skrill",
-        "fixedFee": 0.320000,
-        "feeRate": 0.035000,
-        "payMin": 2.000000,
-        "payMax": 5000.000000,
-        "countryName": "United States of America"
-    },
-    {
-        "country": "US",
-        "currency": "USD",
         "payWayCode": "701",
         "payWayName": "Google Pay",
         "fixedFee": 0.400000,
@@ -1575,35 +871,13 @@
     {
         "country": "VN",
         "currency": "VND",
-        "payWayCode": "201",
-        "payWayName": "MoMo",
+        "payWayCode": "203",
+        "payWayName": "Viet QR ",
         "fixedFee": 0.000000,
-        "feeRate": 0.035000,
-        "payMin": 10000.000000,
-        "payMax": 20000000.000000,
+        "feeRate": 0.018000,
+        "payMin": 150000.000000,
+        "payMax": 500000000.000000,
         "countryName": "Vietnam"
-    },
-    {
-        "country": "VN",
-        "currency": "VND",
-        "payWayCode": "210",
-        "payWayName": "Bank Transfer",
-        "fixedFee": 0.000000,
-        "feeRate": 0.035000,
-        "payMin": 20000.000000,
-        "payMax": 100000000.000000,
-        "countryName": "Vietnam"
-    },
-    {
-        "country": "ZA",
-        "currency": "ZAR",
-        "payWayCode": "501",
-        "payWayName": "Apple Pay",
-        "fixedFee": 7.530000,
-        "feeRate": 0.039900,
-        "payMin": 282.000000,
-        "payMax": 37637.300000,
-        "countryName": "South Africa"
     },
     {
         "country": "ZA",
@@ -1615,16 +889,5 @@
         "payMin": 200.000000,
         "payMax": 500000.000000,
         "countryName": "South Africa"
-    },
-    {
-        "country": "ZM",
-        "currency": "ZMW",
-        "payWayCode": "55011",
-        "payWayName": "Bank Transfer",
-        "fixedFee": 0.000000,
-        "feeRate": 0.008000,
-        "payMin": 100.000000,
-        "payMax": 999999.000000,
-        "countryName": "Zambia"
     }
 ]

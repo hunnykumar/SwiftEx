@@ -247,7 +247,7 @@ const KycComponent = ({ route }) => {
         "amount": amountSend.toString(),
         "fiatCurrency": selectedfiat?.currency,
         "cryptoCurrency": selectedCrypto?.crypto,
-        "address": state?.ETH_KEY,
+        "address": selectedCrypto?.network==="XLM"?state&&state.STELLAR_PUBLICK_KEY:state?.ETH_KEY,
         "network": selectedCrypto?.network,
         "payWayCode": selectedfiat?.payWayCode,
         "memo": "test1"
@@ -537,9 +537,11 @@ const KycComponent = ({ route }) => {
             {/* Wallet Address */}
             <View style={[styles.walletAddress,{backgroundColor:theme.cardBg}]}>
             <Text style={[styles.sectionTitle,{color:theme.inactiveTx}]}>Wallet Address:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft:10}}>
-                <Text style={[styles.addressText,{color:theme.inactiveTx}]}>{state&&state.wallet && state.wallet.address}</Text>
-                </ScrollView>
+            <Text style={[styles.addressText,{color:theme.inactiveTx}]}>{state&&state.wallet && state.wallet.address?.slice(0,11)}......{state&&state.wallet && state.wallet.address?.slice(-8)}</Text>
+            </View>
+            <View style={[styles.walletAddress,{backgroundColor:theme.cardBg,marginTop:hp(-2.4)}]}>
+            <Text style={[styles.sectionTitle,{color:theme.inactiveTx}]}>Stellar Address:</Text>
+            <Text style={[styles.addressText,{color:theme.inactiveTx}]}>{state&&state.STELLAR_PUBLICK_KEY?.slice(0,8) || null}......{state&&state.STELLAR_PUBLICK_KEY?.slice(-8) || null}</Text>
             </View>
 
               {/* Info Container */}

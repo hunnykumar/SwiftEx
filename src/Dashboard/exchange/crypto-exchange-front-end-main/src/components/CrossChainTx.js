@@ -1134,73 +1134,73 @@ const CrossChainTx = ({ route = "ETH" }) => {
     const finalAmount = Math.max(0, minAmount - feeAmount);
 
     return (
-        !isTokenHaveBalances ?
-            <View style={{ backgroundColor: theme.bg, width: wp(100), height: hp(100), marginBottom: hp(5), paddingHorizontal: wp(3.5) }}>
-                <WalletActivationComponent
-                    isVisible={ACTIVATION_MODAL_PROD}
-                    onClose={() => setACTIVATION_MODAL_PROD(false)}
-                    onActivate={() => setACTIVATION_MODAL_PROD(false)}
-                    navigation={navigation}
-                    appTheme={true}
-                    shouldNavigateBack={true}
-                />
+        // !isTokenHaveBalances ?
+        //     <View style={{ backgroundColor: theme.bg, width: wp(100), height: hp(100), marginBottom: hp(5), paddingHorizontal: wp(3.5) }}>
+        //         <WalletActivationComponent
+        //             isVisible={ACTIVATION_MODAL_PROD}
+        //             onClose={() => setACTIVATION_MODAL_PROD(false)}
+        //             onActivate={() => setACTIVATION_MODAL_PROD(false)}
+        //             navigation={navigation}
+        //             appTheme={true}
+        //             shouldNavigateBack={true}
+        //         />
 
-                <Text style={[styles.headingText, { color: theme.headingTx }]}>Oops! You don't own this asset yet. Buy to get started.</Text>
-                <View style={styles.card}>
-                    <View style={styles.subCon}>
-                        <TextInput
-                            maxLength={19}
-                            placeholder='0.0'
-                            placeholderTextColor={"gray"}
-                            value={finalAmount ? finalAmount.toFixed(6) : "0.0"}
-                            style={[styles.textInputForCrossChain, { color: theme.inactiveTx, width: wp(50) }]}
-                            editable={false}
-                        />
-                        <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}
-                        >
-                            <Text style={styles.actionButtonText}>Buy USDC
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
+        //         <Text style={[styles.headingText, { color: theme.headingTx }]}>Oops! You don't own this asset yet. Buy to get started.</Text>
+        //         <View style={styles.card}>
+        //             <View style={styles.subCon}>
+        //                 <TextInput
+        //                     maxLength={19}
+        //                     placeholder='0.0'
+        //                     placeholderTextColor={"gray"}
+        //                     value={finalAmount ? finalAmount.toFixed(6) : "0.0"}
+        //                     style={[styles.textInputForCrossChain, { color: theme.inactiveTx, width: wp(50) }]}
+        //                     editable={false}
+        //                 />
+        //                 <TouchableOpacity
+        //                     style={styles.actionButton}
+        //                     onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}
+        //                 >
+        //                     <Text style={styles.actionButtonText}>Buy USDC
+        //                     </Text>
+        //                 </TouchableOpacity>
+        //             </View>
 
-                    <View style={[styles.subCon, { marginBottom: hp(0) }]}>
-                        <TouchableOpacity style={styles.exportCon} disabled={true}>
-                            <View style={{ flexDirection: "row" }}>
-                                <Image
-                                    source={{ uri: reciverAsset.imageUrl }}
-                                    style={styles.assetLogo}
-                                />
-                                <View>
-                                    <Text style={styles.networkSubHeading}>{reciverAsset.assetNetwork}</Text>
-                                    <Text style={styles.networkHeading} numberOfLines={1} ellipsizeMode="tail">{reciverAsset.assetName}</Text>
-                                </View>
-                            </View>
-                        </TouchableOpacity>
+        //             <View style={[styles.subCon, { marginBottom: hp(0) }]}>
+        //                 <TouchableOpacity style={styles.exportCon} disabled={true}>
+        //                     <View style={{ flexDirection: "row" }}>
+        //                         <Image
+        //                             source={{ uri: reciverAsset.imageUrl }}
+        //                             style={styles.assetLogo}
+        //                         />
+        //                         <View>
+        //                             <Text style={styles.networkSubHeading}>{reciverAsset.assetNetwork}</Text>
+        //                             <Text style={styles.networkHeading} numberOfLines={1} ellipsizeMode="tail">{reciverAsset.assetName}</Text>
+        //                         </View>
+        //                     </View>
+        //                 </TouchableOpacity>
 
-                        <View style={styles.accountDetailsCon}>
-                            <View style={{ minWidth: wp(15), alignItems: "flex-end" }}>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                    {balanceLoading ? (
-                                        <ActivityIndicator color={"green"} />
-                                    ) : (
-                                        <Text style={{ color: theme.headingTx, fontSize: 16 }}>
-                                            {state && state.STELLAR_ADDRESS_STATUS === false
-                                                ? "0.0"
-                                                : state?.assetData
-                                                    ?.filter((b) => b.asset_code === "USDC")
-                                                    .find((b, _, arr) => parseFloat(b.balance).toFixed(5) > 0 && (b === arr[0] || parseFloat(arr[0].balance).toFixed(5) <= 0))
-                                                    ?.balance || "0.0"}
-                                        </Text>
-                                    )}
-                                </ScrollView>
-                            </View>
-                            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Available  USDC</Text>
-                        </View>
-                    </View>
-                </View>
-            </View> :
+        //                 <View style={styles.accountDetailsCon}>
+        //                     <View style={{ minWidth: wp(15), alignItems: "flex-end" }}>
+        //                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        //                             {balanceLoading ? (
+        //                                 <ActivityIndicator color={"green"} />
+        //                             ) : (
+        //                                 <Text style={{ color: theme.headingTx, fontSize: 16 }}>
+        //                                     {state && state.STELLAR_ADDRESS_STATUS === false
+        //                                         ? "0.0"
+        //                                         : state?.assetData
+        //                                             ?.filter((b) => b.asset_code === "USDC")
+        //                                             .find((b, _, arr) => parseFloat(b.balance).toFixed(5) > 0 && (b === arr[0] || parseFloat(arr[0].balance).toFixed(5) <= 0))
+        //                                             ?.balance || "0.0"}
+        //                                 </Text>
+        //                             )}
+        //                         </ScrollView>
+        //                     </View>
+        //                     <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Available  USDC</Text>
+        //                 </View>
+        //             </View>
+        //         </View>
+        //     </View> :
 
             <View style={{ backgroundColor: theme.bg, width: wp(100)}}>
                 <WalletActivationComponent
