@@ -99,7 +99,7 @@ export const HomeView = () => {
   ]
 
   const quickActions = [
-    { name: `Spot\nTrading`, icon: "candlestick-chart", iconProvider: "material" },
+    { name: `Swap\nOrders`, icon: "candlestick-chart", iconProvider: "material" },
     { name: `Deposit\nUSDC`, icon: "generating-tokens", iconProvider: "material" },
     { name: `Withdrawal\nUSDC`, icon: "currency-exchange", iconProvider: "material" },
   ]
@@ -262,7 +262,7 @@ export const HomeView = () => {
   return (
     <>
       <Exchange_screen_header
-        title="Exchange"
+        title="SDEX"
         onLeftIconPress={() => navigation.navigate("Home")}
         onRightIconPress={() => {
           console.log("Right icon pressed");

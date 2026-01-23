@@ -185,7 +185,7 @@ const Settings = (props) => {
             <Icon type={"ionicon"} name="git-compare" size={31} color={"#4052D6"} />
 
           </View>
-          <Text style={[styles.text, { color: theme.headingTx }]}>Exchange</Text>
+          <Text style={[styles.text, { color: theme.headingTx }]}>SDEX</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

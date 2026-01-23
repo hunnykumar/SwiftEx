@@ -301,16 +301,16 @@ const KycComponent = ({ route }) => {
   useEffect(()=>{
     setamountSend(0.00);
     setSelectedCrypto({
-      "crypto": "ETH",
-      "network": "ETH",
-      "buyEnable": 1,
-      "sellEnable": 1,
-      "minPurchaseAmount": 15.00,
-      "maxPurchaseAmount": 2000.00,
-      "address": null,
-      "icon": "https://static.alchemypay.org/alchemypay/crypto-images/ETH.png",
-      "minSellAmount": 0.006061000,
-      "maxSellAmount": 1.242230886
+      "crypto": "USDC",
+        "network": "XLM",
+        "buyEnable": 1,
+        "sellEnable": 0,
+        "minPurchaseAmount": 15.00,
+        "maxPurchaseAmount": 2000.00,
+        "address": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+        "icon": "https://static.alchemypay.org/alchemypay/crypto-images/USDC.png",
+        "minSellAmount": null,
+        "maxSellAmount": null
   });
     setSelectedfiat({
       "country": "IN",

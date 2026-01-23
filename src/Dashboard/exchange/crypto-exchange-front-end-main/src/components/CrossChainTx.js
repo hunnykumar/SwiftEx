@@ -278,42 +278,6 @@ const CrossChainTx = ({ route = "ETH" }) => {
             flexDirection: "row",
             alignItems: "center"
         },
-        suggestActionCon:{
-            backgroundColor:theme.cardBg,
-            alignItems:"flex-start",
-            width:wp(100),
-            paddingHorizontal:wp(5),
-            paddingVertical:hp(1.4),
-            alignSelf:"center",
-            marginVertical:hp(0.8)
-        },
-        suggestActionTxt:{
-            color: theme.headingTx,
-            fontSize: 16,
-            fontWeight: "500",
-            textAlign: "left",
-            marginLeft:hp(0.6)
-        },
-        purcheseBtn: {
-            borderWidth:0.4,
-            borderColor:theme.smallCardBorderColor,
-            backgroundColor: theme.bg,
-            flexDirection:"row",
-            borderRadius: 20,
-            justifyContent: "space-around",
-            alignItems:"center",
-            height:hp(5.3),
-            width:wp(53),
-            marginTop:hp(1)
-        },
-        purcheseSubCon: {
-            backgroundColor: "#4052D6",
-            borderRadius: 14,
-            justifyContent:"center",
-            alignItems:"center",
-            height:hp(3),
-            width:wp(20)
-        },
         feeAssetLogo: {
             width: 28,
             height: 28,
@@ -321,8 +285,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
             marginRight: wp(0.4),
         },
         swapSuggestCon: {
-            marginTop: hp(1),
-            flexDirection: "row",
+            marginTop: hp(0.6),
             justifyContent: "space-between",
             alignItems: "center"
         },
@@ -348,6 +311,12 @@ const CrossChainTx = ({ route = "ETH" }) => {
             borderRadius: 8,
             paddingHorizontal: wp(9),
             paddingVertical: hp(1.1)
+        },
+        dismissCon: {
+            position: "absolute",
+            alignSelf: "flex-end",
+            right: wp(1.5),
+            top: hp(0.6)
         }
     });
     const toast = useToast();
@@ -506,6 +475,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
     const [showTxHash, setshowTxHash] = useState([]);
     const [tokenSearchQuery, setTokenSearchQuery] = useState('');
     const [networkBalance,setNetworkBalance]=useState(0.0);
+    const [showExpandCon,setShowExpandCon]=useState(false);
 
     const currentWalletType = chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
     const currentTokenList = currentWalletType === "Ethereum" ? ethSupportTokens : bscSupportTokens;
@@ -618,6 +588,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
     }, [chooseSelectedItemId]);
 
     const resetState = () => {
+        setShowExpandCon(false);
         setshowTx(false);
         setshowTxHash([]);
         setresQuotes(null);
@@ -1211,15 +1182,6 @@ const CrossChainTx = ({ route = "ETH" }) => {
                     appTheme={true}
                     shouldNavigateBack={true}
                 />
-                <View style={styles.suggestActionCon}>
-                    <Text style={styles.suggestActionTxt}>{`Deposit instantly from your available balance or Buy USDC`}</Text>
-                    <TouchableOpacity style={styles.purcheseBtn} onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}>
-                        <Text style={styles.actionButtonText}>Buy USDC</Text>
-                       <View style={styles.purcheseSubCon}>
-                        <Text style={{fontSize:14,fontWeight:"400",color:"#fff",textAlign:"center"}}>Low Rates</Text>
-                       </View>
-                    </TouchableOpacity>
-                </View>
                 <ScrollView style={{ paddingHorizontal: wp(3.5) }}>
 
                     <View style={styles.card}>
@@ -1276,7 +1238,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                                             <ActivityIndicator color={"green"} />
                                         ) : (
                                             <Text style={{ color: theme.headingTx, fontSize: 15 }}>
-                                                {Number.isFinite(Number(WALLETBALANCE))? Number(WALLETBALANCE).toFixed(13): "0.00"}
+                                                {WALLETBALANCE}
                                             </Text>
                                         )}
                                     </ScrollView>
@@ -1291,12 +1253,28 @@ const CrossChainTx = ({ route = "ETH" }) => {
                             </View>
                         </View>
                         <View style={styles.swapSuggestCon}>
-                            <Text style={[styles.swapSuggestTex, { color: theme.headingTx,maxWidth:wp(49) }]}>
-                                Your assets can be easily converted into USDT/USDC.
-                            </Text>
-                            <TouchableOpacity style={styles.swapSuggestBtn} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId, activeAsset: selectedToken }) }}>
-                                <Text style={styles.swapSuggestTex}>Swap Now</Text>
-                            </TouchableOpacity>
+                            {!showExpandCon && <TouchableOpacity style={{ flexDirection: "row", justifyContent: "center", alignItems: "center" }} onPress={() => { setShowExpandCon(showExpandCon ? false : true) }}>
+                                <Text style={[styles.swapSuggestTex, { color: theme.headingTx }]}>
+                                    Tap to Swap or Buy Assets
+                                </Text>
+                                <Icon name={"menu-down"} type={"materialCommunity"} size={25} color={theme.headingTx} />
+                            </TouchableOpacity>}
+                            {showExpandCon && <View style={[styles.card, { backgroundColor: "#4052D6", flexDirection: "column", padding: 12, marginVertical: 3,width:wp(86) }]}>
+                                <TouchableOpacity style={styles.dismissCon} onPress={() => { setShowExpandCon(false) }}>
+                                    <Icon name={"close-circle-outline"} type={"materialCommunity"} size={25} color={"#fff"} />
+                                </TouchableOpacity>
+                                <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500",maxWidth:wp(70) }}>
+                                    Swap your tokens now or purchase more to keep going.
+                                </Text>
+                                <View style={styles.InsufficientActionsCon}>
+                                    <TouchableOpacity style={styles.InsufficientActionsBtn} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId, activeAsset: selectedToken }) }}>
+                                        <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Swap Now</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.InsufficientActionsBtn, { backgroundColor: "#fff" }]} onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}>
+                                        <Text style={{ color: "#4052D6", fontSize: 16, fontWeight: "600" }}>Buy Now</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>}
                         </View>
                     </View>
 
@@ -1350,25 +1328,6 @@ const CrossChainTx = ({ route = "ETH" }) => {
 
 
                     {/* paymethod Gas selecter */}
-                    {parseFloat(WALLETBALANCE) <= 0&&<View style={[styles.card, { backgroundColor: "#4052D6", flexDirection: "column" }]}>
-                        <View style={{ flexDirection: "row", alignItems: "center" }}>
-                            <Icon name={"information-outline"} type={"materialCommunity"} size={20} color={theme.headingTx} />
-                            <Text style={{ color: theme.headingTx, fontSize: 16, fontWeight: "600" }}>
-                                {" "}Insufficient {selectedToken?.symbol} Balance
-                            </Text>
-                        </View>
-                        <Text style={{ color: theme.headingTx, fontSize: 13.5, marginLeft: wp(6), fontWeight: "400" }}>
-                            You need {selectedToken?.symbol} to complete this bridge. Quickly swap your current tokens or buy more to continue.
-                        </Text>
-                        <View style={styles.InsufficientActionsCon}>
-                            <TouchableOpacity style={styles.InsufficientActionsBtn} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId, activeAsset: selectedToken }) }}>
-                                <Text style={{ color: theme.headingTx, fontSize: 16, fontWeight: "600" }}>Swap Now</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.InsufficientActionsBtn, { backgroundColor: "#fff" }]} onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}>
-                                <Text style={{ color: "#4052D6", fontSize: 16, fontWeight: "600" }}>Buy Now</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>}
                     <View style={styles.card}>
                         <View style={styles.subHeadingCon}>
                             <Icon name={"fire"} type={"materialCommunity"} size={25} color={"#4052D6"} />
@@ -1535,7 +1494,7 @@ const CrossChainTx = ({ route = "ETH" }) => {
                         {fianl_modal_loading || getInfo ? (
                             <ActivityIndicator color={"white"} />
                         ) : (
-                            <Text style={styles.nextButtonText}>{errorMsg !== null ? errorMsg : "Confirm Transaction"}</Text>
+                            <Text style={styles.nextButtonText}>{errorMsg !== null ? errorMsg : parseFloat(WALLETBALANCE) <= 0?"Insufficient Funds":"Confirm Transaction"}</Text>
                         )}
                     </TouchableOpacity>
 

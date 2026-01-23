@@ -142,7 +142,7 @@ const Dashboard = ({ navigation }) => {
             marginBottom: Platform.OS === "android" ? 8 : 1,
           }}
         >
-          {route.name==="ExchangeHome"?"Exchange":route.name}
+          {route.name==="ExchangeHome"?"SDEX":route.name}
         </Text>
       );
     },

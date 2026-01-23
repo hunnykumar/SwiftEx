@@ -185,6 +185,7 @@ const classic = ({ route }) => {
   const [showTxHash, setshowTxHash] = useState([]);
   const [tokenSearchQuery, setTokenSearchQuery] = useState('');
   const [networkBalance,setNetworkBalance]=useState(0.0);
+  const [showExpandCon,setShowExpandCon]=useState(false);
 
   const theme = state.THEME.THEME ? colors.dark : colors.light;
   const currentWalletType = chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
@@ -288,6 +289,7 @@ const classic = ({ route }) => {
   }, [chooseSelectedItemId]);
 
   const resetState = () => {
+    setShowExpandCon(false);
     setshowTx(false);
     setshowTxHash([]);
     setresQuotes(null);
@@ -858,12 +860,30 @@ const classic = ({ route }) => {
             </TouchableOpacity>
           </View>
           <View style={styles.swapSuggestCon}>
-              <Text style={[styles.swapSuggestTex, { color: theme.headingTx,maxWidth:wp(49),marginLeft:wp(1.3) }]}>
-            Your assets can be easily converted into USDT/USDC.
-          </Text>
-          <TouchableOpacity style={styles.swapSuggestBtn} onPress={()=>{navigation.navigate("EthSwap",{activeNetwork:chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,activeAsset:selectedToken})}}>
-            <Text style={styles.swapSuggestTex}>Swap Now</Text>
-          </TouchableOpacity>
+            {!showExpandCon&&
+            <TouchableOpacity style={{flexDirection:"row",justifyContent:"center",alignItems:"center"}} onPress={()=>{setShowExpandCon(showExpandCon?false:true)}}>
+              <Text style={[styles.swapSuggestTex, { color: theme.headingTx}]}>
+              Tap to Swap or Buy Assets
+            </Text>
+              <Icon name={"menu-down"} type={"materialCommunity"} size={25} color={theme.headingTx}/>
+            </TouchableOpacity>
+            }
+            {showExpandCon&&<View style={[styles.card, { backgroundColor: "#4052D6", flexDirection: "column", marginVertical: 2 }]}>
+              <TouchableOpacity  style={styles.dismissCon} onPress={()=>{setShowExpandCon(false)}}>
+              <Icon name={"close-circle-outline"} type={"materialCommunity"} size={25} color={"#fff"}/>
+              </TouchableOpacity>
+              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500" }}>
+                Swap your tokens now or purchase more to keep going.
+              </Text>
+              <View style={styles.InsufficientActionsCon}>
+                <TouchableOpacity style={styles.InsufficientActionsBtn} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId, activeAsset: selectedToken }) }}>
+                  <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Swap Now</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.InsufficientActionsBtn, { backgroundColor: "#fff" }]} onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}>
+                  <Text style={{ color: "#4052D6", fontSize: 16, fontWeight: "600" }}>Buy Now</Text>
+                </TouchableOpacity>
+              </View>
+            </View>}
           </View>
         </View>
 
@@ -928,25 +948,7 @@ const classic = ({ route }) => {
           </View>
         </View>
         
-        {parseFloat(WALLETBALANCE) <= 0&&<View style={[styles.card, { backgroundColor: "#4052D6", flexDirection: "column" }]}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Icon name={"information-outline"} type={"materialCommunity"} size={20} color={theme.headingTx} />
-            <Text style={{ color: theme.headingTx, fontSize: 16, fontWeight:"600" }}>
-              {" "}Insufficient {selectedToken?.symbol} Balance
-            </Text>
-          </View>
-          <Text style={{ color: theme.headingTx, fontSize: 13.5, marginLeft: wp(6), fontWeight:"400" }}>
-            You need {selectedToken?.symbol} to complete this bridge. Quickly swap your current tokens or buy more to continue.
-          </Text>
-          <View style={styles.InsufficientActionsCon}>
-            <TouchableOpacity style={styles.InsufficientActionsBtn} onPress={()=>{navigation.navigate("EthSwap",{activeNetwork:chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,activeAsset:selectedToken})}}>
-              <Text style={{ color: theme.headingTx, fontSize: 16, fontWeight:"600" }}>Swap Now</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.InsufficientActionsBtn,{backgroundColor:"#fff"}]} onPress={()=>{ navigation.navigate("KycComponent", { tabName: "Buy" })}}>
-              <Text style={{ color: "#4052D6", fontSize: 16, fontWeight:"600" }}>Buy Now</Text>
-            </TouchableOpacity>
-          </View>
-        </View>}
+        
 
         <View style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: "column", borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }]}>
           <View style={{ flexDirection: "row", paddingLeft: wp(3) }}>
@@ -1130,7 +1132,7 @@ const classic = ({ route }) => {
           {fianl_modal_loading || getInfo ? (
             <ActivityIndicator color={"white"} />
           ) : (
-            <Text style={styles.nextButtonText}>{errorMsg !== null ? errorMsg : "Confirm Transaction"}</Text>
+            <Text style={styles.nextButtonText}>{errorMsg !== null ? errorMsg : parseFloat(WALLETBALANCE) <= 0?"Insufficient Balance":"Confirm Transaction"}</Text>
           )}
         </TouchableOpacity>
         <RecentCrossChainTx activeWalletPublicKey={state && state.wallet && state.wallet.address} theme={state?.THEME?.THEME}/>
@@ -1499,14 +1501,13 @@ const styles = StyleSheet.create({
     marginRight: 3,
   },
   swapSuggestCon:{
-    marginTop:hp(1.5),
-    flexDirection:"row",
-    justifyContent:"space-between",
-    alignItems:"center"
+    marginTop:hp(1),
+    justifyContent:"space-between"
   },
   swapSuggestTex:{
-    fontSize:15,
-    color:"#fff"
+    fontSize:16,
+    color:"#fff",
+    textAlign:"center"
   },
   swapSuggestBtn:{
     borderRadius:10,
@@ -1526,6 +1527,12 @@ const styles = StyleSheet.create({
     borderRadius:8,
     paddingHorizontal:wp(9),
     paddingVertical:hp(1.1)
+  },
+  dismissCon:{
+    position:"absolute",
+    alignSelf:"flex-end",
+    right:wp(1.5),
+    top:hp(0.6)
   }
 });
 

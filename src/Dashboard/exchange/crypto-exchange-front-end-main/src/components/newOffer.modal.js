@@ -70,15 +70,15 @@ const SUCCESS_MESSAGES = {
 // Tab configuration
 const TAB_CONFIG = {
   INSTANT_TRADE: { id: 1, label: "Instant Swap", iconName:"lightning-bolt" },
-  LARGE_ORDER_TRADE: { id: 0, label: "Large Order Trade", iconName:"chart-timeline-variant" },
+  LARGE_ORDER_TRADE: { id: 0, label: "Large Order", iconName:"chart-timeline-variant" },
 };
 
 const SUB_TAB_CONFIG = {
   TRADE: { id: 0, label: "Trade" },
   OVERVIEW: { id: 1, label: "Overview" },
   TRANSACTIONS: { id: 4, label: "Transactions" },
-  ORDERBOOK: { id: 2, label: "Orderbook" },
-  LAST_TRADE: { id: 3, label: "Last Trade" },
+  // ORDERBOOK: { id: 2, label: "Orderbook" },
+  LAST_TRADE: { id: 3, label: "Last Transaction" },
 };
 
 export const NewOfferModal = () => {
@@ -790,7 +790,7 @@ const selectTradingPair = useCallback((item) => {
 
         {activeTradeType === TAB_CONFIG.LARGE_ORDER_TRADE.id && (
           <>
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               style={[styles.tab, activeTab === SUB_TAB_CONFIG.ORDERBOOK.id && styles.activeTab]} 
               onPress={() => setActiveTab(SUB_TAB_CONFIG.ORDERBOOK.id)}
             >
@@ -800,7 +800,7 @@ const selectTradingPair = useCallback((item) => {
               ]}>
                 {SUB_TAB_CONFIG.ORDERBOOK.label}
               </Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             
             <TouchableOpacity 
               style={[styles.tab, activeTab === SUB_TAB_CONFIG.LAST_TRADE.id && styles.activeTab]} 
@@ -1247,11 +1247,11 @@ const selectTradingPair = useCallback((item) => {
                 </View>
               )}
               
-              {activeTab === SUB_TAB_CONFIG.ORDERBOOK.id && (
+              {/* {activeTab === SUB_TAB_CONFIG.ORDERBOOK.id && (
                 <View style={{ width: "100%" }}>
                   <CustomOrderBook visibleTabs={['bids']} />
                 </View>
-              )}
+              )} */}
               
               {activeTab === SUB_TAB_CONFIG.LAST_TRADE.id && (
                 <View style={{ width: "100%" }}>
