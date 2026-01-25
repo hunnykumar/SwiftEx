@@ -820,79 +820,91 @@ const classic = ({ route }) => {
 
       <ScrollView style={{ marginBottom: hp(5), paddingHorizontal: wp(3.5) }}>
         <View style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: "column", paddingHorizontal: wp(3) }]}>
-          <Text style={[styles.headingText, { color: theme.headingTx }]}>Deposit USDC on Trade Wallet</Text>
-
           <View style={[styles.exportBottomCon, { backgroundColor: theme.cardBg }]}>
+           <View style={{width:wp(50)}}>
+            <View style={styles.fromCon}>
+             <Text style={[styles.networkHeading, { color: theme.headingTx }]}>From Network </Text>
+              <Icon name={"information-outline"} type={"materialCommunity"} color={theme.headingTx} size={17} />
+            </View>
+             <View style={styles.fromCon}>
+            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Native Balance : </Text>
+             {balanceLoading ? (
+                    <ActivityIndicator color={"green"} />
+                  ):<View style={{ width: wp(15)}}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <Text style={{ fontSize: 14, color: theme.headingTx }}>{networkBalance}</Text>
+              </ScrollView>
+            </View>}
+            </View>
+           </View>
+
             <TouchableOpacity
-              style={[styles.exportCon, { backgroundColor: theme.bg }]}
+              style={[styles.FromSelectionCon, { backgroundColor: theme.bg}]}
               onPress={() => setChooseModalVisible(true)}
+              disabled={balanceLoading}
             >
-              <View style={{ flexDirection: "row" }}>
+              <View style={{ flexDirection: "row",alignItems:"center" }}>
                 <Image
                   source={{ uri: chooseItemList.find(item => item.name === currentWalletType)?.url }}
-                  style={styles.logoImg_TOP_1}
+                  style={styles.fromConImg}
                 />
-                <View>
-                  <Text style={styles.networkSubHeading}>Network</Text>
                   <Text style={[styles.networkHeading, { color: theme.headingTx }]}>
                     {currentWalletType}
                   </Text>
-                </View>
               </View>
               <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30} />
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.exportCon, { backgroundColor: theme.bg }]}
-              onPress={() => { resetState(), setchooseModalVisible_choose(true) }}
-            >
-              <View style={{ flexDirection: "row" }}>
-                <Image
-                  source={{ uri: selectedToken?.logoURI || currentTokenList[0]?.logoURI }}
-                  style={styles.logoImg_TOP_1}
-                />
-                <View>
-                  <Text style={styles.networkSubHeading}>Assets</Text>
-                  <Text style={[styles.networkHeading, { color: theme.headingTx }]} numberOfLines={1} ellipsizeMode="tail">{(selectedToken?.name || currentTokenList[0]?.name)?.slice(0, 10)}</Text>
-                </View>
-              </View>
-              <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30} />
-            </TouchableOpacity>
           </View>
-          <View style={styles.swapSuggestCon}>
-            {!showExpandCon&&
-            <TouchableOpacity style={{flexDirection:"row",justifyContent:"center",alignItems:"center"}} onPress={()=>{setShowExpandCon(showExpandCon?false:true)}}>
-              <Text style={[styles.swapSuggestTex, { color: theme.headingTx}]}>
-              Tap to Swap or Buy Assets
-            </Text>
-              <Icon name={"menu-down"} type={"materialCommunity"} size={25} color={theme.headingTx}/>
-            </TouchableOpacity>
-            }
-            {showExpandCon&&<View style={[styles.card, { backgroundColor: "#4052D6", flexDirection: "column", marginVertical: 2 }]}>
-              <TouchableOpacity  style={styles.dismissCon} onPress={()=>{setShowExpandCon(false)}}>
-              <Icon name={"close-circle-outline"} type={"materialCommunity"} size={25} color={"#fff"}/>
+          <View  style={[styles.card, { backgroundColor: theme.bg, flexDirection: "column", paddingVertical: 0,paddingHorizontal:0 }]}>
+            <View style={[styles.card, { backgroundColor: theme.bg, flexDirection: "row", paddingVertical: 0, justifyContent: "space-between", borderColor: theme.inactiveTx, borderWidth: 0.4,marginTop:0,borderBottomLeftRadius:0,borderBottomRightRadius:0 }]}>
+              <TouchableOpacity
+                style={[styles.exportCon, { backgroundColor: theme.bg }]}
+                onPress={() => { resetState(), setchooseModalVisible_choose(true) }}
+                disabled={balanceLoading}
+              >
+                <View style={{ flexDirection: "row" }}>
+                  <Image
+                    source={{ uri: selectedToken?.logoURI || currentTokenList[0]?.logoURI }}
+                    style={styles.logoImg_TOP_1}
+                  />
+                  <View>
+                    <Text style={styles.networkSubHeading}>Assets</Text>
+                    <Text style={[styles.networkHeading, { color: theme.headingTx }]} numberOfLines={1} ellipsizeMode="tail">{(selectedToken?.symbol || currentTokenList[0]?.symbol)?.slice(0, 10)}</Text>
+                  </View>
+                </View>
+                <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30} />
               </TouchableOpacity>
-              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500" }}>
-                Swap your tokens now or purchase more to keep going.
-              </Text>
-              <View style={styles.InsufficientActionsCon}>
-                <TouchableOpacity style={styles.InsufficientActionsBtn} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId, activeAsset: selectedToken }) }}>
-                  <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Swap Now</Text>
+              <View style={[styles.InsufficientActionsCon, { backgroundColor: theme.cardBg }]}>
+                <TouchableOpacity style={[styles.InsufficientActionsBtn, { backgroundColor: "#4052D6" }]} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId, activeAsset: selectedToken }) }}>
+                  <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Swap</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.InsufficientActionsBtn, { backgroundColor: "#fff" }]} onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}>
-                  <Text style={{ color: "#4052D6", fontSize: 16, fontWeight: "600" }}>Buy Now</Text>
+                  <Text style={{ color: "#4052D6", fontSize: 16, fontWeight: "600" }}>Buy</Text>
                 </TouchableOpacity>
               </View>
-            </View>}
-          </View>
-        </View>
-
-        <View style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: "column"}]}>
-          <View style={[styles.rowBtnCon, { paddingVertical: hp(-0.5), backgroundColor: theme.cardBg }]}>
-            <Text style={[styles.subInputText, { color: theme.inactiveTx, marginTop: hp(0) }]}>Amount</Text>
-            <View style={styles.accountDetailsCon}>
-              <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Balance:</Text>
-              <View style={{ minWidth: wp(15),marginTop:4 }}>
+            </View>
+            <View style={[styles.modalOpen, { paddingVertical: hp(1), backgroundColor: theme.bg }]}>
+              <TextInput
+                maxLength={50}
+                placeholder={`Enter ${selectedToken?.symbol} amount`}
+                placeholderTextColor={"gray"}
+                keyboardType="decimal-pad"
+                value={amount}
+                style={[styles.textInputForCrossChain, { fontSize: 20, color: theme.headingTx }]}
+                onChangeText={(value) => handleInputChange(
+                  value,
+                  currentWalletType,
+                  selectedToken?.symbol,
+                  selectedToken
+                )}
+                returnKeyType="done"
+              />
+               <View style={styles.formBalanceCon}>
+              <Text style={[styles.subInputText, { color: theme.inactiveTx,fontSize:16 }]}>Available <TouchableOpacity onPress={async()=>{await fetchUSDCBalnce(selectedToken || currentTokenList[0],state?.wallet?.address)}} style={{marginTop:-2,marginRight:8}}>
+                <Icon name={"refresh"} type={"materialCommunity"} size={20} color={theme.headingTx} />
+              </TouchableOpacity></Text>
+              <View style={{ width: wp(17) }}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   {balanceLoading ? (
                     <ActivityIndicator color={"green"} />
@@ -903,92 +915,101 @@ const classic = ({ route }) => {
                   )}
                 </ScrollView>
               </View>
-              <TouchableOpacity onPress={async()=>{await fetchUSDCBalnce(selectedToken || currentTokenList[0],state?.wallet?.address)}}>
-                <Icon name={"refresh"} type={"materialCommunity"} size={25} color={theme.headingTx} />
-              </TouchableOpacity>
+            </View>
             </View>
           </View>
-
-          <View style={[styles.modalOpen, { paddingVertical: hp(1), backgroundColor: theme.bg }]}>
-            <TextInput
-              maxLength={50}
-              placeholder={`Enter ${selectedToken?.symbol} amount`}
-              placeholderTextColor={"gray"}
-              keyboardType="decimal-pad"
-              value={amount}
-              style={[styles.textInputForCrossChain, { fontSize: 22, color: theme.headingTx }]}
-              onChangeText={(value) => handleInputChange(
-                value,
-                currentWalletType,
-                selectedToken?.symbol,
-                selectedToken
-              )}
-              returnKeyType="done"
-            />
-          </View>
-
-          <View style={[styles.accountDetailsCon,{marginTop:hp(1)}]}>
+          <View style={[styles.accountDetailsCon,{marginTop:hp(0.3)}]}>
             <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Active Wallet :</Text>
-            <View style={{ width: "60%" }}>
+            <View style={{ width: "72%" }}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <Text style={{ fontSize: 14, color: theme.headingTx }}>{WALLETADDRESS}</Text>
               </ScrollView>
             </View>
           </View>
-           <View style={styles.accountDetailsCon}>
-            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Native Balance :</Text>
-             {balanceLoading ? (
-                    <ActivityIndicator color={"green"} />
-                  ):<View style={{ width: wp(30),flexDirection:"row" }}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <Text style={{ fontSize: 14, color: theme.headingTx }}>{networkBalance}</Text>
-              </ScrollView>
-              <Text style={{ fontSize: 14, color: theme.headingTx }}> {currentWalletType}</Text>
-            </View>}
-          </View>
-        </View>
-        
-        
-
-        <View style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: "column", borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }]}>
-          <View style={{ flexDirection: "row", paddingLeft: wp(3) }}>
-            <Icon name={"fire"} type={"materialCommunity"} size={25} color={"#4052D6"} />
-            <Text style={[styles.subInputText, { fontSize: 16, color: theme.headingTx }]}> Relayer Fee</Text>
-          </View>
-
-          <View style={{ flexDirection: "row", marginLeft: 5 }}>
-            <TouchableOpacity
-              style={[styles.feePayCon, { backgroundColor: payFeeType === "native" ? "#4052D6" : theme.bg }]}
-              onPress={() => setPayFeeType("native")}
-            >
-              <Icon name={"fire"} type={"materialCommunity"} size={25} color={payFeeType === "native" ? "#fff" : "#4052D6"} />
-              <Text style={[styles.feePayTx, { color: payFeeType === "native" ? "#fff" : theme.headingTx }]}>Native</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.feePayCon, { backgroundColor: payFeeType === "stable" ? "#4052D6" : theme.bg }]}
-              onPress={() => setPayFeeType("stable")}
-            >
-            <Image source={{ uri: selectedToken?.symbol==="USDC"?reciverAsset.imageUrl:feeAsset.imageUrl }} style={styles.feeImage}/>
-            <Text style={[styles.feePayTx, { color: payFeeType === "stable" ? "#fff" : theme.headingTx }]}>{selectedToken?.symbol==="USDC"?"USDC":"USDT"}</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: "column", borderTopLeftRadius: 0, borderTopRightRadius: 0, marginTop: -9, borderTopColor: theme.smallCardBorderColor, borderTopWidth: 1 }]}>
-          <View style={styles.accountDetailsCon}>
-            <View style={{ flexDirection: "row" }}>
-              <Image
-                source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }}
-                style={styles.logoImg_TOP_1}
-              />
-              <View>
-                <Text style={styles.networkSubHeading}>Receive</Text>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Text style={[styles.networkHeading, { color: theme.headingTx }]}>USDC</Text>
-                  <Text style={{ color: "gray", fontSize: 13 }}> (centre.io)</Text>
-                </View>
+        <View style={[styles.card, { backgroundColor: theme.cardBg }]}>
+          <View style={[styles.exportBottomCon, { backgroundColor: theme.cardBg }]}>
+           <View style={{width:wp(59)}}>
+            <View style={styles.fromCon}>
+             <Text style={[styles.networkHeading, { color: theme.headingTx }]}>To Network </Text>
+              <Icon name={"information-outline"} type={"materialCommunity"} color={theme.headingTx} size={17} />
+            </View>
+           </View>
+
+            <TouchableOpacity
+              style={[styles.FromSelectionCon, { backgroundColor: theme.bg,padding:6, width: wp(25)}]}
+            >
+              <View style={{ flexDirection: "row",alignItems:"center" }}>
+                <Image
+                  source={{ uri: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq" }}
+                  style={styles.fromConImg}
+                />
+                  <Text style={[styles.networkHeading, { color: theme.headingTx }]}>
+                    Stellar
+                  </Text>
               </View>
+            </TouchableOpacity>
+          </View>
+        <View style={[{ backgroundColor: theme.cardBg, flexDirection: "row",marginTop:hp(2) }]}>
+
+          <View style={[styles.receiveAssetCon, { backgroundColor: theme.bg }]}>
+            <Image
+              source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }}
+              style={styles.receiveAssetImg}
+            />
+            <View>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={[styles.networkHeading, { color: theme.headingTx }]}>USDC</Text>
+              </View>
+              <Text style={{ color: "gray", fontSize: 13 }}>(centre.io)</Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: "column" }}>
+            <View style={{ flexDirection: "row",marginTop:-6 }}>
+              <Text style={[styles.subInputText, { fontSize: 15, color: theme.headingTx }]}>Relayer Fee </Text>
+              <Icon name={"gas-station"} type={"materialCommunity"} size={18} color={theme.headingTx} />
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <TouchableOpacity
+                style={[styles.feePayCon, { backgroundColor: payFeeType === "native" ? "#4052D6" : theme.bg,borderTopRightRadius:0,borderBottomRightRadius:0}]}
+                onPress={() => setPayFeeType("native")}
+              >
+                <Icon name={"fire"} type={"materialCommunity"} size={25} color={payFeeType === "native" ? "#fff" : "#4052D6"} />
+                <Text style={[styles.feePayTx, { color: payFeeType === "native" ? "#fff" : theme.headingTx }]}>Native</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.feePayCon, { backgroundColor: payFeeType === "stable" ? "#4052D6" : theme.bg,borderTopLeftRadius:0,borderBottomLeftRadius:0}]}
+                onPress={() => setPayFeeType("stable")}
+              >
+                <Image source={{ uri: selectedToken?.symbol === "USDC" ? reciverAsset.imageUrl : feeAsset.imageUrl }} style={styles.feeImage} />
+                <Text style={[styles.feePayTx, { color: payFeeType === "stable" ? "#fff" : theme.headingTx }]}>{selectedToken?.symbol === "USDC" ? "USDC" : "USDT"}</Text>
+              </TouchableOpacity>
+            </View>
+            </View>
+          </View>
+          
+          <View style={[styles.receiveAmountCon, { backgroundColor: theme.smallCardBg }]}>
+            <TextInput
+              maxLength={100}
+              placeholder={"0.00"}
+              placeholderTextColor={"gray"}
+              value={resQuotes?Math.max(
+                    0,
+                    parseFloat(resQuotes.minimumAmountOut || "0") -
+                    parseFloat(
+                      payFeeType === "native"
+                        ? resQuotes?.fee?.native?.amount || "0"
+                        : resQuotes?.fee?.stablecoin?.amount || "0"
+                    )
+                  ).toFixed(6):"0.00"}
+              style={[styles.textInputForCrossChain, { fontSize: 20, color: theme.inactiveTx }]}
+              editable={false}
+            />
+            <View style={[styles.accountDetailsCon,{marginTop:hp(0.3)}]}>
+            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>≈ {feeData?.formattedUSD || `$${Number(feeData?.usdValue || 0).toFixed(2)}`}</Text>
+            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Min {resQuotes?resQuotes.minimumAmountOut:"0.00"} USDC</Text>
             </View>
           </View>
         </View>
@@ -1088,12 +1109,6 @@ const classic = ({ route }) => {
                 </View>
               </View>
 
-              <View style={styles.quoteRow}>
-                <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Network Fee (USD)</Text>
-                <Text style={[styles.quoteValue, { color: theme.headingTx, textAlign: "right" }]}>
-                  {feeData?.formattedUSD || `$${Number(feeData?.usdValue || 0).toFixed(2)}`}
-                </Text>
-              </View>
 
               <View style={styles.quoteRow}>
                 <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Estimated time</Text>
@@ -1273,13 +1288,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 10,
+    paddingVertical: 10,
     borderRadius: 8,
-    width: wp(43)
+    width: wp(34)
   },
   logoImg_TOP_1: {
-    width: 35,
-    height: 35,
+    width: 33,
+    height: 33,
     borderRadius: 20,
     marginRight: 3,
   },
@@ -1305,10 +1320,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   maxCon: {
-    backgroundColor: '#4052D6',
-    paddingHorizontal: 12,
+    paddingHorizontal: 19,
     paddingVertical: 4,
     borderRadius: 6,
+    alignItems:"center",
+    justifyContent:"center"
   },
   maxBtn: {
     color: 'white',
@@ -1317,10 +1333,12 @@ const styles = StyleSheet.create({
   modalOpen: {
     borderRadius: 8,
     paddingHorizontal: 8,
+    flexDirection:"row"
   },
   textInputForCrossChain: {
-    width: '100%',
-    paddingVertical:hp(0.5)
+    width: wp(61),
+    paddingVertical:hp(0.5),
+    marginLeft:wp(1)
   },
   accountDetailsCon: {
     flexDirection: 'row',
@@ -1331,10 +1349,10 @@ const styles = StyleSheet.create({
   feePayCon: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    paddingVertical:hp(0.9),
+    paddingHorizontal: 10,
     borderRadius: 8,
-    marginRight: 8,
-    marginTop: 8,
+    marginTop: 2,
   },
   feePayTx: {
     marginLeft: 8,
@@ -1518,22 +1536,78 @@ const styles = StyleSheet.create({
   InsufficientActionsCon:{
     flexDirection:"row",
     alignItems:"center",
-    justifyContent:"space-around",
-    marginTop:hp(1.5)
+    justifyContent:"space-evenly",
+    width:wp(48.6),
+    borderTopRightRadius:10,
+    borderBottomRightRadius:10,
+    paddingVertical:10,
+    borderLeftWidth:0.5,
+    borderLeftColor:"gray"
   },
   InsufficientActionsBtn:{
-    borderColor:"#fff",
-    borderWidth:1,
     borderRadius:8,
-    paddingHorizontal:wp(9),
-    paddingVertical:hp(1.1)
+    width:wp(20),
+    paddingVertical:hp(1.1),
+    alignItems:"center"
   },
   dismissCon:{
     position:"absolute",
     alignSelf:"flex-end",
     right:wp(1.5),
     top:hp(0.6)
-  }
+  },
+  fromCon: {
+    width: wp(30),
+    flexDirection: "row",
+    marginLeft:wp(1)
+  },
+  fromConImg: {
+    width: 25,
+    height: 25,
+    borderRadius: 20,
+    marginRight:hp(0.5),
+    marginLeft:hp(0.5),    
+  },
+  FromSelectionCon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 8,
+    width: wp(35),
+    padding:5,
+    marginTop:-2,
+    borderColor:"gray",
+    borderWidth:0.6
+  },
+  formBalanceCon: {
+    justifyContent: 'space-between',
+    alignContent: 'center',
+    paddingVertical: 4,
+    width:wp(39),
+    alignSelf:"flex-end",
+    marginBottom:hp(1)
+  },
+  receiveAssetCon:{
+    flexDirection: "row",
+    width:wp(36),
+    alignItems:"center",
+    justifyContent:"center",
+    borderRadius:13,
+    marginRight:wp(3),
+    marginVertical:-3
+  },
+  receiveAssetImg:{
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight:wp(2)
+  },
+  receiveAmountCon: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: hp(1),
+    marginTop:hp(1.3)
+  },
 });
 
 export default classic
