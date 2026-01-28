@@ -73,7 +73,7 @@ const KycComponent = ({ route }) => {
       setbtnLoading(false)
       setVisibleAlert(false);
       setVisibleAlertLoading(false)
-      setamountSend(0.00);
+      setamountSend(route?.params?.cryptoRequest?"1374":0.00);
       setoperationType("BUY");
       setoperationError(null);
       setqoutesLoading(false);
@@ -132,18 +132,7 @@ const KycComponent = ({ route }) => {
   const handleUser = async () => {
       try {
         setbtnLoading(true)
-        const token= await AsyncStorage.getItem("UserAuthID");
-        if(!token){
-          setinfoHeading("Oops! You're in Guest Mode");
-          setinfoSubHeading("Looks like you're in Guest Mode. Log in to unlock this feature and enjoy the full experience!");
-          setinfoBtnHeading("Login");
-          setinfoBtnAction(true)
-          setVisibleAlert(true)
-          setbtnLoading(false);
-        }
-        else{
-          await checkUserKyc();
-        }
+        await checkUserKyc();
       } catch (error) {
         console.log("error--",error)
        CustomInfoProvider.show("info", "Somthing went wrong");
@@ -253,12 +242,11 @@ const KycComponent = ({ route }) => {
         "memo": "test1"
       }
 
-      const result = await authApi.post(REACT_APP_HOST + "/v1/alchemy/create-buy-order", payload);
+      const result = await apiHelper.post(REACT_APP_HOST + "/v1/alchemy/create-buy-order", payload);
       console.log(result,"payload",payload)
-      const respo = JSON.parse(result.data.success.data)
-      if (result.success&&respo.data.payUrl) {
+      if (result.success&&result.data.success) {
         setbtnLoading(false);
-        navigation.navigate("TxDetails", { userKycUrl: respo.data.payUrl })
+        navigation.navigate("TxDetails", { userKycUrl: result.data.success })
       } else {
         setbtnLoading(false);
        CustomInfoProvider.show("Oops!", "Somthing went wrong.");
@@ -279,7 +267,7 @@ const KycComponent = ({ route }) => {
         "network": selectedCrypto?.network,
         "country": selectedfiat?.country
       }
-      const result = await authApi.post(REACT_APP_HOST + "/v1/alchemy/create-sell-order", payload);
+      const result = await apiHelper.post(REACT_APP_HOST + "/v1/alchemy/create-sell-order", payload);
       console.log("res--",result.data.success)
       if(result.success&&result.data.success)
       {
@@ -299,8 +287,19 @@ const KycComponent = ({ route }) => {
   }
 
   useEffect(()=>{
-    setamountSend(0.00);
-    setSelectedCrypto({
+    setamountSend(route?.params?.cryptoRequest?"1374":0.00);
+    setSelectedCrypto(route?.params?.cryptoRequest?{
+        "crypto": "XLM",
+        "network": "XLM",
+        "buyEnable": 1,
+        "sellEnable": 0,
+        "minPurchaseAmount": 15.00,
+        "maxPurchaseAmount": 2000.00,
+        "address": null,
+        "icon": "https://static.alchemypay.org/alchemypay/crypto-images/XLM.png",
+        "minSellAmount": null,
+        "maxSellAmount": null
+    }:{
       "crypto": "USDC",
         "network": "XLM",
         "buyEnable": 1,
@@ -329,10 +328,35 @@ const KycComponent = ({ route }) => {
     setoperationError(null);
     setqoutesLoading(false);
     setQoutesRes(null);
+    setamountSend(route?.params?.cryptoRequest?"1374":0.00);
+    if (route?.params?.cryptoRequest) {
+      waitAndQoutesFetch("1374", operationType, {
+        "crypto": "XLM",
+        "network": "XLM",
+        "buyEnable": 1,
+        "sellEnable": 0,
+        "minPurchaseAmount": 15.00,
+        "maxPurchaseAmount": 2000.00,
+        "address": null,
+        "icon": "https://static.alchemypay.org/alchemypay/crypto-images/XLM.png",
+        "minSellAmount": null,
+        "maxSellAmount": null
+      }, {
+        "country": "IN",
+        "currency": "INR",
+        "payWayCode": "90001",
+        "payWayName": "UPI",
+        "fixedFee": 0.000000,
+        "feeRate": 0.055000,
+        "payMin": 1000.000000,
+        "payMax": 50000.000000,
+        "countryName": "India"
+      })
+    }
   },[operationType])
 
   useEffect(()=>{
-    setamountSend(0.00);
+    setamountSend(route?.params?.cryptoRequest?"1374":0.00);
     setbtnLoading(false);
     setVisibleAlert(false);
     setVisibleAlertLoading(false);

@@ -17,6 +17,7 @@ import AllbridgeTxTrack from '../components/AllbridgeTxTrack';
 import LocalTxManager from '../../../../../utilities/LocalTxManager';
 import { useSelector } from 'react-redux';
 import { AllbridgeCoreSdk, nodeRpcUrlsDefault } from '@allbridge/bridge-core-sdk';
+import CustomInfoProvider from '../components/CustomInfoProvider';
 
 const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
@@ -284,6 +285,7 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
         ]}
         disabled={operation.type === 'sellCry' || operation.type === 'buyCry'}
         onPress={() => {
+          item.success === false || item.success === "failed" || item.success === "Failed"?CustomInfoProvider.show("error","Opps!","Transaction failed try again."):
           txViewrManager(item?.operations?.records[0]?.transaction_hash || item?.operations?.records[0]?.hash,operation.type,isReceived);
         }}
       >
@@ -391,6 +393,8 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
                     ? "Processing"
                     : item.success === "process"
                     ? "Process"
+                    : ["completed", "Completed"].includes(item.success)?
+                      "Success"
                     : item.success === false || ["failed", "Failed", "FAILED"].includes(item.success)
                     ? "Failed"
                     : typeof item.success === "string"

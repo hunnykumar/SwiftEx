@@ -36,8 +36,8 @@ const Settings = (props) => {
         const Checked = await AsyncStorageLib.getItem("APP_THEME");
         setCheckBox(Checked === null ? false : Checked === "false" ? false : true);
         await AsyncStorageLib.setItem("APP_THEME", JSON.stringify(state.THEME.THEME));
-        setuserProfileLoading(true);
-        checkUserLoginStatus();
+        setuserProfileLoading(false);
+        // checkUserLoginStatus();
       } catch (error) {
         console.log("====****.", error)
       }
@@ -52,7 +52,7 @@ const Settings = (props) => {
         setuserProfile(null);
         setuserProfileLoading(false);
       } else {
-        await getUserProfile()
+        // await getUserProfile()
       }
     } catch (error) {
       console.log("error-while-checkUserLoginStatus", error)
@@ -77,7 +77,7 @@ const Settings = (props) => {
     try {
         await AsyncStorageLib.removeItem("UserAuthID");
         setuserProfileLoading(true);
-        await checkUserLoginStatus();
+        // await checkUserLoginStatus();
         CustomInfoProvider.show("success", "Logged out successfully. Guest Mode enabled.");
     } catch (error) {
       console.log("(--)---", error)
@@ -99,7 +99,7 @@ const Settings = (props) => {
   return (
     <View style={{ backgroundColor: theme.bg, height: hp(100) }}>
       <Wallet_screen_header elementestID={"setting_back"} title="Settings" onLeftIconPress={() => navi.goBack()} />
-      {userProfileLoading ? <TransactionSkeleton /> :
+      {/* {userProfileLoading ? <TransactionSkeleton /> :
         <View style={[styles.profileCard, { backgroundColor: theme.cardBg }]}>
           <View style={[styles.profileIcon, { backgroundColor: theme.smallCardBg }]}>
             <Text style={[styles.profileIconTxt, { color: theme.headingTx }]}>{userProfile?.email?.charAt(0)?.toLocaleUpperCase() || "G"}</Text>
@@ -112,7 +112,7 @@ const Settings = (props) => {
             <TouchableOpacity onPress={() => { props.navigation.navigate("exchangeLogin",{diractPath:"Settings"}) }} style={styles.loginBtn}>
               <Text style={styles.loginBtnTxt}>Login</Text>
             </TouchableOpacity> : <Icon type={"material"} name="verified" size={25} color={"#4052D6"} style={{ alignSelf: "center" }} />}
-        </View>}
+        </View>} */}
 
       <View style={[styles.multicardContainer, { backgroundColor: theme.cardBg }]}>
         <TouchableOpacity
@@ -214,14 +214,14 @@ const Settings = (props) => {
 
       </View>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={[styles.singleCard, { backgroundColor: theme.cardBg }]}
         onPress={() => { logout() }}>
         <View style={styles.iconCon}>
           <Icon type={"material"} name="logout" size={31} color={"#4052D6"} />
         </View>
         <Text style={[styles.text, { color: theme.headingTx }]}>Log Out</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 };

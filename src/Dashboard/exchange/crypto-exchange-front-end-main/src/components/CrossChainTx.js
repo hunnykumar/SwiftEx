@@ -822,7 +822,7 @@ const CrossChainTx = ({ route="ETH" }) => {
               <Icon name={"information-outline"} type={"materialCommunity"} color={theme.headingTx} size={17} />
             </View>
              <View style={styles.fromCon}>
-            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Native Balance : </Text>
+            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>{currentWalletType==="BNB"?"BNB":"ETH"} Balance : </Text>
              {balanceLoading ? (
                     <ActivityIndicator color={"green"} />
                   ):<View style={{ width: wp(15)}}>
@@ -970,7 +970,10 @@ const CrossChainTx = ({ route="ETH" }) => {
                 style={[styles.feePayCon, { backgroundColor: payFeeType === "native" ? "#4052D6" : theme.bg,borderTopRightRadius:0,borderBottomRightRadius:0}]}
                 onPress={() => setPayFeeType("native")}
               >
-                <Icon name={"fire"} type={"materialCommunity"} size={25} color={payFeeType === "native" ? "#fff" : "#4052D6"} />
+                <Image
+                  source={{ uri: chooseItemList.find(item => item.name === currentWalletType)?.url }}
+                  style={[styles.fromConImg,{marginRight:wp(0),marginLeft:hp(0)}]}
+                />
                 <Text style={[styles.feePayTx, { color: payFeeType === "native" ? "#fff" : theme.headingTx }]}>Native</Text>
               </TouchableOpacity>
 

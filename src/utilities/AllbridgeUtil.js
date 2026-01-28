@@ -1,4 +1,4 @@
-import { RPC, STELLAR_URL } from '../Dashboard/constants';
+import { RPC } from '../Dashboard/constants';
 import {
   AllbridgeCoreSdk,
   Messenger,
@@ -7,8 +7,9 @@ import {
   nodeRpcUrlsDefault,
   mainnet,
 } from "@allbridge/bridge-core-sdk";
-import * as StellarSdk from '@stellar/stellar-sdk';
+import {Keypair, rpc,TransactionBuilder} from '@stellar/stellar-sdk';
 import LocalTxManager from './LocalTxManager';
+import { SRBRPC } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/ExchangeConstants';
 
 export async function getChainTokenData(sourceChain, destChain, sourceToken, destToken, amount) {
   console.log("Allbridge-Info--", sourceChain, destChain, sourceToken, destToken, amount);
@@ -91,7 +92,7 @@ export async function swapPepare(
 
     const sdk = new AllbridgeCoreSdk({
       ...nodeRpcUrlsDefault,
-      SRB: "https://stellar-soroban-public.nodies.app",
+      SRB: SRBRPC,
       BNB: RPC.BSCRPC,
       ETH: RPC.ETHRPC
     });
@@ -100,69 +101,24 @@ export async function swapPepare(
       sdk,
       sendParams,
       stellarWallet,
-      maxAttempts = 2
     ) => {
-      const keypair = StellarSdk.Keypair.fromSecret(stellarWallet.secretKey);
-
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          console.log(` Attempt ${attempt}/${maxAttempts}: Building transaction...`);
-
-          const xdrTx = await sdk.bridge.rawTxBuilder.send(sendParams);
-          let tx = StellarSdk.TransactionBuilder.fromXDR(xdrTx, mainnet.sorobanNetworkPassphrase);
-          tx.sign(keypair);
-          let signedTx = tx.toXDR();
-
-          const restoreXdrTx = await sdk.utils.srb.simulateAndCheckRestoreTxRequiredSoroban(
-            signedTx,
-            stellarWallet.publicKey
-          );
-
-          if (restoreXdrTx) {
-            console.log("Restore transaction required...");
-            const restoreTx = StellarSdk.TransactionBuilder.fromXDR(
-              restoreXdrTx,
-              mainnet.sorobanNetworkPassphrase
-            );
-            restoreTx.sign(keypair);
-            const signedRestoreXdrTx = restoreTx.toXDR();
-
-            const sentRestore = await sdk.utils.srb.sendTransactionSoroban(signedRestoreXdrTx);
-            const confirmRestore = await sdk.utils.srb.confirmTx(sentRestore.hash);
-
-            if (confirmRestore.status !== "SUCCESS") {
-              throw new Error(`Restore failed: ${confirmRestore.status}`);
-            }
-
-            console.log("Restore transaction successful");
-
-            const xdrTx2 = await sdk.bridge.rawTxBuilder.send(sendParams);
-            tx = StellarSdk.TransactionBuilder.fromXDR(xdrTx2, mainnet.sorobanNetworkPassphrase);
-            tx.sign(keypair);
-            signedTx = tx.toXDR();
-          }
-
-          const sent = await sdk.utils.srb.sendTransactionSoroban(signedTx);
-          console.log(`Attempt ${attempt} response:`, sent.status);
-
-          if (sent.status === "ERROR" && attempt < maxAttempts) {
-            console.log(`ERROR received. Retrying in 1 second...`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            continue;
-          }
-          return sent;
-
-        } catch (error) {
-          console.error(`Attempt ${attempt} error:`, error.message);
-
-          if (attempt < maxAttempts) {
-            console.log(`Retrying after error...`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            continue;
-          }
-
-          throw error;
-        }
+      try {
+        const keypair = Keypair.fromSecret(stellarWallet.secretKey);
+        const xdrTx = await sdk.bridge.rawTxBuilder.send(sendParams);
+        const sorobanServer = new rpc.Server(SRBRPC);
+        let transactionBuilderTx = TransactionBuilder.fromXDR(xdrTx, mainnet.sorobanNetworkPassphrase);
+        const simulateTX = await sorobanServer.simulateTransaction(transactionBuilderTx);
+        const resourceFee = simulateTX.minResourceFee;
+        const strFee = Math.floor(Number(resourceFee) * 1.5).toString();
+        const assembleTx = rpc.assembleTransaction(transactionBuilderTx, simulateTX);
+        assembleTx.fee = strFee;
+        const finalTx = assembleTx.build();
+        finalTx.sign(keypair);
+        const result = await sorobanServer.sendTransaction(finalTx);
+        return result;
+      } catch (error) {
+        console.log(`error:`, error.message);
+        throw error;
       }
     };
 

@@ -18,6 +18,11 @@ import { STELLAR_URL } from '../../../../constants';
 import apiHelper from '../apiHelper';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import Icon from '../../../../../icon';
+import TokenQrCode from '../../../../Modals/TokensQrCode';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 
 const { height } = Dimensions.get('window');
 
@@ -34,6 +39,7 @@ const WalletActivationComponent = ({
   
   const [Wallet_activation,setWallet_activation]=useState(false);
   const [visibleBuyUi,setVisibleBuyUi]=useState(false);
+  const [qrVisible, setQrVisible] = useState(false);
   const isDarkMode = appTheme;
   
   // Use refs to avoid re-creating animation instances
@@ -104,7 +110,8 @@ const WalletActivationComponent = ({
     
     if (isVisible) {
       // Make sure component is rendered first
-      setVisibleBuyUi(false);
+      setQrVisible(false);
+      setVisibleBuyUi(true);
       setShowSheet(true);
       
       // Use requestAnimationFrame to avoid layout thrashing
@@ -216,11 +223,11 @@ const WalletActivationComponent = ({
 
   const ActivationHandle=async()=>{
     setWallet_activation(true)
-    await active_account()
+    // await active_account()
   }
 
   const HandleTokensBuy=()=>{
-    navigation.navigate("payout",{cryptoRequest:"XLM"});
+    navigation.navigate("KycComponent",{cryptoRequest:"XLM"});
   }
 
   return (
@@ -246,21 +253,29 @@ const WalletActivationComponent = ({
           </View>
           
           <Text style={[styles.title, { color: theme.text }]}>
-          {!visibleBuyUi?"Activate Trade Wallet":"Buy Stellar Lumens Easily"}
+          {!visibleBuyUi?"Activate Trade Wallet":"Buy Stellar XLM Easily"}
           </Text>
           
           <Text style={[styles.description, { color: theme.secondaryText }]}>
           {!visibleBuyUi?"Your Stellar wallet isn’t activated yet. Activate it now to automatically trust USDC and start using all features seamlessly!":"Start trading with near-zero fees and lightning-fast transactions, unlocking seamless access to Stellar's network and maximum efficiency for all your crypto activities."}
           </Text>
           
-          <TouchableOpacity 
-            style={[styles.activateButton,{backgroundColor:Wallet_activation?"gray":"#4F8EF7"}]}
-            onPress={()=>{!visibleBuyUi?ActivationHandle():HandleTokensBuy()}}
-            disabled={Wallet_activation}
-          >
-            {Wallet_activation?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={styles.buttonText}>{!visibleBuyUi?"Claim 5 XLM Now!":"Buy XLM"}</Text>}
-          </TouchableOpacity>
-          
+          <View style={styles.userActionBtnCon}>
+            <TouchableOpacity
+              style={[styles.activateButton, { backgroundColor: Wallet_activation ? "gray" : "#5B6FED" }]}
+              onPress={() => { HandleTokensBuy() }}
+              disabled={Wallet_activation}
+            >
+              {Wallet_activation ? <ActivityIndicator color={"green"} size={"small"} /> : <Text style={styles.buttonText}>{!visibleBuyUi ? "Claim 5 XLM Now!" : "Buy XLM"}</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.activateButton, { backgroundColor: Wallet_activation ? "gray" : theme.handleColor }]}
+              onPress={() => { setQrVisible(true) }}
+              disabled={Wallet_activation}
+            >
+              {Wallet_activation ? <ActivityIndicator color={"green"} size={"small"} /> : <Text style={[styles.buttonText,{color:theme.text}]}>I'll do it myself.</Text>}
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity 
             style={styles.cancelButton}
             onPress={handleClose}
@@ -271,6 +286,13 @@ const WalletActivationComponent = ({
             </Text>
           </TouchableOpacity>
         </View>
+        <TokenQrCode
+          modalVisible={qrVisible}
+          setModalVisible={()=>{setQrVisible(false),handleClose()}}
+          iconType={"XLM"}
+          qrvalue={state?.STELLAR_PUBLICK_KEY}
+          isDark={isDarkMode}
+        />
       </Animated.View>
     </View>
   );
@@ -280,6 +302,8 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'flex-end',
     zIndex: 1000,
+    paddingBottom:hp(2),
+    height:hp(98)
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -335,17 +359,17 @@ const styles = StyleSheet.create({
   },
   activateButton: {
     backgroundColor: '#4F8EF7',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingVertical: 14,
     paddingHorizontal: 24,
-    width: '100%',
+    width: '48%',
     alignItems: 'center',
     marginBottom: 12,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   cancelButton: {
     padding: 10,
@@ -353,6 +377,12 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: 14,
   },
+  userActionBtnCon: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "98%",
+    alignItems: "center"
+  }
 });
 
 export default WalletActivationComponent;

@@ -320,6 +320,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(5),
     paddingTop: hp(2),
     gap: wp(3),
+    paddingBottom:hp(3)
   },
   actionButton: {
     flex: 1,

@@ -11,7 +11,21 @@ const LocalTxManager = {
         timestamp: data?.timestamp ?? Date.now(),
       };
 
-      const updatedData = [...existingData, dataWithTimestamp];
+      let updatedData = [dataWithTimestamp, ...existingData];
+      const BLOCKED_STATUS = ['pending', 'processing', 'process'];
+      if (updatedData.length > 5) {
+        const removableTx = updatedData.filter(
+          tx => !BLOCKED_STATUS.includes(String(tx.status).toLowerCase())
+        );
+        while (updatedData.length > 5 && removableTx.length > 0) {
+          const txToRemove = removableTx.pop();
+          const index = updatedData.indexOf(txToRemove);
+          if (index !== -1) {
+            updatedData.splice(index, 1);
+          }
+        }
+      }
+
       await AsyncStorage.setItem(key, JSON.stringify(updatedData));
       console.log('LocalTxManager save true.');
       return {
