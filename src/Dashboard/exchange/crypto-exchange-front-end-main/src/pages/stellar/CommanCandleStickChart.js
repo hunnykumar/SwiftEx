@@ -11,8 +11,7 @@ const CandleStickChart = ({ visible, activeTheme, pair }) => {
   const styles = StyleSheet.create({
     container: {
       padding: 10,
-      backgroundColor: theme.bg,
-      minHeight: hp(100),
+      backgroundColor: theme.bg
     },
     header: {
       flexDirection: 'row',

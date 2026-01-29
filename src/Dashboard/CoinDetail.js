@@ -244,7 +244,7 @@ export const CoinDetails = (props) => {
                     theme={{
                       stroke: { color: lineColor, width: 2 },
                       scatter: {
-                        selected: { width: 0, height: 0, color: "transparent" },
+                        selected: { width: 1, height: hp(99),rx: 4, color: lineColor },
                       },
                     }}
                     smoothing="bezier"

@@ -157,7 +157,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
         <ActivityIndicator color="green" />
       ) : (
         <View style={[styles.headerContainer, { backgroundColor: themeColors.header }]}>
-          <BasicHeader title={"Home"} iconName={"settings"} iconProvder={"feather"}/>
+          {/* <BasicHeader title={"Home"} iconName={"settings"} iconProvder={"feather"}/> */}
           <View style={styles.walletCon}>
             <View style={styles.walletTopRow}>
               <TouchableOpacity
@@ -184,10 +184,10 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                   styles.bellCon,
                   { backgroundColor: isDark ? "#18181C" : "#F4F4F8",marginRight:10 },
                 ]}
-                onPress={() => {CustomInfoProvider.show("Info", "Wallet-Connect will be added soon.")}}
+                onPress={() => {navigation.navigate("Transactions")}}
               >
                 <Icon
-                  name="qr-code-scanner"
+                  name="history"
                   type="material"
                   size={28}
                   color={isDark ? "gray" : "#272729"}
@@ -199,12 +199,12 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                   styles.bellCon,
                   { backgroundColor: isDark ? "#18181C" : "#F4F4F8" },
                 ]}
-                onPress={() => {navigation.navigate("Transactions")}}
+                onPress={() => {navigation.navigate("Settings")}}
               >
                 <Icon
-                  name="history"
-                  type="material"
-                  size={28}
+                  name="settings"
+                  type="feather"
+                  size={26}
                   color={isDark ? "gray" : "#272729"}
                 />
               </TouchableOpacity>
@@ -262,7 +262,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                   <Icon
                     name={item.icon}
                     type={item.type}
-                    size={35}
+                    size={30}
                     color={themeColors.icon}
                   />
                 </View>
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   featureCon: {
     paddingHorizontal: 15,
     flexDirection: "row",
-    marginTop: "8%",
+    marginTop: "6%",
     justifyContent: "space-between",
     alignItems: "center",
     height: 90,
@@ -395,8 +395,8 @@ const styles = StyleSheet.create({
   featureIconWrapper: {
     alignItems: "center",
     justifyContent: "center",
-    height: "90%",
-    width: "95%",
+    height: "80%",
+    width: "93%",
     borderRadius: 19,
   },
   featureText: {

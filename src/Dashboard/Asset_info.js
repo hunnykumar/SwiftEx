@@ -461,8 +461,8 @@ const Asset_info = ({ route }) => {
                       stroke: { color: lineColor, width: 2 },
                       scatter: {
                         selected: {
-                          width: 8,
-                          height: 8,
+                          width: 1,
+                          height: hp(99),
                           rx: 4,
                           color: lineColor,
                         },

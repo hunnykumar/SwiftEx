@@ -423,7 +423,7 @@ const KycComponent = ({ route }) => {
           keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
         >
           <Exchange_screen_header 
-            title={route?.params?.tabName??"Buy-Sell"} 
+            title={"On/Off Ramp"} 
             onLeftIconPress={() => navigation.goBack()} 
             onRightIconPress={() => console.log('Pressed')} 
           />
@@ -620,6 +620,7 @@ const KycComponent = ({ route }) => {
             >
               {btnLoading?<ActivityIndicator size={"small"} color={"#fff"}/>:<Text style={styles.buyBtnText}>{operationType==="BUY"?"Buy Crypto":"Sell Crypto"}</Text>}
             </TouchableOpacity>
+            <Text style={{fontSize:16,color:theme.inactiveTx,alignSelf:"center",marginTop:hp(2)}}>Powered by Alchemy Pay</Text>
           </ScrollView>
             <Modal
               animationType="slide"

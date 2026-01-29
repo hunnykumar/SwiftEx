@@ -694,7 +694,7 @@ export async function GetWalletTokens(evmAddress = null, stellarAddress = null, 
         totalValueUSD += result.value.totalValueUSD;
       }
     });
-    allTokens.sort((a, b) => b.balance - a.balance);
+    allTokens.sort((a, b) => b.balanceUSD - a.balanceUSD);
     return {
       tokens: allTokens,
       totalValueUSD: parseNumber(totalValueUSD, 2)

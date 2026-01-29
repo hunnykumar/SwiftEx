@@ -21,6 +21,7 @@ import { Wallet_screen_header } from "./src/Dashboard/reusables/ExchangeHeader";
 import CustomInfoProvider from "./src/Dashboard/exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 import authApi from "./src/Dashboard/exchange/crypto-exchange-front-end-main/src/authApi";
 import { colors } from "./src/Screens/ThemeColorsConfig";
+import Clipboard from "@react-native-clipboard/clipboard";
 const Settings = (props) => {
   const navi = useNavigation();
   const focused = useIsFocused();
@@ -185,7 +186,7 @@ const Settings = (props) => {
             <Icon type={"ionicon"} name="git-compare" size={31} color={"#4052D6"} />
 
           </View>
-          <Text style={[styles.text, { color: theme.headingTx }]}>SDEX</Text>
+          <Text style={[styles.text, { color: theme.headingTx }]}>S-DEX</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -202,14 +203,15 @@ const Settings = (props) => {
 
         <TouchableOpacity
           style={[styles.card, { borderBottomWidth: 0, borderBottomColor: theme.inactiveTx }]}
-          onPress={() => {
-            CustomInfoProvider.show("Info", "Help Center will be added soon.");
-          }}
+          onPress={()=>{Clipboard.setString("info@swiftexwallet.com")}}
         >
           <View style={styles.iconCon}>
             <Icon type={"feather"} name="help-circle" size={31} color={"#4052D6"} />
           </View>
-          <Text style={[styles.text, { color: theme.headingTx }]}>Help Center</Text>
+          <View>
+            <Text style={[styles.text, { color: theme.headingTx,marginTop:hp(2) }]}>Help Center</Text>
+            <Text style={[styles.supportTxt, { color: theme.headingTx}]}>For any assistance, please feel free to email us at <Text style={[styles.supportTxt, { color: theme.headingTx,fontWeight:"900"}]}>info@swiftexwallet.com</Text></Text>
+          </View>
         </TouchableOpacity>
 
       </View>
@@ -352,4 +354,11 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
   },
+  supportTxt:{
+    marginTop:hp(0.2),
+    maxWidth:wp(70),
+    fontSize: 15,
+    fontWeight: "500",
+    marginHorizontal: wp(1.5),
+  }
 });

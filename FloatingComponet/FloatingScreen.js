@@ -3,15 +3,12 @@ import {
     View,
     StyleSheet,
     BackHandler,
-    Alert,
     TouchableOpacity,
     Text,
     PanResponder,
     ActivityIndicator,
     Platform,
     Animated,
-    KeyboardAvoidingView,
-    Keyboard,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import {
@@ -24,8 +21,7 @@ import CustomInfoProvider from '../src/Dashboard/exchange/crypto-exchange-front-
 const FloatingScreen = ({ uri, visible, onClose }) => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [showControls, setShowControls] = useState(false);
-    const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const [showControls, setShowControls] = useState(true);
     const pos = useRef(new Animated.ValueXY({ x: 50, y: 50 })).current;
     const backHandler = useRef(null);
     const webViewRef = useRef(null);
@@ -50,44 +46,6 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
         };
     }, [visible, isMinimized]);
 
-    // Keyboard event listeners
-    useEffect(() => {
-        const keyboardWillShow = Keyboard.addListener(
-            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-            (e) => {
-                setKeyboardHeight(e.endCoordinates.height);
-                // Inject JavaScript to scroll to focused element
-                if (webViewRef.current && !isMinimized) {
-                    webViewRef.current.injectJavaScript(`
-                        setTimeout(() => {
-                            const activeElement = document.activeElement;
-                            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
-                                activeElement.scrollIntoView({ 
-                                    behavior: 'smooth', 
-                                    block: 'center',
-                                    inline: 'nearest'
-                                });
-                            }
-                        }, 100);
-                        true;
-                    `);
-                }
-            }
-        );
-
-        const keyboardWillHide = Keyboard.addListener(
-            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-            () => {
-                setKeyboardHeight(0);
-            }
-        );
-
-        return () => {
-            keyboardWillShow.remove();
-            keyboardWillHide.remove();
-        };
-    }, [isMinimized]);
-
     const panResponder = useRef(
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
@@ -107,7 +65,7 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
     const handleHeaderBack = () => {
        CustomInfoProvider.show("Info", "Do you want to minimise this screen?", [
             { text: "Exit", onPress: onClose, style: "cancel" },
-            { text: "Yes", onPress: () => { setIsMinimized(true), setShowControls(true) } },
+            { text: "Yes", onPress: () => { setIsMinimized(true); setShowControls(true); } },
             { text: "Cancel", style: "cancel" },
         ]);
     };
@@ -119,26 +77,68 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
         ]);
     };
 
-    const TopHeader = () => (
-        <View style={[styles.headerContainer, { height: Platform.OS === "ios" ? hp(8) : hp(6) }]}>
-            <TouchableOpacity onPress={handleHeaderBack} style={[styles.headerleftIconContainer, { marginTop: Platform.OS === "ios" ? hp(4) : 0 }]}>
-                <Icon name="arrow-left" type="materialCommunity" size={30} color="#fff" />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, { marginTop: Platform.OS === "ios" ? hp(4) : 0 }]}>Info</Text>
-            <View style={styles.headerrightIconContainer} />
-        </View>
-    );
-
     if (!visible) return null;
+
+    const getTruncatedUrl = (url) => {
+        if (!url) return '';
+        const maxLength = 60;
+        if (url.length <= maxLength) return url;
+        return url.substring(0, maxLength) + '...';
+    };
+
+    const ComponetHeader = ({ title, url }) => {
+        return (
+            <View style={styles.topHeaderContainer}>
+                <TouchableOpacity style={styles.iconButton} onPress={handleHeaderBack}>
+                    <Icon name="arrow-left" type="materialCommunity" size={30} color="black" />
+                </TouchableOpacity>
+                
+                <View style={styles.headerTextContainer}>
+                    <Text style={styles.headerTitle}>{title}</Text>
+                    {url && (
+                        <Text style={styles.urlText} numberOfLines={1} ellipsizeMode="tail">
+                            {getTruncatedUrl(url)}
+                        </Text>
+                    )}
+                </View>
+            </View>
+        );
+    };
 
     return (
         <View style={styles.container} pointerEvents={isMinimized ? 'box-none' : 'auto'}>
-            {isMinimized ? (
+            <View
+                pointerEvents={isMinimized ? 'none' : 'auto'}
+                style={[
+                    styles.webviewWrapper,
+                    isMinimized ? styles.webviewHidden : styles.webviewVisible,
+                ]}
+            >
+                <WebView
+                    ref={webViewRef}
+                    source={{ uri }}
+                    style={styles.webview}
+                    onLoad={() => setLoading(false)}
+                    onError={() => setLoading(false)}
+                    automaticallyAdjustContentInsets={true}
+                    contentInsetAdjustmentBehavior="automatic"
+                    scalesPageToFit={false}
+                    keyboardDisplayRequiresUserAction={false}
+                />
+                {loading && (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="green" />
+                        <Text style={styles.loadingText}>Collecting Details...</Text>
+                    </View>
+                )}
+            </View>
+            {!isMinimized && <ComponetHeader title="Details" url={uri} />}
+            {isMinimized && (
                 <Animated.View
                     style={[styles.minimized, { transform: pos.getTranslateTransform() }]}
                     {...panResponder.panHandlers}
                 >
-                    <View style={styles.container} pointerEvents={isMinimized ? 'box-none' : 'auto'}>
+                    <View style={styles.minimizedContent}>
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                             <Icon name="information" type="materialCommunity" size={40} color="#333" />
                         </View>
@@ -157,89 +157,7 @@ const FloatingScreen = ({ uri, visible, onClose }) => {
                         )}
                     </View>
                 </Animated.View>
-            ) : (
-                <KeyboardAvoidingView 
-                    style={styles.full}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                >
-                    <TopHeader />
-                </KeyboardAvoidingView>
             )}
-
-            <View
-                pointerEvents={isMinimized ? 'none' : 'auto'}
-                style={[
-                    styles.webviewWrapper,
-                    isMinimized ? styles.webviewHidden : styles.webviewVisible,
-                    // Adjust bottom margin when keyboard is visible
-                    !isMinimized && keyboardHeight > 0 && {
-                        bottom: Platform.OS === 'ios' ? keyboardHeight : 0,
-                        marginBottom: Platform.OS === 'android' ? keyboardHeight : 0,
-                    }
-                ]}
-            >
-                <WebView
-                    ref={webViewRef}
-                    source={{ uri }}
-                    style={styles.webview}
-                    onLoad={() => setLoading(false)}
-                    onError={() => setLoading(false)}
-                    // Enable automatic adjustment for keyboard
-                    automaticallyAdjustContentInsets={true}
-                    contentInsetAdjustmentBehavior="automatic"
-                    // Allow zooming for better text input experience
-                    scalesPageToFit={false}
-                    // Improve keyboard handling
-                    keyboardDisplayRequiresUserAction={false}
-                    // JavaScript for better input handling
-                    injectedJavaScript={`
-                        // Function to handle input focus
-                        function handleInputFocus() {
-                            const inputs = document.querySelectorAll('input, textarea');
-                            inputs.forEach(input => {
-                                input.addEventListener('focus', function() {
-                                    setTimeout(() => {
-                                        this.scrollIntoView({ 
-                                            behavior: 'smooth', 
-                                            block: 'center',
-                                            inline: 'nearest'
-                                        });
-                                    }, 300);
-                                });
-                            });
-                        }
-                        
-                        // Run when page loads
-                        if (document.readyState === 'loading') {
-                            document.addEventListener('DOMContentLoaded', handleInputFocus);
-                        } else {
-                            handleInputFocus();
-                        }
-                        
-                        // Also run for dynamically added inputs
-                        const observer = new MutationObserver(function(mutations) {
-                            mutations.forEach(function(mutation) {
-                                if (mutation.type === 'childList') {
-                                    handleInputFocus();
-                                }
-                            });
-                        });
-                        
-                        observer.observe(document.body, {
-                            childList: true,
-                            subtree: true
-                        });
-                        
-                        true; // Required for injected JavaScript
-                    `}
-                />
-                {loading && (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="green" />
-                        <Text style={styles.loadingText}>Preparing Details...</Text>
-                    </View>
-                )}
-            </View>
         </View>
     );
 };
@@ -251,13 +169,6 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 999,
-    },
-    full: {
-        position: 'absolute',
-        top: 0, left: 0, right: 0,
-        height: Platform.OS === 'ios' ? hp(8) : hp(6),
-        backgroundColor: '#011434',
         zIndex: 999,
     },
     minimized: {
@@ -273,6 +184,9 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowOffset: { width: 0, height: 2 },
         shadowRadius: 4,
+    },
+    minimizedContent: {
+        flex: 1,
     },
     controlsOverlay: {
         ...StyleSheet.absoluteFillObject,
@@ -293,12 +207,11 @@ const styles = StyleSheet.create({
     },
     webviewWrapper: {
         position: 'absolute',
-        top: Platform.OS === 'ios' ? hp(8) : hp(6),
+        top: Platform.OS === 'ios' ? hp(12) : hp(10),
         left: 0,
         right: 0,
         bottom: 0,
         backgroundColor: '#fff',
-        zIndex: 1,
     },
     webviewVisible: {
         zIndex: 1,
@@ -307,14 +220,12 @@ const styles = StyleSheet.create({
     webviewHidden: {
         zIndex: -1,
         opacity: 0,
-        height: 0,
     },
     webview: {
-        flex: 1,
+        marginTop:Platform.OS==="ios"?hp(4):hp(0),
         height: '100%',
         width: '100%',
     },
-
     loadingContainer: {
         ...StyleSheet.absoluteFillObject,
         justifyContent: 'center',
@@ -326,28 +237,35 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#fff"
     },
-    headerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 17,
-        backgroundColor: '#011434',
+    topHeaderContainer: {
+        height: Platform.OS === 'ios' ? hp(17.9) : hp(10.5),
+        width: wp(100),
+        flexDirection: "row",
+        alignItems: "center",
+        paddingTop: Platform.OS === 'ios' ? hp(11) : hp(3),
+        paddingHorizontal: 15,
+        position: "absolute",
+        top: 0,
+        backgroundColor: "#F4F4F8",
+        zIndex: 999,
     },
-    headerleftIconContainer: {
-        width: 40,
+    iconButton: {
+        padding: 1,
+        marginRight:5,
+    },
+    headerTextContainer: {
+        flex: 1,
         justifyContent: 'center',
     },
     headerTitle: {
-        flex: 1,
-        textAlign: 'center',
-        fontSize: 21,
-        fontWeight: 'bold',
-        color: '#fff',
+        fontSize: 18,
+        fontWeight: '500',
+        color: 'black',
     },
-    headerrightIconContainer: {
-        width: 40,
-        justifyContent: 'center',
-        alignItems: 'flex-end',
+    urlText: {
+        fontSize: 15,
+        color: 'gray',
+        marginTop: hp(0.3),
     },
 });
 

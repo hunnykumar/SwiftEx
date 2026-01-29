@@ -335,7 +335,7 @@ const Home2 = ({ navigation }) => {
 export default Home2;
 const Styles = StyleSheet.create({
   tabCon: {
-    marginVertical: "6%",
+    marginVertical: hp(2),
     flexDirection: "row",
     width: "90%",
     height: "7%",
@@ -358,7 +358,7 @@ const Styles = StyleSheet.create({
   },
   container: {
     backgroundColor: "black",
-    height: hp("100"),
+    height: hp(90),
     width: wp("100"),
     borderTopRightRadius: 20,
     borderTopLeftRadius: 20,

@@ -9,7 +9,8 @@ import {
   ScrollView,
   RefreshControl,
   Image,StatusBar,
-  FlatList
+  FlatList,
+  Platform
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -604,11 +605,11 @@ const Market = (props) => {
         {Load_new_data ? (
   <Wallet_market_loading />
 ) : (
-  <View style={{ height: hp(75), paddingBottom: hp(5) }}>
+  <View style={{ height: Platform.OS==="android"?hp(75):hp(80), paddingBottom: hp(5) }}>
     <FlatList
       data={data}
       keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-      style={{ marginBottom: hp(4) }}
+      style={{ marginBottom: hp(5) }}
       refreshControl={
         <RefreshControl
           tintColor={"#4CA6EA"}
@@ -651,7 +652,7 @@ const Market = (props) => {
                 <Image source={{ uri: image }} style={Styles.img} />
               </View>
               <View style={Styles.flatContainerText}>
-                <Text style={{ fontSize:16,fontWeight:"500",color: state.THEME.THEME === false ? "black" : "#fff" }}>
+                <Text style={{ fontSize:16,fontWeight:"500",color: state.THEME.THEME === false ? "black" : "#fff",maxWidth:wp(50) }}>
                   {item.name}
                 </Text>
                 <Text

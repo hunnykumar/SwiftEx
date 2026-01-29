@@ -57,8 +57,8 @@ const ERROR_MESSAGES = {
   TRUSTLINE_FAILED: "Trustline failed to update",
   UNABLE_TO_GET_MARKET_PRICE: "Unable to get market price.",
   INSUFFICIENT_FUNDS: "Insufficient funds",
-  CREATE_OFFER: "Create Offer",
-  MULTIOP_OFFER: "Trust & Create Offer",
+  CREATE_OFFER: "Execute",
+  MULTIOP_OFFER: "Trust & Execute",
 };
 
 // Success messages configuration
@@ -70,11 +70,11 @@ const SUCCESS_MESSAGES = {
 // Tab configuration
 const TAB_CONFIG = {
   INSTANT_TRADE: { id: 1, label: "Instant Swap", iconName:"lightning-bolt" },
-  LARGE_ORDER_TRADE: { id: 0, label: "Large Order", iconName:"chart-timeline-variant" },
+  LARGE_ORDER_TRADE: { id: 0, label: "Advance Swap", iconName:"chart-timeline-variant" },
 };
 
 const SUB_TAB_CONFIG = {
-  TRADE: { id: 0, label: "Trade" },
+  TRADE: { id: 0, label: "Swap" },
   OVERVIEW: { id: 1, label: "Overview" },
   TRANSACTIONS: { id: 4, label: "Transactions" },
   // ORDERBOOK: { id: 2, label: "Orderbook" },
@@ -698,7 +698,7 @@ const selectTradingPair = useCallback((item) => {
   return (
     <View style={[styles.scrollView0, { backgroundColor: theme.bg }]}>
       <Exchange_screen_header 
-        title="Trade" 
+        title="Swap" 
         onLeftIconPress={() => {showOneTap?setshowOneTap(false):navigation.goBack()}} 
         onRightIconPress={() => console.log('Pressed')} 
       />
@@ -839,7 +839,7 @@ const selectTradingPair = useCallback((item) => {
                   <View style={[styles.informationContiner, { backgroundColor: theme.cardBg }]}>
                     <View >
                       <Text style={[styles.amountSugCon.amountSugCardText,{color:theme.headingTx}]}>
-                        Deposit USDC to start trading.
+                        Deposit USDC to get started.
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -930,21 +930,9 @@ const selectTradingPair = useCallback((item) => {
                           </View>
                           
                           <View style={{ flexDirection: "row" }}>
-                            <TouchableOpacity 
-                              style={{ flexDirection: "row", alignItems: "center" }} 
-                              onPress={() => setreservedError(true)}
-                            >
                               <Text style={[styles.pairHeadingText, { color: theme.inactiveTx }]}>
                                 Balance :
                               </Text>
-                              <Icon 
-                                name={"information-outline"} 
-                                type={"materialCommunity"} 
-                                size={15} 
-                                color={"#818895"} 
-                                style={{ marginHorizontal: 4 }} 
-                              />
-                            </TouchableOpacity>
                             {reserveLoading ? (
                               <ActivityIndicator color={"green"} />
                             ) : (
@@ -982,7 +970,7 @@ const selectTradingPair = useCallback((item) => {
                               styles.pairSelectionSubCon.pairSelectionName,
                               { color: btnRoot === 0 ? "#fff" : theme.headingTx }
                             ]}>
-                              Sell
+                              Send
                             </Text>
                           </TouchableOpacity>
                           
@@ -1005,7 +993,7 @@ const selectTradingPair = useCallback((item) => {
                               styles.pairSelectionSubCon.pairSelectionName,
                               { color: btnRoot === 1 ? "#fff" : theme.headingTx }
                             ]}>
-                              Buy
+                              Receive
                             </Text>
                           </TouchableOpacity>
                         </View>
@@ -1016,21 +1004,11 @@ const selectTradingPair = useCallback((item) => {
                           <View style={[styles.amountSubinfo,{left:0,justifyContent:"space-between",width:wp(86)}]}>
                             <View style={styles.amountSubinfo}>
                               <Text style={[styles.pairHeadingText]}>Amount </Text>
-                              <TouchableOpacity
-                                onPress={() => {
-                                  setinfoVisible(true);
-                                  setinfotype("success");
-                                  setinfomessage(`Offered Amount for ${getAssetDisplayName(SelectedBaseValue)}`);
-                                }}
-                              >
-                                <Icon
-                                  name={"information-outline"}
-                                  type={"materialCommunity"}
-                                  size={15}
-                                  color={"#818895"}
-                                />
-                              </TouchableOpacity>
-                            <Text style={{color:theme.headingTx,fontSize:16,fontWeight:"800",marginLeft:wp(2)}}>{route === stellarConfig.TRADE_TYPES.SELL ? 'Sell' : 'Buy'} {getAssetDisplayName(top_value)}</Text>
+                              <Text style={{ color: theme.headingTx, fontSize: 16, fontWeight: "500", marginLeft: wp(1) }}>
+                                {route === stellarConfig.TRADE_TYPES.SELL ? 'Send' : 'Get'}{" "}
+                                {getAssetDisplayName(top_value)} /{" "}
+                                {route === stellarConfig.TRADE_TYPES.SELL ? 'Get' : 'Send'}{" "}
+                                {getAssetDisplayName(top_value_0)}</Text>
                             </View>
                           </View>
                       
@@ -1043,7 +1021,7 @@ const selectTradingPair = useCallback((item) => {
                             value={offer_amount}
                             contextMenuHidden={true}
                             disableFullscreenUI={true}
-                            placeholder={"0.0"}
+                            placeholder={"Enter "+getAssetDisplayName(top_value)+" amount"}
                             placeholderTextColor={"gray"}
                             onChangeText={(text) => {
                               onChangeamount(text);
@@ -1075,20 +1053,6 @@ const selectTradingPair = useCallback((item) => {
                         <View style={styles.priceCon}>
                           <View style={[styles.amountSubinfo]}>
                             <Text style={[styles.pairHeadingText]}>Price </Text>
-                            <TouchableOpacity 
-                              onPress={() => {
-                                setinfoVisible(true);
-                                setinfotype("success");
-                                setinfomessage(`Offered Price for ${getAssetDisplayName(selectedValue)}`);
-                              }}
-                            >
-                             {tradePriceLoading?<ActivityIndicator size={"small"} color={"green"}/>:<Icon 
-                                name={"information-outline"} 
-                                type={"materialCommunity"} 
-                                size={15} 
-                                color={"#818895"} 
-                              />}
-                            </TouchableOpacity>
                           </View>
                           
                           <View style={styles.priceMangerCon}>
@@ -1098,7 +1062,8 @@ const selectTradingPair = useCallback((item) => {
                                 { 
                                   backgroundColor: priceType === 0 ? "#4052D6" : theme.bg,
                                   borderTopRightRadius: 0,
-                                  borderBottomRightRadius: 0 
+                                  borderBottomRightRadius: 0,
+                                  width: wp(27)
                                 }
                               ]} 
                               onPress={async () => {
@@ -1110,7 +1075,7 @@ const selectTradingPair = useCallback((item) => {
                                 styles.pairSelectionSubCon.pairSelectionName,
                                 { color: priceType === 0 ? "#fff" : theme.headingTx }
                               ]}>
-                                Market
+                                Current Rate
                               </Text>
                             </TouchableOpacity>
                             
@@ -1120,7 +1085,8 @@ const selectTradingPair = useCallback((item) => {
                                 { 
                                   backgroundColor: priceType === 1 ? "#4052D6" : theme.bg,
                                   borderTopLeftRadius: 0,
-                                  borderBottomLeftRadius: 0 
+                                  borderBottomLeftRadius: 0,
+                                  width: wp(27)
                                 }
                               ]} 
                               onPress={() => {
@@ -1132,7 +1098,7 @@ const selectTradingPair = useCallback((item) => {
                                 styles.pairSelectionSubCon.pairSelectionName,
                                 { color: priceType === 1 ? "#fff" : theme.headingTx }
                               ]}>
-                                Limit
+                                Custom Rate
                               </Text>
                             </TouchableOpacity>
                           </View>
@@ -1159,20 +1125,6 @@ const selectTradingPair = useCallback((item) => {
                       <View style={[styles.priceInfoCon, { backgroundColor: theme.cardBg }]}>
                         <View style={styles.amountSubinfo}>
                           <Text style={[styles.pairHeadingText]}>Total </Text>
-                          <TouchableOpacity 
-                            onPress={() => {
-                              setinfoVisible(true);
-                              setinfotype("success");
-                              setinfomessage(`Total for ${getAssetDisplayName(selectedValue)}`);
-                            }}
-                          >
-                            <Icon 
-                              name={"information-outline"} 
-                              type={"materialCommunity"} 
-                              size={15} 
-                              color={"#818895"} 
-                            />
-                          </TouchableOpacity>
                         </View>
                         <Text 
                           style={[styles.accountInfoCon.accountInfoText, { fontWeight: "900", color: theme.headingTx }]} 

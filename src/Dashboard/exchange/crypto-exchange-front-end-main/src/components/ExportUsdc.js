@@ -158,7 +158,7 @@ const ExportUSDC = () => {
 
   const handleWalletActivationComponent = () => {
     setstellarWalletActivated(false)
-    navigation.goBack()
+    // navigation.goBack()
   };
 
   const handleValueUpdater = (data) => {
@@ -335,10 +335,10 @@ console.log("resQuotes-",resQuotes)
     }
   return (
     <View style={[styles.container,{backgroundColor:theme.bg}]}>
-      <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+      <Exchange_screen_header title="Allbridge" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
       <WalletActivationComponent
         isVisible={stellarWalletActivated}
-        onClose={() => { handleWalletActivationComponent }}
+        onClose={() => { handleWalletActivationComponent() }}
         onActivate={() => { setstellarWalletActivated(false) }}
         navigation={navigation}
         appTheme={true}
@@ -363,7 +363,7 @@ console.log("resQuotes-",resQuotes)
                   {basicProccesing ? <ActivityIndicator color={"green"} /> :
                   <View style={{ width: wp(13) }}>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                     <Text style={{ color: theme.headingTx, fontSize: 14 }}>{XLMAvlBal}</Text>
+                     <Text style={{ color: theme.headingTx, fontSize: 14 }}>{XLMAvlBal==="Error"?"0.00":XLMAvlBal}</Text>
                   </ScrollView>
                   </View>
                   }
@@ -373,7 +373,7 @@ console.log("resQuotes-",resQuotes)
                   {basicProccesing ? <ActivityIndicator color={"green"} /> :
                   <View style={{ width: wp(14) }}>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                     <Text style={{ color: theme.headingTx, fontSize: 14 }}>{walletBalance}</Text>
+                     <Text style={{ color: theme.headingTx, fontSize: 14 }}>{!walletBalance?"0.00":walletBalance}</Text>
                   </ScrollView>
                   </View>
                   }

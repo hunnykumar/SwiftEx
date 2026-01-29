@@ -240,7 +240,7 @@ const CheckNewWalletMnemonic = ({
                   }}
                   onPress={() => handleAnswer(index, option)}
                 >
-                  <Text style={{color:theme.headingTx,fontSize:14}}>{option}</Text>
+                  <Text style={{color:answers[index] === option ? '#fff':theme.headingTx,fontSize:14}}>{option}</Text>
                 </TouchableOpacity>
               ))}
              </View>

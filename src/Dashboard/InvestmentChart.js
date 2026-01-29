@@ -115,7 +115,7 @@ function InvestmentChart() {
             dispatch({
               type: PORTFOLIO_CONFIG,
               payload: {
-                isTotalInUSDVisible: false,
+                isTotalInUSDVisible: true,
                 totalInUSD: walletInfo.totalValueUSD
               }
             }); 
@@ -252,7 +252,7 @@ function InvestmentChart() {
                       : item.symbol?.toUpperCase(), tradeAssetIssuer: ["ETH", "BTC", "BSC"].includes(item.chain) ? "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" : null
               })
             }}>
-              <Text style={styles.tradeButtonText}>Trade</Text>
+              <Text style={styles.tradeButtonText}>Convert</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -269,6 +269,18 @@ function InvestmentChart() {
           <Text style={[styles.waitConTxt,{color:theme.inactiveTx}]}>Hang tight — loading your portfolio..</Text>
         </View>
         ) : (
+          <>
+          <View style={[styles.topHeaderCon,{backgroundColor:theme.cardBg}]}>
+            <Text style={[styles.topHeaderTxt,{width: wp(45),textAlign:"left",paddingLeft:wp(2),color:theme.headingTx,marginBottom:hp(0.2)}]}>Your Assets</Text>
+            <Text style={[styles.topHeaderTxt,{color:theme.headingTx,marginBottom:hp(0.2)}]}>Balance</Text>
+            <View style={styles.floatCon}>
+              <Text style={{color:theme.headingTx,fontSize:14,fontWeight:"400"}}>Fee: ~ $</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(10) }}>
+                                <Text style={[styles.infoText, { color:theme.headingTx }]}>{state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens.find(d => d.chain.toLowerCase() === "stellar" && d.symbol === "XLM")?.price * 0.00001 || "0.0000002"}</Text>
+                              </ScrollView>
+            </View>
+            <Text style={[styles.topHeaderTxt,{color:theme.headingTx}]}>S-DEX</Text>
+          </View>
           <FlatList
             data={tokenInfoList}
             renderItem={renderTokens}
@@ -288,6 +300,7 @@ function InvestmentChart() {
             }
             contentContainerStyle={{ paddingBottom: hp(50) }}
           />
+        </>
         )}
         <Modal
           animationType="slide"
@@ -392,7 +405,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(244, 244, 244, 1)",
     width: "100%",
     height: "100%",
-    paddingVertical: 10,
     paddingHorizontal: 0,
   },
   coinCard: {
@@ -507,4 +519,34 @@ const styles = StyleSheet.create({
   AccounbtnSkipContainer: {
     marginTop: 5
   },
+  topHeaderCon: {
+    flexDirection: "row",
+    alignItems:"center",
+    justifyContent:"space-evenly",
+    paddingVertical:hp(0.6),
+    borderTopLeftRadius:20,
+    borderTopRightRadius:20,
+    marginBottom:hp(0.2)
+  },
+  topHeaderTxt:{
+    width: wp(20),
+    textAlign:"center",
+    fontSize:16,
+    fontWeight:"500",
+    marginBottom:hp(1.5)
+  },
+  floatCon:{
+    flexDirection:"row",
+    backgroundColor:"#81848f77",
+    zIndex:999,
+    position:"absolute",
+    bottom:0,
+    borderBottomRightRadius:8,
+    borderTopLeftRadius:9,
+    paddingHorizontal:wp(1.5),
+    paddingVertical:hp(0.1),
+    right:3,
+    alignItems:"center"
+  }
+
 });

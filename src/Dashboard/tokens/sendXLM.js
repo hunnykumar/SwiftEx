@@ -140,7 +140,7 @@ const SendXLM = (props) => {
         }
       }
       insilize1()
-      }, [ACTIVATION_MODAL_PROD])
+      }, [])
     
   useEffect(() => {
     const new_data = async () => {
@@ -226,7 +226,7 @@ const SendXLM = (props) => {
     }
     const ActivateModal = () => {
       setACTIVATION_MODAL_PROD(false);
-      navigation.goBack()
+      // navigation.goBack()
     };
     const handleUsernameChange = (text) => {
         // Remove whitespace from the username
@@ -355,7 +355,7 @@ useEffect(() => {
         />
          <WalletActivationComponent 
        isVisible={ACTIVATION_MODAL_PROD}
-       onClose={() => {ActivateModal}}
+       onClose={() => {ActivateModal()}}
        onActivate={()=>{setACTIVATION_MODAL_PROD(false)}}
        navigation={navigation}
        appTheme={state.THEME.THEME}

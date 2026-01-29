@@ -99,14 +99,14 @@ export const HomeView = () => {
   ]
 
   const quickActions = [
-    { name: `Swap\nOrders`, icon: "candlestick-chart", iconProvider: "material" },
+    { name: `Convert\nAssets`, icon: "candlestick-chart", iconProvider: "material" },
     { name: `Deposit\nUSDC`, icon: "generating-tokens", iconProvider: "material" },
     { name: `Withdrawal\nUSDC`, icon: "currency-exchange", iconProvider: "material" },
   ]
   const quickTradeActions = [
     { name: `Manage\nAssets`, icon: "token", iconProvider: "material" },
     { name: `On/Off\nRamp`, icon: "storefront", iconProvider: "material" },
-    { name: `Trade\nOffers`, icon: "insights", iconProvider: "material" },
+    { name: `Adv.Swap\nHistory`, icon: "insights", iconProvider: "material" },
     { name: `Transaction\nHistory`, icon: "restore", iconProvider: "material" },
   ]
   useEffect(() => {
@@ -262,7 +262,7 @@ export const HomeView = () => {
   return (
     <>
       <Exchange_screen_header
-        title="SDEX"
+        title="Stellar-DEX"
         onLeftIconPress={() => navigation.navigate("Home")}
         onRightIconPress={() => {
           console.log("Right icon pressed");
@@ -271,7 +271,7 @@ export const HomeView = () => {
 
       <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ backgroundColor: theme.bg }}>
         <View style={[styles.quickActionWrapper, { backgroundColor: theme.cardBg, borderColor: theme.smallCardBorderColor }]}>
-          <Text style={[styles.headingTx, { color: theme.headingTx }]}>Manage Trade</Text>
+          <Text style={[styles.headingTx, { color: theme.headingTx }]}>Execute Swap</Text>
           <View style={[styles.quickActionRow]}>
             {quickActions.map((item, index) => {
               return (
@@ -398,7 +398,7 @@ export const HomeView = () => {
                 smoothing="bezier"
                 theme={{
                   stroke: { color: lineColor, width: 2 },
-                  scatter: { selected: { width: 8, height: 8, rx: 4, color: "red" } },
+                  scatter: { selected: { width: 1, height: hp(99), rx: 4, color: lineColor } },
                 }}
                 tooltipComponent={
                   <Tooltip

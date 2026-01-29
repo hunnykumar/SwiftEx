@@ -804,7 +804,7 @@ const classic = ({ route }) => {
   return (
     <View style={{ backgroundColor: theme.bg, width: wp(100), height: hp(100) }}>
       <Exchange_screen_header
-        title="Bridge"
+        title="Allbridge"
         onLeftIconPress={() => navigation.goBack()}
         onRightIconPress={() => console.log('Pressed')}
       />

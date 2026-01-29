@@ -67,15 +67,15 @@ const WalletActivationComponent = ({
   // Function to handle closing and navigation
   const handleClose = () => {
     // First close the sheet
-    if (typeof onClose === 'function') {
+    // if (typeof onClose === 'function') {
       onClose();
-    }
+    // }
     
     // Then navigate back if needed
-    if (shouldNavigateBack && navigation && navigation.canGoBack()) {
+    // if (shouldNavigateBack && navigation && navigation.canGoBack()) {
       // Use a short timeout to ensure the sheet starts closing first
-        navigation.goBack();
-    }
+        // navigation.goBack();
+    // }
   };
 
   // Handle back button press on Android
@@ -273,7 +273,7 @@ const WalletActivationComponent = ({
               onPress={() => { setQrVisible(true) }}
               disabled={Wallet_activation}
             >
-              {Wallet_activation ? <ActivityIndicator color={"green"} size={"small"} /> : <Text style={[styles.buttonText,{color:theme.text}]}>I'll do it myself.</Text>}
+              {Wallet_activation ? <ActivityIndicator color={"green"} size={"small"} /> : <Text style={[styles.buttonText,{color:theme.text}]}>Receive XLM</Text>}
             </TouchableOpacity>
           </View>
           <TouchableOpacity 
@@ -282,13 +282,13 @@ const WalletActivationComponent = ({
             disabled={Wallet_activation}
           >
             <Text style={[styles.cancelText, { color: theme.secondaryText }]}>
-              Remind Me Later
+              I'll do it myself.
             </Text>
           </TouchableOpacity>
         </View>
         <TokenQrCode
           modalVisible={qrVisible}
-          setModalVisible={()=>{setQrVisible(false),handleClose()}}
+          setModalVisible={()=>{setQrVisible(false)}}
           iconType={"XLM"}
           qrvalue={state?.STELLAR_PUBLICK_KEY}
           isDark={isDarkMode}
