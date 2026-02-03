@@ -35,7 +35,7 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
           index === self.findIndex((t) => (
             t.hash === tx.hash && t.chain === tx.chain
           ))
-        ).reverse();
+        );
         setTransactions(uniqueTransactions);
       }
     } catch (error) {
@@ -217,7 +217,7 @@ const RecentCrossChainTx = ({ activeWalletPublicKey, theme }) => {
   return (
     <View style={[styles.container, { backgroundColor: activeTheme.bg }]}>
       <View style={[styles.header, { backgroundColor: activeTheme.bg }]}>
-        <Text style={[styles.headerTitle, { color: activeTheme.headingTx }]}>Recent Transaction</Text>
+        <Text style={[styles.headerTitle, { color: activeTheme.headingTx }]}>Recent Five Transaction</Text>
         <Text style={[styles.headerSubtitle, { color: activeTheme.inactiveTx }]}>
           {transactions.length} transaction(s)
         </Text>

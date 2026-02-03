@@ -6,7 +6,7 @@ export const colors = {
         smallCardBg: "#FFFFFF",
         smallCardBorderColor: "#5E5C5C66",
         cardSubTx: "#272729",
-        inactiveTx: "#AAAAAA"
+        inactiveTx: "#7a7878ff"
     },
     dark: {
         bg: "#1B1B1C",

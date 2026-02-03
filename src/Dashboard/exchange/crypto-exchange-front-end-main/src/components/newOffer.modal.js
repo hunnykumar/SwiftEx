@@ -76,9 +76,9 @@ const TAB_CONFIG = {
 const SUB_TAB_CONFIG = {
   TRADE: { id: 0, label: "Swap" },
   OVERVIEW: { id: 1, label: "Overview" },
-  TRANSACTIONS: { id: 4, label: "Transactions" },
+  TRANSACTIONS: { id: 4, label: "Details" },
   // ORDERBOOK: { id: 2, label: "Orderbook" },
-  LAST_TRADE: { id: 3, label: "Last Transaction" },
+  LAST_TRADE: { id: 3, label: "Details" },
 };
 
 export const NewOfferModal = () => {
@@ -698,7 +698,7 @@ const selectTradingPair = useCallback((item) => {
   return (
     <View style={[styles.scrollView0, { backgroundColor: theme.bg }]}>
       <Exchange_screen_header 
-        title="Swap" 
+        title="" 
         onLeftIconPress={() => {showOneTap?setshowOneTap(false):navigation.goBack()}} 
         onRightIconPress={() => console.log('Pressed')} 
       />
@@ -839,14 +839,14 @@ const selectTradingPair = useCallback((item) => {
                   <View style={[styles.informationContiner, { backgroundColor: theme.cardBg }]}>
                     <View >
                       <Text style={[styles.amountSugCon.amountSugCardText,{color:theme.headingTx}]}>
-                        Deposit USDC to get started.
+                        Add USDC to get started.
                       </Text>
                     </View>
                     <TouchableOpacity
                       style={[styles.amountSugCon.amountSugCard, { backgroundColor: theme.bg, paddingHorizontal: 16.9 }]}
                       onPress={proceedToBridgeValidation}
                     >
-                      <Text style={[styles.amountSugCon.amountSugCardText,{color:theme.headingTx}]}>Deposit</Text>
+                      <Text style={[styles.amountSugCon.amountSugCardText,{color:theme.headingTx}]}>Add</Text>
                     </TouchableOpacity>
                   </View>
                 </Animated.View>
@@ -898,7 +898,9 @@ const selectTradingPair = useCallback((item) => {
                         onPress={() => setchooseModalPair(true)}
                       >
                         <Text style={[styles.pairSelectionSubCon.pairSelectionName, { color: theme.headingTx }]}>
-                          {top_value} / {top_value_0}
+                          {top_value} 
+                                <Icon name={"arrow-right"} type={"materialCommunity"} size={19} color={theme.headingTx} style={{ marginHorizontal: 10 }} />
+                           {top_value_0}
                         </Text>
                         <Icon name="down" type={"antDesign"} size={20} color={theme.headingTx} />
                       </TouchableOpacity>
@@ -1005,9 +1007,8 @@ const selectTradingPair = useCallback((item) => {
                             <View style={styles.amountSubinfo}>
                               <Text style={[styles.pairHeadingText]}>Amount </Text>
                               <Text style={{ color: theme.headingTx, fontSize: 16, fontWeight: "500", marginLeft: wp(1) }}>
-                                {route === stellarConfig.TRADE_TYPES.SELL ? 'Send' : 'Get'}{" "}
-                                {getAssetDisplayName(top_value)} /{" "}
-                                {route === stellarConfig.TRADE_TYPES.SELL ? 'Get' : 'Send'}{" "}
+                                Swap {getAssetDisplayName(top_value)}
+                                <Icon name={"arrow-right"} type={"materialCommunity"} size={19} color={theme.headingTx} style={{ marginHorizontal: 4 }} />
                                 {getAssetDisplayName(top_value_0)}</Text>
                             </View>
                           </View>
@@ -1052,7 +1053,7 @@ const selectTradingPair = useCallback((item) => {
   
                         <View style={styles.priceCon}>
                           <View style={[styles.amountSubinfo]}>
-                            <Text style={[styles.pairHeadingText]}>Price </Text>
+                            <Text style={[styles.pairHeadingText]}>Conversion Rate </Text>
                           </View>
                           
                           <View style={styles.priceMangerCon}>
@@ -1063,7 +1064,7 @@ const selectTradingPair = useCallback((item) => {
                                   backgroundColor: priceType === 0 ? "#4052D6" : theme.bg,
                                   borderTopRightRadius: 0,
                                   borderBottomRightRadius: 0,
-                                  width: wp(27)
+                                  width: wp(28)
                                 }
                               ]} 
                               onPress={async () => {
@@ -1075,7 +1076,7 @@ const selectTradingPair = useCallback((item) => {
                                 styles.pairSelectionSubCon.pairSelectionName,
                                 { color: priceType === 0 ? "#fff" : theme.headingTx }
                               ]}>
-                                Current Rate
+                                Network Rate
                               </Text>
                             </TouchableOpacity>
                             
@@ -1086,7 +1087,7 @@ const selectTradingPair = useCallback((item) => {
                                   backgroundColor: priceType === 1 ? "#4052D6" : theme.bg,
                                   borderTopLeftRadius: 0,
                                   borderBottomLeftRadius: 0,
-                                  width: wp(27)
+                                  width: wp(28)
                                 }
                               ]} 
                               onPress={() => {
@@ -1098,7 +1099,7 @@ const selectTradingPair = useCallback((item) => {
                                 styles.pairSelectionSubCon.pairSelectionName,
                                 { color: priceType === 1 ? "#fff" : theme.headingTx }
                               ]}>
-                                Custom Rate
+                                 Preferred Rate
                               </Text>
                             </TouchableOpacity>
                           </View>
@@ -1179,7 +1180,7 @@ const selectTradingPair = useCallback((item) => {
                       >
                         <View style={[styles.chooseModalContent, { backgroundColor: theme.bg }]}>
                           <Text style={[styles.chooseItem_text, { color: theme.headingTx }]}>
-                            Select Trading Pair
+                            Select Swap Pair
                           </Text>
                           <FlatList
                             data={chooseFilteredItemList}

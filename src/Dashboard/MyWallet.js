@@ -67,22 +67,6 @@ const MyWallet = (props) => {
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => {
-        setbackupVisible(!backupVisible);
-      }} style={[styles.btnCard, { backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426" }]}>
-        <View style={{ flexDirection: "row" }}>
-          <View style={[styles.iconCon,{backgroundColor:"#40BF6A33"}]}>
-            <Icon name="cloud-download-outline" type={"materialCommunity"} color={"#40BF6A"} size={24} />
-          </View>
-          <View style={styles.iconContainer}>
-            <Text style={[styles.secretText, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>Backup Secrets</Text>
-            <Text style={[styles.secretSubText, { color: state.THEME.THEME === false ? "black" : "#AAAAAA" }]}>Secure your wallet</Text>
-          </View>
-        </View>
-        <View style={styles.rightIcon}>
-          <Icon name="right" type={"antDesign"} color={state.THEME.THEME === false ? "black" : "#fff"} size={20}/>
-        </View>
-      </TouchableOpacity>
 
       <View style={styles.infoCard}>
         <View style={{padding:5,borderRadius:50,backgroundColor:"#ECB742",marginRight:4}}>

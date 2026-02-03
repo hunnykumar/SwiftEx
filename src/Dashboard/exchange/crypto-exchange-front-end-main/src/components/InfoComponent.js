@@ -8,8 +8,13 @@ import {
   Animated,
   PanResponder,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { useEffect, useRef } from 'react';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 
 const InfoComponent = ({
   visible = false,
@@ -156,7 +161,7 @@ const InfoComponent = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 0,
+    top: Platform.OS==="ios"?hp(4): 0,
     left: 0,
     right: 0,
     padding: 16,

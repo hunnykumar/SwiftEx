@@ -350,7 +350,7 @@ const Offers_manages = () => {
         />:
         <View style={styles.error_cont}>
           <Icon name={"cart-outline"} type={"materialCommunity"} size={55} color={theme.inactiveTx} />
-          <Text style={[styles.error_text,{color:theme.inactiveTx}]}>No Active Offers</Text>
+          <Text style={[styles.error_text,{color:theme.inactiveTx}]}>No Active Adv. Swaps</Text>
         </View>
       )}
 

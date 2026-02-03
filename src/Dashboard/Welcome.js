@@ -271,6 +271,7 @@ const Welcome = (props) => {
             <ActivityIndicator color={"green"} size={"large"} />
           </View>
         }
+        <Text style={styles.termsTxt}>By continuing, you agree to our Terms and Policies</Text>
 
       </Animated.View>
     </View>
@@ -326,6 +327,13 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: hp(1),
   },
+  termsTxt:{
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#fff",
+    fontStyle:"italic"
+  }
 });
 
 export default Welcome;

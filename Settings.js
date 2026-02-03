@@ -22,10 +22,13 @@ import CustomInfoProvider from "./src/Dashboard/exchange/crypto-exchange-front-e
 import authApi from "./src/Dashboard/exchange/crypto-exchange-front-end-main/src/authApi";
 import { colors } from "./src/Screens/ThemeColorsConfig";
 import Clipboard from "@react-native-clipboard/clipboard";
+import { getApp } from "@react-native-firebase/app";
+import { getMessaging, subscribeToTopic, unsubscribeFromTopic } from "@react-native-firebase/messaging";
 const Settings = (props) => {
   const navi = useNavigation();
   const focused = useIsFocused();
   const [Checked, setCheckBox] = useState(false);
+  const [notificationStatus,setNotificationStatus]=useState(false);
   const [userProfileLoading, setuserProfileLoading] = useState(false);
   const [userProfile, setuserProfile] = useState(null);
   const dispatch = useDispatch();
@@ -38,13 +41,15 @@ const Settings = (props) => {
         setCheckBox(Checked === null ? false : Checked === "false" ? false : true);
         await AsyncStorageLib.setItem("APP_THEME", JSON.stringify(state.THEME.THEME));
         setuserProfileLoading(false);
+        const notifiStatus=await AsyncStorageLib.getItem("notiPermissions");
+        setNotificationStatus(notifiStatus === null ? false : notifiStatus === "false" ? false : true);
         // checkUserLoginStatus();
       } catch (error) {
         console.log("====****.", error)
       }
     }
     insilize_data()
-  }, [focused, state.THEME.THEME, Checked])
+  }, [focused, state.THEME.THEME, Checked, notificationStatus])
 
   const checkUserLoginStatus = async () => {
     try {
@@ -82,6 +87,22 @@ const Settings = (props) => {
         CustomInfoProvider.show("success", "Logged out successfully. Guest Mode enabled.");
     } catch (error) {
       console.log("(--)---", error)
+    }
+  }
+
+  const handleNotification=async()=>{
+    const notiStatus=await AsyncStorageLib.getItem("notiPermissions");
+    console.log(notiStatus)
+    const app=getApp();
+    const messaging=getMessaging(app);
+    if(notiStatus==null||notiStatus==="false"){
+      await subscribeToTopic(messaging,"txUpdates");
+      await AsyncStorageLib.setItem("notiPermissions","true");
+      setNotificationStatus(true);
+    }else{
+      await unsubscribeFromTopic(messaging,"txUpdates");
+      await AsyncStorageLib.setItem("notiPermissions","false");
+      setNotificationStatus(false);
     }
   }
 
@@ -186,7 +207,7 @@ const Settings = (props) => {
             <Icon type={"ionicon"} name="git-compare" size={31} color={"#4052D6"} />
 
           </View>
-          <Text style={[styles.text, { color: theme.headingTx }]}>S-DEX</Text>
+          <Text style={[styles.text, { color: theme.headingTx }]}>SDEX</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -199,6 +220,28 @@ const Settings = (props) => {
             <Icon type={Platform.OS === 'android' ? "ionicon" : "material"} name={Platform.OS === 'android' ? "finger-print" : "lock-outline"} size={31} color={"#4052D6"} />
           </View>
           <Text style={[styles.text, { color: theme.headingTx }]}>{Platform.OS === 'android' ? "Biometric Authenticaton" : "Authenticaton"}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.cardWithToggel, { borderBottomColor: theme.inactiveTx }]}
+          onPress={() => {
+            handleNotification()
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={styles.iconCon}>
+              <Icon name={"bell"} type={"materialCommunity"} size={31} color={"#4052D6"} />
+            </View>
+            <Text style={[styles.text, { color: theme.headingTx }]}>Notification</Text>
+          </View>
+          <View style={Platform.OS == "android" ? { paddingRight: wp(2) } : { paddingRight: wp(3.5) }}>
+            <ToggleSwitch
+              isOn={notificationStatus}
+              onColor="green"
+              offColor="gray"
+              disabled={true}
+            />
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity

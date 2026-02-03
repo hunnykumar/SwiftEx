@@ -8,7 +8,8 @@ import {
   Dimensions,
   Platform,
   BackHandler,
-  ActivityIndicator
+  ActivityIndicator,
+  Image
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { RAPID_STELLAR, SET_ASSET_DATA } from '../../../../../components/Redux/actions/type';
@@ -23,6 +24,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
+import stellarImg from "../../../../../../assets/Stellar_(XLM).png"
 
 const { height } = Dimensions.get('window');
 
@@ -249,15 +251,15 @@ const WalletActivationComponent = ({
         
         <View style={styles.content}>
           <View style={[styles.iconContainer, { backgroundColor: theme.accentBackground }]}>
-          <Icon type={"materialCommunity"} name={!visibleBuyUi?"shield-alert":"cart"} size={40} color={theme.accentColor} />
+                <Image source={stellarImg} style={{width: wp(20),height: hp(8)}}/>
           </View>
           
           <Text style={[styles.title, { color: theme.text }]}>
-          {!visibleBuyUi?"Activate Trade Wallet":"Buy Stellar XLM Easily"}
+          {!visibleBuyUi?"Activate Trade Wallet":"Activate Your Stellar Wallet"}
           </Text>
           
           <Text style={[styles.description, { color: theme.secondaryText }]}>
-          {!visibleBuyUi?"Your Stellar wallet isn’t activated yet. Activate it now to automatically trust USDC and start using all features seamlessly!":"Start trading with near-zero fees and lightning-fast transactions, unlocking seamless access to Stellar's network and maximum efficiency for all your crypto activities."}
+          {!visibleBuyUi?"Your Stellar wallet isn’t activated yet. Activate it now to automatically trust USDC and start using all features seamlessly!":"Enable Stellar to send, receive, and use assets on the Stellar network.A small network reserve is required to keep your Stellar account active and use on-chain features. This stays in your wallet."}
           </Text>
           
           <View style={styles.userActionBtnCon}>

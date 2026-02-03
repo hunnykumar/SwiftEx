@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,9 @@ import { AllbridgeCoreSdk, nodeRpcUrlsDefault } from '@allbridge/bridge-core-sdk
 import CustomInfoProvider from '../components/CustomInfoProvider';
 
 const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
+const PAGE_SIZE = 10;
+const INITIAL_LOAD = 10;
+const STELLAR_BATCH_SIZE = 30;
 
 const getThemeColors = (isDarkMode) => ({
   background: isDarkMode ? '#1B1B1C' : '#F5F5F5',
@@ -64,9 +67,9 @@ const getTransactionType = (operation, userPublicKey, isReceived) => {
       case 'change_trust':
           return 'Trust Line';
       case 'manage_sell_offer':
-          return 'Sell Offer';
+          return 'Swap Out';
       case 'manage_buy_offer':
-          return 'Buy Offer';
+          return 'Swap In';
       case 'create_account':
           return 'Create Account';
       case 'invoke_host_function':
@@ -74,12 +77,12 @@ const getTransactionType = (operation, userPublicKey, isReceived) => {
             const assetSymbol = operation.asset_balance_changes?.find(
               resObj => resObj.to === userPublicKey
             )?.asset_code || 'USDC';
-            return `Deposit ${assetSymbol}`;
+            return `Add ${assetSymbol}`;
           } else {
             const assetSymbol = operation.asset_balance_changes?.find(
               resObj => resObj.from === userPublicKey
             )?.asset_code || 'USDC';
-            return `Withdrawal ${assetSymbol}`;
+            return `Send ${assetSymbol}`;
           }
       case 'path_payment_strict_send':
       case 'path_payment_strict_receive': {
@@ -91,7 +94,7 @@ const getTransactionType = (operation, userPublicKey, isReceived) => {
           operation.asset_code,
           operation.asset_type
         );
-       return `${fromAsset} to ${toAsset}`;
+       return `${fromAsset} -> ${toAsset}`;
       }
       case 'setOptions':
           return 'Settings Update';
@@ -104,10 +107,10 @@ const getTransactionType = (operation, userPublicKey, isReceived) => {
       case 'wallet_tx':
           if (operation.chain === 'SRB') {
             const assetSymbol = operation.symbol || 'USDC';
-            return `Withdrawal ${assetSymbol}`;
+            return `Send ${assetSymbol}`;
           } else {
             const assetSymbol = operation.symbol || 'USDC';
-            return `Deposit ${assetSymbol}`;
+            return `Add ${assetSymbol}`;
           }
       default:
           return operation.type.replace(/([A-Z])/g, ' $1').trim();
@@ -428,10 +431,16 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
 
 const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
   const colors = getThemeColors(isDarkMode);
-  const [transactions, setTransactions] = useState([]);
+  const [allTransactions, setAllTransactions] = useState([]);
+  const [displayedTransactions, setDisplayedTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedTab, setSelectedTab] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [stellarCursor, setStellarCursor] = useState(null);
+  const [isFetchingStellar, setIsFetchingStellar] = useState(false);
   const state = useSelector((state) => state);
 
   const refreshSingleTx = async (chainSymbol, txHash) => {
@@ -472,8 +481,7 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
 
       await LocalTxManager.updateTxStatus(state?.wallet?.address, updatedStatus);
       
-      setTransactions(prevTransactions =>
-        prevTransactions.map(tx => {
+      const updateTransactions = (txList) => txList.map(tx => {
           if (tx.id === `wallet_tx_${txHash}` && tx.operations.records[0].chain === chainSymbol) {
             return {
               ...tx,
@@ -489,7 +497,8 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
           }
           return tx;
         })
-      );
+      setAllTransactions(prev => updateTransactions(prev));
+      setDisplayedTransactions(prev => updateTransactions(prev));
 
       return { status: updatedStatus.status, statusColor: updatedStatus.statusColor };
     } catch (err) {
@@ -621,9 +630,10 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
         .transactions()
         .forAccount(publicKey)
         .order('desc')
-        .limit(200)
+        .limit(STELLAR_BATCH_SIZE)
         .call();
 
+      setStellarCursor(transactionsData.records[transactionsData.records.length - 1]?.paging_token || null);
       const processedTransactions = await Promise.all(
         transactionsData.records.map(async (tx) => {
           const operations = await tx.operations();
@@ -666,10 +676,15 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
       );
 
       // Merge and sort all transactions by time (latest first)
-      const allTransactions = [...walletTxs, ...processedTransactions];
-      allTransactions.sort((a, b) => b.sortTime - a.sortTime);
+      const allTxs = [...walletTxs, ...processedTransactions];
+      allTxs.sort((a, b) => b.sortTime - a.sortTime);
 
-      setTransactions(allTransactions);
+      setAllTransactions(allTxs);
+      const initialDisplay = allTxs.slice(0, INITIAL_LOAD);
+      setDisplayedTransactions(initialDisplay);
+      setCurrentPage(1);
+      setHasMore(allTxs.length > INITIAL_LOAD);
+      
     } catch (error) {
       console.log('Error fetching transactions:', error);
     } finally {
@@ -678,34 +693,119 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
     }
   };
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [publicKey]);
+  const fetchMoreStellarTransactions = async () => {
+    if (isFetchingStellar || !stellarCursor) return [];
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchTransactions();
+    setIsFetchingStellar(true);
+    try {
+      const transactionsData = await server
+        .transactions()
+        .forAccount(publicKey)
+        .order('desc')
+        .cursor(stellarCursor)
+        .limit(STELLAR_BATCH_SIZE)
+        .call();
+
+      if (transactionsData.records.length > 0) {
+        setStellarCursor(transactionsData.records[transactionsData.records.length - 1]?.paging_token || null);
+        
+        const processedTransactions = await Promise.all(
+          transactionsData.records.map(async (tx) => {
+            const operations = await tx.operations();
+            const firstOp = operations.records[0];
+            let amount = '0';
+            let isReceived = false;
+
+            if (firstOp.type === 'payment') {
+              amount = firstOp.amount;
+              isReceived = firstOp.to === publicKey;
+            } else if (firstOp.type === 'create_account') {
+              amount = firstOp.starting_balance;
+              isReceived = true;
+            } else if (firstOp.type === 'invoke_host_function') {
+              const resBal = firstOp.asset_balance_changes?.find(
+                resObj => (resObj.to === publicKey || resObj.from === publicKey) && resObj.type === 'transfer'
+              ) || null;
+              if (resBal) {
+                amount = resBal?.amount || '0';
+                isReceived = resBal.to === publicKey;
+              }
+            } else if (['change_trust', 'create_account', 'invoke_host_function'].includes(firstOp.type)) {
+              isReceived = true;
+            } else if (firstOp.type === 'manage_sell_offer' || firstOp.type === 'manage_buy_offer') {
+              isReceived = false;
+              amount = firstOp.amount;
+            }
+
+            return {
+              id: tx.id,
+              date: formatDate(tx.created_at),
+              amount: amount,
+              success: tx.successful,
+              memo: tx.memo || 'No memo',
+              operations: operations,
+              isReceived: isReceived,
+              sortTime: new Date(tx.created_at).getTime(),
+            };
+          })
+        );
+
+        return processedTransactions;
+      }
+      return [];
+    } catch (error) {
+      console.log('Error fetching more Stellar transactions:', error);
+      return [];
+    } finally {
+      setIsFetchingStellar(false);
+    }
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    );
-  }
+  const loadMoreTransactions = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TabBar
-        selectedTab={selectedTab}
-        onTabPress={setSelectedTab}
-        isDarkMode={isDarkMode}
-      />
+    setLoadingMore(true);
+    
+    try {
+      const filteredAll = getFilteredTransactions(allTransactions);
+      const currentDisplayed = getFilteredTransactions(displayedTransactions).length;
+      
+      if (currentDisplayed < filteredAll.length) {
+        const nextBatch = filteredAll.slice(currentDisplayed, currentDisplayed + PAGE_SIZE);
+        setDisplayedTransactions(prev => {
+          const allCurrent = [...prev, ...nextBatch];
+          return allCurrent;
+        });
+        setHasMore(currentDisplayed + PAGE_SIZE < filteredAll.length || stellarCursor !== null);
+      } else if (stellarCursor) {
+        const newStellarTxs = await fetchMoreStellarTransactions();
+        
+        if (newStellarTxs.length > 0) {
+          setAllTransactions(prev => {
+            const updated = [...prev, ...newStellarTxs];
+            updated.sort((a, b) => b.sortTime - a.sortTime);
+            return updated;
+          });
+          
+          const newFiltered = getFilteredTransactions(newStellarTxs);
+          setDisplayedTransactions(prev => [...prev, ...newFiltered.slice(0, PAGE_SIZE)]);
+          setHasMore(newStellarTxs.length >= STELLAR_BATCH_SIZE || stellarCursor !== null);
+        } else {
+          setHasMore(false);
+        }
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Error loading more transactions:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [allTransactions, displayedTransactions, loadingMore, hasMore, stellarCursor, selectedTab]);
 
-      <FlatList
-        data={transactions.filter(tx => {
-          const opType = tx.operations.records[0].type;
+  const getFilteredTransactions = (txList) => {
+    return txList.filter(tx => {
+         const opType = tx.operations.records[0].type;
 
           if (selectedTab === 'all') return true;
 
@@ -740,6 +840,47 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
 
           return true;
         })}
+
+  const handleTabChange = (tab) => {
+    setSelectedTab(tab);
+    const filteredTxs = getFilteredTransactions(allTransactions);
+    setDisplayedTransactions(filteredTxs.slice(0, INITIAL_LOAD));
+    setCurrentPage(1);
+    setHasMore(filteredTxs.length > INITIAL_LOAD);
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [publicKey]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setStellarCursor(null);
+    setDisplayedTransactions([]);
+    setAllTransactions([]);
+    fetchTransactions();
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
+
+  const filteredDisplayedTransactions = getFilteredTransactions(displayedTransactions);
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <TabBar
+        selectedTab={selectedTab}
+        onTabPress={handleTabChange}
+        isDarkMode={isDarkMode}
+      />
+
+      <FlatList
+        data={filteredDisplayedTransactions}
         renderItem={({ item }) => (
           <TransactionCard
             item={item}
@@ -758,13 +899,37 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
         }
         contentContainerStyle={[
           styles.listContent,
-          transactions.length === 0 && { 
+          filteredDisplayedTransactions.length === 0 && { 
             flex: 1, 
             justifyContent: 'center', 
             alignItems: 'center' 
           }
         ]}
         showsVerticalScrollIndicator={false}
+        onEndReached={loadMoreTransactions}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={() => {
+          if (loadingMore) {
+            return (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color={colors.accent} />
+                <Text style={[styles.loadingText, { color: colors.secondaryText }]}>
+                  Loading more...
+                </Text>
+              </View>
+            );
+          }
+          if (!hasMore && filteredDisplayedTransactions.length > 0) {
+            return (
+              <View style={styles.footerLoader}>
+                <Text style={[styles.endText, { color: colors.secondaryText }]}>
+                  • End of transactions •
+                </Text>
+              </View>
+            );
+          }
+          return null;
+        }}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Icon name="history" size={60} color={colors.primaryText} />
@@ -910,7 +1075,19 @@ const styles = StyleSheet.create({
     borderRadius:10,
     paddingHorizontal:10,
     paddingVertical:5
-  }
+  },
+  footerLoader: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 8,
+    fontSize: 14,
+  },
+  endText: {
+    fontSize: 13,
+    fontStyle: 'italic',
+  },
 });
 
 export default StellarTransactionHistory;

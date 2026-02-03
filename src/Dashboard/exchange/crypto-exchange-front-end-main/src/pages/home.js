@@ -99,13 +99,13 @@ export const HomeView = () => {
   ]
 
   const quickActions = [
-    { name: `Convert\nAssets`, icon: "candlestick-chart", iconProvider: "material" },
-    { name: `Deposit\nUSDC`, icon: "generating-tokens", iconProvider: "material" },
-    { name: `Withdrawal\nUSDC`, icon: "currency-exchange", iconProvider: "material" },
+    { name: `Swap\nAssets`, icon: "candlestick-chart", iconProvider: "material" },
+    { name: `Add\nUSDC`, icon: "add", iconProvider: "material" },
+    { name: `Use\nUSDC`, icon: "currency-exchange", iconProvider: "material" },
   ]
   const quickTradeActions = [
     { name: `Manage\nAssets`, icon: "token", iconProvider: "material" },
-    { name: `On/Off\nRamp`, icon: "storefront", iconProvider: "material" },
+    { name: `Fiat\nAccess`, icon: "storefront", iconProvider: "material" },
     { name: `Adv.Swap\nHistory`, icon: "insights", iconProvider: "material" },
     { name: `Transaction\nHistory`, icon: "restore", iconProvider: "material" },
   ]
@@ -210,10 +210,10 @@ export const HomeView = () => {
       }}
       style={[styles.chooseItemContainer, { borderRadius: 5, height: hp(6), justifyContent: "space-around",backgroundColor:theme.cardBg }]}
     >
-      <Image source={{ uri: item.img_0 }} style={{ width: wp(8), height: hp(4) }} />
+      <Image source={{ uri: item.img_0 }} style={{ width: wp(9), height: hp(4) }} />
       <Text style={[styles.chooseItemText,{color:theme.headingTx}]}>{item.name}</Text>
-      <Text style={{ color:theme.headingTx,fontSize: 19 }}>VS</Text>
-      <Image source={{ uri: item.img }} style={{ width: wp(8), height: hp(4), marginLeft: wp(3) }} />
+      <Icon name={"arrow-right"} type={"materialCommunity"} size={19} color={theme.headingTx} />
+      <Image source={{ uri: item.img }} style={{ width: wp(9), height: hp(4), marginLeft: wp(0) }} />
       <Text style={[styles.chooseItemText,{color:theme.headingTx}]}>{item.name_0}</Text>
     </TouchableOpacity>
   );
@@ -262,7 +262,7 @@ export const HomeView = () => {
   return (
     <>
       <Exchange_screen_header
-        title="Stellar-DEX"
+        title="Stellar SDEX"
         onLeftIconPress={() => navigation.navigate("Home")}
         onRightIconPress={() => {
           console.log("Right icon pressed");
@@ -271,7 +271,18 @@ export const HomeView = () => {
 
       <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ backgroundColor: theme.bg }}>
         <View style={[styles.quickActionWrapper, { backgroundColor: theme.cardBg, borderColor: theme.smallCardBorderColor }]}>
-          <Text style={[styles.headingTx, { color: theme.headingTx }]}>Execute Swap</Text>
+         <View style={{
+          flexDirection:"row",
+          justifyContent:"space-between",
+          alignItems:"center",
+         }}>
+           <Text style={[styles.headingTx, { color: theme.headingTx }]}>Start Swap</Text>
+             <View style={{ flexDirection: "row",alignItems:"center" }}>
+                <Image source={{uri:CHART_API[0].img_0}} width={wp(7)} height={hp(3.2)} />
+                <Text style={[styles.infoText, { color: theme.headingTx }]}>Avg. Network Fee</Text>
+                <Text style={[styles.infoText, { color: theme.headingTx }]}>~ 0.00001  </Text>
+              </View>
+         </View>
           <View style={[styles.quickActionRow]}>
             {quickActions.map((item, index) => {
               return (
@@ -283,12 +294,11 @@ export const HomeView = () => {
                 </View>
               )
             })}
-            <View style={[styles.infoCon,{backgroundColor:theme.smallCardBg}]}>
+            <View style={[styles.infoCon,{}]}>
               <View style={{ flexDirection: "row",paddingHorizontal:wp(1),alignItems:"center" }}>
-                <Image source={{uri:CHART_API[0].img}} width={wp(7)} height={hp(3.2)} />
                 <View>
-                  <Text style={[styles.infoText, { color: theme.headingTx }]}>USDC</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(16.9) }}>
+                  <Text style={[styles.infoText, { color: theme.headingTx }]}>USDC Balance:</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(16.9),alignSelf:"center" }}>
                   <Text style={[styles.infoText,{ color: theme.cardSubTx }]}>
                     {state?.STELLAR_ADDRESS_STATUS === false
                       ? "0.00"
@@ -297,15 +307,6 @@ export const HomeView = () => {
                         .find((b, _, arr) => parseFloat(b.balance) > 0 && (b === arr[0] || parseFloat(arr[0].balance) <= 0))
                         ?.balance || "0.00"}
                   </Text>
-                </ScrollView>
-                </View>
-              </View>
-              <View style={{ flexDirection: "row",marginTop:hp(1),paddingHorizontal:wp(1) }}>
-                <Image source={{uri:CHART_API[0].img_0}} width={wp(7)} height={hp(3.2)} />
-                 <View>
-                <Text style={[styles.infoText, { color: theme.headingTx }]}>Trade Fee</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(19) }}>
-                  <Text style={[styles.infoText, { color: theme.headingTx }]}>${state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens.find(d => d.chain.toLowerCase() === "stellar" && d.symbol === "XLM")?.price * 0.00001 || "0.0000002"}</Text>
                 </ScrollView>
                 </View>
               </View>
@@ -368,7 +369,9 @@ export const HomeView = () => {
               accessibilityLabel="Change asset pair for trade"
             >
               <Text style={[styles.tradeButtonText, { color: theme.cardSubTx }]}>
-                {CHART_API[chartIndex].name} vs {CHART_API[chartIndex].name_0}
+                {CHART_API[chartIndex].name} 
+                <Icon name={"arrow-right"} type={"materialCommunity"} size={14} color={theme.headingTx}/>
+                {CHART_API[chartIndex].name_0}
               </Text>
               <Icon name={"expand-more"} type={"material"} color={theme.cardSubTx} size={24} />
             </TouchableOpacity>
@@ -421,7 +424,7 @@ export const HomeView = () => {
             </Chart>
           )}
         </View>
-        <CandleStickChart visible={apiDataLoading} activeTheme={state.THEME.THEME} pair={PAIRS[chartIndex]}/>
+        {/* <CandleStickChart visible={apiDataLoading} activeTheme={state.THEME.THEME} pair={PAIRS[chartIndex]}/> */}
         <View style={styles.tradeButtonWrapper}>
           <Modal animationType="slide" transparent visible={openChartApi} onRequestClose={() => setOpenChartApi(false)}>
             <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setOpenChartApi(false)}>
@@ -447,7 +450,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   quickActionWrapper: {
-    paddingVertical: hp(2),
+    paddingVertical: hp(1.3),
     borderRadius: 20,
     marginTop: hp(1),
     marginHorizontal: wp(2.5),
@@ -456,7 +459,7 @@ const styles = StyleSheet.create({
   quickActionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: hp(2.5),
+    marginTop: hp(1),
     paddingHorizontal: wp(5),
   },
   accountDetils: {
@@ -522,7 +525,8 @@ const styles = StyleSheet.create({
     maxWidth: wp(50),
     alignItems: "center",
     borderRadius: hp(1.6),
-    flexDirection: "row"
+    flexDirection: "row",
+    justifyContent:"center"
   },
   tradeButtonText: {
     fontSize: 14,
@@ -560,7 +564,7 @@ const styles = StyleSheet.create({
   chooseItemText: {
     fontSize: 19,
     color: "#fff",
-    marginLeft: wp(3)
+    marginLeft: wp(-10)
   },
   headingTx: {
     fontSize: 16,
@@ -585,11 +589,11 @@ const styles = StyleSheet.create({
   },
   infoCon:{
     paddingVertical:hp(1.2),
-    width:wp(32),
+    width:wp(34),
     justifyContent:"center",
     alignItems:"flex-start",
     borderRadius:15,
-    paddingHorizontal:5,
+    paddingHorizontal:3,
     marginRight:hp(-1)
   },
   infoText:{

@@ -17,6 +17,7 @@ import { colors } from '../Screens/ThemeColorsConfig';
 import { GetWalletTokens, TemporaryTokens } from '../utilities/TokenUtils';
 import CustomInfoProvider from './exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import InfoComponent from './exchange/crypto-exchange-front-end-main/src/components/InfoComponent';
 
 function InvestmentChart() {
   const navigation = useNavigation();
@@ -28,6 +29,7 @@ function InvestmentChart() {
   const [loading, setLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [tokenInfoList, setTokenInfoList] = useState([]);
+  const [showCustomInfo,setshowCustomInfo]=useState(false);
   const avilableSoonAsset={
     chain: 'BTC',
     name: 'Bitcoin',
@@ -205,9 +207,8 @@ function InvestmentChart() {
       return (
         <TouchableOpacity
           style={[styles.coinCard, { backgroundColor: theme.cardBg }]}
-          onPress={() => navigation.navigate('Asset_info', { asset_type: item })}
+          onPress={() => {item.chain==="BTC"?setshowCustomInfo(true):navigation.navigate('Asset_info', { asset_type: item })}}
           key={index.toString()}
-          disabled={item.chain==="BTC"}
         >
           <View style={styles.coinContent}>
             <View style={[styles.coinIcon, { backgroundColor: '#F7931A1A' }]}>
@@ -231,7 +232,7 @@ function InvestmentChart() {
                 </Text>
                 <Text style={[styles.networkBadge, { color: theme.inactiveTx }]}>({item.chain})</Text>
               </View>
-              <Text style={[styles.coinPrice, { color: theme.inactiveTx }]}>{item.chain==="BTC"?"BTC wallet will be enabled soon.":"$"+priceValue}</Text>
+              <Text style={[styles.coinPrice, { color: theme.inactiveTx }]}>{item.chain==="BTC"?"Direct wallet support coming soon.":"$"+priceValue}</Text>
             </View>
             <View style={styles.balanceSection}>
               <Text style={[styles.balanceAmount, { color: theme.headingTx }]}>
@@ -241,19 +242,6 @@ function InvestmentChart() {
                 {state&&state.isTotalInUSDVisible?"$"+balanceUSD:"$X.XXXXX"}
               </Text>
             </View>
-            <TouchableOpacity style={styles.tradeButton} onPress={() => {
-              navigation.navigate("newOffer_modal", {
-                purchesReq: balanceValue === 0,
-                tradeAssetType:
-                  item.chain === "BSC"
-                    ? "ETH"
-                    : ["ETH", "BTC"].includes(item.chain)
-                      ? item.chain
-                      : item.symbol?.toUpperCase(), tradeAssetIssuer: ["ETH", "BTC", "BSC"].includes(item.chain) ? "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" : null
-              })
-            }}>
-              <Text style={styles.tradeButtonText}>Convert</Text>
-            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       );
@@ -263,6 +251,7 @@ function InvestmentChart() {
 
   return (
     <View style={[styles.watchlistCon, { backgroundColor: theme.bg }]}>
+      <InfoComponent visible={showCustomInfo} type='' message='Direct BTC wallet support is not yet available. You can still access BTC through on-chain swaps via SDEX.' onClose={()=>{setshowCustomInfo(false)}} />
         {loading ? (
         <View style={styles.waitCon}>
           <ActivityIndicator color="#5B6FED" size="large" />
@@ -270,17 +259,6 @@ function InvestmentChart() {
         </View>
         ) : (
           <>
-          <View style={[styles.topHeaderCon,{backgroundColor:theme.cardBg}]}>
-            <Text style={[styles.topHeaderTxt,{width: wp(45),textAlign:"left",paddingLeft:wp(2),color:theme.headingTx,marginBottom:hp(0.2)}]}>Your Assets</Text>
-            <Text style={[styles.topHeaderTxt,{color:theme.headingTx,marginBottom:hp(0.2)}]}>Balance</Text>
-            <View style={styles.floatCon}>
-              <Text style={{color:theme.headingTx,fontSize:14,fontWeight:"400"}}>Fee: ~ $</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(10) }}>
-                                <Text style={[styles.infoText, { color:theme.headingTx }]}>{state && state.activeWalletPortFolio && state.activeWalletPortFolio.tokens.find(d => d.chain.toLowerCase() === "stellar" && d.symbol === "XLM")?.price * 0.00001 || "0.0000002"}</Text>
-                              </ScrollView>
-            </View>
-            <Text style={[styles.topHeaderTxt,{color:theme.headingTx}]}>S-DEX</Text>
-          </View>
           <FlatList
             data={tokenInfoList}
             renderItem={renderTokens}
@@ -533,20 +511,7 @@ const styles = StyleSheet.create({
     textAlign:"center",
     fontSize:16,
     fontWeight:"500",
-    marginBottom:hp(1.5)
+    paddingVertical:hp(0.5)
   },
-  floatCon:{
-    flexDirection:"row",
-    backgroundColor:"#81848f77",
-    zIndex:999,
-    position:"absolute",
-    bottom:0,
-    borderBottomRightRadius:8,
-    borderTopLeftRadius:9,
-    paddingHorizontal:wp(1.5),
-    paddingVertical:hp(0.1),
-    right:3,
-    alignItems:"center"
-  }
 
 });

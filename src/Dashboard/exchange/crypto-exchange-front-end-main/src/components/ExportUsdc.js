@@ -20,7 +20,6 @@ import AllbridgeTxTrack from './AllbridgeTxTrack';
 import CustomInfoProvider from './CustomInfoProvider';
 import { convertMultiple } from '../utils/UsdPriceHandler';
 import { colors } from '../../../../../Screens/ThemeColorsConfig';
-import RecentCrossChainTx from '../../../../reusables/RecentCrossChainTx';
 
 const ExportUSDC = () => {
   const Focused = useIsFocused();
@@ -335,7 +334,7 @@ console.log("resQuotes-",resQuotes)
     }
   return (
     <View style={[styles.container,{backgroundColor:theme.bg}]}>
-      <Exchange_screen_header title="Allbridge" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+      <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
       <WalletActivationComponent
         isVisible={stellarWalletActivated}
         onClose={() => { handleWalletActivationComponent() }}
@@ -346,8 +345,6 @@ console.log("resQuotes-",resQuotes)
       />
       <ScrollView style={[styles.scrollCon,{backgroundColor:theme.bg}]}>
         <View style={[styles.card,{backgroundColor:theme.cardBg,flexDirection:"column"}]}>
-        
-        <Text style={[styles.headingText,{color:theme.headingTx}]}>Withdrawal USDC to Trading Wallet</Text>
         {/* Select network */}
         <TouchableOpacity disabled={true} style={[styles.modalOpen,{backgroundColor:theme.bg}]} onPress={() => { setchooseNetwork(true); }}>
           <View style={{ flexDirection: "row" }}>
@@ -479,7 +476,7 @@ console.log("resQuotes-",resQuotes)
             </View>
 
             <View style={styles.quoteRow}>
-              <Text style={[styles.quoteLabel,{color:theme.inactiveTx}]}>Unit Price</Text>
+              <Text style={[styles.quoteLabel,{color:theme.inactiveTx}]}>Conversion Rate</Text>
               <Text style={[styles.quoteValue,{color:theme.headingTx}]}>
                 1 {!selectedAssetDetils?sendAseets[0].symbole:selectedAssetDetils.symbole} = {resQuotes.conversionRate} {!selectedReciveAssetDetils?reciveAsset[0].symbole:selectedReciveAssetDetils.symbole}
               </Text>
@@ -603,7 +600,6 @@ console.log("resQuotes-",resQuotes)
             </View>
           </TouchableOpacity>
         </Modal>
-        <RecentCrossChainTx activeWalletPublicKey={state && state.wallet && state.wallet.address} theme={state?.THEME?.THEME}/>
         </ScrollView>
       <View style={styles.allBridgeTxCon}>
         <AllbridgeTxTrack txs={showTxHash} isDarkMode={state?.THEME?.THEME} showTx={showTx} closeTx={()=>{setshowTx(false)}} />
@@ -652,7 +648,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: hp(1.5),
     borderRadius: 10,
     alignSelf: "center",
     paddingVertical: hp(1.8),

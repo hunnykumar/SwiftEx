@@ -14,7 +14,6 @@ import WalletActivationComponent from '../utils/WalletActivationComponent';
 import { getToken, PPOST, proxyRequest } from '../api';
 import { ShowErrotoast } from '../../../../reusables/Toasts';
 import { swap_prepare } from '../../../../../../All_bridge';
-import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
 import { ethers } from 'ethers';
 import { debounce } from 'lodash';
 import { fetchBSCTokenInfo, fetchTokenInfo } from '../../../../../ethSwap/tokenUtils';
@@ -26,7 +25,6 @@ import { colors } from '../../../../../Screens/ThemeColorsConfig';
 import tokenList from "../../../../../Dashboard/tokens/tokenList.json";
 import PancakeList from "../../../../../Dashboard/tokens/pancakeSwap/PancakeList.json";
 import LocalTxManager from '../../../../../utilities/LocalTxManager';
-import RecentCrossChainTx from '../../../../reusables/RecentCrossChainTx';
 import { getWalletBalance } from '../utils/getWalletInfo/EtherWalletService';
 
 const CrossChainTx = ({ route="ETH" }) => {
@@ -396,7 +394,7 @@ const CrossChainTx = ({ route="ETH" }) => {
           <TouchableOpacity style={[styles.buyBtnCon,{backgroundColor:"#4052D6"}]} onPress={() => {
             setchooseModalVisible_choose(false),
               setTimeout(() => {
-                navigation.navigate("KycComponent", { tabName: "Buy" })
+                navigation.navigate("KycComponent", {cryptoRequest:item.symbol,cryptoRequestChain:currentWalletType==="BNB"?"BNB":"ETH"})
               },300)
           }
           }>
@@ -802,8 +800,8 @@ const CrossChainTx = ({ route="ETH" }) => {
     : resQuotes?.fee?.stablecoin;
 
   return (
-    <View style={{ backgroundColor: theme.bg, width: wp(100), height: hp(150) }}>
-   
+    <View style={{ backgroundColor: theme.bg, width: wp(100), height: hp(100) }}>
+
       <WalletActivationComponent
         isVisible={ACTIVATION_MODAL_PROD}
         onClose={() => setACTIVATION_MODAL_PROD(false)}
@@ -870,13 +868,18 @@ const CrossChainTx = ({ route="ETH" }) => {
                 </View>
                 <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30} />
               </TouchableOpacity>
-              <View style={[styles.InsufficientActionsCon, { backgroundColor: theme.cardBg }]}>
+              <View style={{alignItems:"center",flexDirection:"row",justifyContent:"center"}}>
+              {showExpandCon && <View style={[styles.InsufficientActionsCon]}>
                 <TouchableOpacity style={[styles.InsufficientActionsBtn, { backgroundColor: "#4052D6" }]} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId, activeAsset: selectedToken }) }}>
-                  <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Swap</Text>
+                  <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" }}>Swap</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.InsufficientActionsBtn, { backgroundColor: "#fff" }]} onPress={() => { navigation.navigate("KycComponent", { tabName: "Buy" }) }}>
-                  <Text style={{ color: "#4052D6", fontSize: 16, fontWeight: "600" }}>Buy</Text>
+                <TouchableOpacity style={[styles.InsufficientActionsBtn, { backgroundColor: "#fff" }]} onPress={() => { { navigation.navigate("KycComponent", { cryptoRequest: selectedToken.symbol, cryptoRequestChain: currentWalletType === "BNB" ? "BNB" : "ETH" }) } }}>
+                  <Text style={{ color: "#4052D6", fontSize: 14, fontWeight: "600" }}>Buy</Text>
                 </TouchableOpacity>
+              </View>}
+                <TouchableOpacity onPress={() => { setShowExpandCon(!showExpandCon ? true : false) }}>
+                <Icon name={showExpandCon?"close-circle-outline":"plus-circle-outline"} type={"materialCommunity"} color={theme.headingTx} size={30} />
+              </TouchableOpacity>
               </View>
             </View>
             <View style={[styles.modalOpen, { paddingVertical: hp(1), backgroundColor: theme.bg }]}>
@@ -1148,7 +1151,6 @@ const CrossChainTx = ({ route="ETH" }) => {
             <Text style={styles.nextButtonText}>{errorMsg !== null ? errorMsg : parseFloat(WALLETBALANCE) <= 0?"Insufficient Balance":"Confirm Transaction"}</Text>
           )}
         </TouchableOpacity>
-        <RecentCrossChainTx activeWalletPublicKey={state && state.wallet && state.wallet.address} theme={state?.THEME?.THEME}/>
 
         <Modal animationType="slide" transparent={true} visible={chooseModalVisible}>
           <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setChooseModalVisible(false)}>
@@ -1408,7 +1410,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginVertical: 16,
-    marginBottom:hp(5)
+    marginBottom:hp(2)
   },
   nextButtonText: {
     color: 'white',
@@ -1534,17 +1536,13 @@ const styles = StyleSheet.create({
   InsufficientActionsCon:{
     flexDirection:"row",
     alignItems:"center",
-    justifyContent:"space-evenly",
-    width:wp(48.6),
-    borderTopRightRadius:10,
-    borderBottomRightRadius:10,
+    justifyContent:"space-between",
+    width:wp(35),
     paddingVertical:10,
-    borderLeftWidth:0.5,
-    borderLeftColor:"gray"
   },
   InsufficientActionsBtn:{
     borderRadius:8,
-    width:wp(20),
+    width:wp(16),
     paddingVertical:hp(1.1),
     alignItems:"center"
   },
@@ -1606,6 +1604,11 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1),
     marginTop:hp(1.3)
   },
+  suggestTag: {
+    alignSelf: "flex-start",
+    marginLeft:wp(1),
+    fontSize:13
+  }
 });
 
-export default CrossChainTx;
+export default CrossChainTx

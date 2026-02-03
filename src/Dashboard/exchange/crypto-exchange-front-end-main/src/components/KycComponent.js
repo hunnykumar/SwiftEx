@@ -73,7 +73,7 @@ const KycComponent = ({ route }) => {
       setbtnLoading(false)
       setVisibleAlert(false);
       setVisibleAlertLoading(false)
-      setamountSend(route?.params?.cryptoRequest?"1374":0.00);
+      setamountSend(route?.params?.cryptoRequest==="XLM"?"1374":0.00);
       setoperationType("BUY");
       setoperationError(null);
       setqoutesLoading(false);
@@ -287,8 +287,8 @@ const KycComponent = ({ route }) => {
   }
 
   useEffect(()=>{
-    setamountSend(route?.params?.cryptoRequest?"1374":0.00);
-    setSelectedCrypto(route?.params?.cryptoRequest?{
+    setamountSend(route?.params?.cryptoRequest==="XLM"?"1374":0.00);
+    setSelectedCrypto(route?.params?.cryptoRequest==="XLM"?{
         "crypto": "XLM",
         "network": "XLM",
         "buyEnable": 1,
@@ -328,8 +328,8 @@ const KycComponent = ({ route }) => {
     setoperationError(null);
     setqoutesLoading(false);
     setQoutesRes(null);
-    setamountSend(route?.params?.cryptoRequest?"1374":0.00);
-    if (route?.params?.cryptoRequest) {
+    setamountSend(route?.params?.cryptoRequest==="XLM"?"1374":0.00);
+    if (route?.params?.cryptoRequest==="XLM") {
       waitAndQoutesFetch("1374", operationType, {
         "crypto": "XLM",
         "network": "XLM",
@@ -353,10 +353,17 @@ const KycComponent = ({ route }) => {
         "countryName": "India"
       })
     }
+
+    if(route?.params?.cryptoRequestChain){
+      const requestChain=route.params.cryptoRequestChain==="BNB"?"BSC":route.params.cryptoRequestChain;
+      const find=AlchemyCryptoTokens.filter(find=> find.network===requestChain && find.crypto===route.params.cryptoRequest)
+      console.log(JSON.stringify(find))
+      setSelectedCrypto(find[0]);
+    }
   },[operationType])
 
   useEffect(()=>{
-    setamountSend(route?.params?.cryptoRequest?"1374":0.00);
+    setamountSend(route?.params?.cryptoRequest==="XLM"?"1374":0.00);
     setbtnLoading(false);
     setVisibleAlert(false);
     setVisibleAlertLoading(false);
@@ -423,7 +430,7 @@ const KycComponent = ({ route }) => {
           keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
         >
           <Exchange_screen_header 
-            title={"On/Off Ramp"} 
+            title={"Fiat Access"} 
             onLeftIconPress={() => navigation.goBack()} 
             onRightIconPress={() => console.log('Pressed')} 
           />
@@ -557,16 +564,6 @@ const KycComponent = ({ route }) => {
                     </View>
                   </TouchableOpacity>}
               </View>
-
-            {/* Wallet Address */}
-            <View style={[styles.walletAddress,{backgroundColor:theme.cardBg}]}>
-            <Text style={[styles.sectionTitle,{color:theme.inactiveTx}]}>Wallet Address:</Text>
-            <Text style={[styles.addressText,{color:theme.inactiveTx}]}>{state&&state.wallet && state.wallet.address?.slice(0,11)}......{state&&state.wallet && state.wallet.address?.slice(-8)}</Text>
-            </View>
-            <View style={[styles.walletAddress,{backgroundColor:theme.cardBg,marginTop:hp(-2.4)}]}>
-            <Text style={[styles.sectionTitle,{color:theme.inactiveTx}]}>Stellar Address:</Text>
-            <Text style={[styles.addressText,{color:theme.inactiveTx}]}>{state&&state.STELLAR_PUBLICK_KEY?.slice(0,8) || null}......{state&&state.STELLAR_PUBLICK_KEY?.slice(-8) || null}</Text>
-            </View>
 
               {/* Info Container */}
                 {qoutesLoading&&QoutesRes===null?

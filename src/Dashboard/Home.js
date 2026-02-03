@@ -108,7 +108,7 @@ const Dashboard = ({ navigation }) => {
               iconName = focused?"ios-pie-chart":"ios-pie-chart-outline";
               iconProvider = "ionicon";
               break;
-            case "Market":
+            case "Discover":
               iconName = focused?"candlestick-chart":"candlestick-chart";
               iconProvider = "material";
               break;
@@ -142,7 +142,7 @@ const Dashboard = ({ navigation }) => {
             marginBottom: Platform.OS === "android" ? 8 : 1,
           }}
         >
-          {route.name==="ExchangeHome"?"S-DEX":route.name}
+          {route.name==="ExchangeHome"?"SDEX":route.name}
         </Text>
       );
     },
@@ -181,7 +181,7 @@ const Dashboard = ({ navigation }) => {
         }}
       />
       <Tab.Screen
-        name="Market"
+        name="Discover"
         component={Market}
         options={{
           headerShown: false,

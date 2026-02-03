@@ -27,6 +27,7 @@ import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import Stellar_image from "../../assets/Stellar_(XLM).png";
 import brridge_new from "../../assets/brridge_new.png";
 import TokenQrCode from "./Modals/TokensQrCode";
+import InfoComponent from "./exchange/crypto-exchange-front-end-main/src/components/InfoComponent";
 
 const Asset_info = ({ route }) => {
   const state = useSelector((state) => state);
@@ -53,6 +54,9 @@ const Asset_info = ({ route }) => {
   const [currentPrice, setCurrentPrice] = useState(0);
   const [priceChange, setPriceChange] = useState(0);
   const [priceTime, setPriceTime] = useState("");
+  const [infoVisible,setinfoVisible]=useState("");
+  const [infotype,setinfotype]=useState("");
+  const [infomessage,setinfomessage]=useState("");
 
   const assetSymbol = useMemo(
     () => asset_type?.symbol?.toUpperCase() || asset_type?.symbol,
@@ -259,21 +263,44 @@ const Asset_info = ({ route }) => {
   }, [token, navigation]);
 
   const handleSwap = useCallback(() => {
-    navigation.navigate("classic", {
-      Asset_type: assetSymbol === "XLM" ? "ETH" : assetSymbol,
-    });
+ navigation.navigate("newOffer_modal", {
+                purchesReq:0,
+                tradeAssetType:
+                  assetSymbol === "BSC"
+                    ? "ETH"
+                    : ["ETH"].includes(assetSymbol)
+                      ? assetSymbol
+                      : assetSymbol?.toUpperCase(), tradeAssetIssuer: ["ETH", "BTC", "BSC"].includes(assetSymbol) ? "GBFXOHVAS43OIWNIO7XLRJAHT3BICFEIKOJLZVXNT572MISM4CMGSOCC" : null
+              })
   }, [token, assetSymbol, navigation]);
 
   const handleHistory = useCallback(() => {
     navigation.navigate("Transactions");
   }, []);
 
-  const ActionButton = ({ icon,iconProvider, label, onPress, disabled }) => (
+  const ActionButton = ({ icon,iconProvider, label, onPress, disabled, customInfo, customInfoTxt }) => (
     <TouchableOpacity
       disabled={disabled || (chartLoading && loading)}
       style={styles.actionButton}
       onPress={onPress}
     >
+      {customInfo&&<TouchableOpacity style={{
+        zIndex:20,
+        position:"absolute",
+        top:-10,
+        right:-5
+      }} onPress={()=>{
+        setinfomessage(customInfoTxt);
+        setinfotype("");
+        setinfoVisible(true)
+      }}>
+        <Icon
+          type={"materialCommunity"}
+          name={"information-outline"}
+          size={23}
+          color={chartLoading && loading ? "gray" : isDark ? "#FFF" : "#000"}
+        />
+      </TouchableOpacity>}
       <View
         style={[
           styles.actionIcon,
@@ -334,7 +361,12 @@ const Asset_info = ({ route }) => {
         title={assetSymbol}
         onLeftIconPress={() => navigation.goBack()}
       />
-
+      <InfoComponent
+        visible={infoVisible}
+        type={infotype}
+        message={infomessage}
+        onClose={() => setinfoVisible(false)}
+      />
       <View
         style={[
           styles.container,
@@ -501,22 +533,26 @@ const Asset_info = ({ route }) => {
                 onPress={handleRequest}
               />
               <ActionButton
+                icon="swap-vert"
+                iconProvider={"material"}
+                label={`Swap${"\n"}(SDEX)`}
+                onPress={handleSwap}
+                customInfo={true}
+                customInfoTxt={"This swap runs on Stellar’s on-chain SDEX. A small network fee (typically a fraction of a cent) is paid to the Stellar network per swap."}
+              />
+              <ActionButton
                 icon="credit-card"
                 iconProvider={"material"}
                 label="Buy"
                 onPress={handleBuy}
               />
               <ActionButton
-                icon="swap-vert"
-                iconProvider={"material"}
-                label="Swap"
-                onPress={handleSwap}
-              />
-              <ActionButton
-                icon="history"
-                iconProvider={"materials"}
-                label="History"
-                onPress={handleHistory}
+                icon="bridge"
+                iconProvider={"materialCommunity"}
+                label="Bridge"
+                onPress={()=>{navigation.navigate("classic", {
+      Asset_type: assetSymbol === "XLM" ? "ETH" : assetSymbol,
+    })}}
               />
             </View>
 
@@ -754,6 +790,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: 14,
     fontWeight: "400",
+    textAlign:"center"
   },
   aboutSection: {
     paddingHorizontal: wp(5),
