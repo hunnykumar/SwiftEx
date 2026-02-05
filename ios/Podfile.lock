@@ -1742,6 +1742,14 @@ PODS:
     - ReactCommon/turbomodule/core
     - Yoga
   - SocketRocket (0.7.0)
+  - SwiftProtobuf (1.33.3)
+  - TrustWalletCore (4.6.0):
+    - TrustWalletCore/Core (= 4.6.0)
+  - TrustWalletCore/Core (4.6.0):
+    - TrustWalletCore/Types
+  - TrustWalletCore/Types (4.6.0):
+    - WalletCoreSwiftProtobuf
+  - WalletCoreSwiftProtobuf (1.29.0)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -1834,6 +1842,8 @@ DEPENDENCIES:
   - RNSnackbar (from `../node_modules/react-native-snackbar`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
+  - SwiftProtobuf (~> 1.0)
+  - TrustWalletCore (~> 4.0)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -1852,6 +1862,9 @@ SPEC REPOS:
     - OpenSSL-Universal
     - PromisesObjC
     - SocketRocket
+    - SwiftProtobuf
+    - TrustWalletCore
+    - WalletCoreSwiftProtobuf
 
 EXTERNAL SOURCES:
   boost:
@@ -2134,8 +2147,11 @@ SPEC CHECKSUMS:
   RNSVG: a01c9a4296ee3317b686b0067d7b1c3d854e2080
   RNVectorIcons: d629dbc9c0c9ec0fcb6aea868d4d66c5a34e9312
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
+  SwiftProtobuf: e1b437c8e31a4c5577b643249a0bb62ed4f02153
+  TrustWalletCore: a63eef893eeb285c3f689d2bfc89673419f65474
+  WalletCoreSwiftProtobuf: a4798576a2d309511fc45f81843d348732ec571d
   Yoga: 36d44f1d31d7c11be1067e5c7a70a12c2eed355c
 
-PODFILE CHECKSUM: f884d184c60892444b1f69996d862162e4d47765
+PODFILE CHECKSUM: 13cb331c90323fe82888c2df272b07cbf4d6c5a1
 
 COCOAPODS: 1.16.2

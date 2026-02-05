@@ -1,5 +1,5 @@
 import { useIsFocused, useNavigation } from "@react-navigation/native";
-import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { ActivityIndicator, Image, NativeModules, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp,
@@ -96,7 +96,10 @@ const Assets_manage = ({ route }) => {
                 )
                 .setTimeout(30)
                 .build();
-            transaction.sign(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY));
+            const txXDR = transaction.toXDR();
+            const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
+            const signatureBuffer = Buffer.from(signedTx.signature, 'base64');
+            transaction.addSignature(signedTx.publicKey, signatureBuffer.toString('base64'));
             const result = await server.submitTransaction(transaction);
             console.log(`Trustline updated successfully`);
             Snackbar.show({
@@ -158,7 +161,10 @@ const Assets_manage = ({ route }) => {
                 )
                 .setTimeout(30)
                 .build();
-            transaction.sign(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY));
+            const txXDR = transaction.toXDR();
+            const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
+            const signatureBuffer = Buffer.from(signedTx.signature, 'base64');
+            transaction.addSignature(signedTx.publicKey, signatureBuffer.toString('base64'));
             const result = await server.submitTransaction(transaction);
             console.log("Trustline remove aand updated successfully",result);
             Snackbar.show({

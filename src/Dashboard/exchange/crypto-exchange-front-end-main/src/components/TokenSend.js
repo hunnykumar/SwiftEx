@@ -12,7 +12,8 @@ import {
   Alert,
   Modal,
   PermissionsAndroid,
-  Linking
+  Linking,
+  NativeModules
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -38,6 +39,7 @@ import QRScannerComponent from "../../../../Modals/QRScannerComponent";
 import TokenTxDetails from "./TokenTxDetails";
 import LinearGradient from "react-native-linear-gradient";
 import ShortTermStorage from "../../../../../utilities/ShortTermStorage";
+import AccessNativeStorage from "../../../../Wallets/AccessNativeStorage";
 const TokenSend = ({ route }) => {
   const toast = useToast();
   const FOCUSED = useIsFocused()
@@ -102,13 +104,40 @@ const TokenSend = ({ route }) => {
         value: res.value ? ethers.BigNumber.from(res.value) : ethers.BigNumber.from(0),
       };
 
-      console.log("Transaction to sign:", upgradedTx);
-      const signedTx = await wallet.signTransaction(upgradedTx);
-      console.log("Signed transaction:", signedTx);
+      const { TransactionSigner } = NativeModules;
+      const tx = {
+        chainId: parseInt(res.chainId) || 56,
+        nonce: ethers.utils.hexlify(res.nonce),
+        gasPrice: ethers.utils.hexlify(
+          ethers.BigNumber.from(res.gasPrice)
+        ),
+        gasLimit: ethers.utils.hexlify(
+          ethers.BigNumber.from(res.gasLimit)
+        ),
+        to: res.unsignedTx?.to || tokenAddress,
+        value: ethers.utils.hexlify(
+          res.value ? ethers.BigNumber.from(res.value) : 0
+        ),
+        data: (res.unsignedTx?.data || data).startsWith("0x")
+          ? (res.unsignedTx?.data || data)
+          : "0x" + (res.unsignedTx?.data || data),
+      };
+      const signedTx = await TransactionSigner.signTransaction(
+        "bsc",
+        address,
+        JSON.stringify(tx),
+        tx.chainId
+      );
+      let rawTx = signedTx.signedTx;
+      
+      if (rawTx.startsWith("0x0x")) {
+        rawTx = rawTx.replace(/^0x/, "");
+      }
+
       const respoExe = await proxyRequest(
         "/v1/bsc/transaction/broadcast",
         PPOST,
-        { signedTx: signedTx }
+        { signedTx: rawTx }
       );
       console.log("Broadcast response:", respoExe);
       if (respoExe?.err) {
@@ -123,7 +152,7 @@ const TokenSend = ({ route }) => {
              CustomInfoProvider.show("error", "Transaction failed try again.");
       }
     } catch (error) {
-      console.log("Transaction Error:", error);
+      console.error("Transaction Error:", error);
       CustomInfoProvider.show("error", "Transaction failed try again.");
     } finally {
       setAddress();
@@ -150,19 +179,28 @@ const TokenSend = ({ route }) => {
       if (preInfo.err) {
         alert("error", preInfo.err.message||"Something went wrong...")
       }
-      const upgradedTx = {
+      const { TransactionSigner } = NativeModules;
+      const gasPriceBN = ethers.BigNumber.from(preInfo.res.gasFeeData.gasPrice);
+      const tx = {
+        nonce: ethers.utils.hexlify(preInfo.res.transactionCount),
+        gasPrice: ethers.utils.hexlify(gasPriceBN),
+        gasLimit: ethers.utils.hexlify(100000),
         to: tokenAddress,
+        value: "0x0",
         data: data,
-        gasLimit: ethers.BigNumber.from(100000),
-        gasPrice: ethers.BigNumber.from(preInfo.res.gasFeeData.gasPrice),
-        nonce: preInfo.res.transactionCount,
-        chainId: 1,
-        value: ethers.BigNumber.from(0)
       };
-    const signedTx = await wallet.signTransaction(upgradedTx);
-      console.log("signedTx", signedTx)
-      const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, { signedTx: signedTx });
-      console.log("respoExe:00---", respoExe)
+      
+      const signedTx = await TransactionSigner.signTransaction(
+        "eth",
+        wallet.address,
+        JSON.stringify(tx),
+        1
+      );
+      let rawTx = signedTx.signedTx;
+      if (rawTx.startsWith("0x0x")) {
+        rawTx = rawTx.replace(/^0x/, "");
+      }
+      const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, { signedTx: rawTx });
       if (respoExe?.res?.txHash) {
         alert("success", `Transaction successful!`);
         await ShortTermStorage.saveTx(state && state.wallet && state.wallet.address,{chain: "ETH",typeTx: "Token Send",status: "Pending",hash: respoExe?.res?.txHash});

@@ -1,10 +1,8 @@
-import { SaveTransaction } from "../../utilities/utilities";
 import React, { useRef, useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
-  Button,
   ActivityIndicator,
   TouchableOpacity,
   ScrollView,
@@ -12,8 +10,6 @@ import {
   Pressable,
   Modal,
   Platform,
-  Image,
-  Alert,
   PermissionsAndroid,
   Linking,
   Keyboard
@@ -23,7 +19,6 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { Animated } from "react-native";
-import title_icon from "../../../assets/title_icon.png";
 import { useDispatch, useSelector } from "react-redux";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
@@ -32,19 +27,14 @@ import {
   getBalance,
   getEthBalance,
   getMaticBalance,
-  getXrpBalance,
 } from "../../components/Redux/actions/auth";
 import { SendCrypto } from "./sendFunctions";
 import "react-native-get-random-values";
 import "@ethersproject/shims";
-import { urls } from "../constants";
-import { checkAddressValidity, checkXrpAddress } from "../../utilities/web3utilities";
+import { checkAddressValidity } from "../../utilities/web3utilities";
 import { isFloat, isInteger, Paste } from "../../utilities/utilities";
 import { alert } from "../reusables/Toasts";
 import Icon from "../../icon";
-import { WalletHeader } from "../header";
-import { NavigationActions } from "react-navigation";
-import darkBlue from "../../../assets/darkBlue.png"
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 import ErrorComponet from "../../utilities/ErrorComponet";
 import CustomInfoProvider from "../exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
@@ -108,47 +98,6 @@ const SendTokens = (props) => {
         ]
       );
     }
-    // No need to explicitly toggle modal visibility on "READY"
-    // Let `toggleModal` or user actions handle visibility
-  };
-  const getXrpBal = async (address) => {
-    console.log(address);
-
-    try {
-      const response = await fetch(
-        `http://${urls.testUrl}/user/getXrpBalance`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            address: address,
-          }),
-        }
-      )
-        .then((response) => response.json())
-        .then((responseJson) => {
-          console.log(responseJson);
-          if (responseJson) {
-            console.log(responseJson.responseData);
-            setBalance(
-              responseJson.responseData ? responseJson.responseData : 0
-            );
-          } else {
-            console.log(response);
-          }
-        })
-        .catch((e) => {
-          console.log(e);
-          //alert('unable to update balance')
-        });
-
-      return response;
-    } catch (e) {
-      console.log(e);
-    }
   };
 
   const Balance = async (Type) => {
@@ -191,47 +140,7 @@ const SendTokens = (props) => {
               console.log(res.MaticBalance);
               setBalance(bal);
             });
-          } else if (Type === "Multi-coin-Xrp") {
-            try {
-              await AsyncStorageLib.getItem("wallet")
-                .then(async (wallet) => {
-                  console.log("XrpMulti", JSON.parse(wallet));
-                  await dispatch(getXrpBalance(JSON.parse(wallet).xrp.address))
-                    .then((res) => {
-                      console.log(res.XrpBalance);
-                      setBalance(res.XrpBalance ? res.XrpBalance : 0);
-                    })
-                    .catch((e) => {
-                      console.log(e);
-                    });
-                })
-                .catch((e) => {
-                  console.log(e);
-                });
-            } catch (e) {
-              console.log(e);
-            }
-          } else if (Type == "Xrp") {
-            try {
-              await AsyncStorageLib.getItem("wallet")
-                .then(async (wallet) => {
-                  console.log(JSON.parse(wallet).address);
-                  await dispatch(getXrpBalance(JSON.parse(wallet).address))
-                    .then((res) => {
-                      console.log(res.XrpBalance);
-                      setBalance(res.XrpBalance );
-                    })
-                    .catch((e) => {
-                      console.log(e);
-                    });
-                })
-                .catch((e) => {
-                  console.log(e);
-                });
-            } catch (e) {
-              console.log(e);
-            }
-          } else if (Type == "BNB") {
+          }  else if (Type === "BNB") {
             setLoadingBal(true)
             await dispatch(getBalance(state.wallet.address))
               .then(async (response) => {
@@ -290,19 +199,7 @@ const SendTokens = (props) => {
     let valid
     let xrpInvalid
     console.log(props?.route?.params?.token)
-    if(props?.route?.params?.token==='Multi-coin-Xrp' || walletType==='Xrp')
-    {
-      if(balance<11)
-      {
-        xrpInvalid=true
-        setMessage("Your minnimum balance should be 10 to send XRP");
-
-      }
-      valid = checkXrpAddress(address)
-    }else{
-      valid = checkAddressValidity(address);
-
-    }
+    valid = checkAddressValidity(address);
     inputValidation = isFloat(amount);
     inputValidation1 = isInteger(amount);
     console.log(inputValidation, inputValidation1);
@@ -514,45 +411,25 @@ const checkPermission = async () => {
             onPress={async () => {
               setLoading(true)
               Keyboard.dismiss();
-              console.log(walletType);
               let privateKey;
               const myAddress = await state.wallet.address;
               const token = props.route.params.token;
               const wallet = await AsyncStorageLib.getItem("Wallet");
-              console.log(wallet);
-              if(token==='Multi-coin-Xrp')
-              {
-                const xrpAddress = await state.wallet.xrp.address
-                if(address==xrpAddress)
-                {
-                  setLoading(false);
-                  return alert('error','address cannot be same as your address')
-
-                }
-              }
-              if(address== myAddress)
-              {
-                setLoading(false);
-                return alert('error','address cannot be same as your address')
-              }
+              // if(address== myAddress)
+              // {
+              //   setLoading(false);
+              //   return alert('error','address cannot be same as your address')
+              // }
               if (amount && balance && Number(amount) > Number(balance)) {
                 setLoading(false);
-                console.log(amount, balance);
                 return alert(
                   "error",
                   "You don't have enough balance to do this transaction "
                 );
               }
-
-              if (token === "Multi-coin-Xrp") {
-                privateKey = (await state.wallet.xrp.privateKey)
-                  ? await state.wallet.xrp.privateKey
-                  : JSON.parse(wallet).xrp.privateKey;
-              } else {
                 privateKey = (await state.wallet.privateKey)
                   ? await state.wallet.privateKey
                   : JSON.parse(wallet).privateKey;
-              }
 
               if (
                 walletType &&

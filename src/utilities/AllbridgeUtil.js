@@ -10,6 +10,7 @@ import {
 import {Keypair, rpc,TransactionBuilder} from '@stellar/stellar-sdk';
 import LocalTxManager from './LocalTxManager';
 import { SRBRPC } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/ExchangeConstants';
+import { NativeModules } from 'react-native';
 
 export async function getChainTokenData(sourceChain, destChain, sourceToken, destToken, amount) {
   console.log("Allbridge-Info--", sourceChain, destChain, sourceToken, destToken, amount);
@@ -113,7 +114,10 @@ export async function swapPepare(
         const assembleTx = rpc.assembleTransaction(transactionBuilderTx, simulateTX);
         assembleTx.fee = strFee;
         const finalTx = assembleTx.build();
-        finalTx.sign(keypair);
+        const txXDR = finalTx.toXDR();
+        const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
+        const signatureBuffer = Buffer.from(signedTx.signature, 'base64');
+        finalTx.addSignature(signedTx.publicKey, signatureBuffer.toString('base64'));
         const result = await sorobanServer.sendTransaction(finalTx);
         return result;
       } catch (error) {

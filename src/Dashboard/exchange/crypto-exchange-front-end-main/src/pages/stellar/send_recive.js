@@ -1,5 +1,5 @@
 import { useIsFocused, useNavigation } from "@react-navigation/native";
-import { ActivityIndicator, Alert, Image, Keyboard, Linking, Modal, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { ActivityIndicator, Alert, Image, Keyboard, Linking, Modal, NativeModules, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp,
@@ -148,7 +148,10 @@ const send_recive = ({route}) => {
         .build();
   
       // Sign the transaction
-      transaction.sign(sourceKeypair);
+      const txXDR = transaction.toXDR();
+      const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
+      const signatureBuffer = Buffer.from(signedTx.signature, 'base64');
+      transaction.addSignature(signedTx.publicKey, signatureBuffer.toString('base64'));
   
       // Submit the transaction
       const transactionResult = await server.submitTransaction(transaction);

@@ -31,6 +31,7 @@ import Snackbar from "react-native-snackbar";
 import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
 import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import { colors } from "../../Screens/ThemeColorsConfig";
+import AccessNativeStorage from "../Wallets/AccessNativeStorage";
 const CheckNewWalletMnemonic = ({
   Wallet,
   Visible,
@@ -325,6 +326,13 @@ const CheckNewWalletMnemonic = ({
                                 console.log('Error:', result.error, 'Status:', result.status);
                               }
                               AsyncStorageLib.setItem("currentWallet",Wallet?.accountName)
+                              await AccessNativeStorage.updateExisting("activeUserWallet", JSON.stringify({
+                                name: Wallet.accountName,
+                                address: Wallet.address,
+                                privatekey: Wallet.privateKey,
+                                stellarPublicKey: Wallet.stellarWallet.publicKey,
+                                stellarPrivateKey: Wallet.stellarWallet.secretKey
+                              }))
                               dispatch(
                                 setCurrentWallet(
                                   Wallet?.address,

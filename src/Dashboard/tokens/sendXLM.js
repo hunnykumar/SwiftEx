@@ -15,7 +15,8 @@ import {
     Alert,
     Modal,
     PermissionsAndroid,
-    Linking
+    Linking,
+    NativeModules
 } from "react-native";
 import {
     widthPercentageToDP as wp,
@@ -272,10 +273,10 @@ const SendXLM = (props) => {
               .setTimeout(30)
               .build();
           
-              // Sign the transaction
-              transaction.sign(sourceKeypair);
-          
-              // Submit the transaction
+              const txXDR = transaction.toXDR();
+              const res = await NativeModules.StellarSigner.signTransaction(txXDR);
+              const signatureBuffer = Buffer.from(res.signature, 'base64');
+              transaction.addSignature(res.publicKey, signatureBuffer.toString('base64'));
               const transactionResult = await server.submitTransaction(transaction);
               console.log('Transaction successful!', transactionResult);
               Showsuccesstoast(toast,"Transaction successful!");

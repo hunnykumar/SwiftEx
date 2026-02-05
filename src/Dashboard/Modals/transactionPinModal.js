@@ -36,6 +36,7 @@ import { alert, ShowToast } from "../reusables/Toasts";
 import { getAllBalances } from "../../utilities/web3utilities";
 import { PPOST, proxyRequest } from "../exchange/crypto-exchange-front-end-main/src/api";
 import CustomInfoProvider from "../exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
+import ShortTermStorage from "../../utilities/ShortTermStorage";
 
 const TransactionPinModal = ({
   pinViewVisible,
@@ -151,6 +152,7 @@ const TransactionPinModal = ({
   
             if (res.txHash) {
               try {
+                await ShortTermStorage.saveTx(state && state.wallet && state.wallet.address,{chain: "ETH",typeTx: "Send",status: "Pending",hash: res?.txHash});
                 ShowToast(toast, "Transaction Successful");
   
                 setLoading(false);
@@ -223,6 +225,7 @@ const TransactionPinModal = ({
          if (res.txHash) {
               try {
                 ShowToast(toast, "Transaction Successful");
+                await ShortTermStorage.saveTx(state && state.wallet && state.wallet.address,{chain: "BSC",typeTx: "Send",status: "Pending",hash: res?.txHash});
                 setLoading(false);
                 setLoader(false);
                 setDisable(false);

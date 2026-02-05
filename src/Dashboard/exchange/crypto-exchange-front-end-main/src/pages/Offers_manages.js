@@ -14,6 +14,7 @@ import {
   Modal,
   Keyboard,
   ScrollView,
+  NativeModules,
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import * as StellarSdk from '@stellar/stellar-sdk';
@@ -185,8 +186,10 @@ const Offers_manages = () => {
         .setTimeout(30)
         .build();
 
-      transaction.sign(keypair);
-
+      const txXDR = transaction.toXDR();
+      const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
+      const signatureBuffer = Buffer.from(signedTx.signature, 'base64');
+      transaction.addSignature(signedTx.publicKey, signatureBuffer.toString('base64'));
       const response = await server.submitTransaction(transaction);
       console.log('Offer deleted:', response);
       setloading_del(false);
@@ -275,7 +278,10 @@ const Offers_manages = () => {
         .setTimeout(30)
         .build();
   
-      transaction.sign(keypair);
+      const txXDR = transaction.toXDR();
+      const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
+      const signatureBuffer = Buffer.from(signedTx.signature, 'base64');
+      transaction.addSignature(signedTx.publicKey, signatureBuffer.toString('base64'));
   
       const response = await server.submitTransaction(transaction);
       console.log('Offer updated:', response);

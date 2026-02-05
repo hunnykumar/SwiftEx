@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Animated,
   BackHandler,
+  NativeModules,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -254,7 +255,10 @@ export const NewOfferModal = () => {
         offerId: stellarConfig.DEFAULT_OFFER_ID
       }))
       const tx = offerTx.setTimeout(stellarConfig.TRANSACTION_TIMEOUT).build();
-      tx.sign(sourceKeypair);
+      const txXDR = tx.toXDR();
+      const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
+      const signatureBuffer = Buffer.from(signedTx.signature, 'base64');
+      tx.addSignature(signedTx.publicKey, signatureBuffer.toString('base64'));
       const offerResult = await server.submitTransaction(tx);
       
       console.log('Sell Offer placed:', offerResult.hash);
@@ -322,7 +326,10 @@ export const NewOfferModal = () => {
           })
         )
         const tx=offerTx.setTimeout(stellarConfig.TRANSACTION_TIMEOUT).build();
-        tx.sign(sourceKeypair);
+        const txXDR = tx.toXDR();
+        const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
+        const signatureBuffer = Buffer.from(signedTx.signature, 'base64');
+        tx.addSignature(signedTx.publicKey, signatureBuffer.toString('base64'));
       const offerResult = await server.submitTransaction(tx);
       
       console.log('Buy Offer placed:', offerResult.hash);

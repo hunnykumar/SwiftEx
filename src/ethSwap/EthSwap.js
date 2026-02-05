@@ -12,7 +12,8 @@ import {
   Image,
   ScrollView,
   Keyboard,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  NativeModules
 } from 'react-native';
 import {
   widthPercentageToDP as wp,
@@ -578,16 +579,43 @@ const EthSwap = () => {
       for (let i = 0; i < rawTxs.length; i++) {
         const tx = rawTxs[i];
         
-        if (tx.value) tx.value = BigInt(tx.value);
-        if (tx.gasLimit) tx.gasLimit = BigInt(tx.gasLimit);
-        if (tx.maxFeePerGas) tx.maxFeePerGas = BigInt(tx.maxFeePerGas);
-        if (tx.maxPriorityFeePerGas) tx.maxPriorityFeePerGas = BigInt(tx.maxPriorityFeePerGas);
-        if (tx.chainId) tx.chainId = BigInt(tx.chainId);
-        if (tx.nonce) tx.nonce = BigInt(tx.nonce);
-
         try {
-          const signedTx = await wallet.signTransaction(tx);
-          signedTxs.push(signedTx);
+          let transaction;
+          let chainId = tx.chainId ? Number(tx.chainId) : 1;
+          const isEIP1559 = tx.maxFeePerGas !== undefined && tx.maxPriorityFeePerGas !== undefined;
+          
+          if (isEIP1559) {
+            const gasPrice = tx.maxFeePerGas;
+            transaction = {
+              nonce: ethers.utils.hexlify(tx.nonce || 0),
+              gasPrice: ethers.utils.hexlify(ethers.BigNumber.from(gasPrice.toString())),
+              gasLimit: ethers.utils.hexlify(ethers.BigNumber.from(tx.gasLimit?.toString() || "21000")),
+              to: tx.to,
+              value: ethers.utils.hexlify(ethers.BigNumber.from(tx.value?.toString() || "0")),
+              data: tx.data || "0x",
+            };
+          } else {
+            transaction = {
+              nonce: ethers.utils.hexlify(tx.nonce || 0),
+              gasPrice: ethers.utils.hexlify(ethers.BigNumber.from(tx.gasPrice?.toString() || "0")),
+              gasLimit: ethers.utils.hexlify(ethers.BigNumber.from(tx.gasLimit?.toString() || "21000")),
+              to: tx.to,
+              value: ethers.utils.hexlify(ethers.BigNumber.from(tx.value?.toString() || "0")),
+              data: tx.data || "0x",
+            };
+          }
+          const signedTx = await NativeModules.TransactionSigner.signTransaction(
+            "eth",
+            address,
+            JSON.stringify(transaction),
+            chainId
+          );
+
+          let rawTransaction = signedTx.signedTx;
+          if (rawTransaction.startsWith("0x0x")) {
+            rawTransaction = rawTransaction.replace(/^0x/, "");
+          }
+          signedTxs.push(rawTransaction);
           console.log(`Transaction ${i + 1}/${rawTxs.length} signed`);
         } catch (signError) {
           console.error(`Sign error:`, signError);
@@ -681,15 +709,13 @@ const EthSwap = () => {
         const tx = rawTxs[i];
 
         const formattedTx = {
+          chainId: parseInt(tx.chainId) || 56,
           to: tx.to,
-          from: tx.from,
-          data: tx.data,
-          value: ethers.BigNumber.from(tx.value || 0),
-          chainId: Number(tx.chainId),
-          nonce: Number(tx.nonce),
-          gasLimit: ethers.BigNumber.from(tx.gasLimit),
-          gasPrice: ethers.BigNumber.from(tx.gasPrice),
-          type: 0,
+          nonce: ethers.utils.hexlify(Number(tx.nonce)),
+          gasPrice: ethers.utils.hexlify(Number(tx.gasPrice)),
+          gasLimit: ethers.utils.hexlify(Number(tx.gasLimit)),  // 🔧 MAIN FIX
+          value: ethers.utils.hexlify(ethers.BigNumber.from(tx.value || 0)),
+          data: tx.data?.startsWith("0x") ? tx.data : "0x" + (tx.data || ""),
         };
 
         console.log(`Signing tx ${i + 1}:`, {
@@ -701,8 +727,18 @@ const EthSwap = () => {
         });
 
         try {
-          const signedTx = await wallet.signTransaction(formattedTx);
-          signedTxs.push(signedTx);
+        const signedTx = await NativeModules.TransactionSigner.signTransaction(
+            "bsc",
+            address,
+            JSON.stringify(formattedTx),
+            56
+          );
+
+          let rawTx = signedTx.signedTx;
+          if (rawTx.startsWith("0x0x")) {
+            rawTx = rawTx.replace(/^0x/, "");
+          }
+          signedTxs.push(rawTx);
           console.log(`Transaction ${i + 1}/${rawTxs.length} signed`);
         } catch (signError) {
           console.log(`Sign error for tx ${i}:`, signError);
