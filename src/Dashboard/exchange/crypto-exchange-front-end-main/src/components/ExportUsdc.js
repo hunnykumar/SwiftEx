@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     height:hp(6.4),
     marginTop:hp(1.6),
-    marginBottom:hp(0.5)
+    marginBottom:hp(2)
   },
   confirmButtonText: {
     color: '#fff',

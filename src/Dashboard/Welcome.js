@@ -28,6 +28,7 @@ import { useNavigation } from "@react-navigation/native";
 import apiHelper from "./exchange/crypto-exchange-front-end-main/src/apiHelper";
 import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import * as StellarSdk from '@stellar/stellar-sdk';
+import AccessNativeStorage from "./Wallets/AccessNativeStorage";
 const Welcome = (props) => {
   const [Loading,setLoading]=useState(false)
   const [enableUserAccess,setenableUserAccess]=useState(false);
@@ -128,7 +129,6 @@ const Welcome = (props) => {
 
   const dispatChingData=async(wallet)=>{
     try {
-      console.log("respoms wallet:",wallet)
       const pin = await AsyncStorageLib.getItem("pin");
             const body = {
               accountName: "Main",
@@ -137,17 +137,13 @@ const Welcome = (props) => {
             const token = genUsrToken(body);
             const accounts = {
               address: wallet.address,
-              privateKey: wallet.privateKey,
-              mnemonic: wallet.mnemonic,
               name: "Main",
               walletType: "Multi-coin",
               xrp: {
-                address: wallet.xrp.address,
-                privateKey: wallet.xrp.privateKey,
+                address: wallet.xrp.address
               },
               stellarWallet: {
                 publicKey: wallet.stellarWallet.publicKey,
-                secretKey: wallet.stellarWallet.secretKey
               },
               wallets: [],
             };
@@ -156,16 +152,12 @@ const Welcome = (props) => {
             const allWallets = [
               {
                 address: wallet.address,
-                privateKey: wallet.privateKey,
                 name: "Main",
-                mnemonic: wallet.mnemonic,
                 xrp: {
-                  address: wallet.xrp.address,
-                  privateKey: wallet.xrp.privateKey,
+                  address: wallet.xrp.address
                 },
                 stellarWallet: {
-                  publicKey: wallet.stellarWallet.publicKey,
-                  secretKey: wallet.stellarWallet.secretKey
+                  publicKey: wallet.stellarWallet.publicKey
                 },
                 walletType: "Multi-coin",
               },
@@ -197,14 +189,8 @@ const Welcome = (props) => {
               setCurrentWallet(
                 wallet.address,
                 "Main",
-                wallet.privateKey,
-                wallet.mnemonic,
-                wallet.xrp.address
-                  ? wallet.xrp.address
-                  : "",
-                wallet.xrp.privateKey
-                  ? wallet.xrp.privateKey
-                  : "",
+                "",
+                "",
                 (walletType = "Multi-coin")
               )
             );
@@ -217,17 +203,31 @@ const Welcome = (props) => {
             dispatch(getBalance(wallet.address));
             dispatch(setWalletType("Multi-coin"));
             dispatch(setToken(token));
-            genrateStellarKeypair(wallet.address,wallet.stellarWallet.publicKey,wallet.stellarWallet.secretKey)
+            genrateStellarKeypair(wallet.address,wallet.stellarWallet.publicKey)
+            const walletResponse = await AccessNativeStorage.saveWallet({
+              name: "Main",
+              address: wallet.address,
+              privatekey: wallet.privateKey,
+              stellarPublicKey: wallet.stellarWallet.publicKey,
+              stellarPrivateKey: wallet.stellarWallet.secretKey,
+              mnemonic: wallet.mnemonic,
+              walletType: wallet.walletType
+            })
+            if (walletResponse.success) {
             setLoading(false);
             navigation.navigate("HomeScreen");
             alert("success", "Wallet Genration Compleated!");
+            } else {
+            alert("error", "Wallet generation failed.");
+            setLoading(false);
+            }
     } catch (error) {
       alert("error","Wallet generation failed.");
       console.log("---Error-getting-from-dispatChingData--",error)
     }   
   }
 
-  const genrateStellarKeypair =async(etherAddress,publicKey,secretKey) => {
+  const genrateStellarKeypair =async(etherAddress,publicKey) => {
     try {
       let userTransactions = [];
       const transactions = await AsyncStorageLib.getItem('myDataKey');
@@ -237,7 +237,7 @@ const Welcome = (props) => {
           userTransactions = [];
         }
       }
-      userTransactions.push({etherAddress,publicKey,secretKey});
+      userTransactions.push({etherAddress,publicKey});
       await AsyncStorageLib.setItem('myDataKey', JSON.stringify(userTransactions));
     } catch (error) {
       setLoading(false);

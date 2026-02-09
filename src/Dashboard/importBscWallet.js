@@ -40,6 +40,7 @@ import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { useNavigation } from "@react-navigation/native";
 import { recoverMultiChainWallet } from "../utilities/WalletManager";
 import * as StellarSdk from '@stellar/stellar-sdk';
+import AccessNativeStorage from "./Wallets/AccessNativeStorage";
 const { EthereumWallet } = NativeModules;
 
 const ImportBscWallet = (props) => {
@@ -318,21 +319,16 @@ const ImportBscWallet = (props) => {
                     "Incorrect Mnemonic. Please provide a valid Mnemonic"
                   );
                 }
-                const accountFromMnemonic = Platform.OS === "android" ? await EthereumWallet.recoverMultiChainWallet(trimmedPhrase) : await recoverMultiChainWallet(trimmedPhrase);
+                const accountFromMnemonic = Platform.OS === "android" ? await EthereumWallet.recoverMultiChainWallet(trimmedPhrase) : await EthereumWallet.recoverWallet(trimmedPhrase,"");
                 const wallet = {
                   address: accountFromMnemonic.ethereum.address,
-                  privateKey: accountFromMnemonic.ethereum.privateKey,
                   xrp: {
                     address: "000000000",
-                    privateKey: "000000000",
                   },
                   stellarWallet: {
                     publicKey: accountFromMnemonic.stellar.publicKey,
-                    secretKey: accountFromMnemonic.stellar.secretKey
                   },
                 };
-
-                console.log(pin);
                 const body = {
                   accountName: accountName,
                   pin: JSON.parse(pin),
@@ -342,18 +338,14 @@ const ImportBscWallet = (props) => {
 
                 const accounts = {
                   address: wallet.address,
-                  privateKey: wallet.privateKey,
-                  mnemonic: trimmedPhrase,
                   name: accountName,
                   xrp: {
                   address: "000000000",
-                  privateKey: "000000000",
                   },
                   stellarWallet: {
                     publicKey: wallet.stellarWallet.publicKey,
-                    secretKey: wallet.stellarWallet.secretKey
                   },
-                  walletType: "BSC",
+                  walletType: "Multi-coin",
                   wallets: [],
                 };
                 let wallets = [];
@@ -361,10 +353,8 @@ const ImportBscWallet = (props) => {
                 const allWallets = [
                   {
                     address: wallet.address,
-                    privateKey: wallet.privateKey,
                     name: accountName,
-                    mnemonic: trimmedPhrase,
-                    walletType: "BSC",
+                    walletType: "Multi-coin",
                   },
                 ];
 
@@ -384,118 +374,124 @@ const ImportBscWallet = (props) => {
                 dispatch(
                   setCurrentWallet(
                     wallet.address,
-                    accountName,
-                    wallet.privateKey,
-                    trimmedPhrase
+                    accountName
                   )
                 );
                 dispatch(AddToAllWallets(wallets, accountName));
                 dispatch(getBalance(wallet.address));
                 dispatch(setToken(token));
-                //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
-                dispatch(setWalletType("BSC"));
+                dispatch(setWalletType("Multi-coin"));
+                const walletResponse = await AccessNativeStorage.saveWallet({
+                  name: accountName,
+                  address: accountFromMnemonic.ethereum.address,
+                  privatekey: accountFromMnemonic.ethereum.privateKey,
+                  stellarPublicKey: accountFromMnemonic.stellar.publicKey,
+                  stellarPrivateKey: accountFromMnemonic.stellar.secretKey,
+                  mnemonic: trimmedPhrase,
+                  walletType: "Multi-coin"
+                })
 
-                setLoading(false);
-                props.navigation.navigate("HomeScreen");
-
-                //setVisible(!visible)
+                if (walletResponse.success) {
+                  setLoading(false);
+                  alert("success","Wallet import success.");
+                  props.navigation.navigate("HomeScreen");
+                }else{
+                  setLoading(false);
+                  alert("error","Wallet import faild.");
+                }
               } catch (e) {
                 console.log(e);
                 alert("error", e);
                 setLoading(false);
               }
             } else if (label === "privateKey") {
-                try {
-                  console.log('starting private key')
-                  const check = ethers.utils.isHexString(privateKey, 32);
-                  if (!check) {
-                    setLoading(false);
-                    return alert(
-                      "error",
-                      "Incorrect PrivateKey. Please provide a valid privatekey"
-                    );
-                  }
-                  const pair =await StellarSdk.Keypair.random();
-                  console.log("StellaeKeys-using-private keys:---",pair.publicKey(),"privat--",pair.secret())
-                  const walletPrivateKey = new ethers.Wallet(privateKey);
-                  console.log(walletPrivateKey.mnemonic);
-                  const Keys = walletPrivateKey._signingKey();
-                  const privatekey = Keys.privateKey;
-                  const wallet = {
-                    address: walletPrivateKey.address,
-                    privateKey: privatekey,
-                    xrp: {
-                      address: "000000000",
-                      privateKey: "000000000",
-                    },
-                    stellarWallet: {
-                      publicKey: pair.publicKey(),
-                      secretKey: pair.secret()
-                    },
-                  };
-                  
-                  console.log(pin);
-                  const body = {
-                    accountName: accountName,
-                    pin: JSON.parse(pin),
-                  };
-                  const token = genUsrToken(body);
-                  console.log(token);
-
-                  const accounts = {
-                    address: wallet.address,
-                    privateKey: wallet.privateKey,
-                    name: accountName,
-                    xrp: {
-                      address: "000000000",
-                      privateKey: "000000000",
-                    },
-                    stellarWallet: {
-                      publicKey: wallet.stellarWallet.publicKey,
-                      secretKey: wallet.stellarWallet.secretKey
-                    },
-                    walletType: "BSC",
-                    wallets: [],
-                  };
-                  let wallets = [];
-                  wallets.push(accounts);
-                  const allWallets = [
-                    {
-                      address: wallet.address,
-                      privateKey: wallet.privateKey,
-                      name: accountName,
-                      walletType: "BSC",
-                    },
-                  ];
-
-                  AsyncStorageLib.setItem(
-                    "wallet",
-                    JSON.stringify(allWallets[0])
-                  );
-                  AsyncStorageLib.setItem(
-                    `${accountName}-wallets`,
-                    JSON.stringify(allWallets)
-                  );
-                  AsyncStorageLib.setItem("user", accountName);
-                  AsyncStorageLib.setItem("token", token);
-                  AsyncStorageLib.setItem("currentWallet", accountName);
-
-                  dispatch(setUser(accountName));
-                  dispatch(
-                    setCurrentWallet(
-                      wallet.address,
-                      accountName,
-                      wallet.privateKey
-                    )
-                  );
-                  dispatch(AddToAllWallets(wallets, accountName));
-                  dispatch(getBalance(wallet.address));
-                  dispatch(setToken(token));
-                  //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
-                  dispatch(setWalletType("BSC"));
-
+              try {
+                console.log('starting private key')
+                const check = ethers.utils.isHexString(privateKey, 32);
+                if (!check) {
                   setLoading(false);
-                  props.navigation.navigate("HomeScreen");
+                  return alert(
+                    "error",
+                    "Incorrect PrivateKey. Please provide a valid privatekey"
+                  );
+                }
+                const etherWalletRes = await NativeModules.EthereumWallet.importEthPrivateKey(privateKey);
+                if (!etherWalletRes.generated) {
+                  setLoading(false);
+                  alert('error', "Account Not import yet.");
+                } else {
+                  const walletResponse = await AccessNativeStorage.saveWallet({
+                    name: accountName,
+                    address: etherWalletRes.original.address,
+                    privatekey: etherWalletRes.original.privateKey,
+                    stellarPublicKey: etherWalletRes.generated.publicKey,
+                    stellarPrivateKey: etherWalletRes.generated.secretKey,
+                    mnemonic: "",
+                    walletType: "Multi-coin"
+                  })
+                  if (walletResponse.success) {
+                    const wallet = {
+                      address: etherWalletRes.original.address,
+                      xrp: {
+                        address: "000000000",
+                      },
+                      stellarWallet: {
+                        publicKey: etherWalletRes.generated.publicKey
+                      },
+                    };
+                    const body = {
+                      accountName: accountName,
+                      pin: JSON.parse(pin),
+                    };
+                    const token = genUsrToken(body);
+                    const accounts = {
+                      address: wallet.address,
+                      name: accountName,
+                      xrp: {
+                        address: "000000000",
+                      },
+                      stellarWallet: {
+                        publicKey: wallet.stellarWallet.publicKey
+                      },
+                      walletType: "Multi-coin",
+                      wallets: [],
+                    };
+                    let wallets = [];
+                    wallets.push(accounts);
+                    const allWallets = [
+                      {
+                        address: wallet.address,
+                        name: accountName,
+                        walletType: "Multi-coin",
+                      },
+                    ];
+                    AsyncStorageLib.setItem(
+                      "wallet",
+                      JSON.stringify(allWallets[0])
+                    );
+                    AsyncStorageLib.setItem(
+                      `${accountName}-wallets`,
+                      JSON.stringify(allWallets)
+                    );
+                    AsyncStorageLib.setItem("user", accountName);
+                    AsyncStorageLib.setItem("token", token);
+                    AsyncStorageLib.setItem("currentWallet", accountName);
+
+                    dispatch(setUser(accountName));
+                    dispatch(
+                      setCurrentWallet(
+                        wallet.address,
+                        accountName
+                      )
+                    );
+                    dispatch(AddToAllWallets(wallets, accountName));
+                    dispatch(getBalance(wallet.address));
+                    dispatch(setToken(token));
+                    dispatch(setWalletType("Multi-coin"));
+                    setLoading(false);
+                    props.navigation.navigate("HomeScreen");
+                  }
+                }
                 } catch (e) {
                   console.log(e);
                   setLoading(false);

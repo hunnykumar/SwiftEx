@@ -108,7 +108,7 @@ export const Exchange_screen_header = ({ title, onLeftIconPress, onRightIconPres
           />
         </TouchableOpacity>
         <Text style={[styles.exchangeheaderTitle, { marginTop: Platform.OS === "ios" && hp(4),color:state.THEME.THEME?"#FFFFFF":"#1B1B1C" }]}>{title}</Text>
-        <TouchableOpacity onPress={toggleDrawer} style={[styles.exchangerightIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
+        <TouchableOpacity disabled={true} onPress={toggleDrawer} style={[styles.exchangerightIconContainer, { marginTop: Platform.OS === "ios" && hp(4) }]}>
           <Icon name={"menu"} type={"materialCommunity"} size={30} color={state.THEME.THEME?"#1B1B1C":"#FFFFFF"} />
         </TouchableOpacity>
       </View>

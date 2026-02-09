@@ -408,12 +408,11 @@ const CrossChainTx = ({ route="ETH" }) => {
     try {
       const activeNetwork = chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
       const activeAsset = selectedToken?.symbol;
-      const wallet = new ethers.Wallet(state?.wallet?.privateKey);
 
       if (activeNetwork === "Ethereum" && activeAsset === "USDT" || activeNetwork === "Ethereum" && activeAsset === "USDC") {
         const respoExe = await swap_prepare(
-          state?.wallet?.privateKey,
-          wallet.address,
+          state?.wallet?.address,
+          state?.wallet?.address,
           state.STELLAR_PUBLICK_KEY,
           amount,
           activeAsset,
@@ -486,8 +485,8 @@ const CrossChainTx = ({ route="ETH" }) => {
 
       if (activeNetwork === "BNB" && activeAsset === "USDT" || activeNetwork === "BNB" && activeAsset === "USDC") {
         const respoExe = await SwapPepare(
-          state?.wallet?.privateKey,
-          wallet.address,
+          state?.wallet?.address,
+          state?.wallet?.address,
           state.STELLAR_PUBLICK_KEY,
           amount,
           activeAsset,
@@ -1024,7 +1023,7 @@ const CrossChainTx = ({ route="ETH" }) => {
 
         {resQuotes !== null && (
           <View style={[styles.modalQoutesCon, { backgroundColor: theme.cardBg }]}>
-            <Text style={[styles.quoteTitle, { color: theme.headingTx }]}>Quote Details</Text>
+            <Text style={[styles.quoteTitle, { color: theme.headingTx }]}>Transaction Details</Text>
             {nonDirectQoutes !== null && (
               <>
                 <View style={[styles.quoteDetailsContainer, { marginBottom: hp(1) }]}>
@@ -1073,7 +1072,7 @@ const CrossChainTx = ({ route="ETH" }) => {
               </View>
 
               <View style={styles.quoteRow}>
-                <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Rate</Text>
+                <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Conversion Rate</Text>
                 <Text style={[styles.quoteValue, { color: theme.headingTx }]}>
                   1 USDT = {resQuotes.conversionRate} USDC
                 </Text>

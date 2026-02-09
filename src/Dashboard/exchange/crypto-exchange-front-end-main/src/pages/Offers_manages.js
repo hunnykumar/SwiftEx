@@ -156,9 +156,8 @@ const Offers_manages = () => {
   const deleteOffer = async (offer) => {
     console.log("==--------lppp",sellingAssetCode,buyingAssetCode)
     setloading_del(true);
-    const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
     try {
-      const account = await server.loadAccount(keypair.publicKey());
+      const account = await server.loadAccount(state.STELLAR_PUBLICK_KEY);
   
       const selling =
         offer.selling.asset_type === "native"
@@ -248,10 +247,10 @@ const Offers_manages = () => {
     }
     
     setloading_edi(true);
-    const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
+
   
     try {
-      const account = await server.loadAccount(keypair.publicKey());
+      const account = await server.loadAccount(state.STELLAR_PUBLICK_KEY);
   
       const selling =
         sellingAssetCode === "XLM" || sellingAssetCode === "native"

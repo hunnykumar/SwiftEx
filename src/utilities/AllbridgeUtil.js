@@ -7,7 +7,7 @@ import {
   nodeRpcUrlsDefault,
   mainnet,
 } from "@allbridge/bridge-core-sdk";
-import {Keypair, rpc,TransactionBuilder} from '@stellar/stellar-sdk';
+import {rpc,TransactionBuilder} from '@stellar/stellar-sdk';
 import LocalTxManager from './LocalTxManager';
 import { SRBRPC } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/ExchangeConstants';
 import { NativeModules } from 'react-native';
@@ -104,7 +104,6 @@ export async function swapPepare(
       stellarWallet,
     ) => {
       try {
-        const keypair = Keypair.fromSecret(stellarWallet.secretKey);
         const xdrTx = await sdk.bridge.rawTxBuilder.send(sendParams);
         const sorobanServer = new rpc.Server(SRBRPC);
         let transactionBuilderTx = TransactionBuilder.fromXDR(xdrTx, mainnet.sorobanNetworkPassphrase);
@@ -146,8 +145,8 @@ export async function swapPepare(
       sourceToken: srcToken,
       destinationToken: dstToken,
       messenger: Messenger.ALLBRIDGE,
-      extraGas: "1.15",
-      extraGasFormat: AmountFormat.FLOAT,
+      // extraGas: "1.5",
+      // extraGasFormat: AmountFormat.FLOAT,
       gasFeePaymentMethod: payFeeMode === "native"
         ? FeePaymentMethod.WITH_NATIVE_CURRENCY
         : FeePaymentMethod.WITH_STABLECOIN,

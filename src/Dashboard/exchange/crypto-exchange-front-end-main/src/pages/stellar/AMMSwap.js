@@ -367,7 +367,7 @@ const AMMSwap = () => {
 
   const handleSwap=async()=>{
     settokenBurn(true)
-    const respo=await AMMSWAPTESTNET(fromToken.code,fromToken.issuer,toToken.code,toToken.issuer,state?.STELLAR_SECRET_KEY,toAmount,assetTrustRequired)
+    const respo=await AMMSWAPTESTNET(fromToken.code,fromToken.issuer,toToken.code,toToken.issuer,state?.STELLAR_PUBLICK_KEY,toAmount,assetTrustRequired)
     if(respo.status===true)
     {
       CustomInfoProvider.show("success","Transaction successful!");

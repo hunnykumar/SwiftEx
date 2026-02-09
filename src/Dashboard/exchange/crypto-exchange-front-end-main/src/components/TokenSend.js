@@ -68,7 +68,7 @@ const TokenSend = ({ route }) => {
         "function transfer(address to, uint256 value) public returns (bool)"
       ];
       // Load wallet with private key
-      const wallet = new ethers.Wallet(state.wallet.privateKey);
+      const wallet = state?.wallet?.address;
       // Load ERC-20 contract
       const tokenInterface = new ethers.utils.Interface(BNBERC20ABI);
       const formattedAmount = ethers.utils.parseUnits(amount, tokenDecimals);
@@ -76,14 +76,14 @@ const TokenSend = ({ route }) => {
       const unsignedTx = {
         to: tokenAddress,
         data: data,
-        from: wallet.address
+        from: wallet
       };
       const { res, err } = await proxyRequest(
         "/v1/bsc/transaction/prepare",
         PPOST,
         {
           unsignedTx: unsignedTx,
-          walletAddress: wallet.address
+          walletAddress: wallet
         }
       );
       if (err) {
@@ -170,12 +170,12 @@ const TokenSend = ({ route }) => {
         "function transfer(address to, uint256 amount) returns (bool)"
       ];
         // Load wallet with private key
-        const wallet = new ethers.Wallet(state?.wallet?.privateKey);
+        const wallet = state?.wallet?.address;
         // Load ERC-20 contract
         const tokenInterface = new ethers.utils.Interface(usdtAbi);
         const formattedAmount = ethers.utils.parseUnits(amount, tokenDecimals);
         const data = tokenInterface.encodeFunctionData("transfer", [address, formattedAmount]);
-      const preInfo = await proxyRequest(`/v1/eth/wallet-address/${wallet.address}/info`, PGET);
+      const preInfo = await proxyRequest(`/v1/eth/wallet-address/${wallet}/info`, PGET);
       if (preInfo.err) {
         alert("error", preInfo.err.message||"Something went wrong...")
       }
@@ -192,7 +192,7 @@ const TokenSend = ({ route }) => {
       
       const signedTx = await TransactionSigner.signTransaction(
         "eth",
-        wallet.address,
+        wallet,
         JSON.stringify(tx),
         1
       );

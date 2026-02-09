@@ -711,7 +711,7 @@ const connectEventSource = useCallback(() => {
             </View>
           )}
         </TouchableOpacity>
-        <View style={[styles.headerRight,{backgroundColor:theme.bg}]}>
+        {/* <View style={[styles.headerRight,{backgroundColor:theme.bg}]}>
           {refreshing ? (
             <Animated.View style={{ transform: [{ rotate: spin }] }}>
               <Ionicons name="refresh" size={24} color="#007AFF" />
@@ -721,7 +721,7 @@ const connectEventSource = useCallback(() => {
               <Ionicons name="refresh" size={24} color="#8A8A8F" />
             </TouchableOpacity>
           )}
-        </View>
+        </View> */}
       </View>
       
       {/* {availableTabs.length > 0 && (

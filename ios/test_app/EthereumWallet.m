@@ -18,6 +18,17 @@ RCT_EXTERN_METHOD(validateMnemonic:
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(importEthPrivateKey:
+                  (NSString *)privateKey
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(importStellarPrivateKey:
+                  (NSString *)secretKey
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+
 + (BOOL)requiresMainQueueSetup
 {
   return NO;

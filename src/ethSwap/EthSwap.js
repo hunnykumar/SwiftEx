@@ -371,6 +371,7 @@ const EthSwap = () => {
                 <FlatList
                   data={filteredTokens}
                   keyExtractor={(item) => item.address}
+                  style={{height:hp(60)}}
                   renderItem={({ item }) => (
                     <TouchableOpacity
                       style={styles.tokenListItem}
@@ -498,7 +499,7 @@ const EthSwap = () => {
 
     try {
       // const result = await swapForEth(amount, state?.wallet?.privateKey);
-      const result = currentNetwork === 0 ? await swapForEth(amount, state?.wallet?.privateKey): await swapBnb(amount, state?.wallet?.privateKey);
+      const result = currentNetwork === 0 ? await swapForEth(amount, state?.wallet?.address): await swapBnb(amount, state?.wallet?.address);
       console.log("swap result",result)
       if (result.status) {
         Snackbar.show({
@@ -542,10 +543,8 @@ const EthSwap = () => {
   };
 
   // Swap execution function
-  const swapForEth = async (amount, privateKey) => {
+  const swapForEth = async (amount, address) => {
     try {
-      const wallet = new ethers.Wallet(privateKey);
-      const address = await wallet.getAddress();
 
       const payload = {
         tokenIn: fromToken,
@@ -669,10 +668,8 @@ const EthSwap = () => {
   };
 
   // Bnb Swap execution function
-  const swapBnb = async (amount, privateKey) => {
+  const swapBnb = async (amount, address) => {
     try {
-      const wallet = new ethers.Wallet(privateKey);
-      const address = await wallet.getAddress();
 
       const payload = {
         tokenIn: fromToken,

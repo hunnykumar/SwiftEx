@@ -427,22 +427,21 @@ const checkPermission = async () => {
                   "You don't have enough balance to do this transaction "
                 );
               }
-                privateKey = (await state.wallet.privateKey)
-                  ? await state.wallet.privateKey
-                  : JSON.parse(wallet).privateKey;
+                // privateKey = (await state.wallet.privateKey)
+                //   ? await state.wallet.privateKey
+                //   : JSON.parse(wallet).privateKey;
 
               if (
                 walletType &&
                 token &&
                 myAddress &&
-                privateKey &&
                 amount &&
                 address
               ) {
                 await SendCrypto(
                   address,
                   amount,
-                  privateKey,
+                  "",
                   balance,
                   setLoading,
                   walletType,

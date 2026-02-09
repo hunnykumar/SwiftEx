@@ -409,12 +409,11 @@ const classic = ({ route }) => {
     try {
       const activeNetwork = chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
       const activeAsset = selectedToken?.symbol;
-      const wallet = new ethers.Wallet(state?.wallet?.privateKey);
 
       if (activeNetwork === "Ethereum" && activeAsset === "USDT" || activeNetwork === "Ethereum" && activeAsset === "USDC") {
         const respoExe = await swap_prepare(
-          state?.wallet?.privateKey,
-          wallet.address,
+          state?.wallet?.address,
+          state?.wallet?.address,
           state.STELLAR_PUBLICK_KEY,
           amount,
           activeAsset,
@@ -487,8 +486,8 @@ const classic = ({ route }) => {
 
       if (activeNetwork === "BNB" && activeAsset === "USDT" || activeNetwork === "BNB" && activeAsset === "USDC") {
         const respoExe = await SwapPepare(
-          state?.wallet?.privateKey,
-          wallet.address,
+          state?.wallet?.address,
+          state?.wallet?.address,
           state.STELLAR_PUBLICK_KEY,
           amount,
           activeAsset,

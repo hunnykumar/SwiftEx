@@ -123,13 +123,12 @@ const send_recive = ({route}) => {
           return false;
       }
   }
-  async function send_XLM(sourceSecret, destinationPublic, amount) {
+  async function send_XLM(sourcePublicKey, destinationPublic, amount) {
     Keyboard.dismiss();
     try {
     const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
       // Load the source account
-      const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecret);
-      const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());
+      const sourceAccount = await server.loadAccount(sourcePublicKey);
   
       // Create the transaction
       const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
@@ -235,7 +234,7 @@ const send_recive = ({route}) => {
              });
             setPayment_loading(false);
            }else{
-            send_XLM(state.STELLAR_SECRET_KEY, recepi_address, recepi_amount)
+            send_XLM(state.STELLAR_PUBLICK_KEY, recepi_address, recepi_amount)
            }
           }
         } else {

@@ -144,7 +144,6 @@ const CheckNewWalletMnemonic = ({
       useNativeDriver: true,
     }).start();
     let wallet = Wallet;
-    console.log("mnemonic+++",Wallet.mnemonic)
     console.log(wallet);
   }, [fadeAnim, Spin]);
 
@@ -280,17 +279,13 @@ const CheckNewWalletMnemonic = ({
                       const allWallets = [
                         {
                           address: Wallet.address,
-                          privateKey: Wallet.privateKey,
                           name: Wallet.accountName,
-                          mnemonic: Wallet.mnemonic,
                           walletType: "Multi-coin",
                           xrp: {
                             address: Wallet.xrp.address,
-                            privateKey: Wallet.xrp.privateKey,
                           },
                           stellarWallet: {
                             publicKey: Wallet.stellarWallet.publicKey,
-                            secretKey: Wallet.stellarWallet.secretKey
                           },
                           wallets: wallets,
                         },
@@ -326,19 +321,19 @@ const CheckNewWalletMnemonic = ({
                                 console.log('Error:', result.error, 'Status:', result.status);
                               }
                               AsyncStorageLib.setItem("currentWallet",Wallet?.accountName)
-                              await AccessNativeStorage.updateExisting("activeUserWallet", JSON.stringify({
+                              await AccessNativeStorage.saveWallet({
                                 name: Wallet.accountName,
                                 address: Wallet.address,
                                 privatekey: Wallet.privateKey,
                                 stellarPublicKey: Wallet.stellarWallet.publicKey,
-                                stellarPrivateKey: Wallet.stellarWallet.secretKey
-                              }))
+                                stellarPrivateKey: Wallet.stellarWallet.secretKey,
+                                mnemonic: Wallet.mnemonic,
+                                walletType:"Multi-coin"
+                              })
                               dispatch(
                                 setCurrentWallet(
                                   Wallet?.address,
                                   Wallet?.accountName,
-                                  Wallet?.privateKey,
-                                  Wallet?.mnemonic ? Wallet.mnemonic : ""
                                 )
                               )
                               setTimeout(() => {

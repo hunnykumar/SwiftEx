@@ -6,7 +6,7 @@ import { NativeModules } from "react-native";
 var ethers = require("ethers");
 
 const sendEth = async (
-  privateKey,
+  publicKey,
   amount,
   addressTo,
   addressFrom,
@@ -14,8 +14,7 @@ const sendEth = async (
   setLoading
 ) => {
 
-  const walletPrivateKey = new ethers.Wallet(privateKey);
-  const { res, err } = await proxyRequest(`/v1/eth/wallet-address/${walletPrivateKey.address}/info`, PGET);
+  const { res, err } = await proxyRequest(`/v1/eth/wallet-address/${publicKey}/info`, PGET);
   if (err) {
     alert("error", err.message || "Something went wrong...");
     return;
@@ -63,9 +62,8 @@ const sendEth = async (
   return info;
 };
 
-const sendBNB = async (privateKey, amount, addressTo, addressFrom, balance, setLoading) => {
-  const walletPrivateKey = new ethers.Wallet(privateKey);
-  const { res, err } = await proxyRequest(`/v1/bsc/wallet-address/${walletPrivateKey.address}/info`, PGET);
+const sendBNB = async (publicKey, amount, addressTo, addressFrom, balance, setLoading) => {
+  const { res, err } = await proxyRequest(`/v1/bsc/wallet-address/${publicKey}/info`, PGET);
   if (err) {
     alert("error", err.message || "Something went wrong...");
     return;
@@ -95,7 +93,6 @@ const sendBNB = async (privateKey, amount, addressTo, addressFrom, balance, setL
     JSON.stringify(transaction),
     56
   );
-  console.debug("bnb signedTx",signedTx);
 
   let rawTransaction = signedTx.signedTx;
   if (rawTransaction.startsWith("0x0x")) {
@@ -116,11 +113,10 @@ const sendBNB = async (privateKey, amount, addressTo, addressFrom, balance, setL
 const SendCrypto = async (recieverAddress, amount, decrypt, balance, setLoading, walletType, setDisable, myAddress, Token, navigation) => {
   try {
     setLoading(true);
-    const privateKey = decrypt ? decrypt : alert("no wallets connected");
     const addressTo = recieverAddress;
     const addressFrom = myAddress ? myAddress : alert("please choose a wallet first");
     if (walletType == "Ethereum") {
-      const response = await sendEth(privateKey, amount, addressTo, addressFrom, balance, setLoading);
+      const response = await sendEth(addressFrom, amount, addressTo, addressFrom, balance, setLoading);
       let info = response;
       const feeBN = ethers.BigNumber.from(info.fee.toString());
       const feeInEth = ethers.utils.formatEther(feeBN);
@@ -135,7 +131,7 @@ const SendCrypto = async (recieverAddress, amount, decrypt, balance, setLoading,
         info,
       });
     } else if (walletType == "BSC") {
-      const response = await sendBNB(privateKey, amount, addressTo, addressFrom, balance, setLoading);
+      const response = await sendBNB(addressFrom, amount, addressTo, addressFrom, balance, setLoading);
       let info = response;
       const feeBN = ethers.BigNumber.from(info.fee.toString());
       const feeInEth = ethers.utils.formatEther(feeBN);
@@ -150,7 +146,7 @@ const SendCrypto = async (recieverAddress, amount, decrypt, balance, setLoading,
       });
     } else if (walletType === "Multi-coin") {
       if (Token === "Ethereum") {
-        const response = await sendEth(privateKey, amount, addressTo, addressFrom, balance, setLoading)
+        const response = await sendEth(addressFrom, amount, addressTo, addressFrom, balance, setLoading)
         let info = response;
         const feeBN = ethers.BigNumber.from(info.fee.toString());
         const feeInEth = ethers.utils.formatEther(feeBN);
@@ -165,7 +161,7 @@ const SendCrypto = async (recieverAddress, amount, decrypt, balance, setLoading,
         });
       } else if (Token === "BNB") {
         const response = await sendBNB(
-          privateKey,
+          addressFrom,
           amount,
           addressTo,
           addressFrom,

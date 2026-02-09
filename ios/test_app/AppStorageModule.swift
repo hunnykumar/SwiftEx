@@ -13,129 +13,132 @@ class StorageModule: NSObject {
     }
     
     @objc
-    func save(_ key: String,
-              value: String,
+    func saveWallet(_ value: String,
               resolver resolve: @escaping RCTPromiseResolveBlock,
               rejecter reject: @escaping RCTPromiseRejectBlock) {
         
         DispatchQueue.global(qos: .userInitiated).async {
             do {
-                try self.saveToKeychain(key: key, value: value)
-                
+                guard let data = value.data(using: .utf8),
+                      let newUser = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                    throw SecureStorageError.decodingError
+                }
+                var usersArray: [[String: Any]] = []
+                if let existingData = try? self.getFromKeychain(key: "appAllWallet"),
+                   let jsonData = existingData.data(using: .utf8),
+                   let existingUsers = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]] {
+                    usersArray = existingUsers
+                }
+                usersArray.append(newUser)
+                let updatedData = try JSONSerialization.data(withJSONObject: usersArray)
+                guard let updatedString = String(data: updatedData, encoding: .utf8) else {
+                    throw SecureStorageError.encodingError
+                }
+                try self.saveToKeychain(key: "appAllWallet", value: updatedString)
                 DispatchQueue.main.async {
                     resolve([
-                        "success": true,
-                        "key": key
+                        "success": true
                     ])
                 }
             } catch {
                 DispatchQueue.main.async {
-                    reject("SAVE_ERROR", error.localizedDescription, error)
+                    reject("SAVE_WALLET_ERROR", error.localizedDescription, error)
                 }
             }
         }
     }
   
     @objc
-    func updateExisting(_ key: String,
-                       value: String,
+    func updateActiveWallet(_ id: String,
                        resolver resolve: @escaping RCTPromiseResolveBlock,
                        rejecter reject: @escaping RCTPromiseRejectBlock) {
 
         DispatchQueue.global(qos: .userInitiated).async {
             do {
-                try self.saveToKeychain(key: key, value: value)
-
+                guard let walletDataString = try self.getFromKeychain(key: "appAllWallet") else {
+                    throw SecureStorageError.decodingError
+                }
+                
+                guard let data = walletDataString.data(using: .utf8),
+                      let walletArray = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+                    throw SecureStorageError.decodingError
+                }
+                
+                var matchedWallet: [String: Any]?
+                for wallet in walletArray {
+                    if let walletID = wallet["walletId"] as? String, walletID == id {
+                        matchedWallet = wallet
+                        break
+                    }
+                }
+                
+                guard let foundWallet = matchedWallet else {
+                    DispatchQueue.main.async {
+                        reject("WALLET_ID_NOT_FOUND", "wallet with \(id) not found.", nil)
+                    }
+                    return
+                }
+                
+                let walletInfo = try JSONSerialization.data(withJSONObject: foundWallet)
+                guard let walletString = String(data: walletInfo, encoding: .utf8) else {
+                    throw SecureStorageError.encodingError
+                }
+                
+                try self.saveToKeychain(key: "activeUserWallet", value: walletString)
+                
                 DispatchQueue.main.async {
                     resolve([
                         "success": true,
                         "mode": "replace",
-                        "key": key
+                        "walletId": id
                     ])
                 }
             } catch {
                 DispatchQueue.main.async {
-                    reject("UPDATE_EXISTING_ERROR", error.localizedDescription, error)
+                    reject("UPDATE_WALLET_ERROR", error.localizedDescription, error)
                 }
             }
         }
     }
 
     @objc
-    func mergeInExisting(_ key: String,
-                     value: String,
-                     resolver resolve: @escaping RCTPromiseResolveBlock,
-                     rejecter reject: @escaping RCTPromiseRejectBlock) {
-
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                let existingValue = try self.getFromKeychain(key: key)
-
-                var existingJson: [String: Any] = [:]
-
-                if let existingValue = existingValue,
-                   let data = existingValue.data(using: .utf8),
-                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                    existingJson = json
-                }
-
-                guard let newData = value.data(using: .utf8),
-                      let newJson = try JSONSerialization.jsonObject(with: newData) as? [String: Any] else {
-                    throw SecureStorageError.decodingError
-                }
-
-                for (k, v) in newJson {
-                    existingJson[k] = v
-                }
-
-                let mergedData = try JSONSerialization.data(withJSONObject: existingJson)
-                guard let mergedString = String(data: mergedData, encoding: .utf8) else {
-                    throw SecureStorageError.encodingError
-                }
-
-                try self.saveToKeychain(key: key, value: mergedString)
-
-                DispatchQueue.main.async {
-                    resolve([
-                        "success": true,
-                        "mode": "merge",
-                        "key": key,
-                        "updatedKeys": Array(newJson.keys)
-                    ])
-                }
-
-            } catch {
-                DispatchQueue.main.async {
-                    reject("MERGE_EXISTING_ERROR", error.localizedDescription, error)
-                }
-            }
-        }
-    }
-
-    @objc
-    func get(_ key: String,
-             resolver resolve: @escaping RCTPromiseResolveBlock,
+    func getAllWallets(_ resolver: @escaping RCTPromiseResolveBlock,
              rejecter reject: @escaping RCTPromiseRejectBlock) {
         
         DispatchQueue.global(qos: .userInitiated).async {
             do {
-                let value = try self.getFromKeychain(key: key)
-                
-                DispatchQueue.main.async {
-                    if let value = value {
-                        resolve([
-                            "success": true,
-                            "key": key,
-                            "value": value
-                        ])
-                    } else {
-                        resolve([
+                guard let walletDataString = try self.getFromKeychain(key: "appAllWallet") else {
+                    DispatchQueue.main.async {
+                        resolver([
                             "success": false,
-                            "key": key,
-                            "value": NSNull()
+                            "wallets": []
                         ])
                     }
+                    return
                 }
+                
+                guard let data = walletDataString.data(using: .utf8),
+                      let walletJson = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+                    throw SecureStorageError.decodingError
+                }
+                
+                let filteredWallet = walletJson.map { wallet -> [String: Any] in
+                    return [
+                        "walletId": wallet["walletId"] ?? NSNull(),
+                        "name": wallet["name"] ?? NSNull(),
+                        "address": wallet["address"] ?? NSNull(),
+                        "stellarPublicKey": wallet["stellarPublicKey"] ?? NSNull(),
+                        "walletType": wallet["walletType"] ?? NSNull()
+                    ]
+                }
+                
+                DispatchQueue.main.async {
+                    resolver([
+                        "success": true,
+                        "wallets": filteredWallet
+                    ])
+                }
+                
             } catch {
                 DispatchQueue.main.async {
                     reject("GET_ERROR", error.localizedDescription, error)
@@ -171,13 +174,54 @@ class StorageModule: NSObject {
               let response: [String: Any] = [
                   "address": walletJson["address"] ?? NSNull(),
                   "stellarPublicKey": walletJson["stellarPublicKey"] ?? NSNull(),
-                  "name": walletJson["name"] ?? NSNull()
+                  "name": walletJson["name"] ?? NSNull(),
+                  "walletId": walletJson["walletId"] ?? NSNull(),
+                  "walletType": walletJson["walletType"] ?? NSNull()
               ]
 
               DispatchQueue.main.async {
                   resolver([
                       "success": true,
                       "wallet": response
+                  ])
+              }
+
+          } catch {
+              DispatchQueue.main.async {
+                  reject("GET_WALLET_ERROR", error.localizedDescription, error)
+              }
+          }
+      }
+  }
+  
+  @objc
+  func getWalletInfo(_ resolver: @escaping RCTPromiseResolveBlock,
+                 rejecter reject: @escaping RCTPromiseRejectBlock) {
+
+      DispatchQueue.global(qos: .userInitiated).async {
+          do {
+              guard let walletString = try self.getFromKeychain(key: "activeUserWallet") else {
+                  DispatchQueue.main.async {
+                      resolver([
+                          "success": false,
+                          "wallet": NSNull()
+                      ])
+                  }
+                  return
+              }
+
+              guard let data = walletString.data(using: .utf8),
+                    let walletJson = try JSONSerialization.jsonObject(
+                      with: data,
+                      options: []
+                    ) as? [String: Any] else {
+                  throw SecureStorageError.decodingError
+              }
+
+              DispatchQueue.main.async {
+                  resolver([
+                      "success": true,
+                      "wallet": walletJson
                   ])
               }
 
@@ -201,36 +245,12 @@ class StorageModule: NSObject {
                 
                 DispatchQueue.main.async {
                     resolve([
-                        "success": true,
-                        "key": key
+                        "success": true
                     ])
                 }
             } catch {
                 DispatchQueue.main.async {
                     reject("DELETE_ERROR", error.localizedDescription, error)
-                }
-            }
-        }
-    }
-    
-    @objc
-    func exists(_ key: String,
-                resolver resolve: @escaping RCTPromiseResolveBlock,
-                rejecter reject: @escaping RCTPromiseRejectBlock) {
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                let value = try self.getFromKeychain(key: key)
-                
-                DispatchQueue.main.async {
-                    resolve([
-                        "exists": value != nil,
-                        "key": key
-                    ])
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    reject("EXISTS_ERROR", error.localizedDescription, error)
                 }
             }
         }
@@ -274,37 +294,6 @@ class StorageModule: NSObject {
             } catch {
                 DispatchQueue.main.async {
                     reject("CLEAR_ALL_ERROR", error.localizedDescription, error)
-                }
-            }
-        }
-    }
-    
-    @objc
-    func saveMultiple(_ items: NSDictionary,
-                      resolver resolve: @escaping RCTPromiseResolveBlock,
-                      rejecter reject: @escaping RCTPromiseRejectBlock) {
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                var savedKeys: [String] = []
-                
-                for (key, value) in items {
-                    if let key = key as? String, let value = value as? String {
-                        try self.saveToKeychain(key: key, value: value)
-                        savedKeys.append(key)
-                    }
-                }
-                
-                DispatchQueue.main.async {
-                    resolve([
-                        "success": true,
-                        "savedKeys": savedKeys,
-                        "count": savedKeys.count
-                    ])
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    reject("SAVE_MULTIPLE_ERROR", error.localizedDescription, error)
                 }
             }
         }

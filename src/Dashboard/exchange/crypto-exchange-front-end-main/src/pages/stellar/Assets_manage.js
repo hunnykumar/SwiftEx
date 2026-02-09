@@ -84,7 +84,7 @@ const Assets_manage = ({ route }) => {
             console.log(":++++ Entered into trusting ++++:")
             const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
             StellarSdk.Networks.PUBLIC
-            const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
+            const account = await server.loadAccount(state.STELLAR_PUBLICK_KEY);
             const transaction = new StellarSdk.TransactionBuilder(account, {
                 fee: StellarSdk.BASE_FEE,
                 networkPassphrase: StellarSdk.Networks.PUBLIC,
@@ -148,7 +148,7 @@ const Assets_manage = ({ route }) => {
             console.log(":++++ Entered into remove trusting ++++:")
             const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
             StellarSdk.Networks.PUBLIC
-            const account = await server.loadAccount(StellarSdk.Keypair.fromSecret(state.STELLAR_SECRET_KEY).publicKey());
+            const account = await server.loadAccount(state.STELLAR_PUBLICK_KEY);
             const transaction = new StellarSdk.TransactionBuilder(account, {
                 fee: StellarSdk.BASE_FEE,
                 networkPassphrase: StellarSdk.Networks.PUBLIC,

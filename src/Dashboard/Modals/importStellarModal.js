@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  NativeModules,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -22,10 +23,12 @@ import Icon from "../../icon";
 import { useDispatch, useSelector } from "react-redux";
 import { STELLAR_URL } from "../constants";
 import { RAPID_STELLAR, SET_ASSET_DATA } from "../../components/Redux/actions/type";
-import { getEthBalance } from "../../components/Redux/actions/auth";
+import { AddToAllWallets, getBalance, getEthBalance, setCurrentWallet, setToken, setUser, setWalletType } from "../../components/Redux/actions/auth";
 import * as StellarSdk from '@stellar/stellar-sdk';
 import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
 import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
+import AccessNativeStorage from "../Wallets/AccessNativeStorage";
+import { genUsrToken } from "../Auth/jwtHandler";
 const ImportStellarModal = ({
   setWalletVisible,
   Visible,
@@ -34,6 +37,7 @@ const ImportStellarModal = ({
   const state = useSelector((state) => state);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [secretkey, setsecretkey] = useState("");
+  const [walletName, setwalletName] = useState("");
   const [loadingAccount, setloadingAccount] = useState(false);
   const navigation = useNavigation();
   const dispatch = useDispatch()
@@ -47,21 +51,32 @@ const add_wallet=()=>{
         storeData(secretkey)
     }
 }
-const storeData = async (secretKey) => {
-        
+  const storeData = async (secretKey) => {
     try {
       setloadingAccount(true);
-      const data_1=await AsyncStorageLib.getItem('myDataKey');
-      console.log('Data ',data_1);
       try {
-        const keypair = StellarSdk.Keypair.fromSecret(secretKey);
-        const publicKey = keypair.publicKey();
-          const data = {
-            Ether_address:state.wallet.address,
-            key1: publicKey,
-            key2: secretKey,
-          };
-          await storeData_marge(data.key1,data.key2,data.Ether_address)
+        const stellarWalletRes = await NativeModules.EthereumWallet.importStellarPrivateKey(secretKey);
+        if (!stellarWalletRes.generated) {
+          setloadingAccount(false);
+          alert('error', "Account Not import yet.");
+        } else {
+          const walletResponse = await AccessNativeStorage.saveWallet({
+            name: walletName,
+            address: stellarWalletRes.generated.address,
+            privatekey: stellarWalletRes.generated.privateKey,
+            stellarPublicKey: stellarWalletRes.original.publicKey,
+            stellarPrivateKey: stellarWalletRes.original.secretKey,
+            mnemonic: "",
+            walletType: "Multi-coin"
+          })
+          if (walletResponse.success) {
+            updateWallet(stellarWalletRes.original.publicKey,stellarWalletRes.generated.address)
+            await storeData_marge(stellarWalletRes.original.publicKey,stellarWalletRes.generated.address,walletName)
+          } else {
+            setloadingAccount(false);
+            alert('error', "Account Not import yet.");
+          }
+        }
       } catch (error) {
         setloadingAccount(false);
         console.error('Error storing data:', error);
@@ -71,8 +86,7 @@ const storeData = async (secretKey) => {
       setloadingAccount(false);
       console.error('Error clearing data:', error);
     }
-   
-};
+  };
 
 const updateWallet=async(stellarAdd,WalletAdd)=>{
   const resultApi =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
@@ -94,89 +108,80 @@ const updateWallet=async(stellarAdd,WalletAdd)=>{
   }
 }
 
-const storeData_marge = async (publicKey, secretKey, Ether_address) => {
-  try {
-    let userTransactions = [];
-    const transactions = await AsyncStorageLib.getItem('myDataKey');
-    if (transactions) {
-      userTransactions = JSON.parse(transactions);
-      if (!Array.isArray(userTransactions)) {
-        userTransactions = [];
-      }
-    }
-
-    const existingIndex = userTransactions.findIndex(
-      (transaction) => transaction.Ether_address === Ether_address
-    );
-
-    if (existingIndex !== -1) {
-      // Update existing transaction
-      userTransactions[existingIndex].publicKey = publicKey;
-      userTransactions[existingIndex].secretKey = secretKey;
-    } else {
-      // Add new transaction
-      const newTransaction = {
-        Ether_address,
-        publicKey,
-        secretKey,
-      };
-      userTransactions.push(newTransaction);
-    }
-
-    await AsyncStorageLib.setItem('myDataKey', JSON.stringify(userTransactions));
-    console.log('Updated userTransactions:', userTransactions);
-    alert('success', "Account Imported.");
-    setWalletVisible(false);
+  const storeData_marge = async (publicKey, EtherAddress,accountName) => {
     try {
-      StellarSdk.Networks.PUBLIC
-      const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
-      server.loadAccount(publicKey)
-        .then(account => {
-          dispatch({
-            type: SET_ASSET_DATA,
-            payload: account.balances,
-          })
-          account.balances.forEach(balance => {
-          dispatch({
-            type: RAPID_STELLAR,
-            payload: {
-              ETH_KEY:Ether_address,
-              STELLAR_PUBLICK_KEY:publicKey,
-              STELLAR_SECRET_KEY:secretKey,
-              STELLAR_ADDRESS_STATUS:true
-            },
-          })
-          dispatch(getEthBalance(Ether_address))
-          console.log("==Dispacthed+Waller+success==")
-          setloadingAccount(false);
-          updateWallet(publicKey, Ether_address)
-          // setTimeout(() => {
-            navigation.navigate("Home");
-          // }, 1000);
-          });
-        })
-        .catch(error => {
-          console.log('Error +loading +account:', error);
-          dispatch({
-            type: RAPID_STELLAR,
-            payload: {
-              ETH_KEY:Ether_address,
-              STELLAR_PUBLICK_KEY:publicKey,
-              STELLAR_SECRET_KEY:secretKey,
-              STELLAR_ADDRESS_STATUS:false
-            },
-          })
-          console.log("==Dispacthed+success==")
-          console.log(':===ERROR +STELLER ACCOUNT NEED TO ACTIVATE===:');
-          setloadingAccount(false);
-          setTimeout(() => {
-            navigation.navigate("Home");
-          }, 1000);
-        });
-    } catch (error) {
+      const wallet = {
+        address: EtherAddress,
+        xrp: {
+          address: "000000000"
+        },
+        stellarWallet: {
+          publicKey: publicKey
+        },
+      };
+      const pin = await AsyncStorageLib.getItem("pin");
+      const body = {
+        accountName: accountName,
+        pin: JSON.parse(pin),
+      };
+      const token = genUsrToken(body);
+      const accounts = {
+        address: wallet.address,
+        name: accountName,
+        xrp: {
+          address: "000000000",
+        },
+        stellarWallet: {
+          publicKey: wallet.stellarWallet.publicKey,
+        },
+        walletType: "Multi-coin",
+        wallets: [],
+      };
+      let wallets = [];
+      wallets.push(accounts);
+      const allWallets = [
+        {
+          address: wallet.address,
+          name: accountName,
+          xrp: {
+            address: "000000000",
+          },
+          stellarWallet: {
+            publicKey: wallet.stellarWallet.publicKey,
+          },
+          walletType: "Multi-coin",
+        },
+      ];
+
+      AsyncStorageLib.setItem(
+        "wallet",
+        JSON.stringify(allWallets[0])
+      );
+      AsyncStorageLib.setItem(
+        `${accountName}-wallets`,
+        JSON.stringify(allWallets)
+      );
+      AsyncStorageLib.setItem("user", accountName);
+      AsyncStorageLib.setItem("currentWallet", accountName);
+      AsyncStorageLib.setItem("token", token);
+      dispatch(setUser(accountName));
+      dispatch(
+        setCurrentWallet(
+          wallet.address,
+          accountName,
+          "000000000",
+          "000000000",
+          "Multi-coin"
+        )
+      );
+      dispatch(AddToAllWallets(wallets, accountName));
+      dispatch(getBalance(wallet.address));
+      dispatch(setToken(token));
+      dispatch(setWalletType("Multi-coin"));
       setloadingAccount(false);
-      console.log("Error in +get_stellar")
-    }
+      setTimeout(() => {
+        navigation.navigate("Home");
+      }, 1000);
   } catch (error) {
     setloadingAccount(false);
     console.error('Error saving +payout:', error);
@@ -222,8 +227,25 @@ const storeData_marge = async (publicKey, secretKey, Ether_address) => {
             <Icon type={'entypo'} name='info-with-circle' color={"#ECB742"} size={20} />
             <Text style={[style.coinSubText, { color: "#ECB742", marginLeft: 5 }]}>Never share this phrase. Enter it here only to recover your wallet.</Text>
           </View>
-
-    <View style={[style.card, { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C" }]}>
+      <View style={[style.card, { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C" }]}>
+          <View style={{flexDirection:"row",justifyContent:"space-between"}}>
+           <Text style={[style.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>Wallet Name</Text>
+           </View>
+           <View style={[style.inputContainer, {
+                         backgroundColor: state.THEME.THEME === false ? "#F4F4F8" : "#242426",
+                       }]}>
+            <TextInput
+              placeholder={"Enter your wallet name here"}
+              placeholderTextColor={"gray"}
+              style={[style.textInputForCrossChain,{ color: state.THEME.THEME === false ?"black":"#fff" }]}
+              value={walletName}
+              onChangeText={(text) => {
+                setwalletName(text)
+              }}
+            />
+            </View>
+          </View>
+    <View style={[style.card, { backgroundColor: state.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C",marginTop:hp(1) }]}>
           <View style={{flexDirection:"row",justifyContent:"space-between"}}>
            <Text style={[style.label, { color: state.THEME.THEME === false ? "#6C757D" : "#8B93A7" }]}>Secret Key</Text>
             <TouchableOpacity

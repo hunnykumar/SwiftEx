@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { PPOST, proxyRequest } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/api";
+import { NativeModules } from "react-native";
 
 
 
@@ -124,9 +125,9 @@ export async function SwapPepare(
   }
 }
 
-async function signTransaction(privateKey, txData) {
+async function signTransaction(publicKey, txData) {
   try {
-    const account = new ethers.Wallet(privateKey);
+    const account = publicKey;
     const tx = txData.transaction;
     const meta = txData.txMeta;
 
@@ -156,54 +157,50 @@ async function signTransaction(privateKey, txData) {
     const isEIP1559 = meta.feeData.maxFeePerGas !== null && 
                       meta.feeData.maxPriorityFeePerGas !== null;
 
-    const baseTx = {
-      from: tx.from,
+    const nativeTxFormat = {
+      chainId: parseInt(meta.network.chainId) || 56,
+      nonce: ethers.utils.hexlify(meta.nonce || 0),
       to: tx.to,
-      data: tx.data || "0x",
-      value: toBigNumber(tx.value, "value"),
-      gasLimit: toBigNumber(meta.gasLimit, "gasLimit"),
-      nonce: meta.nonce,
-      chainId: Number(meta.network.chainId),
+      value: ethers.utils.hexlify(toBigNumber(tx.value, "value")),
+      data: (tx.data || "0x").startsWith("0x") ? (tx.data || "0x") : "0x" + (tx.data || ""),
+      gasLimit: ethers.utils.hexlify(toBigNumber(meta.gasLimit, "gasLimit")),
     };
 
-    let txToSign;
-
     if (isEIP1559) {
-      console.log(` Signing EIP-1559 transaction (${txData.type})`);
-      txToSign = {
-        ...baseTx,
-        maxFeePerGas: toBigNumber(meta.feeData.maxFeePerGas, "maxFeePerGas"),
-        maxPriorityFeePerGas: toBigNumber(meta.feeData.maxPriorityFeePerGas, "maxPriorityFeePerGas"),
-        type: 2,
-      };
+      console.log(` Preparing EIP-1559 for NativeModule (${txData.type})`);
+      nativeTxFormat.maxFeePerGas = ethers.utils.hexlify(
+        toBigNumber(meta.feeData.maxFeePerGas, "maxFeePerGas")
+      );
+      nativeTxFormat.maxPriorityFeePerGas = ethers.utils.hexlify(
+        toBigNumber(meta.feeData.maxPriorityFeePerGas, "maxPriorityFeePerGas")
+      );
     } else {
-      console.log(` Signing Legacy transaction (${txData.type})`);
-      txToSign = {
-        ...baseTx,
-        gasPrice: toBigNumber(meta.feeData.gasPrice, "gasPrice"),
-        type: 0,
-      };
+      console.log(` Preparing Legacy for NativeModule (${txData.type})`);
+      nativeTxFormat.gasPrice = ethers.utils.hexlify(
+        toBigNumber(meta.feeData.gasPrice, "gasPrice")
+      );
     }
 
-    console.log(`Transaction to sign (${txData.type}):`, {
-      from: txToSign.from,
-      to: txToSign.to,
-      value: txToSign.value.toString(),
-      gasLimit: txToSign.gasLimit.toString(),
-      gasPrice: txToSign.gasPrice?.toString(),
-      maxFeePerGas: txToSign.maxFeePerGas?.toString(),
-      nonce: txToSign.nonce,
-      chainId: txToSign.chainId,
-      type: txToSign.type,
-    });
+    console.log(`NativeModule TX format (${txData.type}):`, nativeTxFormat);
 
-    const signedTx = await account.signTransaction(txToSign);
+    const { TransactionSigner } = NativeModules;
+    const result = await TransactionSigner.signTransaction(
+      "bsc",
+      publicKey,
+      JSON.stringify(nativeTxFormat),
+      nativeTxFormat.chainId
+    );
+
+    let signedTx = result.signedTx;
+    if (signedTx.startsWith("0x0x")) {
+      signedTx = signedTx.replace(/^0x/, "");
+    }
 
     if (!signedTx) {
-      throw new Error("Transaction signing failed - no signed transaction returned");
+      throw new Error("TransactionSigner returned empty signedTx");
     }
 
-    console.log(` ${txData.type} transaction signed (${signedTx.length} bytes)`);
+    console.log(`${txData.type} signed by NativeModule (${signedTx.length} bytes)`);
     return signedTx;
 
   } catch (error) {

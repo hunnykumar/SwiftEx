@@ -215,16 +215,7 @@ export const NewOfferModal = () => {
         return;
       }
 
-      const secretKey = state.STELLAR_SECRET_KEY;
-
-      if (!secretKey || !secretKey.startsWith("S")) {
-        ShowErrotoast(toast, "Invalid Stellar Secret Key");
-        setLoading(false);
-        return;
-      }
-
-      const sourceKeypair = StellarSdk.Keypair.fromSecret(secretKey);
-      const account = await server.loadAccount(sourceKeypair.publicKey());
+      const account = await server.loadAccount(state.STELLAR_PUBLICK_KEY);
       const base_asset_sell = createStellarAsset(top_value, AssetIssuerPublicKey);
       const counter_asset_buy  = createStellarAsset(top_value_0, AssetIssuerPublicKey1);
 
@@ -284,15 +275,7 @@ export const NewOfferModal = () => {
         return;
       }
 
-      const secretKey = state.STELLAR_SECRET_KEY;
-      if (!secretKey || !secretKey.startsWith("S")) {
-        ShowErrotoast(toast, "Invalid Stellar Secret Key");
-        setLoading(false);
-        return;
-      }
-
-      const sourceKeypair = StellarSdk.Keypair.fromSecret(secretKey);
-      const account = await server.loadAccount(sourceKeypair.publicKey());
+      const account = await server.loadAccount(state.STELLAR_PUBLICK_KEY);
       
       const base_asset_sell = createStellarAsset(top_value_0, AssetIssuerPublicKey1);
       const counter_asset_buy = createStellarAsset(top_value, AssetIssuerPublicKey);

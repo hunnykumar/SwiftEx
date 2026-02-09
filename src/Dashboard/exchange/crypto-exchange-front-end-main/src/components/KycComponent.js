@@ -378,7 +378,7 @@ const KycComponent = ({ route }) => {
       onPress={() =>{tokenModalType===0?[setSelectedfiat(item),setTokenModalVisible(false)]:[setSelectedCrypto(item),setTokenModalVisible(false)],setFindResult("")}}
     >
       <Image
-        source={{ uri: item.icon }}
+        source={{ uri: item.icon?item.icon:`https://flagcdn.com/24x18/${item?.country?.toLowerCase()}.png` }}
         style={styles.tokenIcon}
       />
       <View style={styles.tokenInfo}>
@@ -493,7 +493,8 @@ const KycComponent = ({ route }) => {
                 <TouchableOpacity style={[styles.amountFlagCon,{backgroundColor:theme.bg}]} onPress={() => { settokenModalType(0), setTokenModalVisible(true) }}>
                   <View style={styles.currencySelector}>
                     <View style={styles.downBoxCon}>
-                      <Icon name="currency-usd" type="materialCommunity" color={theme.headingTx} size={25} />
+                      {/* <Icon name="currency-usd" type="materialCommunity" color={theme.headingTx} size={25} /> */}
+                      <Image source={{ uri: `https://flagcdn.com/24x18/${selectedfiat?.country?.toLowerCase()}.png` }} style={styles.tokenIcon} /> 
                     </View>
                     <Text style={[styles.currencyText,{color:theme.headingTx}]}>{selectedfiat?.currency || "Fiat"}</Text>
                   </View>
@@ -540,7 +541,7 @@ const KycComponent = ({ route }) => {
                 <TouchableOpacity style={[styles.amountFlagCon,{backgroundColor:theme.bg}]}  onPress={() => { settokenModalType(0), setTokenModalVisible(true) }}>
                   <View style={styles.currencySelector}>
                     <View style={styles.downBoxCon}>
-                      <Icon name="currency-usd" type="materialCommunity" color={theme.headingTx} size={25} />
+                      <Image source={{ uri: `https://flagcdn.com/24x18/${selectedfiat?.country?.toLowerCase()}.png` }} style={styles.tokenIcon} /> 
                     </View>
                     <Text style={[styles.currencyText,{color:theme.headingTx}]}>{selectedfiat?.currency || "Fiat"}</Text>
                   </View>

@@ -71,7 +71,10 @@ const TokenQrCode = ({ modalVisible, setModalVisible, iconType, qrvalue, isDark 
   const shareQR = async () => {
     try {
       await Share.share({
-        message: qrvalue,
+        message: JSON.stringify({
+          Wallet: iconType,
+          Address: qrvalue
+        }, null, 2)
       });
     } catch (error) {
       console.log('Error sharing QR code', error);

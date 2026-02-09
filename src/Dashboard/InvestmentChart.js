@@ -276,7 +276,7 @@ function InvestmentChart() {
                 }}
               />
             }
-            contentContainerStyle={{ paddingBottom: hp(50) }}
+            contentContainerStyle={{ paddingBottom: hp(33) }}
           />
         </>
         )}

@@ -33,6 +33,7 @@ import Icon from "../../icon";
 import { recoverMultiChainWallet } from "../../utilities/WalletManager";
 import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
 import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
+import AccessNativeStorage from "../Wallets/AccessNativeStorage";
 const { EthereumWallet } = NativeModules;
 
 const xrpl = require("xrpl");
@@ -48,13 +49,6 @@ const ImportMultiCoinWalletModal = ({
   const [accountName, setAccountName] = useState();
   const [mnemonic, setMnemonic] = useState("");
   const [visible, setVisible] = useState(false);
-  const [Wallet, setWallet] = useState();
-  const [label, setLabel] = useState("privateKey");
-  const [privateKey, setPrivateKey] = useState("");
-  const [json, setJson] = useState();
-  const [jsonKey, setJsonKey] = useState();
-  const [optionVisible, setOptionVisible] = useState(false);
-  const [provider, setProvider] = useState("");
   const [disable, setDisable] = useState(true);
   const [message, setMessage] = useState("");
   const state = useSelector((state) => state);
@@ -66,52 +60,6 @@ const ImportMultiCoinWalletModal = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const Spin = new Animated.Value(0);
-
-  async function saveUserDetails(address) {
-    let response;
-    const user = await AsyncStorageLib.getItem("user");
-    const token = await AsyncStorageLib.getItem("token");
-    console.log(user);
-    try {
-      response = await fetch(`http://${urls.testUrl}/user/saveUserDetails`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: token,
-          user: user,
-          walletAddress: address,
-          accountName: accountName,
-        }),
-      })
-        .then((response) => response.json())
-        .then(async (responseJson) => {
-          if (responseJson.responseCode === 200) {
-            alert("success", "success");
-            return responseJson.responseCode;
-          } else if (responseJson.responseCode === 400) {
-            alert(
-              "error",
-              "account with same name already exists. Please use a different name"
-            );
-            return responseJson.responseCode;
-          } else {
-            alert("error", "Unable to create account. Please try again");
-            return 401;
-          }
-        })
-        .catch((error) => {
-          alert(error);
-        });
-    } catch (e) {
-      console.log(e);
-      alert(e);
-    }
-    console.log(response);
-    return response;
-  }
 
   const closeModal = () => {
     setWalletVisible(false);
@@ -263,17 +211,14 @@ const ImportMultiCoinWalletModal = ({
                     "Incorrect Mnemonic. Please provide a valid Mnemonic"
                   );
                 }
-                const accountFromMnemonic = Platform.OS === "android" ? await EthereumWallet.recoverMultiChainWallet(trimmedPhrase) : await recoverMultiChainWallet(trimmedPhrase);
+                const accountFromMnemonic = Platform.OS === "android" ? await EthereumWallet.recoverMultiChainWallet(trimmedPhrase) : await EthereumWallet.recoverWallet(trimmedPhrase,"");
                 const wallet = {
                   address: accountFromMnemonic.ethereum.address,
-                  privateKey: accountFromMnemonic.ethereum.privateKey,
                   xrp: {
                     address: "000000000",
-                    privateKey: "000000000",
                   },
                   stellarWallet: {
                     publicKey: accountFromMnemonic.stellar.publicKey,
-                    secretKey: accountFromMnemonic.stellar.secretKey
                   },
 
                 };
@@ -296,16 +241,12 @@ const ImportMultiCoinWalletModal = ({
                 const allWallets = [
                   {
                     address: wallet.address,
-                    privateKey: wallet.privateKey,
-                    mnemonic: trimmedPhrase,
                     name: accountName,
                     xrp: {
                       address: "000000000",
-                      privateKey: "000000000",
                     },
                     stellarWallet: {
-                      publicKey: wallet.stellarWallet.publicKey,
-                      secretKey: wallet.stellarWallet.secretKey
+                      publicKey: wallet.stellarWallet.publicKey
                     },
                     walletType: "Multi-coin",
                     wallets: wallets,
@@ -329,7 +270,7 @@ const ImportMultiCoinWalletModal = ({
                   console.log('Error:', resultApi.error, 'Status:', resultApi.status);
                 }
 
-                dispatch(AddToAllWallets(allWallets, user)).then((response) => {
+                dispatch(AddToAllWallets(allWallets, user)).then(async(response) => {
                   if (response) {
                     if (response.status === "Already Exists") {
                       alert("error", "Account with same name already exists");
@@ -339,19 +280,28 @@ const ImportMultiCoinWalletModal = ({
                       dispatch(
                         setCurrentWallet(
                           wallet.address,
-                          accountName,
-                          wallet.privateKey,
-                          trimmedPhrase
+                          accountName
                         )
                       )
-                      setTimeout(() => {
-                        setLoading(false);
-                        setWalletVisible(false);
-                        setVisible(false);
-                        setModalVisible(false);
-                        AsyncStorageLib.setItem("currentWallet", accountName);
-                        navigation.navigate("AllWallets");
-                      }, 0);
+                      const walletResponse = await AccessNativeStorage.saveWallet({
+                        name: accountName,
+                        address: accountFromMnemonic.ethereum.address,
+                        privatekey: accountFromMnemonic.ethereum.privateKey,
+                        stellarPublicKey: accountFromMnemonic.stellar.publicKey,
+                        stellarPrivateKey: accountFromMnemonic.stellar.secretKey,
+                        mnemonic: trimmedPhrase,
+                        walletType: "Multi-coin"
+                      })
+                      if (walletResponse.success) {
+                        setTimeout(() => {
+                          setLoading(false);
+                          setWalletVisible(false);
+                          setVisible(false);
+                          setModalVisible(false);
+                          AsyncStorageLib.setItem("currentWallet", accountName);
+                          navigation.navigate("AllWallets");
+                        }, 0);
+                      }
                     } else {
                       alert("error", "failed please try again");
                       return;

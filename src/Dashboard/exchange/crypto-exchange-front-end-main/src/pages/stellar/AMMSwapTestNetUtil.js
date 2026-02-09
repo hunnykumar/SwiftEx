@@ -8,11 +8,11 @@ async function AMMSWAPTESTNET(
   fromTokenIssuer,
   toTokenCode,
   toTokenIssuer,
-  sourceSecret,
+  sourcePublic,
   destAmount,
   trustLineOpt
 ) {
-  if (!sourceSecret) {
+  if (!sourcePublic) {
     return {
       status: false,
       tx: '',
@@ -21,8 +21,8 @@ async function AMMSWAPTESTNET(
   }
 
   try {
-    const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecret);
-    const sourcePublicKey = sourceKeypair.publicKey();
+
+    const sourcePublicKey = sourcePublic;
 
     // Define sending asset
     const assetSend =

@@ -32,6 +32,7 @@ import { useNavigation } from "@react-navigation/native";
 import { alert } from "../reusables/Toasts";
 import Icon from "../../icon";
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
+import AccessNativeStorage from "./AccessNativeStorage";
 
 const WALLET_ICONS = {
   BSC: Bnbimage,
@@ -64,27 +65,6 @@ const AllWallets = () => {
     [isDarkTheme]
   );
 
-  const fetchXrpBalance = useCallback(async (address) => {
-    try {
-      const response = await fetch(
-        `http://${urls.testUrl}/user/getXrpBalance`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ address }),
-        }
-      );
-      const data = await response.json();
-      return data?.responseData || null;
-    } catch (error) {
-      console.error("Error fetching XRP balance:", error);
-      return null;
-    }
-  }, []);
-
   const fetchMultiCoinBalances = useCallback(async (address, xrpAddress) => {
     try {
       await Promise.all([
@@ -100,14 +80,8 @@ const AllWallets = () => {
   const handleBalanceFetch = useCallback(async (walletType, address, xrpAddress) => {
     try {
       switch (walletType) {
-        case "Matic":
-          await dispatch(getMaticBalance(address));
-          break;
         case "Ethereum":
           await dispatch(getEthBalance(address));
-          break;
-        case "Xrp":
-          await dispatch(getXrpBalance(xrpAddress || address));
           break;
         case "Multi-coin":
           await fetchMultiCoinBalances(address, xrpAddress);
@@ -127,23 +101,15 @@ const AllWallets = () => {
       await AsyncStorageLib.setItem("currentWallet", item.name);
 
       const walletData = {
-        address: item.walletType === "Xrp" ? item.classicAddress : item.address,
+        address: item.address,
         name: item.name,
-        privateKey: item.privateKey,
-        mnemonic: item.mnemonic || "",
-        xrpAddress: item.xrp?.address || "",
-        xrpPrivateKey: item.xrp?.privateKey || "",
-        walletType: item.xrp ? "Multi-coin" : item.walletType,
+        walletType: item.walletType,
       };
 
       const response = await dispatch(
         setCurrentWallet(
           walletData.address,
           walletData.name,
-          walletData.privateKey,
-          walletData.mnemonic,
-          walletData.xrpAddress,
-          walletData.xrpPrivateKey,
           walletData.walletType
         )
       );
@@ -161,6 +127,7 @@ const AllWallets = () => {
           walletData.address,
           walletData.xrpAddress
         );
+        await AccessNativeStorage.updateActiveWallet(item.walletId)
 
         alert("success", `Wallet selected: ${item.name}`);
 
@@ -185,8 +152,7 @@ const AllWallets = () => {
         return;
       }
 
-      const data = await AsyncStorageLib.getItem(`${user}-wallets`);
-      const parsedWallets = data ? JSON.parse(data) : [];
+      const parsedWallets = await AccessNativeStorage.getAllWallets();
       setWallets(parsedWallets);
     } catch (error) {
       console.error("Error fetching wallets:", error);
@@ -213,7 +179,6 @@ const AllWallets = () => {
   const renderWalletItem = useCallback((item, index) => {
     const walletIcon = getWalletIcon(item.walletType);
     const isActive = item.name === currentWalletName;
-    const isMultiCoin = item.walletType === "Multi-coin";
 
     return (
       <TouchableOpacity
