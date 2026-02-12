@@ -87,6 +87,7 @@ import ExportUSDC from "../Dashboard/exchange/crypto-exchange-front-end-main/src
 import { TransactionView } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/transaction";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../Screens/ThemeColorsConfig";
+import BridgeAssets from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/BridgeAssets";
 
 const Stack = createNativeStackNavigator();
 
@@ -625,6 +626,13 @@ const AuthStack = () => {
         component={TransactionView}
         options={{
           headerShown:false
+        }}
+      />
+      <Stack.Screen
+        name="BridgeAssets"
+        component={BridgeAssets}
+        options={{
+          headerShown: false,
         }}
       />
         <Stack.Screen

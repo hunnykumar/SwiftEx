@@ -38,7 +38,7 @@ import { useToast } from "native-base";
 import { STELLAR_URL } from "../constants";
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 import ErrorComponet from "../../utilities/ErrorComponet";
-import { GetStellarAvilabelBalance } from "../../utilities/StellarUtils";
+import { GetStellarAvilabelBalance, stellarWalletStatus } from "../../utilities/StellarUtils";
 import StellarAccountReserve from "../exchange/crypto-exchange-front-end-main/src/utils/StellarReserveComponent";
 import WalletActivationComponent from "../exchange/crypto-exchange-front-end-main/src/utils/WalletActivationComponent";
 // const StellarSdK = require('stellar-base');
@@ -221,7 +221,8 @@ const SendXLM = (props) => {
                   setACTIVATION_MODAL(true)
                 }
                 else{
-                  setACTIVATION_MODAL_PROD(true);
+                  const walletStatus=stellarWalletStatus(state?.STELLAR_PUBLICK_KEY);
+                  setACTIVATION_MODAL_PROD(walletStatus);
                 }
             });
     }
@@ -254,23 +255,37 @@ const SendXLM = (props) => {
               Showsuccesstoast(toast,"Sending Payment");
               const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
               StellarSdk.Networks.PUBLIC;
-              // Load the source account
               const sourceAccount = await server.loadAccount(sourcePublic);
-          
-              // Create the transaction
-              const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+              const isDestinationActive = await stellarWalletStatus(destinationPublic);
+              let transaction;
+              if (!isDestinationActive) {
+                transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
                   fee: await server.fetchBaseFee(),
                   networkPassphrase: StellarSdk.Networks.PUBLIC,
-              })
-              .addOperation(
-                  StellarSdk.Operation.payment({
+                })
+                  .addOperation(
+                    StellarSdk.Operation.payment({
                       destination: destinationPublic,
                       asset: StellarSdk.Asset.native(),
                       amount: amount,
-                  })
-              )
-              .setTimeout(30)
-              .build();
+                    })
+                  )
+                  .setTimeout(30)
+                  .build();
+              } else {
+                transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+                  fee: await server.fetchBaseFee(),
+                  networkPassphrase: StellarSdk.Networks.PUBLIC,
+                })
+                  .addOperation(
+                    StellarSdk.Operation.createAccount({
+                      destination: destinationPublic,
+                      startingBalance: amount,
+                    })
+                  )
+                  .setTimeout(30)
+                  .build();
+              }
           
               const txXDR = transaction.toXDR();
               const res = await NativeModules.StellarSigner.signTransaction(txXDR);

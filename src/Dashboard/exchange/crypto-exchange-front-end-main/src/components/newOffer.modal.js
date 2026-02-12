@@ -28,7 +28,7 @@ import { STELLAR_URL } from "../../../../constants";
 import { useToast } from "native-base";
 import { Exchange_screen_header } from "../../../../reusables/ExchangeHeader";
 import StellarAccountReserve from "../utils/StellarReserveComponent";
-import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../utilities/StellarUtils";
+import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance, stellarWalletStatus } from "../../../../../utilities/StellarUtils";
 import InfoComponent from "./InfoComponent";
 import WalletActivationComponent from "../utils/WalletActivationComponent";
 import CustomOrderBook from "../pages/stellar/CustomOrderBook";
@@ -49,8 +49,8 @@ const ERROR_MESSAGES = {
   INSUFFICIENT_BALANCE: "Insufficient Balance",
   ACTIVATION_REQUIRED: "Activation Required",
   INPUT_CORRECT_VALUE: "Input Correct Value.",
-  SELL_OFFER_NOT_CREATED: "Sell Offer not-created",
-  BUY_OFFER_NOT_CREATED: "Buy offer not-created.",
+  SELL_OFFER_NOT_CREATED: "Request Faild",
+  BUY_OFFER_NOT_CREATED: "Request Faild",
   XLM_LOW_RESERVE: "XLM low reserve in account",
   LOW_RESERVE: (asset) => `${asset} low reserve in account`,
   OPPOSING_ORDER: "Account already has an active offer with an Opposing order",
@@ -58,14 +58,14 @@ const ERROR_MESSAGES = {
   TRUSTLINE_FAILED: "Trustline failed to update",
   UNABLE_TO_GET_MARKET_PRICE: "Unable to get market price.",
   INSUFFICIENT_FUNDS: "Insufficient funds",
-  CREATE_OFFER: "Execute",
-  MULTIOP_OFFER: "Trust & Execute",
+  CREATE_OFFER: "Swap",
+  MULTIOP_OFFER: "Trust & Swap",
 };
 
 // Success messages configuration
 const SUCCESS_MESSAGES = {
-  SELL_OFFER_CREATED: "Sell offer created.",
-  BUY_OFFER_CREATED: "Buy offer created.",
+  SELL_OFFER_CREATED: "Request created.",
+  BUY_OFFER_CREATED: "Request created.",
 };
 
 // Tab configuration
@@ -257,7 +257,7 @@ export const NewOfferModal = () => {
       setLoading(false);
       navigation?.navigate(stellarConfig.NAVIGATION.STELLAR_OFFERS);
       
-      return 'Sell Offer placed successfully';
+      return 'Request placed successfully';
     } catch (error) {
       console.log("----err-or--",error)
       handleTransactionError(error, stellarConfig.TRADE_TYPES.SELL);
@@ -320,7 +320,7 @@ export const NewOfferModal = () => {
       setLoading(false);
       navigation?.navigate(stellarConfig.NAVIGATION.STELLAR_OFFERS);
       
-      return 'Buy Offer placed successfully';
+      return 'Request placed successfully';
     } catch (error) {
       handleTransactionError(error, stellarConfig.TRADE_TYPES.BUY);
     }
@@ -515,13 +515,13 @@ const selectTradingPair = useCallback((item) => {
   const triggerMarketUpdate = useCallback(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
-    debounceTimer.current = setTimeout(() => {
+    debounceTimer.current = setTimeout(async() => {
       setALL_STELLER_BALANCES(state?.assetData || [])
-      if (state.STELLAR_ADDRESS_STATUS === false) {
-        setACTIVATION_MODAL_PROD(true);
-      }
-      get_stellar(top_value);
+      const walletStatus=await stellarWalletStatus(state?.STELLAR_PUBLICK_KEY)
+      setACTIVATION_MODAL_PROD(walletStatus);
+      get_stellar(top_value_0);
       getLastTradePrice(top_value, AssetIssuerPublicKey, top_value_0, AssetIssuerPublicKey1);
+      get_stellar(top_value);
     }, 350);
   }, [
     top_value,

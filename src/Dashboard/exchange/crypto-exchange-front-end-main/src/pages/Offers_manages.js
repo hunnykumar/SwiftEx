@@ -144,8 +144,8 @@ const Offers_manages = () => {
   const handleDelete = (offerId,index) => {
     setSelectedIndex(index)
    CustomInfoProvider.show(
-      'Delete Offer',
-      'Are you sure you want to delete this offer?',
+      'Delete Request',
+      'Are you sure you want to delete this request?',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'OK', onPress: () => deleteOffer(offerId) },
@@ -193,11 +193,11 @@ const Offers_manages = () => {
       console.log('Offer deleted:', response);
       setloading_del(false);
       fetchOffers(); 
-     CustomInfoProvider.show('Success', 'Offer deleted successfully.');
+     CustomInfoProvider.show('Success', 'Request successfull.');
     } catch (error) {
       setloading_del(false);
       console.log("Error deleting offer:", error);
-     CustomInfoProvider.show('Info', 'Failed to delete the offer');
+     CustomInfoProvider.show('Info', 'Failed to delete the request.');
     }
   };
 
@@ -287,12 +287,12 @@ const Offers_manages = () => {
   
       setloading_edi(false);
       fetchOffers();
-     CustomInfoProvider.show('Success', 'Offer updated successfully.');
+     CustomInfoProvider.show('Success', 'Request updated successfully.');
       setModalVisible(false);
     } catch (error) {
       setloading_edi(false);
       console.log("Error updating offer:", error.response?.data || error);
-     CustomInfoProvider.show('Info', 'Failed to update the offer');
+     CustomInfoProvider.show('Info', 'Failed to update the request.');
     }
   };
   
@@ -302,7 +302,7 @@ const Offers_manages = () => {
     <View style={[styles.offerItem, { backgroundColor: theme.cardBg }]}>
       <View style={styles.offer_id_con}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={[styles.offerText, { color: theme.headingTx }]}>Offer ID: {item.id}</Text>
+          <Text style={[styles.offerText, { color: theme.headingTx }]}>Swap ID: {item.id}</Text>
           <View style={styles.active_text}>
             <Text style={[styles.offerText, { color: "#fff", fontSize: 13 }]}>Active</Text>
           </View>
@@ -321,11 +321,11 @@ const Offers_manages = () => {
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       <View style={{flexDirection:"row",alignItems:"center",justifyContent:"center"}}>
         <View style={styles.container_sub}>
-          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Selling Asset</Text>
+          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Send Asset</Text>
           <Text style={[styles.offerSubText, { color: theme.headingTx }]}>{item?.selling?.asset_type === "native" ? "XLM" : item.selling?.asset_code}</Text>
         </View>
         <View style={styles.container_sub}>
-          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Buying Asset</Text>
+          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Receive Asset</Text>
           <Text style={[styles.offerSubText, { color: theme.headingTx }]}>{item?.buying?.asset_type === "native" ? "XLM" : item.buying?.asset_code}</Text>
         </View>
         <View style={styles.container_sub}>
@@ -355,7 +355,7 @@ const Offers_manages = () => {
         />:
         <View style={styles.error_cont}>
           <Icon name={"cart-outline"} type={"materialCommunity"} size={55} color={theme.inactiveTx} />
-          <Text style={[styles.error_text,{color:theme.inactiveTx}]}>No Active Adv. Swaps</Text>
+          <Text style={[styles.error_text,{color:theme.inactiveTx}]}>No Pending Adv. Swaps</Text>
         </View>
       )}
 
@@ -373,8 +373,8 @@ const Offers_manages = () => {
           <Icon name={"close"} type={"antDesign"} size={25} color={"#fff"}/>
           </TouchableOpacity>
             <View style={styles.container_sub}>
-            <Text style={styles.modalTitle}>Edit Offer</Text>
-            <Text style={styles.modalTitle}>ID: {selectedOffer?.id}</Text>
+            <Text style={styles.modalTitle}>Edit Swap</Text>
+            <Text style={styles.modalTitle}>Swap ID: {selectedOffer?.id}</Text>
             </View>
             <TextInput
               editable={!loading_edi}
@@ -401,7 +401,7 @@ const Offers_manages = () => {
                   <Text style={styles.balance}>{stellarAvalibleBalance ? Number(stellarAvalibleBalance) : 0.0} </Text>}
             </View>
             <TouchableOpacity style={styles.update_btn} disabled={loading_edi||reserveLoading} onPress={()=>{updateOffer()}}>
-              {loading_edi?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={{color:"#4B84ED",fontSize:19}}>Update Offer</Text>}
+              {loading_edi?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={{color:"#4B84ED",fontSize:19}}>Update Swap</Text>}
             </TouchableOpacity>
           </View>
         </View>

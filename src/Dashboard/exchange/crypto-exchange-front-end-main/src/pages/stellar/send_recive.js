@@ -20,7 +20,7 @@ import { STELLAR_URL } from "../../../../../constants";
 import { Paste, SaveTransaction } from "../../../../../../utilities/utilities";
 import Snackbar from "react-native-snackbar";
 import ErrorComponet from "../../../../../../utilities/ErrorComponet";
-import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../../utilities/StellarUtils";
+import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance, stellarWalletStatus } from "../../../../../../utilities/StellarUtils";
 import WalletActivationComponent from "../../utils/WalletActivationComponent";
 import * as StellarSdk from '@stellar/stellar-sdk';
 import CustomInfoProvider from "../../components/CustomInfoProvider";
@@ -263,12 +263,8 @@ const send_recive = ({route}) => {
         setPayment_loading(false)
         get_data()
         setmode_selected("SED");
-        if(state.STELLAR_ADDRESS_STATUS===false)
-        {
-          setTimeout(()=>{
-            setACTIVATION_MODAL_PROD(true)
-          },600)
-        }
+        const walletStatus=stellarWalletStatus(state?.STELLAR_PUBLICK_KEY);
+        setACTIVATION_MODAL_PROD(walletStatus)
     }, [FOCUSED])
 
     useEffect(()=>{
@@ -284,7 +280,6 @@ const send_recive = ({route}) => {
 
   const ActivateModal = () => {
     setACTIVATION_MODAL_PROD(false);
-    navigation.goBack()
   };
 
   const theme = state.THEME.THEME ? colors.dark : colors.light;
@@ -298,7 +293,7 @@ const send_recive = ({route}) => {
         />
          <WalletActivationComponent 
          isVisible={ACTIVATION_MODAL_PROD}
-         onClose={() => {ActivateModal}}
+         onClose={() => {ActivateModal()}}
          onActivate={()=>{setACTIVATION_MODAL_PROD(false)}}
          navigation={navigation}
          appTheme={true}

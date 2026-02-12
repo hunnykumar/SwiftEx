@@ -170,3 +170,12 @@ export async function HandleStellarTrustLine(secretKey, assetCode, assetIssuer, 
     return { response: error, status: false };
   }
 }
+
+export const stellarWalletStatus = async (publicKey) => {
+  try {
+    await server.loadAccount(publicKey);
+    return false;
+  } catch (error) {
+    return true;
+  }
+};

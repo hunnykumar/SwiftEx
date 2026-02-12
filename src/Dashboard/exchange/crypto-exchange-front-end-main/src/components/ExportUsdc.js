@@ -10,7 +10,7 @@ import {
 import WalletActivationComponent from '../utils/WalletActivationComponent';
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
 import { useCallback, useEffect, useState } from 'react';
-import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from '../../../../../utilities/StellarUtils';
+import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance, stellarWalletStatus } from '../../../../../utilities/StellarUtils';
 import { alert } from '../../../../reusables/Toasts';
 import { getChainTokenData, swapPepare } from '../../../../../utilities/AllbridgeUtil';
 import { Keypair } from '@stellar/stellar-sdk';
@@ -122,15 +122,15 @@ const ExportUSDC = () => {
   }, [Focused])
 
   useEffect(() => {
-    setamount("");
-    setgetInfo(false);
-    setresQuotes(null);
-    setPayFeeType("native")
+    if(amount){
+      getQuote(!selectedNetworkDetils ? sendNetworks[0].symbole : selectedNetworkDetils.symbole, !selectedReciveNetworkDetils ? reciveNetwork[0].symbole : selectedReciveNetworkDetils.symbole, !selectedAssetDetils ? sendAseets[0].symbole : selectedAssetDetils.symbole, !selectedReciveAssetDetils ? reciveAsset[0].symbole : selectedReciveAssetDetils.symbole,amount);
+    }
   }, [chooseReciveAsset,chooseReciveNetwork])
 
   const fetchStellarWalletdetails = async () => {
     try {
-      if (state.STELLAR_ADDRESS_STATUS === false) {
+      const walletStatus=await stellarWalletStatus(state?.STELLAR_PUBLICK_KEY)
+      if (walletStatus) {
         setstellarWalletActivated(true);
         setbasicProccesing(false);
       }

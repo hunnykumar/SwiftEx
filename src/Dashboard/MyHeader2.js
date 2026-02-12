@@ -87,6 +87,9 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
       alert("Swapping is only supported for Ethereum and Binance ");
     }
   }
+  const openModal4= async()=>{
+    navigation.navigate("BridgeAssets");
+  }
 
   const translation = useRef(new Animated.Value(0)).current;
 
@@ -239,6 +242,12 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                 action: openModal2,
               },
               {
+                name: "Bridge",
+                icon: "arrow-u-down-right",
+                type: "materialCommunity",
+                action: openModal4,
+              },
+              {
                 name: "Swap",
                 icon: "swap-vert",
                 type: "material",
@@ -262,7 +271,7 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
                   <Icon
                     name={item.icon}
                     type={item.type}
-                    size={30}
+                    size={28}
                     color={themeColors.icon}
                   />
                 </View>
@@ -380,7 +389,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   featureCon: {
-    paddingHorizontal: 15,
+    paddingHorizontal: 9,
     flexDirection: "row",
     marginTop: "6%",
     justifyContent: "space-between",
@@ -390,7 +399,7 @@ const styles = StyleSheet.create({
   featureCard: {
     alignItems: "center",
     justifyContent: "center",
-    width: "20%",
+    width: wp(18),
   },
   featureIconWrapper: {
     alignItems: "center",

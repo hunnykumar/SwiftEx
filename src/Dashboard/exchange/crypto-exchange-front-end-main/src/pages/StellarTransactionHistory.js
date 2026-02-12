@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Linking,
 } from 'react-native';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -275,7 +276,7 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
       setshowTxHash([{ chain: operation.chain, hash: operation.hash }]);
       setshowTx(true);
     } else {
-      navigation.navigate('StellarTransactionViewer', { transactionPath: txId });
+      Linking.openURL(`${STELLAR_URL.EXPERT_URL}/tx/${txId}`);
     }
   };
 

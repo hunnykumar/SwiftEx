@@ -14,6 +14,7 @@ import {
   Clipboard,
   Alert,
   Dimensions,
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSelector } from 'react-redux';
@@ -305,7 +306,7 @@ const TransactionCard = ({ item, walletAddress, activeChain, navigation, colors 
 
     const explorerUrl = getExplorerUrl();
     if (explorerUrl) {
-      navigation.navigate("TxDetail", { transactionPath: explorerUrl });
+     Linking.openURL(explorerUrl);
     }
   };
 

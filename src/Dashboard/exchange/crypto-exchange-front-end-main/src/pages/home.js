@@ -105,8 +105,8 @@ export const HomeView = () => {
   ]
   const quickTradeActions = [
     { name: `Manage\nAssets`, icon: "token", iconProvider: "material" },
-    { name: `Fiat\nAccess`, icon: "storefront", iconProvider: "material" },
-    { name: `Adv.Swap\nHistory`, icon: "insights", iconProvider: "material" },
+    { name: `Fiat\nAccess`, icon: "attach-money", iconProvider: "material" },
+    { name: `Pending\nAdv.Swaps`, icon: "timeline-clock-outline", iconProvider: "materialCommunity" },
     { name: `Transaction\nHistory`, icon: "restore", iconProvider: "material" },
   ]
   useEffect(() => {
@@ -278,7 +278,7 @@ export const HomeView = () => {
          }}>
            <Text style={[styles.headingTx, { color: theme.headingTx }]}>Start Swap</Text>
              <View style={{ flexDirection: "row",alignItems:"center" }}>
-                <Image source={{uri:CHART_API[0].img_0}} width={wp(7)} height={hp(3.2)} />
+                <Image source={{uri:CHART_API[0].img_0}} width={29} height={29} />
                 <Text style={[styles.infoText, { color: theme.headingTx }]}>Avg. Network Fee</Text>
                 <Text style={[styles.infoText, { color: theme.headingTx }]}>~ 0.00001  </Text>
               </View>

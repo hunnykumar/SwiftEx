@@ -249,7 +249,7 @@ const Welcome = (props) => {
   return (
     <View style={styles.container}>
       <CustomImageSlider images={images} />
-      
+       <Text style={styles.termsTxt}>By continuing, you agree to our Terms and Policies</Text>
       <Animated.View style={[styles.buttonContainer, { opacity: fadeAnim }]}>
         {/* {Loading?null:<TouchableOpacity
           style={styles.createView}
@@ -271,7 +271,7 @@ const Welcome = (props) => {
             <ActivityIndicator color={"green"} size={"large"} />
           </View>
         }
-        <Text style={styles.termsTxt}>By continuing, you agree to our Terms and Policies</Text>
+       
 
       </Animated.View>
     </View>

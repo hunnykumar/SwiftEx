@@ -297,7 +297,7 @@ export const OfferView = () => {
   const state = useSelector((state) => state);
   return (
     <>
-      <Exchange_screen_header title="Adv.Swap History" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
+      <Exchange_screen_header title="Pending Adv.Swaps" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
       <View style={{ height: hp(100),backgroundColor:state.THEME.THEME ? "#1B1B1C" : "#FFFFFF", paddingBottom: hp(15) }}>
         <Offers_manages />
       </View>

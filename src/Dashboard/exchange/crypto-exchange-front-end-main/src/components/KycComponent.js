@@ -6,6 +6,7 @@ import {
     Image,
     Keyboard,
   KeyboardAvoidingView, 
+  Linking, 
   Modal, 
   Platform, 
   ScrollView,
@@ -111,7 +112,7 @@ const KycComponent = ({ route }) => {
       {
        setVisibleAlertLoading(false);
        setVisibleAlert(false);
-       navigation.navigate("TxDetails",{userKycUrl:respo.model})
+       Linking.openURL(respo.model)
       }
     } catch (error) {
       setVisibleAlertLoading(false);
@@ -246,7 +247,7 @@ const KycComponent = ({ route }) => {
       console.log(result,"payload",payload)
       if (result.success&&result.data.success) {
         setbtnLoading(false);
-        navigation.navigate("TxDetails", { userKycUrl: result.data.success })
+        Linking.openURL(result.data.success)
       } else {
         setbtnLoading(false);
        CustomInfoProvider.show("Oops!", "Somthing went wrong.");
@@ -272,7 +273,7 @@ const KycComponent = ({ route }) => {
       if(result.success&&result.data.success)
       {
         setbtnLoading(false);
-        navigation.navigate("TxDetails",{userKycUrl:result.data.success})
+        Linking.openURL(result.data.success)
         
       }
       else{

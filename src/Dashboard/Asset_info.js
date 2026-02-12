@@ -550,7 +550,7 @@ const Asset_info = ({ route }) => {
                 icon="bridge"
                 iconProvider={"materialCommunity"}
                 label="Bridge"
-                onPress={()=>{navigation.navigate("classic", {
+                onPress={()=>{navigation.navigate("BridgeAssets", {
       Asset_type: assetSymbol === "XLM" ? "ETH" : assetSymbol,
     })}}
               />

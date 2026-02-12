@@ -280,14 +280,19 @@ class EthereumWallet: NSObject {
         return (address: address, privateKey: privateKey.data.hexString)
     }
     
-    private func deriveStellar(from wallet: HDWallet) throws -> (publicKey: String, secretKey: String) {
-        let privateKey = wallet.getKey(coin: .stellar, derivationPath: "m/44'/148'/0'")
-        let publicKeyData = privateKey.getPublicKeyEd25519()
-        let stellarAddress = CoinType.stellar.deriveAddressFromPublicKey(publicKey: publicKeyData)
-        let secretKeyData = Data(privateKey.data.prefix(32))
-        let secretSeed = encodeStellarSecretSeed(secretKeyData)
-        return (publicKey: stellarAddress, secretKey: secretSeed)
-    }
+  private func deriveStellar(from wallet: HDWallet) throws -> (publicKey: String, secretKey: String) {
+      let privateKey = wallet.getKey(coin: .stellar, derivationPath: "m/44'/148'/0'")
+      
+      let seed = privateKey.data.prefix(32)
+      
+      let keyPair = try KeyPair(seed: Seed(bytes: [UInt8](seed)))
+      
+      guard let secretSeed = keyPair.secretSeed else {
+          throw WalletError.derivationFailed
+      }
+      
+      return (publicKey: keyPair.accountId, secretKey: secretSeed)
+  }
     
     private func encodeStellarSecretSeed(_ data: Data) -> String {
         let versionByte: UInt8 = 18 << 3

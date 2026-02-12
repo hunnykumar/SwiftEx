@@ -11,7 +11,8 @@ export async function swap_prepare(
   sourceToken,
   destinationToken,
   walletType,
-  feePayType
+  feePayType,
+  destinationWalletType,
 ) {
   try {
     console.log("starting bridge swap process");
@@ -22,7 +23,8 @@ export async function swap_prepare(
       sourceToken,
       destinationToken,
       walletType,
-      feePayType: feePayType === "native" ? "native" : "stablecoin"
+      feePayType: feePayType === "native" ? "native" : "stablecoin",
+      destinationWalletType
     });
 
     console.log("swap prepare response:", prepareResponse);

@@ -27,6 +27,7 @@ import tokenList from "../../../../../Dashboard/tokens/tokenList.json";
 import PancakeList from "../../../../../Dashboard/tokens/pancakeSwap/PancakeList.json";
 import LocalTxManager from '../../../../../utilities/LocalTxManager';
 import { getWalletBalance } from '../utils/getWalletInfo/EtherWalletService';
+import { stellarWalletStatus } from '../../../../../utilities/StellarUtils';
 
 const classic = ({ route }) => {
   const toast = useToast();
@@ -298,18 +299,19 @@ const classic = ({ route }) => {
     setbalanceLoading(false);
     setfianl_modal_error(false);
     setfianl_modal_loading(false);
-    setamount('');
     setPayFeeType('native');
     seterrorMsg(null);
   };
 
+  useEffect(()=>{
+    getQuote(amount, currentWalletType=== "BNB" ? "BNB" : "ETH",selectedToken?.symbol,selectedToken);
+  },[selectedToken])
+
   const fetchUSDCBalnce = async (activeToken=selectedToken,addresses) => {
     try {
       setbalanceLoading(true);
-
-      if (state.STELLAR_ADDRESS_STATUS === false) {
-        setACTIVATION_MODAL_PROD(true);
-      }
+      const walletStatus=await stellarWalletStatus(state?.STELLAR_PUBLICK_KEY)
+      setACTIVATION_MODAL_PROD(walletStatus);
 
       if (!activeToken) {
         setbalanceLoading(false);

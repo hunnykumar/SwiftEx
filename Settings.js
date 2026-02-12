@@ -6,6 +6,10 @@ import {
   View,
   TouchableOpacity,
   Platform,
+  ScrollView,
+  PermissionsAndroid,
+  Image,
+  Linking,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -13,37 +17,72 @@ import {
 } from "react-native-responsive-screen";
 import { useDispatch, useSelector } from "react-redux";
 import ToggleSwitch from "toggle-switch-react-native";
-import { REACT_APP_HOST, REACT_APP_LOCAL_TOKEN } from "./src/Dashboard/exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import Icon from "./src/icon";
 import { SET_APP_THEME } from "./src/components/Redux/actions/type";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { Wallet_screen_header } from "./src/Dashboard/reusables/ExchangeHeader";
-import CustomInfoProvider from "./src/Dashboard/exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
-import authApi from "./src/Dashboard/exchange/crypto-exchange-front-end-main/src/authApi";
 import { colors } from "./src/Screens/ThemeColorsConfig";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { getApp } from "@react-native-firebase/app";
 import { getMessaging, subscribeToTopic, unsubscribeFromTopic } from "@react-native-firebase/messaging";
+import messaging from '@react-native-firebase/messaging';
+import Modal from "react-native-modal";
+import DeviceInfo from "react-native-device-info";
+import { alert } from "./src/Dashboard/reusables/Toasts";
+import darkBlue from "./assets/darkBlue.png";
+
 const Settings = (props) => {
   const navi = useNavigation();
   const focused = useIsFocused();
   const [Checked, setCheckBox] = useState(false);
-  const [notificationStatus,setNotificationStatus]=useState(false);
-  const [userProfileLoading, setuserProfileLoading] = useState(false);
-  const [userProfile, setuserProfile] = useState(null);
+  const [notificationStatus, setNotificationStatus] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [analytics, setAnalytics] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const dispatch = useDispatch();
   const state = useSelector((state) => state);
   const theme = state.THEME.THEME ? colors.dark : colors.light;
+
+  const notificationPermissionStatus = async () => {
+    try {
+      let platformPermission = false;
+      if (Platform.OS === 'ios') {
+        const authStatus = await messaging().hasPermission();
+        platformPermission =
+          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      }
+      else if (Platform.OS === 'android' && Platform.Version >= 33) {
+        platformPermission = await PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+        );
+      }
+      else {
+        platformPermission = true;
+      }
+
+      const storedStatus = await AsyncStorageLib.getItem('notiPermissions');
+      let finalStatus;
+      if (storedStatus === null) {
+        finalStatus = platformPermission;
+      } else if (platformPermission === true && storedStatus === "false") {
+        finalStatus = false;
+      } else {
+        finalStatus = platformPermission;
+      }
+      setNotificationStatus(finalStatus);
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   useEffect(() => {
     const insilize_data = async () => {
       try {
         const Checked = await AsyncStorageLib.getItem("APP_THEME");
         setCheckBox(Checked === null ? false : Checked === "false" ? false : true);
         await AsyncStorageLib.setItem("APP_THEME", JSON.stringify(state.THEME.THEME));
-        setuserProfileLoading(false);
-        const notifiStatus=await AsyncStorageLib.getItem("notiPermissions");
-        setNotificationStatus(notifiStatus === null ? false : notifiStatus === "false" ? false : true);
-        // checkUserLoginStatus();
+        await notificationPermissionStatus();
       } catch (error) {
         console.log("====****.", error)
       }
@@ -51,91 +90,31 @@ const Settings = (props) => {
     insilize_data()
   }, [focused, state.THEME.THEME, Checked, notificationStatus])
 
-  const checkUserLoginStatus = async () => {
+  const handleNotification = async () => {
     try {
-      const token = await AsyncStorageLib.getItem("UserAuthID");
-      if (!token) {
-        setuserProfile(null);
-        setuserProfileLoading(false);
+      const notiStatus = await AsyncStorageLib.getItem("notiPermissions");
+      console.log(notiStatus)
+      const app = getApp();
+      const messagings = getMessaging(app);
+      if (notiStatus == null || notiStatus === "false") {
+        await subscribeToTopic(messagings, "txUpdates");
+        await AsyncStorageLib.setItem("notiPermissions", "true");
+        setNotificationStatus(true);
+        await notificationPermissionStatus();
       } else {
-        // await getUserProfile()
+        await unsubscribeFromTopic(messagings, "txUpdates");
+        await AsyncStorageLib.setItem("notiPermissions", "false");
+        setNotificationStatus(false);
+        await notificationPermissionStatus();
       }
     } catch (error) {
-      console.log("error-while-checkUserLoginStatus", error)
-      setuserProfile(null);
-      setuserProfileLoading(false);
+      console.error("handleNotification", error)
     }
   }
-  const getUserProfile = async () => {
-    const result = await authApi.get(REACT_APP_HOST + "/v1/users/profile");
-    if (result.success) {
-      setuserProfile(result.data.user);
-      setuserProfileLoading(false);
-    } else {
-      console.log('Failed to fetch:', result);
-      setuserProfile(null);
-      setuserProfileLoading(false)
-      CustomInfoProvider.show("error", "Unable to get user profile.");
-    }
-  }
-
-  const logout = async () => {
-    try {
-        await AsyncStorageLib.removeItem("UserAuthID");
-        setuserProfileLoading(true);
-        // await checkUserLoginStatus();
-        CustomInfoProvider.show("success", "Logged out successfully. Guest Mode enabled.");
-    } catch (error) {
-      console.log("(--)---", error)
-    }
-  }
-
-  const handleNotification=async()=>{
-    const notiStatus=await AsyncStorageLib.getItem("notiPermissions");
-    console.log(notiStatus)
-    const app=getApp();
-    const messaging=getMessaging(app);
-    if(notiStatus==null||notiStatus==="false"){
-      await subscribeToTopic(messaging,"txUpdates");
-      await AsyncStorageLib.setItem("notiPermissions","true");
-      setNotificationStatus(true);
-    }else{
-      await unsubscribeFromTopic(messaging,"txUpdates");
-      await AsyncStorageLib.setItem("notiPermissions","false");
-      setNotificationStatus(false);
-    }
-  }
-
-  const TransactionSkeleton = () => (
-    <View style={[styles.skeletonCard, { backgroundColor: theme.cardBg }]}>
-      <View style={styles.skeletonRow}>
-        <View style={[styles.skeletonCircle, { backgroundColor: theme.inactiveTx }]} />
-        <View style={styles.skeletonContent}>
-          <View style={[styles.skeletonLine, { backgroundColor: theme.inactiveTx, width: '60%' }]} />
-          <View style={[styles.skeletonLine, { backgroundColor: theme.inactiveTx, width: '40%', marginTop: 8 }]} />
-        </View>
-      </View>
-    </View>
-  );
 
   return (
     <View style={{ backgroundColor: theme.bg, height: hp(100) }}>
       <Wallet_screen_header elementestID={"setting_back"} title="Settings" onLeftIconPress={() => navi.goBack()} />
-      {/* {userProfileLoading ? <TransactionSkeleton /> :
-        <View style={[styles.profileCard, { backgroundColor: theme.cardBg }]}>
-          <View style={[styles.profileIcon, { backgroundColor: theme.smallCardBg }]}>
-            <Text style={[styles.profileIconTxt, { color: theme.headingTx }]}>{userProfile?.email?.charAt(0)?.toLocaleUpperCase() || "G"}</Text>
-          </View>
-          <View style={styles.profileInfoContainer}>
-            <Text style={[styles.profileName, { color: theme.headingTx }]}>{userProfile?.email?.split("@")[0] || "Guest"}</Text>
-            <Text style={[styles.profileEmail, { color: theme.inactiveTx }]}>{userProfile?.email || "Guest"}</Text>
-          </View>
-          {!userProfile ?
-            <TouchableOpacity onPress={() => { props.navigation.navigate("exchangeLogin",{diractPath:"Settings"}) }} style={styles.loginBtn}>
-              <Text style={styles.loginBtnTxt}>Login</Text>
-            </TouchableOpacity> : <Icon type={"material"} name="verified" size={25} color={"#4052D6"} style={{ alignSelf: "center" }} />}
-        </View>} */}
-
       <View style={[styles.multicardContainer, { backgroundColor: theme.cardBg }]}>
         <TouchableOpacity
           style={[styles.card, { borderBottomColor: theme.inactiveTx }]}
@@ -184,6 +163,18 @@ const Settings = (props) => {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={[styles.card, { borderBottomColor: theme.inactiveTx }]}
+          onPress={async () => {
+            props.navigation.navigate("Biometric");
+          }}
+        >
+          <View style={styles.iconCon}>
+            <Icon type={Platform.OS === 'android' ? "ionicon" : "material"} name={Platform.OS === 'android' ? "finger-print" : "lock-outline"} size={31} color={"#4052D6"} />
+          </View>
+          <Text style={[styles.text, { color: theme.headingTx }]}>{Platform.OS === 'android' ? "Biometric Authenticaton" : "Authenticaton"}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.card, { borderBottomWidth: 0, borderBottomColor: theme.inactiveTx }]}
           onPress={() => {
             props.navigation.navigate("Transactions");
@@ -200,15 +191,35 @@ const Settings = (props) => {
         <TouchableOpacity
           style={[styles.card, { borderBottomColor: theme.inactiveTx }]}
           onPress={() => {
-            props.navigation.navigate("ExchangeHome");
+            setShowPrivacy(showPrivacy ? false : true);
           }}
         >
           <View style={styles.iconCon}>
-            <Icon type={"ionicon"} name="git-compare" size={31} color={"#4052D6"} />
-
+            <Icon type={"materialCommunity"} name="lock" size={31} color={"#4052D6"} />
           </View>
-          <Text style={[styles.text, { color: theme.headingTx }]}>SDEX</Text>
+          <Text style={[styles.text, { color: theme.headingTx }]}>Security & Privacy</Text>
         </TouchableOpacity>
+
+        <View
+          style={[styles.cardWithToggel, { borderBottomColor: theme.inactiveTx }]}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={styles.iconCon}>
+              <Icon name={"bell"} type={"materialCommunity"} size={31} color={"#4052D6"} />
+            </View>
+            <Text style={[styles.text, { color: theme.headingTx }]}>Notification</Text>
+          </View>
+          <View style={Platform.OS == "android" ? { paddingRight: wp(2) } : { paddingRight: wp(3.5) }}>
+            <ToggleSwitch
+              isOn={notificationStatus}
+              onColor="green"
+              offColor="gray"
+              onToggle={() => {
+                handleNotification()
+              }}
+            />
+          </View>
+        </View>
 
         <TouchableOpacity
           style={[styles.card, { borderBottomColor: theme.inactiveTx }]}
@@ -223,50 +234,114 @@ const Settings = (props) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.cardWithToggel, { borderBottomColor: theme.inactiveTx }]}
-          onPress={() => {
-            handleNotification()
+          style={[styles.card, { borderBottomColor: theme.inactiveTx }]}
+          onPress={async () => {
+            setShowAbout(showAbout ? false : true);
           }}
         >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <View style={styles.iconCon}>
-              <Icon name={"bell"} type={"materialCommunity"} size={31} color={"#4052D6"} />
-            </View>
-            <Text style={[styles.text, { color: theme.headingTx }]}>Notification</Text>
+          <View style={styles.iconCon}>
+            <Icon type={"material"} name={"info"} size={31} color={"#4052D6"} />
           </View>
-          <View style={Platform.OS == "android" ? { paddingRight: wp(2) } : { paddingRight: wp(3.5) }}>
-            <ToggleSwitch
-              isOn={notificationStatus}
-              onColor="green"
-              offColor="gray"
-              disabled={true}
-            />
-          </View>
+          <Text style={[styles.text, { color: theme.headingTx }]}>About SwiftEx</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.card, { borderBottomWidth: 0, borderBottomColor: theme.inactiveTx }]}
-          onPress={()=>{Clipboard.setString("info@swiftexwallet.com")}}
+          onPress={() => { Clipboard.setString("info@swiftexwallet.com") }}
         >
           <View style={styles.iconCon}>
             <Icon type={"feather"} name="help-circle" size={31} color={"#4052D6"} />
           </View>
           <View>
-            <Text style={[styles.text, { color: theme.headingTx,marginTop:hp(2) }]}>Help Center</Text>
-            <Text style={[styles.supportTxt, { color: theme.headingTx}]}>For any assistance, please feel free to email us at <Text style={[styles.supportTxt, { color: theme.headingTx,fontWeight:"900"}]}>info@swiftexwallet.com</Text></Text>
+            <Text style={[styles.text, { color: theme.headingTx }]}>Help Center</Text>
+            <Text style={[styles.supportTxt, { color: theme.headingTx }]}>E-mail us at <Text style={[styles.supportTxt, { color: theme.headingTx, fontWeight: "900" }]}>info@swiftexwallet.com</Text></Text>
           </View>
         </TouchableOpacity>
 
       </View>
 
-      {/* <TouchableOpacity
-        style={[styles.singleCard, { backgroundColor: theme.cardBg }]}
-        onPress={() => { logout() }}>
-        <View style={styles.iconCon}>
-          <Icon type={"material"} name="logout" size={31} color={"#4052D6"} />
+      <Modal
+        animationType="slide"
+        visible={showAbout}
+        onRequestClose={() => { setShowAbout(false) }}
+        useNativeDriver={true}
+        useNativeDriverForBackdrop={true}
+        hideModalContentWhileAnimating
+        onBackdropPress={() => { setShowAbout(false) }}
+        onBackButtonPress={() => { setShowAbout(false) }}
+        style={styles.modalContainer}
+      >
+        <View style={[styles.privacyCon, { backgroundColor: theme.bg, height: hp(60) }]}>
+          <TouchableOpacity style={styles.headerCon} onPress={() => { setShowAbout(false) }}>
+            <Icon type={"material"} name="keyboard-arrow-left" size={36} color={theme.headingTx} />
+            <Text style={[styles.privacyConHeading, { color: theme.headingTx }]}>About SwiftEx</Text>
+          </TouchableOpacity>
+
+          <View style={styles.appCon}>
+            <Image style={{ width: wp(14), height: hp(10) }} source={darkBlue} />
+            <View>
+              <Text style={[styles.appConHeading, { color: theme.headingTx }]}>SwiftEx</Text>
+              <Text style={[styles.appVersion, { color: theme.inactiveTx }]}>Version 1.0.1</Text>
+            </View>
+          </View>
+          <TouchableOpacity style={[styles.privacySubCon, { backgroundColor: theme.cardBg }]} onPress={() => { Linking.openURL("https://swiftexwallet.com/terms-of-service") }}>
+            <Text style={[styles.privacyConTxt, { color: theme.headingTx }]}>Terms of Service</Text>
+            <Icon type={"material"} name="open-in-new" size={21} color={"#4052D6"} style={{ marginLeft: wp(2) }} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.privacySubCon, { backgroundColor: theme.cardBg }]} onPress={() => { Linking.openURL("https://swiftexwallet.com/privacy-policy") }}>
+            <Text style={[styles.privacyConTxt, { color: theme.headingTx }]}>Privacy Policy</Text>
+            <Icon type={"material"} name="open-in-new" size={21} color={"#4052D6"} style={{ marginLeft: wp(2) }} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.privacySubCon, { backgroundColor: theme.cardBg }]} onPress={() => { Linking.openURL("https://swiftexwallet.com") }}>
+            <Text style={[styles.privacyConTxt, { color: theme.headingTx }]}>Visit Website</Text>
+            <Icon type={"material"} name="open-in-new" size={21} color={"#4052D6"} style={{ marginLeft: wp(2) }} />
+          </TouchableOpacity>
         </View>
-        <Text style={[styles.text, { color: theme.headingTx }]}>Log Out</Text>
-      </TouchableOpacity> */}
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        visible={showPrivacy}
+        onRequestClose={() => { setShowPrivacy(false) }}
+        useNativeDriver={true}
+        useNativeDriverForBackdrop={true}
+        hideModalContentWhileAnimating
+        onBackdropPress={() => { setShowPrivacy(false) }}
+        onBackButtonPress={() => { setShowPrivacy(false) }}
+        style={styles.modalContainer}
+      >
+        <View style={[styles.privacyCon, { backgroundColor: theme.bg }]}>
+          <TouchableOpacity style={styles.headerCon} onPress={() => { setShowPrivacy(false) }}>
+            <Icon type={"material"} name="keyboard-arrow-left" size={36} color={theme.headingTx} />
+            <Text style={[styles.privacyConHeading, { color: theme.headingTx }]}>Security & Privacy</Text>
+          </TouchableOpacity>
+          <View style={[styles.privacySubCon, { backgroundColor: theme.cardBg }]}>
+            <Text style={[styles.privacyConTxt, { color: theme.headingTx }]}>User ID : </Text>
+            <View style={{ flexDirection: "row", width: wp(60) }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: wp(70), paddingVertical: 1, borderRadius: 5 }}>
+                <Text style={[styles.privacyConTxt, { color: theme.headingTx }]}>{DeviceInfo.getUniqueIdSync()}</Text>
+              </ScrollView>
+              <TouchableOpacity onPress={() => { Clipboard.setString(DeviceInfo.getUniqueIdSync()), alert("success", "Device id copy."), setShowPrivacy(false) }}>
+                <Icon type={"material"} name="content-copy" size={21} color={"#4052D6"} style={{ marginLeft: wp(2) }} />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={[styles.privacySubCon, { backgroundColor: theme.cardBg }]}>
+            <Text style={[styles.privacyConTxt, { color: theme.headingTx }]}>Share Anonymous Analytics </Text>
+            <ToggleSwitch
+              isOn={analytics}
+              onColor="green"
+              offColor="gray"
+              labelStyle={{ color: "black", fontWeight: "900" }}
+              size="small"
+              onToggle={() => {
+                setAnalytics(analytics ? false : true);
+              }}
+            />
+          </View>
+          <Text style={[styles.infoTxt, { color: theme.inactiveTx }]}>SwiftEx does not use your personal information for analytics purposes.</Text>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -397,11 +472,65 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
   },
-  supportTxt:{
-    marginTop:hp(0.2),
-    maxWidth:wp(70),
+  supportTxt: {
+    marginTop: hp(0.2),
+    maxWidth: wp(70),
     fontSize: 15,
     fontWeight: "500",
     marginHorizontal: wp(1.5),
+  },
+  modalContainer: {
+    justifyContent: "flex-end",
+    margin: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)"
+  },
+  privacyCon: {
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    height: hp(30),
+    paddingTop: hp(3),
+    paddingHorizontal: wp(4),
+  },
+  privacySubCon: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 13,
+    borderRadius: 10,
+    marginTop: hp(1.3)
+  },
+  privacyConTxt: {
+    fontSize: 18,
+    fontWeight: "500"
+  },
+  privacyConHeading: {
+    fontSize: 22.9,
+    fontWeight: "500"
+  },
+  infoTxt: {
+    fontSize: 14,
+    paddingLeft: 6,
+    textAlign: "left",
+    marginTop: hp(0.5)
+  },
+  appCon: {
+    paddingVertical: hp(2),
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  appConHeading: {
+    marginTop: -5,
+    fontSize: 40,
+    fontWeight: "600"
+  },
+  appVersion: {
+    fontSize: 15,
+    marginTop: -5,
+    marginLeft: wp(1)
+  },
+  headerCon: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center"
   }
 });

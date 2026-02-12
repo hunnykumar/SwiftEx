@@ -138,8 +138,6 @@ const TokenQrCode = ({ modalVisible, setModalVisible, iconType, qrvalue, isDark 
                   <QRCode
                     value={qrvalue}
                     size={wp(45)}
-                    backgroundColor={isDark ? '#1B1B1C' : '#F8F9FA'}
-                    color={isDark ? "#fff" : "#171616"}
                     logoBorderRadius={10}
                   />
                 </View>
