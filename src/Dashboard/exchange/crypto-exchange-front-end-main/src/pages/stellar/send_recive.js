@@ -263,8 +263,11 @@ const send_recive = ({route}) => {
         setPayment_loading(false)
         get_data()
         setmode_selected("SED");
-        const walletStatus=stellarWalletStatus(state?.STELLAR_PUBLICK_KEY);
-        setACTIVATION_MODAL_PROD(walletStatus)
+        const inti = async () => {
+          const walletStatus = await stellarWalletStatus(state?.STELLAR_PUBLICK_KEY);
+          setACTIVATION_MODAL_PROD(walletStatus)
+        }
+        inti()
     }, [FOCUSED])
 
     useEffect(()=>{

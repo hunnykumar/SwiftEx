@@ -966,7 +966,7 @@ const BridgeAssets = ({ props }) => {
             </View>
           </View>}
 
-          <TouchableOpacity style={[styles.confirmButton, { backgroundColor: walletActivationWarning||quotesLoading||swapLoading||parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > (selectedRelayerFee==="native"?parseFloat(fromBalance?.walletBalance):parseFloat(fromBalance?.tokenBalance)) ? theme.cardBg : "#4F46E5" }]} disabled={walletActivationWarning||quotesLoading||swapLoading||parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > (selectedRelayerFee==="native"?parseFloat(fromBalance?.walletBalance):parseFloat(fromBalance?.tokenBalance))} onPress={()=>{swapManager()}}>
+          <TouchableOpacity style={[styles.confirmButton, { backgroundColor: walletActivationWarning||quotesLoading||swapLoading||parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > (selectedRelayerFee==="native"?parseFloat(fromBalance?.walletBalance):parseFloat(fromBalance?.tokenBalance)) ? theme.inactiveTx : "#4F46E5" }]} disabled={walletActivationWarning||quotesLoading||swapLoading||parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > (selectedRelayerFee==="native"?parseFloat(fromBalance?.walletBalance):parseFloat(fromBalance?.tokenBalance))} onPress={()=>{swapManager()}}>
             <Text style={styles.confirmButtonText}>
               {walletActivationWarning ? "Stellar wallet Activation Required" :
                 swapLoading ? "Wait transaction under process..." :

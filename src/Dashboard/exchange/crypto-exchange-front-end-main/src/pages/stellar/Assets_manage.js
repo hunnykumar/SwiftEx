@@ -1,13 +1,11 @@
 import { useIsFocused, useNavigation } from "@react-navigation/native";
-import { ActivityIndicator, Image, NativeModules, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { ActivityIndicator, FlatList, Image, NativeModules, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { useEffect, useState } from "react";
 import Icon from "../../../../../../icon";
-import ethereum from "../../../../../../../assets/ethereum.png";
-import stellar from "../../../../../../../assets/Stellar_(XLM).png";
 import { useDispatch, useSelector } from "react-redux";
 import Snackbar from "react-native-snackbar";
 import { SET_ASSET_DATA } from "../../../../../../components/Redux/actions/type";
@@ -221,7 +219,6 @@ const Assets_manage = ({ route }) => {
             <Exchange_screen_header title="Assets" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
 
             <View style={[styles.main_con, { backgroundColor: theme.bg }]}>
-                <Text style={[styles.headerHeading, { backgroundColor: theme.cardBg,color:theme.headingTx }]}>My Assets</Text>
                 <View style={styles.assetCon}>
                     {assets.map((list, index) => {
                         return (
@@ -257,9 +254,8 @@ const Assets_manage = ({ route }) => {
                 style={styles.modal}
             >
                 <View style={[styles.overlay,{backgroundColor:theme.cardBg}]}>
-                    <View style={styles.Body}>
                     <View style={{ flexDirection: "row", justifyContent: "space-between",width:wp(90)}}>
-                       <View style={{flexDirection:"column",paddingVertical:10}}>
+                       <View style={{flexDirection:"column"}}>
                        <Text style={[styles.modal_heading,{color:theme.headingTx}]}>Add Asset</Text>
                        <Text style={[styles.modal_heading,{color:theme.inactiveTx,fontSize:16,fontWeight:"300"}]}>Enable Trustline to Hold Asset</Text>
                        </View>
@@ -276,30 +272,35 @@ const Assets_manage = ({ route }) => {
                     <Icon name={"information-circle-outline"} type={"ionicon"} size={28} color={"#ECB742"} />
                         <Text style={{fontSize:13,color:"#ECB742",fontWeight:"300",marginLeft:4}}>{`Trustlines let your wallet accept and hold \n approved assets.`}</Text>
                     </View>
-                    {AVL_ASSETS.map((list, index) => {
+                    <></>
+                    <FlatList
+                        data={stellarTokens?.assets.slice(1)}
+                        keyExtractor={(item, index) => index.toString()}
+                        style={{ marginBottom: hp(5) }}
+                        renderItem={({ item, index }) => {
                         return (
                             <View key={index} style={[styles.search_bar, { flexDirection: "row", justifyContent: "space-between", alignItems: "center",backgroundColor:theme.bg }]}>
                                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                                    <Image source={{ uri: list.img }} style={styles.modal_IMG} />
+                                    <Image source={{ uri: item.icon }} style={styles.modal_IMG} />
                                     <View>
-                                        <Text style={[styles.modal_sub_heading,{color:theme.headingTx}]}>{list.name}</Text>
-                                        <Text style={[styles.modal_sub_heading, { fontSize: 10, color: theme.inactiveTx }]}>{list.domain}</Text>
+                                        <Text style={[styles.modal_sub_heading,{color:theme.headingTx}]}>{item.name}</Text>
+                                        <Text style={[styles.modal_sub_heading, { fontSize: 10, color: theme.inactiveTx }]}>{item.domain}</Text>
                                     </View>
                                 </View>
-                                {assets.some((list_item) => list_item.asset_code === list.name) ?
-                                    <TouchableOpacity style={[styles.btn,{backgroundColor:"#4052D6"}]} disabled={Loading!==null} onPress={()=>{removeTrustLine(list.name, list.issuerAddress)}}>
-                                        {Loading === list.name ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:"#fff"}]}>Remove</Text>}
+                                {assets.some((list_item) => list_item.asset_code === item.code) ?
+                                    <TouchableOpacity style={[styles.btn,{backgroundColor:"#4052D6"}]} disabled={Loading!==null} onPress={()=>{removeTrustLine(item.code, item.issuer)}}>
+                                        {Loading === item.code ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:"#fff"}]}>Remove</Text>}
                                     </TouchableOpacity> :
                                     <TouchableOpacity style={[styles.btn,{backgroundColor:"#4052D6"}]} onPress={() => {
-                                        changeTrust(list.name, list.issuerAddress)
+                                        changeTrust(item.code, item.issuer)
                                     }} disabled={Loading!==null}>
-                                        {Loading === list.name ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:"#fff"}]}>Add Asset</Text>}
+                                        {Loading === item.code ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:"#fff"}]}>Add Asset</Text>}
                                     </TouchableOpacity>
                                 }
                             </View>
                         )
-                    })}
-                    </View>
+                    }}
+                    />
                 </View>
             </Modal>
             <ClaimableBalanceChecker
@@ -445,20 +446,11 @@ const styles = StyleSheet.create({
         margin: 0,
       },
     overlay: {
-        justifyContent: "flex-end",
-        borderTopRightRadius:10,
-        borderTopLeftRadius:10,
-        padding: 19,
-        alignItems: 'flex-start',
-        marginTop: 60,
-        paddingLeft: 16
-    },
-    Body: {
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
-        alignSelf: "center",
-        justifyContent:"center",
-        paddingHorizontal: 5,
+        height: hp(80),
+        paddingTop: hp(3),
+        paddingHorizontal: wp(4),
     },
     modal_heading: {
         fontSize: 21,
@@ -468,7 +460,8 @@ const styles = StyleSheet.create({
     modal_sub_heading: {
         fontSize: 18,
         color: "#fff",
-        fontWeight: "600"
+        fontWeight: "600",
+        maxWidth:wp(45)
     },
     modal_IMG: {
         height: hp(5),

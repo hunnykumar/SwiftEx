@@ -249,8 +249,8 @@ const Welcome = (props) => {
   return (
     <View style={styles.container}>
       <CustomImageSlider images={images} />
-       <Text style={styles.termsTxt}>By continuing, you agree to our Terms and Policies</Text>
       <Animated.View style={[styles.buttonContainer, { opacity: fadeAnim }]}>
+       <Text style={styles.termsTxt}>By continuing, you agree to our Terms and Policies</Text>
         {/* {Loading?null:<TouchableOpacity
           style={styles.createView}
           onPress={() => props.navigation.navigate("GenerateWallet")}
@@ -332,7 +332,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: "#fff",
-    fontStyle:"italic"
+    fontStyle:"italic",
+    marginVertical:hp(1)
   }
 });
 
