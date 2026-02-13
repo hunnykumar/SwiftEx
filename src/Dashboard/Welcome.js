@@ -7,6 +7,8 @@ import {
   Dimensions,
   Animated,
   ActivityIndicator,
+  NativeModules,
+  Linking,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -29,6 +31,8 @@ import apiHelper from "./exchange/crypto-exchange-front-end-main/src/apiHelper";
 import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import * as StellarSdk from '@stellar/stellar-sdk';
 import AccessNativeStorage from "./Wallets/AccessNativeStorage";
+import crashlytics from '@react-native-firebase/crashlytics';
+
 const Welcome = (props) => {
   const [Loading,setLoading]=useState(false)
   const [enableUserAccess,setenableUserAccess]=useState(false);
@@ -63,8 +67,10 @@ const Welcome = (props) => {
     const initGuestUser = async () => {
       try {
         setLoading(true);
+        const appReset=await NativeModules.StorageModule.clearAll();
+        crashlytics().setCrashlyticsCollectionEnabled(true);
         const userStatus=await createGuestUser();
-        console.log("userStatus:-",userStatus.status)
+        console.log("userStatus:-",userStatus.status,appReset)
         if(userStatus.status)
         {
           setenableUserAccess(true);
@@ -250,7 +256,7 @@ const Welcome = (props) => {
     <View style={styles.container}>
       <CustomImageSlider images={images} />
       <Animated.View style={[styles.buttonContainer, { opacity: fadeAnim }]}>
-       <Text style={styles.termsTxt}>By continuing, you agree to our Terms and Policies</Text>
+       <Text style={styles.termsTxt}>By continuing, you agree to our <Text style={styles.openLink} onPress={() => { Linking.openURL("https://swiftexwallet.com/terms-of-service") }}>Terms</Text> and <Text style={styles.openLink} onPress={()=>{ Linking.openURL("https://swiftexwallet.com/privacy-policy") }}>Policies</Text></Text>
         {/* {Loading?null:<TouchableOpacity
           style={styles.createView}
           onPress={() => props.navigation.navigate("GenerateWallet")}
@@ -334,7 +340,15 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontStyle:"italic",
     marginVertical:hp(1)
-  }
+  },
+  openLink:{
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#135cfaff",
+    fontStyle:"italic",
+    marginVertical:hp(1)
+  },
 });
 
 export default Welcome;

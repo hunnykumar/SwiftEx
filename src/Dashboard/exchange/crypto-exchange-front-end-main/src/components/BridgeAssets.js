@@ -761,7 +761,7 @@ const BridgeAssets = ({ props }) => {
        shouldNavigateBack={true}
       />
       <Exchange_screen_header
-        title="AllBridge"
+        title="Bridge"
         onLeftIconPress={() => navigation.navigate("Home")}
         onRightIconPress={() => {
           console.log("Right icon pressed");

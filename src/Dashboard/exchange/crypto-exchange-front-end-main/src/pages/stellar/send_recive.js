@@ -131,22 +131,96 @@ const send_recive = ({route}) => {
       const sourceAccount = await server.loadAccount(sourcePublicKey);
   
       // Create the transaction
-      const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
-        fee: await server.fetchBaseFee(),
-        networkPassphrase: StellarSdk.Networks.PUBLIC,
-      })
-        .addOperation(
-          StellarSdk.Operation.payment({
-            destination: destinationPublic,
-            asset: asset_name==="native"?StellarSdk.Asset.native():usdtAsset,
-            amount: amount,
-          })
-        )
-        .addMemo(StellarSdk.Memo.text(recepi_memo)) 
-        .setTimeout(30)
-        .build();
+    let destinationAccount;
+    let isActivated = true;
+    let isXLMNative = asset_name === "native";
   
-      // Sign the transaction
+    try {
+      destinationAccount = await server.loadAccount(destinationPublic);
+    } catch (accountError) {
+      if (accountError.response?.data?.title === "ResourceMissingError") {
+        isActivated = false;
+        console.log("Destination account not activated");
+      } else {
+        isActivated = false;
+      }
+    }
+
+      let transaction;
+      
+      if (!isActivated && isXLMNative) {
+        if(parseFloat(amount)<parseFloat(1))
+        {
+          CustomInfoProvider.show("warning","Opps!","Recipient account not activated. Minimum 1 XLM required to activate account.");
+          setPayment_loading(false);
+          return;
+        }
+        transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+          fee: await server.fetchBaseFee(),
+          networkPassphrase: StellarSdk.Networks.PUBLIC,
+        })
+          .addOperation(
+            StellarSdk.Operation.createAccount({
+              destination: destinationPublic,
+              startingBalance: amount,
+            })
+          )
+          .addMemo(StellarSdk.Memo.text(recepi_memo))
+          .setTimeout(30)
+          .build();
+          
+      } else if (isActivated) {
+        if (isXLMNative) {
+          transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+            fee: await server.fetchBaseFee(),
+            networkPassphrase: StellarSdk.Networks.PUBLIC,
+          })
+            .addOperation(
+              StellarSdk.Operation.payment({
+                destination: destinationPublic,
+                asset: StellarSdk.Asset.native(),
+                amount: amount,
+              })
+            )
+            .addMemo(StellarSdk.Memo.text(recepi_memo))
+            .setTimeout(30)
+            .build();
+            
+        } else {
+          const customAsset = new StellarSdk.Asset(asset_name, assetIssuer);
+          const destAccountData = await server.loadAccount(destinationPublic);
+          const hasTrustline = destAccountData.balances.some(balance => 
+            balance.asset_code === asset_name && 
+            balance.asset_issuer === assetIssuer
+          );
+          
+          if (!hasTrustline) {
+            CustomInfoProvider.show("warning","Opps!",`Recipient needs to trust ${asset_name}.`);
+            setPayment_loading(false);
+            return;
+          }
+
+          transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+            fee: await server.fetchBaseFee(),
+            networkPassphrase: StellarSdk.Networks.PUBLIC,
+          })
+            .addOperation(
+              StellarSdk.Operation.payment({
+                destination: destinationPublic,
+                asset: customAsset,
+                amount: amount,
+              })
+            )
+            .addMemo(StellarSdk.Memo.text(recepi_memo))
+            .setTimeout(30)
+            .build();
+        }
+        
+      } else {
+        CustomInfoProvider.show("warning","Opps!",`Cannot send ${asset_name} asset to unactivated account. Send XLM first to activate.`);
+        setPayment_loading(false);
+        return;
+      }
       const txXDR = transaction.toXDR();
       const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
       const signatureBuffer = Buffer.from(signedTx.signature, 'base64');

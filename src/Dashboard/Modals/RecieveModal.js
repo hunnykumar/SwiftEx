@@ -72,7 +72,7 @@ const RecieveModal = ({ modalVisible, setModalVisible }) => {
               color={"#ECB742"}
               size={20}
             />
-        <Text style={{ fontSize: 13, color: "#ECB742",fontWeight:"400",marginLeft:3}}>Always double-check the wallet address before receiving crypto.</Text>
+        <Text style={{ fontSize: 13, color: "#ECB742",fontWeight:"400",marginLeft:3,maxWidth:wp(80)}}>Always double-check the wallet address before receiving crypto.</Text>
         </View>
 
         <View style={styles.cardCon}>

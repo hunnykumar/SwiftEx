@@ -30,6 +30,7 @@ import Modal from "react-native-modal";
 import DeviceInfo from "react-native-device-info";
 import { alert } from "./src/Dashboard/reusables/Toasts";
 import darkBlue from "./assets/darkBlue.png";
+import crashlytics from '@react-native-firebase/crashlytics';
 
 const Settings = (props) => {
   const navi = useNavigation();
@@ -37,7 +38,7 @@ const Settings = (props) => {
   const [Checked, setCheckBox] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
-  const [analytics, setAnalytics] = useState(false);
+  const [analytics, setAnalytics] = useState(crashlytics().isCrashlyticsCollectionEnabled);
   const [showAbout, setShowAbout] = useState(false);
   const dispatch = useDispatch();
   const state = useSelector((state) => state);
@@ -74,6 +75,11 @@ const Settings = (props) => {
     } catch (error) {
       console.error(error)
     }
+  }
+
+  const handleCrashAnalytics=async()=>{
+    await crashlytics().setCrashlyticsCollectionEnabled(!analytics)
+    .then(() => setAnalytics(crashlytics().isCrashlyticsCollectionEnabled));
   }
 
   useEffect(() => {
@@ -335,7 +341,7 @@ const Settings = (props) => {
               labelStyle={{ color: "black", fontWeight: "900" }}
               size="small"
               onToggle={() => {
-                setAnalytics(analytics ? false : true);
+                handleCrashAnalytics();
               }}
             />
           </View>

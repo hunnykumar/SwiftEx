@@ -91,7 +91,6 @@ export const NewOfferModal = () => {
   const [chooseSearchQuery, setChooseSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState(SUB_TAB_CONFIG.TRADE.id);
   const [activeTradeType, setactiveTradeType] = useState(TAB_CONFIG.LARGE_ORDER_TRADE.id);
-  const [ALL_STELLER_BALANCES, setALL_STELLER_BALANCES] = useState([]);
   const [selectedValue, setSelectedValue] = useState(tradingPairsConfig.PAIRS[0].base_value);
   const [SelectedBaseValue, setSelectedBaseValue] = useState(tradingPairsConfig.PAIRS[0].counter_value);
   const [Balance, setbalance] = useState('');
@@ -327,11 +326,15 @@ export const NewOfferModal = () => {
   }, [offer_amount, offer_price, top_value, top_value_0, AssetIssuerPublicKey, AssetIssuerPublicKey1, validateAmount, validatePrice, createStellarAsset, toast, navigation, handleTransactionError]);
 
 
-  const checkAssetTrust = useCallback((asset) => {
-    const existsAsset = ALL_STELLER_BALANCES.some(
-      (balance) =>
-        balance.asset_code === asset || balance.asset_type === asset
-    );
+  const checkAssetTrust = useCallback(async (asset) => {
+    const currentWalletInfo = await server.loadAccount(state?.STELLAR_PUBLICK_KEY);
+    const balances = currentWalletInfo?.balances ?? [];
+    const existsAsset = balances.some((balance) => {
+      if (asset === "XLM") {
+        return balance.asset_type === "native";
+      }
+      return balance.asset_code === asset;
+    });
     if (existsAsset){
       return  {assetStatus: true };
     } 
@@ -339,7 +342,7 @@ export const NewOfferModal = () => {
       (item) => item.code === asset
     );
     return { unavilabeAsset: unavilabeAsset, assetStatus: false }
-  }, [ALL_STELLER_BALANCES]);
+  }, []);
 
   const get_stellar = useCallback(async (asset) => {
     return safeCall(async (signal) => {
@@ -347,8 +350,7 @@ export const NewOfferModal = () => {
         setbalance("");
         setreserveLoading(true);
 
-        const hasAsset = checkAssetTrust(asset);
-
+        const hasAsset = await checkAssetTrust(asset);
         if (!hasAsset.assetStatus && asset !== stellarConfig.ASSET_TYPES.NATIVE && asset !== stellarConfig.ASSET_TYPES.XLM) {
           setshow_trust_modal((prev) => [...prev, hasAsset.unavilabeAsset]);
         }
@@ -389,8 +391,8 @@ export const NewOfferModal = () => {
       setshowOneTap(true);
   }, [checkAssetTrust, navigation]);
 
-  const offer_creation = useCallback(() => {
-    const hasAsset = checkAssetTrust(selectedValue);
+  const offer_creation = useCallback(async() => {
+    const hasAsset = await checkAssetTrust(selectedValue);
     
     if (!hasAsset.assetStatus && selectedValue !== stellarConfig.ASSET_TYPES.NATIVE) {
       // setLoading(false);
@@ -513,13 +515,12 @@ const selectTradingPair = useCallback((item) => {
 }, []);
 
   const triggerMarketUpdate = useCallback(() => {
+    setshow_trust_modal([]);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
     debounceTimer.current = setTimeout(async() => {
-      setALL_STELLER_BALANCES(state?.assetData || [])
       const walletStatus=await stellarWalletStatus(state?.STELLAR_PUBLICK_KEY)
       setACTIVATION_MODAL_PROD(walletStatus);
-      get_stellar(top_value_0);
       getLastTradePrice(top_value, AssetIssuerPublicKey, top_value_0, AssetIssuerPublicKey1);
       get_stellar(top_value);
     }, 350);
@@ -562,6 +563,7 @@ const selectTradingPair = useCallback((item) => {
   }, []);
 
   useEffect(() => {
+    setshow_trust_modal([]);
     triggerMarketUpdate();
   }, [
     top_value,

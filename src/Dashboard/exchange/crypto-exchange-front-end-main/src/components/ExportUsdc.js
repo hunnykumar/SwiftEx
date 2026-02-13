@@ -122,7 +122,7 @@ const ExportUSDC = () => {
   }, [Focused])
 
   useEffect(() => {
-    if(parseFloat(amount)!==0){
+    if(!isNaN(Number(amount))){
       getQuote(!selectedNetworkDetils ? sendNetworks[0].symbole : selectedNetworkDetils.symbole, !selectedReciveNetworkDetils ? reciveNetwork[0].symbole : selectedReciveNetworkDetils.symbole, !selectedAssetDetils ? sendAseets[0].symbole : selectedAssetDetils.symbole, !selectedReciveAssetDetils ? reciveAsset[0].symbole : selectedReciveAssetDetils.symbole,amount);
     }
   }, [chooseReciveAsset,chooseReciveNetwork])

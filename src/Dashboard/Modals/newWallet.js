@@ -157,7 +157,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
           color={"#F7CC49"}
           />
           <Text style={{width:wp(80),fontSize:13,color:"#ECB742"}}>
-          Your private key is solely your responsibility SwfitEx cannot be held liable for any loss or sharing of your private key.
+          Your private key is solely your responsibility SwiftEx cannot be held liable for any loss or sharing of your private key.
           </Text>
 
             </View>
