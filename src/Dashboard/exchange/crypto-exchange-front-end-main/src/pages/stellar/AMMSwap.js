@@ -164,7 +164,9 @@ const AMMSwap = () => {
     const num = parseFloat(value);
     return !isNaN(num) && num !== 0;
   };
-  const handleInputChange = (numericText) => {
+  const handleInputChange = (text) => {
+    const replaceComma = text.replace(',', '.');
+    const numericText = replaceComma.replace(/[^0-9.]/g, '');
     setmessageError(null);
     setFromAmount(numericText);
     const amount = parseFloat(numericText);

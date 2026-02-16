@@ -468,12 +468,14 @@ export const NewOfferModal = () => {
   };
 
   const onChangename = useCallback((input) => {
-    const formattedInput = input.replace(stellarConfig.INPUT_SANITIZE_REGEX, '');
+    const replaceComma = input.replace(',', '.');
+    const formattedInput = replaceComma.replace(stellarConfig.INPUT_SANITIZE_REGEX, '');
     setoffer_price(formattedInput);
   }, []);
 
   const onChangeamount = useCallback((input) => {
-    const formattedInput = input.replace(stellarConfig.INPUT_SANITIZE_REGEX, '');
+    const replaceComma = input.replace(',', '.');
+    const formattedInput = replaceComma.replace(stellarConfig.INPUT_SANITIZE_REGEX, '');
     setoffer_amount(formattedInput);
   }, []);
 

@@ -230,7 +230,8 @@ export default function OneTapComponet({ showInfo, showPurchase }) {
   }
 
   const handleInputChange = (text) => {
-    const numericText = text.replace(/[^0-9.]/g, '');
+    const replaceComma = text.replace(',', '.');
+    const numericText = replaceComma.replace(/[^0-9.]/g, '');
     setswapAbleAmount(numericText);
     fetchQuote(numericText, selectedAsset.name, selectedAsset.address);
   };

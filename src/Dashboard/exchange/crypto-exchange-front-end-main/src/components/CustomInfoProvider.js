@@ -208,6 +208,10 @@ const CustomInfoProvider = () => {
 
 // Static show method to call alert like Alert.alert:
 CustomInfoProvider.show = (type, messageOrTitle, buttonsOrUndefined) => {
+  if (typeof messageOrTitle === "string" && 
+    messageOrTitle.includes("[big.js] ")) {
+    messageOrTitle = "Invalid value";
+  }
   internalShowFunc(type, messageOrTitle, buttonsOrUndefined);
 };
 

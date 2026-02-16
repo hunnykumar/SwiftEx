@@ -690,14 +690,15 @@ const CrossChainTx = ({ route="ETH" }) => {
           collectNonDefaultTokenQuotes(sumbitToken, chaiType === "BNB" ? defaultUsdts[1] : defaultUsdts[0], value, chaiType === "BNB" ? "bsc" : "eth")
         }
       }
-    }, 400),
+    }, 1000),
     []
   );
 
   const handleInputChange = (text, tokenChain, inputToken, sumbitToken) => {
     setresQuotes(null);
     setnonDirectQoutes(null);
-    const numericText = text.replace(/[^0-9.]/g, '');
+    const replaceComma = text.replace(',', '.');
+    const numericText = replaceComma.replace(/[^0-9.]/g, '');
     setamount(numericText);
     getQuote(numericText, tokenChain === "BNB" ? "BNB" : "ETH", inputToken, sumbitToken);
   };
@@ -801,7 +802,7 @@ const CrossChainTx = ({ route="ETH" }) => {
     : resQuotes?.fee?.stablecoin;
 
   return (
-    <View style={{ backgroundColor: theme.bg, width: wp(100), height: hp(100) }}>
+    <View>
 
       <WalletActivationComponent
         isVisible={ACTIVATION_MODAL_PROD}
@@ -1410,7 +1411,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: hp(7.5)
+    marginBottom: hp(2.5)
   },
   nextButtonText: {
     color: 'white',

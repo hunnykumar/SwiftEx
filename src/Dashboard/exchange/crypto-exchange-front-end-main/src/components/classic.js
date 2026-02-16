@@ -691,14 +691,15 @@ const classic = ({ route }) => {
           collectNonDefaultTokenQuotes(sumbitToken, chaiType === "BNB" ? defaultUsdts[1] : defaultUsdts[0], value, chaiType === "BNB" ? "bsc" : "eth")
         }
       }
-    }, 400),
+    }, 1000),
     []
   );
 
   const handleInputChange = (text, tokenChain, inputToken, sumbitToken) => {
     setresQuotes(null);
     setnonDirectQoutes(null);
-    const numericText = text.replace(/[^0-9.]/g, '');
+    const replaceComma = text.replace(',', '.');
+    const numericText = replaceComma.replace(/[^0-9.]/g, '');
     setamount(numericText);
     getQuote(numericText, tokenChain === "BNB" ? "BNB" : "ETH", inputToken, sumbitToken);
   };

@@ -457,8 +457,9 @@ useEffect(() => {
                         keyboardType="numeric"
                         returnKeyType="done"
                         onChangeText={(input) => {
-                            console.log(input);
-                            setAmount(input);
+                          const replaceComma = input.replace(',', '.');
+                          const filteredValue = replaceComma.replace(/[^0-9.]/g, '');
+                            setAmount(filteredValue);
                         }}
                         placeholder="Amount"
                         placeholderTextColor={"gray"}

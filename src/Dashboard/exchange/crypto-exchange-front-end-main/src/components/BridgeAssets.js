@@ -593,8 +593,12 @@ const BridgeAssets = ({ props }) => {
   };
 
   const handleInputChange = async (value) => {
-    const cleanValue = value.replace(/[^0-9.]/g, '');
+    const replaceComma = value.replace(',', '.');
+    const cleanValue = replaceComma.replace(/[^0-9.]/g, '');
     setFromAmount(cleanValue)
+    if (parseFloat(cleanValue) === 0 || !cleanValue) {
+      return;
+    }
     setQuotesLoading(true);
     fetchPairQuotes(selectedFromNetwork.chainName, selectedToNetwork.chainName, selectedFromAsset.symbol, selectedToAsset.symbol, cleanValue);
   }

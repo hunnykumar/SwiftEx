@@ -161,7 +161,7 @@ const KycComponent = ({ route }) => {
       console.log("alchemyQuotes Error---",respo)
       setqoutesLoading(false);
       setamountSend("");
-     CustomInfoProvider.show("info",respo?.returnMsg||"Something went wrong..");
+     CustomInfoProvider.show("info","!Opps",respo?.returnMsg==="The amount needs to be a positive integer"?"Please enter a whole number. Decimal values are not allowed.":respo?.returnMsg||"Something went wrong..");
     }
 
   };
@@ -190,7 +190,9 @@ const KycComponent = ({ route }) => {
   }, 1000), []);
 
   const handleChange = (text) => {
-    const payAmount=text.replace(/[^0-9.]/g, '')
+    const replaceComma = text.replace(',', '.');
+    const payAmount=replaceComma.replace(/[^0-9.]/g, '')
+    setamountSend(payAmount)
     waitAndQoutesFetch(payAmount,operationType,selectedCrypto,selectedfiat)
   };
   
@@ -482,7 +484,7 @@ const KycComponent = ({ route }) => {
                         placeholderTextColor="gray"
                         value={amountSend}
                         style={[styles.amountInput,{color:theme.headingTx}]}
-                        onChangeText={(text) => { setamountSend(text), handleChange(text) }}
+                        onChangeText={(text) => { handleChange(text) }}
                         returnKeyType="done"
                         keyboardType="decimal-pad"
                       />

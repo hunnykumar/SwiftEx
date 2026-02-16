@@ -375,13 +375,15 @@ const checkPermission = async () => {
             keyboardType="numeric"
             returnKeyType="done"
             onChangeText={(input) => {
-              if (amount && address) {
+              const replaceComma = input.replace(',', '.');
+              const filteredValue = replaceComma.replace(/[^0-9.]/g, '');
+              if (filteredValue && address) {
                 setDisable(false);
               } else {
                 setDisable(true);
               }
-              console.log(input);
-              setAmount(input);
+              console.log(filteredValue);
+              setAmount(filteredValue);
             }}
             placeholder="Amount"
             placeholderTextColor={"gray"}

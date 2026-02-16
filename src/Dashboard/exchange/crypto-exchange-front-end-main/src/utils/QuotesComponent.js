@@ -328,7 +328,8 @@ export const QuoteModalBottomSheet = ({
   );
 
   const handleInputChange = (text) => {
-    const numericText = text.replace(/[^0-9.]/g, '');
+    const replaceComma = text.replace(',', '.');
+    const numericText=replaceComma.replace(/[^0-9.]/g, ''); 
     setInputAmount(numericText);
     fetchQuote(text);
   };

@@ -677,7 +677,8 @@ export const CustomQuotes = ({
   );
 
   const handleInputChange = (text) => {
-    const numericText = text.replace(/[^0-9.]/g, '');
+    const replaceComma = text.replace(',', '.');
+    const numericText = replaceComma.replace(/[^0-9.]/g, '');
     setInputAmount(numericText);
     fetchQuote(text,tokenName,tokenAddress,tokenChain);
   };

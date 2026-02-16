@@ -122,9 +122,12 @@ const ExportUSDC = () => {
   }, [Focused])
 
   useEffect(() => {
-    if(!isNaN(Number(amount))){
-      getQuote(!selectedNetworkDetils ? sendNetworks[0].symbole : selectedNetworkDetils.symbole, !selectedReciveNetworkDetils ? reciveNetwork[0].symbole : selectedReciveNetworkDetils.symbole, !selectedAssetDetils ? sendAseets[0].symbole : selectedAssetDetils.symbole, !selectedReciveAssetDetils ? reciveAsset[0].symbole : selectedReciveAssetDetils.symbole,amount);
+    const replaceComma = amount.replace(',', '.');
+    const numericText = replaceComma.replace(/[^0-9.]/g, '');
+    if (parseFloat(numericText) === 0 || !numericText) {
+      return;
     }
+    getQuote(!selectedNetworkDetils ? sendNetworks[0].symbole : selectedNetworkDetils.symbole, !selectedReciveNetworkDetils ? reciveNetwork[0].symbole : selectedReciveNetworkDetils.symbole, !selectedAssetDetils ? sendAseets[0].symbole : selectedAssetDetils.symbole, !selectedReciveAssetDetils ? reciveAsset[0].symbole : selectedReciveAssetDetils.symbole,amount);
   }, [chooseReciveAsset,chooseReciveNetwork])
 
   const fetchStellarWalletdetails = async () => {
@@ -194,9 +197,13 @@ const ExportUSDC = () => {
     };
 
   const handleInputChange = async (value) => {
-    setgetInfo(true)
-    const numericText = value.replace(/[^0-9.]/g, '');
+    const replaceComma = value.replace(',', '.');
+    const numericText = replaceComma.replace(/[^0-9.]/g, '');
     setamount(numericText)
+    if (parseFloat(numericText) === 0 || !numericText) {
+      return;
+    }
+    setgetInfo(true)
     getQuote(!selectedNetworkDetils ? sendNetworks[0].symbole : selectedNetworkDetils.symbole, !selectedReciveNetworkDetils ? reciveNetwork[0].symbole : selectedReciveNetworkDetils.symbole, !selectedAssetDetils ? sendAseets[0].symbole : selectedAssetDetils.symbole, !selectedReciveAssetDetils ? reciveAsset[0].symbole : selectedReciveAssetDetils.symbole,numericText);
   }
 
@@ -244,7 +251,7 @@ const ExportUSDC = () => {
         setresQuotes(null);
         setgetInfo(false);
       }
-    }, 500),
+    }, 1000),
     []
   );
 

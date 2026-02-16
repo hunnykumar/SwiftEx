@@ -474,8 +474,9 @@ const TokenSend = ({ route }) => {
                 keyboardType="numeric"
                 returnKeyType="done"
                 onChangeText={(input) => {
-                  console.log(input);
-                  setAmount(input);
+                  const replaceComma = input.replace(',', '.');
+                  const filteredValue = replaceComma.replace(/[^0-9.]/g, '');
+                  setAmount(filteredValue);
                 }}
                 placeholder="0.00"
                 placeholderTextColor={state.THEME.THEME === false ? "#ADB5BD" : "#6C757D"}

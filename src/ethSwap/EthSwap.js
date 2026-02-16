@@ -425,10 +425,9 @@ const EthSwap = () => {
 
   // Handle amount input
   const handleChange = (text, decimals) => {
-    const regex = new RegExp(`^\\d*(\\.\\d{0,${decimals}})?$`);
-    if (regex.test(text) || text === '') {
-      setAmount(text);
-    }
+    const replaceComma = text.replace(',', '.');
+    const numericText = replaceComma.replace(/[^0-9.]/g, '');
+    setAmount(numericText);
   };
 
   // Swap tokens

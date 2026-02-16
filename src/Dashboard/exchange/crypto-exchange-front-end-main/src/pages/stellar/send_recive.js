@@ -410,7 +410,11 @@ const send_recive = ({route}) => {
           <View style={[styles.card, { backgroundColor: theme.cardBg,marginTop:2 }]}>
             <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 16, fontSize: 16, color: theme.inactiveTx }]}>Amount</Text>
             <View style={[styles.text_input, { flexDirection: "row", alignItems: "center", backgroundColor: theme.bg }]}>
-              <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="decimal-pad" style={{ height: "100%", width: "88%", fontSize: 19, color: theme.headingTx }} onChangeText={(value) => { setrecepi_amount(value) }} />
+              <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="decimal-pad" style={{ height: "100%", width: "88%", fontSize: 19, color: theme.headingTx }} onChangeText={(value) => { 
+                const replaceComma = value.replace(',', '.');
+                const numericText = replaceComma.replace(/[^0-9.]/g, '');
+                setrecepi_amount(numericText)
+              }} />
             </View>
           </View>
 

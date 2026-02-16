@@ -382,7 +382,11 @@ const Offers_manages = () => {
               placeholder="New Amount"
               placeholderTextColor={"gray"}
               value={newAmount}
-              onChangeText={setNewAmount}
+              onChangeText={(input)=>{
+                const replaceComma = input.replace(',', '.');
+                const filteredValue = replaceComma.replace(/[^0-9.]/g, '');
+                setNewAmount(filteredValue);
+              }}
               keyboardType="numeric"
               returnKeyType='done'
             />
@@ -392,7 +396,11 @@ const Offers_manages = () => {
               placeholder="New Price"
               placeholderTextColor={"gray"}
               value={newPrice}
-              onChangeText={setNewPrice}
+              onChangeText={(input) => {
+                const replaceComma = input.replace(',', '.');
+                const filteredValue = replaceComma.replace(/[^0-9.]/g, '');
+                setNewPrice(filteredValue);
+              }}
               keyboardType="numeric"
               returnKeyType='done'
             />
