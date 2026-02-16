@@ -187,6 +187,36 @@ const CONFIG = {
     XLM: StellarTokenList
   }
 };
+const CACHE_CONFIG = {
+  TTL: 60 * 1000, // 1 minute
+};
+
+const walletCache = new Map();
+
+const getCacheKey = (evmAddress, stellarAddress) => {
+  return `${evmAddress || 'null'}_${stellarAddress || 'null'}`;
+};
+
+const getFromCache = (cacheKey) => {
+  const cached = walletCache.get(cacheKey);
+  if (!cached) return null;
+  
+  const now = Date.now();
+  const age = now - cached.timestamp;
+  
+  if (age < CACHE_CONFIG.TTL) {
+    return cached.data;
+  }
+  
+  return null;
+};
+
+const saveToCache = (cacheKey, data) => {
+  walletCache.set(cacheKey, {
+    data,
+    timestamp: Date.now()
+  });
+};
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -310,7 +340,7 @@ const getXLMPrice = async () => {
   }
 };
 
-const getEthereumTokens = async (walletAddress, onProgress = null) => {
+const getEthereumTokens = async (walletAddress, onProgress = null, cacheKey = null) => {
   if (!isValidAddress(walletAddress)) {
     throw new Error('Invalid Ethereum address');
   }
@@ -389,10 +419,20 @@ const getEthereumTokens = async (walletAddress, onProgress = null) => {
     return { tokens, totalValueUSD: parseNumber(totalValueUSD, 2) };
   } catch (error) {
     console.log('Ethereum fetch failed:', error);
+    if (cacheKey) {
+      const cached = getFromCache(cacheKey);
+      if (cached && cached.tokens) {
+        const ethTokens = cached.tokens.filter(t => t.chain === 'ETH');
+        const ethValue = ethTokens.reduce((sum, t) => sum + t.balanceUSD, 0);
+        console.log('Returning cached ETH data due to error');
+        return { tokens: ethTokens, totalValueUSD: ethValue };
+      }
+    }
+    
     return { tokens: [], totalValueUSD: 0 };
   }
 };
-const getBSCTokensFromBinplorer = async (walletAddress, onProgress = null) => {
+const getBSCTokensFromBinplorer = async (walletAddress, onProgress = null, cacheKey = null) => {
   if (!isValidAddress(walletAddress)) {
     throw new Error('Invalid BSC address');
   }
@@ -472,11 +512,23 @@ const getBSCTokensFromBinplorer = async (walletAddress, onProgress = null) => {
     return { tokens, totalValueUSD: parseNumber(totalValueUSD, 2) };
   } catch (error) {
     console.error('Binplorer failed, using RPC fallback:', error);
-    return await getBNBBalanceViaRPC(walletAddress, onProgress);
+    if (error.response?.status === 429 || error.code === 'ECONNABORTED') {
+      if (cacheKey) {
+        const cached = getFromCache(cacheKey);
+        if (cached && cached.tokens) {
+          const bscTokens = cached.tokens.filter(t => t.chain === 'BSC');
+          const bscValue = bscTokens.reduce((sum, t) => sum + t.balanceUSD, 0);
+          console.log('Returning cached BSC data due to rate limit/error');
+          return { tokens: bscTokens, totalValueUSD: bscValue };
+        }
+      }
+    }
+    
+    return await getBNBBalanceViaRPC(walletAddress, onProgress, cacheKey);
   }
 };
 
-const getBNBBalanceViaRPC = async (walletAddress, onProgress = null) => {
+const getBNBBalanceViaRPC = async (walletAddress, onProgress = null, cacheKey = null) => {
   try {
     const response = await axios.post(CONFIG.APIS.BSC_RPC, {
       jsonrpc: '2.0',
@@ -519,6 +571,15 @@ const getBNBBalanceViaRPC = async (walletAddress, onProgress = null) => {
     }
   } catch (error) {
     console.error('RPC fallback failed:', error);
+    if (cacheKey) {
+      const cached = getFromCache(cacheKey);
+      if (cached && cached.tokens) {
+        const bscTokens = cached.tokens.filter(t => t.chain === 'BSC');
+        const bscValue = bscTokens.reduce((sum, t) => sum + t.balanceUSD, 0);
+        console.log('Returning cached BSC data from RPC fallback');
+        return { tokens: bscTokens, totalValueUSD: bscValue };
+      }
+    }
   }
 
   const bnbPrice = await getBNBPrice();
@@ -546,11 +607,11 @@ const getBNBBalanceViaRPC = async (walletAddress, onProgress = null) => {
   return { tokens: [emptyToken], totalValueUSD: 0 };
 };
 
-const getBSCTokens = async (walletAddress, onProgress = null) => {
-  return await getBSCTokensFromBinplorer(walletAddress, onProgress);
+const getBSCTokens = async (walletAddress, onProgress = null, cacheKey = null) => {
+  return await getBSCTokensFromBinplorer(walletAddress, onProgress, cacheKey);
 };
 
-const getStellarTokens = async (walletAddress, onProgress = null) => {
+const getStellarTokens = async (walletAddress, onProgress = null, cacheKey = null) => {
   try {
     const server = new StellarSdk.Horizon.Server(CONFIG.APIS.STELLAR_HORIZON);
     const account = await server.accounts().accountId(walletAddress).call();
@@ -593,6 +654,16 @@ const getStellarTokens = async (walletAddress, onProgress = null) => {
     return { tokens, totalValueUSD: parseNumber(totalValueUSD, 2) };
   } catch (error) {
     console.error('Stellar fetch failed:', error);
+    if (cacheKey) {
+      const cached = getFromCache(cacheKey);
+      if (cached && cached.tokens) {
+        const xlmTokens = cached.tokens.filter(t => t.chain === 'Stellar');
+        const xlmValue = xlmTokens.reduce((sum, t) => sum + t.balanceUSD, 0);
+        console.log('Returning cached Stellar data due to error');
+        return { tokens: xlmTokens, totalValueUSD: xlmValue };
+      }
+    }
+    
     const xlmPrice = await getXLMPrice();
     const emptyToken = {
       chain: 'Stellar',
@@ -625,6 +696,22 @@ export async function GetWalletTokens(evmAddress = null, stellarAddress = null, 
     throw new Error('At least one wallet address is required');
   }
 
+  const cacheKey = getCacheKey(evmAddress, stellarAddress);
+  const cachedData = getFromCache(cacheKey);
+  if (cachedData) {
+    console.debug('returning cached data (under 1 minute old)');
+    if (onProgress) {
+      onProgress({
+        allTokens: cachedData.tokens,
+        totalValueUSD: cachedData.totalValueUSD,
+        isPartial: false,
+        fromCache: true
+      });
+    }
+    
+    return cachedData;
+  }
+
   try {
     if (!Promise.allSettled) {
       Promise.allSettled = function (promises) {
@@ -654,7 +741,7 @@ export async function GetWalletTokens(evmAddress = null, stellarAddress = null, 
               totalValueUSD: totalValueUSD + update.totalValueUSD
             });
           }
-        })
+        }, cacheKey)
       );
 
       fetchPromises.push(
@@ -666,7 +753,7 @@ export async function GetWalletTokens(evmAddress = null, stellarAddress = null, 
               totalValueUSD: totalValueUSD + update.totalValueUSD
             });
           }
-        })
+        }, cacheKey)
       );
     }
 
@@ -683,7 +770,7 @@ export async function GetWalletTokens(evmAddress = null, stellarAddress = null, 
               totalValueUSD: totalValueUSD + update.totalValueUSD
             });
           }
-        })
+        }, cacheKey)
       );
     }
 
@@ -694,81 +781,222 @@ export async function GetWalletTokens(evmAddress = null, stellarAddress = null, 
         totalValueUSD += result.value.totalValueUSD;
       }
     });
+    
     allTokens.sort((a, b) => b.balanceUSD - a.balanceUSD);
-    return {
+    const result = {
       tokens: allTokens,
       totalValueUSD: parseNumber(totalValueUSD, 2)
     };
+    saveToCache(cacheKey, result);
+    console.debug('data cached successfully');
+    return result;
   } catch (error) {
+    const cachedData = walletCache.get(cacheKey);
+    if (cachedData) {
+      console.debug('returning expired cached data due to error');
+      return cachedData.data;
+    }
     throw new Error(`Failed to fetch wallet tokens: ${error.message}`);
   }
 }
 
 export const TemporaryTokens=[
-  {
-      "balance": 0.000,
-      "balanceUSD": 0.000,
-      "chain": "Stellar",
-      "contractAddress": "Native",
-      "decimals": 7,
-      "imageUrl": "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq",
-      "name": "Stellar Lumens",
-      "price": 0.000,
-      "symbol": "XLM"
-  },
-  {
-      "balance": 0.000,
-      "balanceUSD": 0,
-      "chain": "ETH",
-      "contractAddress": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0",
-      "decimals": 6,
-      "imageUrl": null,
-      "name": "USDT",
-      "price": 0,
-      "symbol": "USDT"
-  },
-  {
-      "balance": 0.000,
-      "balanceUSD": 0,
-      "chain": "ETH",
-      "contractAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
-      "decimals": 6,
-      "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
-      "name": "USDC",
-      "price": 0,
-      "symbol": "USDC"
-  },
-  {
-      "balance": 0.000,
-      "balanceUSD": 0,
-      "chain": "ETH",
-      "contractAddress": "Native",
-      "decimals": 18,
-      "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-      "name": "Ethereum",
-      "price": 0,
-      "symbol": "ETH"
-  },
-  {
-      "balance": 0,
-      "balanceUSD": 0,
-      "chain": "BSC",
-      "contractAddress": "Native",
-      "decimals": 18,
-      "imageUrl": "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png",
-      "name": "Binance Coin",
-      "price": 0.000,
-      "symbol": "BNB"
-  },
-  {
-      "balance": 0,
-      "balanceUSD": 0,
-      "chain": "BTC",
-      "contractAddress": "Native",
-      "decimals": 7,
-      "imageUrl": "https://tokens.pancakeswap.finance/images/0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c.png",
-      "name": "Bitcoin",
-      "price": 0,
-      "symbol": "BTC"
-  }
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "BSC",
+        "contractAddress": "Native",
+        "decimals": 18,
+        "imageUrl": "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png",
+        "name": "Binance Coin",
+        "price":0,
+        "symbol": "BNB"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "BSC",
+        "contractAddress": "0x55d398326f99059ff775485246999027b3197955",
+        "decimals": "18",
+        "imageUrl": "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png",
+        "name": "Tether",
+        "price":0,
+        "symbol": "USDT"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "decimals": "6",
+        "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+        "name": "USD Coin",
+        "price":0,
+        "symbol": "USDC"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "Native",
+        "decimals": 18,
+        "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+        "name": "Ethereum",
+        "price":0,
+        "symbol": "ETH"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "decimals": "18",
+        "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+        "name": "WETH",
+        "price":0,
+        "symbol": "WETH"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "Stellar",
+        "contractAddress": "Native",
+        "decimals": 7,
+        "imageUrl": "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq",
+        "name": "Stellar Lumens",
+        "price":0,
+        "symbol": "XLM"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+        "decimals": "6",
+        "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+        "name": "Tether USD",
+        "price":0,
+        "symbol": "USDT"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "BSC",
+        "contractAddress": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+        "decimals": "18",
+        "imageUrl": "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png",
+        "name": "USD Coin",
+        "price":0,
+        "symbol": "USDC"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0x2e9555c4d34b96b0e76b641457293d5a9fbe4d03",
+        "decimals": "18",
+        "imageUrl": null,
+        "name": "Grok",
+        "price":0,
+        "symbol": "Grok"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0x73f7d02d546025843f952a22abd92050650cc3d4",
+        "decimals": "18",
+        "imageUrl": null,
+        "name": "AlphaGo",
+        "price":0,
+        "symbol": "AlphaGo"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0xb5ff0b0f9c2972801860d9ed823d648ace067aef",
+        "decimals": "18",
+        "imageUrl": null,
+        "name": "GPT4",
+        "price":0,
+        "symbol": "GPT4"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0xd533a949740bb3306d119cc777fa900ba034cd52",
+        "decimals": "18",
+        "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xD533a949740bb3306d119CC777fa900bA034cd52/logo.png",
+        "name": "Curve DAO",
+        "price":0,
+        "symbol": "CRV"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "decimals": "18",
+        "imageUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+        "name": "Dai",
+        "price":0,
+        "symbol": "DAI"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0x84ca8bc7997272c7cfb4d0cd3d55cd942b3c9419",
+        "decimals": "18",
+        "imageUrl": "https://assets.coingecko.com/coins/images/11955/thumb/image.png?1646041751",
+        "name": "DIA",
+        "price":0,
+        "symbol": "DIA"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0xed04915c23f00a313a544955524eb7dbd823143d",
+        "decimals": "8",
+        "imageUrl": "https://assets.coingecko.com/coins/images/12390/thumb/ACH_%281%29.png?1599691266",
+        "name": "Alchemy Pay",
+        "price":0,
+        "symbol": "ACH"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0x111111111117dc0aa78b770fa6a738034120c302",
+        "decimals": "18",
+        "imageUrl": "https://assets.coingecko.com/coins/images/13469/thumb/1inch-token.png?1608803028",
+        "name": "1inch",
+        "price":0,
+        "symbol": "1INCH"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "ETH",
+        "contractAddress": "0x03dc2da9091beb261b80527fd56be5a74dd95600",
+        "decimals": "18",
+        "imageUrl": null,
+        "name": "Reversa",
+        "price":0,
+        "symbol": "RVX"
+    },
+    {
+        "balance":0.0,
+        "balanceUSD": 0.00,
+        "chain": "BSC",
+        "contractAddress": "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+        "decimals": "18",
+        "imageUrl": "https://tokens.pancakeswap.finance/images/0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82.png",
+        "name": "PancakeSwap",
+        "price":0,
+        "symbol": "CAKE"
+    }
 ]

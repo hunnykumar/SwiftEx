@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -32,6 +32,7 @@ import EtherTokens from "../Dashboard/tokens/tokenList.json";
 import BNBTokens from "../Dashboard/tokens/pancakeSwap/PancakeList.json";
 import { getTokenBalancesUsingAddress, getWalletBalance } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/utils/getWalletInfo/EtherWalletService';
 import ShortTermStorage from '../utilities/ShortTermStorage';
+import { debounce } from 'lodash';
 
 const NETWORK = [
   {
@@ -66,6 +67,7 @@ const EthSwap = () => {
   const [btnDisable, setbtnDisable] = useState(true);
   const [swapExecuting, setSwapExecuting] = useState(false);
   const [currentNetwork, setCurrentNetwork] = useState(0);
+  const abortControllerRef = useRef(null);
 
   const getSwapQuote = useCallback(async (tokenIn, tokenOut, amountIn, type) => {
     try {
@@ -94,46 +96,34 @@ const EthSwap = () => {
     }
   }, []);
 
-  const getTokesBalance = useCallback(async (token0, token1) => {
-    try {
-      setBalanceLoading(true);
-      const addresses = [token0, token1];
-      const walletAddress = state?.wallet?.address;
-      
-      const responseBalance = await fetchTokenInfo(addresses, walletAddress);
-      
-      const balance0 = parseFloat(responseBalance[0]?.balance || 0);
-      const balance1 = parseFloat(responseBalance[1]?.balance || 0);
-      const decimals0 = Number(responseBalance[0]?.decimals || 18);
-      const decimals1 = Number(responseBalance[1]?.decimals || 18);
-      
-      setFromTokenBalance(balance0.toFixed(balance0 === 0 ? 3 : Math.min(decimals0, 6)));
-      setToTokenBalance(balance1.toFixed(balance1 === 0 ? 3 : Math.min(decimals1, 6)));
-    } catch (error) {
-      console.error("Error fetching token balance:", error);
-      Snackbar.show({
-        text: "Unable to fetch balance",
-        duration: Snackbar.LENGTH_SHORT,
-        backgroundColor: '#ff6b6b',
-      });
-    } finally {
-      setBalanceLoading(false);
+  const fetchTokenBalances = useCallback(async (token0Addr, token1Addr, network) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-  }, [state?.wallet?.address]);
+    setBalanceLoading(true);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-  const getBSCTokenBalance = useCallback(async (token0, token1) => {
     try {
-      setBalanceLoading(true);
-      const addresses = [token0, token1];
       const walletAddress = state?.wallet?.address;
-      
-      const responseBalance = await fetchBSCTokenInfo(addresses, walletAddress);
-      
-      const balance0 = parseFloat(responseBalance[0]?.balance || 0);
-      const balance1 = parseFloat(responseBalance[1]?.balance || 0);
-      const decimals0 = Number(responseBalance[0]?.decimals || 18);
-      const decimals1 = Number(responseBalance[1]?.decimals || 18);
-      
+      if (!walletAddress) return;
+
+      const addresses = [token0Addr, token1Addr];
+      let responseBalance;
+
+      if (network === 0) {
+        responseBalance = await fetchTokenInfo(addresses, walletAddress, {
+          signal: controller.signal
+        });
+      } else {
+        responseBalance = await fetchBSCTokenInfo(addresses, walletAddress, {
+          signal: controller.signal
+        });
+      }
+      const balance0 = parseFloat(responseBalance?.[0]?.balance || 0);
+      const balance1 = parseFloat(responseBalance?.[1]?.balance || 0);
+      const decimals0 = Number(responseBalance?.[0]?.decimals || 18);
+      const decimals1 = Number(responseBalance?.[1]?.decimals || 18);
       setFromTokenBalance(balance0.toFixed(balance0 === 0 ? 3 : Math.min(decimals0, 6)));
       setToTokenBalance(balance1.toFixed(balance1 === 0 ? 3 : Math.min(decimals1, 6)));
     } catch (error) {
@@ -148,12 +138,19 @@ const EthSwap = () => {
     }
   }, [state?.wallet?.address]);
 
+  const debouncedFetchBalances = useCallback(
+    debounce((token0Addr, token1Addr, network) => {
+      fetchTokenBalances(token0Addr, token1Addr, network);
+    }, 400),
+    [fetchTokenBalances]
+  );
+
   // Update quote when amount changes
   useEffect(() => {
     let timeoutId;
 
     const updateQuote = async () => {
-      if (!amount || parseFloat(amount) === 0) {
+      if (!amount || parseFloat(amount) <= 0) {
         setQuoteInfo(null);
         setbtnDisable(true);
         setbtnMessage("Enter amount");
@@ -200,57 +197,33 @@ const EthSwap = () => {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [amount, fromToken, toToken, currentNetwork, fromTokenBalance]);
+  }, [amount, fromToken, toToken, currentNetwork, fromTokenBalance, getSwapQuote]);
 
   // Fetch balances when tokens change
   useEffect(() => {
-    const fetchBalances = async () => {
-      if (currentNetwork === 0) {
-        await getTokesBalance(fromToken.address, toToken.address);
-      } else {
-        await getBSCTokenBalance(fromToken.address, toToken.address);
-      }
+    if (balanceLoading) return;
+    debouncedFetchBalances(fromToken.address, toToken.address, currentNetwork);
+    return () => {
+      debouncedFetchBalances.cancel();
     };
-
-    fetchBalances();
-  }, [fromToken, toToken, currentNetwork]);
+  }, [fromToken.address, toToken.address, currentNetwork]);
 
   // Network change handler
   useEffect(() => {
     setAmount('');
     setQuoteInfo(null);
 
-    const initByNetwork = async () => {
+    const timer = setTimeout(() => {
       if (currentNetwork === 0) {
-        const from = EtherTokens[0];
-        const to =
-          routeParam.params?.activeNetwork === "Ethereum" &&
-            routeParam.params?.activeAsset
-            ? routeParam.params.activeAsset
-            : EtherTokens[1];
-
-        setFromToken(from);
-        setToToken(to);
-
-        await getTokesBalance(from.address, to.address);
+        setFromToken(EtherTokens[0]);
+        setToToken(routeParam.params?.activeAsset || EtherTokens[1]);
+      } else {
+        setFromToken(BNBTokens[0]);
+        setToToken(routeParam.params?.activeAsset || BNBTokens[1]);
       }
-      if (currentNetwork === 1) {
-        const from = BNBTokens[0];
+    }, 100);
 
-        const to =
-          routeParam.params?.activeNetwork === "BNB" &&
-            routeParam.params?.activeAsset
-            ? routeParam.params.activeAsset
-            : BNBTokens[1];
-
-        setFromToken(from);
-        setToToken(to);
-
-        await getBSCTokenBalance(from.address, to.address);
-      }
-    };
-
-    initByNetwork();
+    return () => clearTimeout(timer);
   }, [currentNetwork]);
 
   // Focus handler
@@ -258,25 +231,24 @@ const EthSwap = () => {
     if (!FOCUSED) return;
     if (routeParam.params?.activeNetwork === "BNB") {
       setCurrentNetwork(1);
-      return;
-    }
-    if (routeParam.params?.activeNetwork === "Ethereum") {
+    } else if (routeParam.params?.activeNetwork === "Ethereum") {
       setCurrentNetwork(0);
-      return;
+    } else {
+      setCurrentNetwork(0);
     }
-    setCurrentNetwork(0);
   }, [FOCUSED]);
 
 
   // Token selector component
   const TokenSelector = ({ token, onPress, balance }) => (
     <TouchableOpacity 
-      disabled={loading} 
+      disabled={balanceLoading || loading}
       style={[
         styles.tokenSelector,
-        { backgroundColor: state?.THEME?.THEME === false ? "#FFFFFF" : "#1B1B1C" }
+        { backgroundColor: state?.THEME?.THEME === false ? "#FFFFFF" : "#1B1B1C",opacity: balanceLoading || loading ? 0.7 : 1}
       ]} 
       onPress={onPress}
+      activeOpacity={0.7}
     >
       <View style={[styles.tokenContainer, { width: wp(40) }]}>
         <Image source={{ uri: token.logoURI }} style={[styles.logoImage, { marginRight: 5 }]} />
@@ -299,21 +271,47 @@ const EthSwap = () => {
     const [searchQuery, setSearchQuery] = useState('');
     
     const filteredTokens = useMemo(() => {
-      const tokens = NETWORK[currentNetwork].symbol === "ETH" ? EtherTokens : BNBTokens;
-      
+      const tokens = currentNetwork === 0 ? EtherTokens : BNBTokens;
+
       if (!searchQuery.trim()) {
         return tokens;
       }
       
       const query = searchQuery.toLowerCase().trim();
-      
-      return tokens.filter(token => {
-        const symbolMatch = token.symbol?.toLowerCase().includes(query);
-        const nameMatch = token.name?.toLowerCase().includes(query);
-        const addressMatch = token.address?.toLowerCase().includes(query);
-        return symbolMatch || nameMatch || addressMatch;
-      });
+
+      return tokens.filter(token => 
+        token.symbol?.toLowerCase().includes(query) ||
+        token.name?.toLowerCase().includes(query) ||
+        token.address?.toLowerCase().includes(query)
+      );
     }, [searchQuery, currentNetwork]);
+
+    const handleTokenSelect = useCallback((item) => {
+      if (balanceLoading) {
+        Snackbar.show({
+          text: "Please wait for balances to load",
+          duration: Snackbar.LENGTH_SHORT,
+          backgroundColor: '#ff6b6b',
+        });
+        return;
+      }
+
+      setShowTokenList(false);
+      
+      requestAnimationFrame(() => {
+        if (selectingFor === 'from' && item.address !== toToken.address) {
+          setFromToken(item);
+        } else if (selectingFor === 'to' && item.address !== fromToken.address) {
+          setToToken(item);
+        } else {
+          Snackbar.show({
+            text: "Cannot select same token twice",
+            duration: Snackbar.LENGTH_SHORT,
+            backgroundColor: '#ff6b6b',
+          });
+        }
+      });
+    }, [selectingFor, fromToken.address, toToken.address, balanceLoading]);
 
     return (
       <Modal
@@ -360,46 +358,15 @@ const EthSwap = () => {
                   )}
                 </View>
                 
-                {searchQuery.trim() && (
-                  <Text style={[styles.resultsText, {
-                    color: state?.THEME?.THEME === false ? "#6c757d" : "#888"
-                  }]}>
-                    {filteredTokens.length} token{filteredTokens.length !== 1 ? 's' : ''} found
-                  </Text>
-                )}
-                
                 <FlatList
                   data={filteredTokens}
-                  keyExtractor={(item) => item.address}
+                  keyExtractor={(item, index) => index.toString()}
                   style={{height:hp(60)}}
                   renderItem={({ item }) => (
                     <TouchableOpacity
                       style={styles.tokenListItem}
-                      onPress={() => {
-                        if (selectingFor === 'from') {
-                          if (item.address === toToken.address) {
-                            Snackbar.show({
-                              text: "Cannot select same token",
-                              duration: Snackbar.LENGTH_SHORT,
-                              backgroundColor: '#ff6b6b',
-                            });
-                            return;
-                          }
-                          setFromToken(item);
-                        } else {
-                          if (item.address === fromToken.address) {
-                            Snackbar.show({
-                              text: "Cannot select same token",
-                              duration: Snackbar.LENGTH_SHORT,
-                              backgroundColor: '#ff6b6b',
-                            });
-                            return;
-                          }
-                          setToToken(item);
-                        }
-                        setShowTokenList(false);
-                        setSearchQuery('');
-                      }}
+                      onPress={() => handleTokenSelect(item)}
+                      activeOpacity={0.7}
                     >
                       <View style={styles.tokenContainer}>
                         <Image source={{ uri: item.logoURI }} style={styles.logoImage} />
@@ -466,7 +433,6 @@ const EthSwap = () => {
 
   // Swap tokens
   const tokenHandle = () => {
-    setAmount('');
     setFromToken(toToken);
     setToToken(fromToken);
     setFromTokenBalance(toTokenBalance);
@@ -512,12 +478,6 @@ const EthSwap = () => {
         setAmount('');
         setQuoteInfo(null);
         
-        // Refresh balances
-        if (currentNetwork === 0) {
-          await getTokesBalance(fromToken.address, toToken.address);
-        } else {
-          await getBSCTokenBalance(fromToken.address, toToken.address);
-        }
         
         // Navigate after short delay
         setTimeout(() => {
@@ -874,8 +834,10 @@ const EthSwap = () => {
             <TokenSelector
               token={fromToken}
               onPress={() => {
-                setSelectingFor('from');
-                setShowTokenList(true);
+                if (!balanceLoading && !loading) {
+                  setSelectingFor('from');
+                  setShowTokenList(true);
+                }
               }}
               balance={fromTokenBalance}
             />
@@ -913,8 +875,10 @@ const EthSwap = () => {
             <TokenSelector
               token={toToken}
               onPress={() => {
-                setSelectingFor('to');
-                setShowTokenList(true);
+                if (!balanceLoading && !loading) {
+                  setSelectingFor('to');
+                  setShowTokenList(true);
+                }
               }}
               balance={toTokenBalance}
             />
@@ -1266,6 +1230,10 @@ const styles = StyleSheet.create({
   },
   assetSymbol: {
     fontSize: 14,
+  },
+  loadingBalanceText: {
+    fontSize: 12,
+    marginTop: 4,
   },
 });
 

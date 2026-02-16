@@ -762,15 +762,66 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
     }
   };
 
+  
+
+  const getFilteredTransactions = (txList, filterTab = selectedTab) => {
+    return txList.filter(tx => {
+      const opType = tx.operations.records[0].type;
+
+      if (filterTab === 'all') return true;
+
+      if (filterTab === 'sent') {
+        return (
+          !tx.isReceived &&
+          opType !== 'path_payment_strict_send' &&
+          opType !== 'path_payment_strict_receive' &&
+          opType !== 'sellCry' &&
+          opType !== 'buyCry' &&
+          opType !== 'wallet_tx' &&
+          opType !== 'create_account'
+        );
+      }
+
+      if (filterTab === 'received') {
+        return (
+          tx.isReceived &&
+          opType !== 'path_payment_strict_send' &&
+          opType !== 'path_payment_strict_receive' &&
+          opType !== 'sellCry' &&
+          opType !== 'buyCry' &&
+          opType !== 'create_account'
+        );
+      }
+
+      if (filterTab === 'path') {
+        return (
+          opType === 'path_payment_strict_send' ||
+          opType === 'path_payment_strict_receive' ||
+          opType === 'wallet_tx'
+        );
+      }
+
+      return true;
+    });
+  };
+
+  const handleTabChange = (tab) => {
+    setSelectedTab(tab);
+    const filteredTxs = getFilteredTransactions(allTransactions, tab);
+    setDisplayedTransactions(filteredTxs.slice(0, INITIAL_LOAD));
+    setCurrentPage(1);
+    setHasMore(filteredTxs.length > INITIAL_LOAD);
+  };
+
   const loadMoreTransactions = useCallback(async () => {
     if (loadingMore || !hasMore) return;
 
     setLoadingMore(true);
-    
+
     try {
-      const filteredAll = getFilteredTransactions(allTransactions);
-      const currentDisplayed = getFilteredTransactions(displayedTransactions).length;
-      
+      const filteredAll = getFilteredTransactions(allTransactions, selectedTab); // selectedTab pass karo
+      const currentDisplayed = getFilteredTransactions(displayedTransactions, selectedTab).length;
+
       if (currentDisplayed < filteredAll.length) {
         const nextBatch = filteredAll.slice(currentDisplayed, currentDisplayed + PAGE_SIZE);
         setDisplayedTransactions(prev => {
@@ -780,15 +831,15 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
         setHasMore(currentDisplayed + PAGE_SIZE < filteredAll.length || stellarCursor !== null);
       } else if (stellarCursor) {
         const newStellarTxs = await fetchMoreStellarTransactions();
-        
+
         if (newStellarTxs.length > 0) {
           setAllTransactions(prev => {
             const updated = [...prev, ...newStellarTxs];
             updated.sort((a, b) => b.sortTime - a.sortTime);
             return updated;
           });
-          
-          const newFiltered = getFilteredTransactions(newStellarTxs);
+
+          const newFiltered = getFilteredTransactions(newStellarTxs, selectedTab); // selectedTab pass karo
           setDisplayedTransactions(prev => [...prev, ...newFiltered.slice(0, PAGE_SIZE)]);
           setHasMore(newStellarTxs.length >= STELLAR_BATCH_SIZE || stellarCursor !== null);
         } else {
@@ -803,52 +854,6 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
       setLoadingMore(false);
     }
   }, [allTransactions, displayedTransactions, loadingMore, hasMore, stellarCursor, selectedTab]);
-
-  const getFilteredTransactions = (txList) => {
-    return txList.filter(tx => {
-         const opType = tx.operations.records[0].type;
-
-          if (selectedTab === 'all') return true;
-
-          if (selectedTab === 'sent') {
-            return (
-              !tx.isReceived &&
-              opType !== 'path_payment_strict_send' &&
-              opType !== 'path_payment_strict_receive' &&
-              opType !== 'sellCry' && 
-              opType !== 'buyCry' &&
-              opType !== 'wallet_tx'
-            );
-          }
-
-          if (selectedTab === 'received') {
-            return (
-              tx.isReceived &&
-              opType !== 'path_payment_strict_send' &&
-              opType !== 'path_payment_strict_receive' &&
-              opType !== 'sellCry' && 
-              opType !== 'buyCry'
-            );
-          }
-
-          if (selectedTab === 'path') {
-            return (
-              opType === 'path_payment_strict_send' ||
-              opType === 'path_payment_strict_receive' ||
-              opType === 'wallet_tx'
-            );
-          }
-
-          return true;
-        })}
-
-  const handleTabChange = (tab) => {
-    setSelectedTab(tab);
-    const filteredTxs = getFilteredTransactions(allTransactions);
-    setDisplayedTransactions(filteredTxs.slice(0, INITIAL_LOAD));
-    setCurrentPage(1);
-    setHasMore(filteredTxs.length > INITIAL_LOAD);
-  };
 
   useEffect(() => {
     fetchTransactions();
@@ -870,7 +875,7 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
     );
   }
 
-  const filteredDisplayedTransactions = getFilteredTransactions(displayedTransactions);
+  const filteredDisplayedTransactions = getFilteredTransactions(displayedTransactions, selectedTab);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

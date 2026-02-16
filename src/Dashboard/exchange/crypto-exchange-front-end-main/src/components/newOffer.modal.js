@@ -350,10 +350,6 @@ export const NewOfferModal = () => {
         setbalance("");
         setreserveLoading(true);
 
-        const hasAsset = await checkAssetTrust(asset);
-        if (!hasAsset.assetStatus && asset !== stellarConfig.ASSET_TYPES.NATIVE && asset !== stellarConfig.ASSET_TYPES.XLM) {
-          setshow_trust_modal((prev) => [...prev, hasAsset.unavilabeAsset]);
-        }
 
         if (asset === stellarConfig.ASSET_TYPES.NATIVE || asset === stellarConfig.ASSET_TYPES.XLM) {
           const result = await GetStellarAvilabelBalance(
@@ -391,15 +387,7 @@ export const NewOfferModal = () => {
       setshowOneTap(true);
   }, [checkAssetTrust, navigation]);
 
-  const offer_creation = useCallback(async() => {
-    const hasAsset = await checkAssetTrust(selectedValue);
-    
-    if (!hasAsset.assetStatus && selectedValue !== stellarConfig.ASSET_TYPES.NATIVE) {
-      // setLoading(false);
-      setshow_trust_modal([...show_trust_modal,hasAsset.unavilabeAsset]);
-      // return;
-    }
-
+  const offer_creation = useCallback(async() => { 
     const temp_amount = parseFloat(offer_amount);
     
     if (!validateBalance(temp_amount, Balance)) {
@@ -521,6 +509,7 @@ const selectTradingPair = useCallback((item) => {
     debounceTimer.current = setTimeout(async() => {
       const walletStatus=await stellarWalletStatus(state?.STELLAR_PUBLICK_KEY)
       setACTIVATION_MODAL_PROD(walletStatus);
+      checkToStatusTrust(top_value_0);
       getLastTradePrice(top_value, AssetIssuerPublicKey, top_value_0, AssetIssuerPublicKey1);
       get_stellar(top_value);
     }, 350);
@@ -533,6 +522,16 @@ const selectTradingPair = useCallback((item) => {
     get_stellar
   ]);
 
+  const checkToStatusTrust = async (selectedValue) => {
+    try {
+      const hasAsset = await checkAssetTrust(selectedValue);
+      if (!hasAsset.assetStatus) {
+        setshow_trust_modal([...show_trust_modal, hasAsset.unavilabeAsset]);
+      }
+    } catch (error) {
+      console.error("error in checkToStatusTrust",error);
+    }
+  }
 
   const chooseRenderItem = useCallback(({ item }) => (
     <TouchableOpacity 

@@ -615,7 +615,6 @@ const styles = StyleSheet.create({
     height: hp(100)
   },
   scrollCon: {
-    marginBottom: hp(5),
     paddingHorizontal:wp(3.5)
   },
   headingText: {
@@ -804,11 +803,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 10,
-    marginTop: 20,
+    marginTop: 10,
     alignSelf: "center",
     height:hp(6.4),
-    marginTop:hp(1.6),
-    marginBottom:hp(2)
+    marginBottom: hp(10),
   },
   confirmButtonText: {
     color: '#fff',

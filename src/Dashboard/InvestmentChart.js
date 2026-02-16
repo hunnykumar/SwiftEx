@@ -103,12 +103,26 @@ function InvestmentChart() {
   }
 
   useEffect(() => {
+    dispatch({
+      type: PORTFOLIO_CONFIG,
+      payload: {
+        isTotalInUSDVisible: true,
+        totalInUSD: 0.0
+      }
+    }); 
     setTokenInfoList(TemporaryTokens);
     const initService = async () => {
       await fetchDataDispatch();
       if (wallet?.address && state?.STELLAR_PUBLICK_KEY) {
         try {
-          const walletInfo = await GetWalletTokens(wallet?.address,state?.STELLAR_PUBLICK_KEY);
+          const storedData = await AsyncStorage.getItem('myDataKey');
+          const parsedData = JSON.parse(storedData);
+          let matchedData = parsedData.find((item) => item.Ether_address === wallet.address);
+          if (!matchedData) {
+            const preser_backup = await AsyncStorage.getItem('wallet_backup');
+            matchedData = parsedData.find((item) => item.Ether_address === preser_backup);
+          }
+          const walletInfo = await GetWalletTokens(wallet?.address,matchedData?matchedData?.publicKey:state?.STELLAR_PUBLICK_KEY);
           if (walletInfo.tokens.length > 1) {
             const userCustomTokens=await getCustomTokens()
             const margeArray=[...walletInfo.tokens,avilableSoonAsset,...(userCustomTokens.status ? userCustomTokens.data : [])]

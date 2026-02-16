@@ -818,7 +818,7 @@ const classic = ({ route }) => {
         shouldNavigateBack={true}
       />
 
-      <ScrollView style={{ marginBottom: hp(5), paddingHorizontal: wp(3.5) }}>
+      <ScrollView style={{ paddingHorizontal: wp(3.5) }}>
         <View style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: "column", paddingHorizontal: wp(3) }]}>
           <View style={[styles.exportBottomCon, { backgroundColor: theme.cardBg }]}>
            <View style={{width:wp(50)}}>
@@ -1416,8 +1416,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginVertical: 16,
-    marginBottom:hp(2)
+    marginBottom: hp(9.5)
   },
   nextButtonText: {
     color: 'white',

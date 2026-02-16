@@ -70,6 +70,7 @@ const AMMSwap = () => {
   const [messageError,setmessageError]=useState(null);
   const [showReverse,setshowReverse]=useState(false);
   const isFocused=useIsFocused();
+  const [findToken, setfindToken] = useState('');
   
   useEffect(()=>{
     setassetTrustRequired([]);
@@ -386,6 +387,23 @@ const AMMSwap = () => {
 
 
   const theme = state.THEME.THEME ? colors.dark : colors.light;
+
+  const getFilteredTokens = () => {
+    if (!findToken.trim()) {
+      return stellarTokens?.assets || [];
+    }
+
+    return stellarTokens?.assets?.filter(token => {
+      const query = findToken.toLowerCase();
+      const code = token.asset_code?.toLowerCase() || '';
+      const issuer = token.asset_issuer?.toLowerCase() || '';
+      const name = token.name?.toLowerCase() || '';
+
+      return code.includes(query) ||
+        issuer.includes(query) ||
+        name.includes(query);
+    }) || [];
+  };
   
   return (
     <View style={styles.container}>
@@ -415,7 +433,7 @@ const AMMSwap = () => {
                 value={fromAmount}
                 onChangeText={(value)=>{handleInputChange(value)}}
               />
-              <TouchableOpacity style={[styles.tokenSelector,{backgroundColor:theme.bg}]} onPress={()=>{settokenTypeSelection(0),setTokenModalVisible(true)}}>
+              <TouchableOpacity style={[styles.tokenSelector,{backgroundColor:theme.bg}]} onPress={()=>{settokenTypeSelection(0),setTokenModalVisible(true),setfindToken("")}}>
                 <Image
                   source={{ uri: fromToken.icon }}
                   style={styles.tokenLogo}
@@ -449,7 +467,7 @@ const AMMSwap = () => {
                 value={toAmount}
                 editable={false}
               />
-              <TouchableOpacity style={[styles.tokenSelector,{backgroundColor:theme.bg}]} onPress={()=>{settokenTypeSelection(1),setTokenModalVisible(true)}}>
+              <TouchableOpacity style={[styles.tokenSelector,{backgroundColor:theme.bg}]} onPress={()=>{settokenTypeSelection(1),setTokenModalVisible(true),setfindToken("")}}>
                 <Image
                   source={{ uri: toToken.icon }}
                   style={styles.tokenLogo}
@@ -523,12 +541,45 @@ const AMMSwap = () => {
               <TouchableOpacity onPress={() => setTokenModalVisible(false)}>
                 <MaterialIcons name="close" size={24} color={theme.headingTx} />
               </TouchableOpacity>
-            </View>      
+              </View>
+                <View style={[styles.findContainer, { borderColor: theme.inactiveTx }]}>
+                  <Ionicons
+                    name="search"
+                    size={20}
+                    color={theme.headingTx}
+                    style={styles.findIcon}
+                  />
+                  <TextInput
+                    style={[styles.findInput, { color: theme.headingTx }]}
+                    placeholder="Search tokens..."
+                    placeholderTextColor={theme.inactiveTx}
+                    value={findToken}
+                    onChangeText={setfindToken}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>      
             <FlatList
-              data={stellarTokens?.assets}
+              data={getFilteredTokens()}
               renderItem={renderTokenItem}
               keyExtractor={item => item.id}
               showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                    findToken.trim() ? (
+                      <View style={styles.emptyContainer}>
+                        <Ionicons
+                          name="warning"
+                          size={48}
+                          color={theme.headingTx}
+                        />
+                        <Text style={[styles.emptyText, {
+                          color: theme.headingTx
+                        }]}>
+                          No tokens found for "{findToken}"
+                        </Text>
+                      </View>
+                    ) : null
+                }
             />
           </View>
         </View>
@@ -745,7 +796,34 @@ const styles = StyleSheet.create({
   seprator:{
     marginHorizontal:wp(1),
     height:hp(3)
-  }
+  },
+  findContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  findIcon: {
+    marginRight: 8,
+  },
+  findInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 4,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    marginTop: 12,
+    textAlign: 'center',
+  },
 });
 
 export default AMMSwap;
