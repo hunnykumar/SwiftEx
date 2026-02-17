@@ -35,6 +35,7 @@ import CheckNewWalletMnemonic from "./checkNewWalletMnemonic";
 import ModalHeader from "../reusables/ModalHeader";
 import Icon from "../../icon";
 import { colors } from "../../Screens/ThemeColorsConfig";
+import { checkWalletExistOrNot } from "../Wallets/WalletManagement";
 
 const NewWalletPrivateKey = ({
   props,
@@ -77,50 +78,6 @@ const NewWalletPrivateKey = ({
     }
   },[]);
   
-  async function saveUserDetails() {
-    let response;
-    try {
-      response = await fetch(`http://${urls.testUrl}/user/saveUserDetails`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          emailId: accountName,
-          walletAddress: Wallet.address,
-        }),
-      })
-        .then((response) => response.json())
-        .then(async (responseJson) => {
-          if (responseJson.responseCode === 200) {
-            alert("success", "success");
-            return responseJson.responseCode;
-          } else if (responseJson.responseCode === 400) {
-            alert(
-              "error",
-              "account with same name already exists. Please use a different name"
-            );
-            return responseJson.responseCode;
-          } else {
-            alert("error", "Unable to create account. Please try again");
-            return 401;
-          }
-        })
-        .catch((error) => {
-          setVisible(!visible);
-
-          alert(error);
-        });
-    } catch (e) {
-      setVisible(!visible);
-
-      console.log(e);
-      alert("error", e);
-    }
-    console.log(response);
-    return response;
-  }
 
   const closeModal = () => {
     SetVisible(false);
@@ -261,15 +218,18 @@ const NewWalletPrivateKey = ({
               }}
               // disabled={accountName && !/\s/.test(accountName) ? false : true}
               disabled={!accountName || !/\S/.test(accountName)}
-              onPress={() => {
+              onPress={async() => {
                 Keyboard.dismiss();
-                //setVisible(!visible)
-                let wallet = Wallet;
-                wallet.accountName = accountName;
-                wallet.Mnemonic = mnemonic;
-                setNewWallet(wallet);
-                console.log(newWallet);
-                setMnemonicVisible(true);
+                const checkWalletName=await checkWalletExistOrNot(accountName);
+                if(!checkWalletName){
+                  //setVisible(!visible)
+                  let wallet = Wallet;
+                  wallet.accountName = accountName;
+                  wallet.Mnemonic = mnemonic;
+                  setNewWallet(wallet);
+                  console.log(newWallet);
+                  setMnemonicVisible(true);
+                }
               }}
             >
               <Text style={{ color: "white",fontSize:16  }}>Done</Text>

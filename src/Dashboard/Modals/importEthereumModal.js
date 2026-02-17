@@ -33,6 +33,9 @@ import Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "../../icon";
 import AccessNativeStorage from "../Wallets/AccessNativeStorage";
 import { genUsrToken } from "../Auth/jwtHandler";
+import { checkWalletExistOrNot } from "../Wallets/WalletManagement";
+import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 
 const ImportEthereumModal = ({
   setWalletVisible,
@@ -147,6 +150,15 @@ const ImportEthereumModal = ({
           walletType: "Multi-coin"
         })
         if (walletResponse.success) {
+          await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+            "addresses": {
+              "eth": etherWalletRes.original.address,
+              "xlm": etherWalletRes.generated.publicKey,
+              "bnb": etherWalletRes.original.address,
+              "multi": etherWalletRes.original.address
+            },
+            "isPrimary": true
+          });
           await storeData_marge(etherWalletRes.generated.publicKey, etherWalletRes.original.address, accountName)
         } else {
           setloadingAccount(false);
@@ -460,6 +472,10 @@ const ImportEthereumModal = ({
               style={style.btn}
               disabled={disable || !accountName || !/\S/.test(accountName) ? true : false || loading}
               onPress={async () => {
+                const checkWalletName = await checkWalletExistOrNot(accountName);
+                if (checkWalletName) {
+                  return false;
+                }
                 if (!accountName) {
                   return alert("error", "Please enter an wallet name to proceed");
                 }

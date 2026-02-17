@@ -12,7 +12,7 @@ import {
   Image
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { RAPID_STELLAR, SET_ASSET_DATA } from '../../../../../components/Redux/actions/type';
+import { RAPID_STELLAR, SET_ASSET_DATA, WALLET_ACTIVATION_SHOW } from '../../../../../components/Redux/actions/type';
 import { REACT_APP_HOST } from '../ExchangeConstants';
 import Snackbar from 'react-native-snackbar';
 import { STELLAR_URL } from '../../../../constants';
@@ -49,9 +49,9 @@ const WalletActivationComponent = ({
   const animation = animationRef.current;
   
   // Use refs to track visible state to avoid race conditions
-  const visibleRef = useRef(isVisible);
-  const [showSheet, setShowSheet] = useState(isVisible);
-  
+  const visibleRef = useRef(state.walletActivationShow&&isVisible?true:false);
+  const [showSheet, setShowSheet] = useState(state.walletActivationShow&&isVisible?true:false);
+  console.debug(state.walletActivationShow&&isVisible?true:false)
   // Prevent animation conflicts
   const animatingRef = useRef(false);
 
@@ -68,16 +68,13 @@ const WalletActivationComponent = ({
 
   // Function to handle closing and navigation
   const handleClose = () => {
-    // First close the sheet
-    // if (typeof onClose === 'function') {
-      onClose();
-    // }
-    
-    // Then navigate back if needed
-    // if (shouldNavigateBack && navigation && navigation.canGoBack()) {
-      // Use a short timeout to ensure the sheet starts closing first
-        // navigation.goBack();
-    // }
+    dispatch_({
+      type: WALLET_ACTIVATION_SHOW,
+      payload: {
+        walletActivationShow: false
+      }
+    });
+    onClose();
   };
 
   // Handle back button press on Android
@@ -114,7 +111,7 @@ const WalletActivationComponent = ({
       // Make sure component is rendered first
       setQrVisible(false);
       setVisibleBuyUi(true);
-      setShowSheet(true);
+      setShowSheet(state.walletActivationShow&&isVisible?true:false);
       
       // Use requestAnimationFrame to avoid layout thrashing
       requestAnimationFrame(() => {

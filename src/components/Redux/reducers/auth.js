@@ -1,4 +1,4 @@
-import { LOGIN_SUCCESS, LOGOUT, WALLET_SUCCESS, IMPORT_SUCCESS, BALANCE_SUCCESS, CONFIRMOTP,EXTENDED , COLLAPSE, IMPORTALLWALLETS, SETCURRENTWALLET, ADDTOALLWALLETS, CHECKWALLETS, GETWALLETSDATA, IMPORTUSINGFILE, GETDIRECTORYURI, SETTOKEN, NEWWALLET, SETUSER, SETPROVIDER, SETWALLETTYPE, ETHBALANCESUCCESS, XRPBALANCESUCCESS, MATICBALANCESUCCESS, SETPLATFORM, RAPID_STELLAR, SET_ASSET_DATA, SET_APP_THEME,PORTFOLIO_CONFIG, MULTICHAIN_PORTFOLIO} from "../actions/type";
+import { LOGIN_SUCCESS, LOGOUT, WALLET_SUCCESS, IMPORT_SUCCESS, BALANCE_SUCCESS, CONFIRMOTP,EXTENDED , COLLAPSE, IMPORTALLWALLETS, SETCURRENTWALLET, ADDTOALLWALLETS, CHECKWALLETS, GETWALLETSDATA, IMPORTUSINGFILE, GETDIRECTORYURI, SETTOKEN, NEWWALLET, SETUSER, SETPROVIDER, SETWALLETTYPE, ETHBALANCESUCCESS, XRPBALANCESUCCESS, MATICBALANCESUCCESS, SETPLATFORM, RAPID_STELLAR, SET_ASSET_DATA, SET_APP_THEME,PORTFOLIO_CONFIG, MULTICHAIN_PORTFOLIO, WALLET_ACTIVATION_SHOW} from "../actions/type";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const emailId = AsyncStorage.getItem('emailId')
@@ -206,7 +206,12 @@ case IMPORTALLWALLETS:
                               return {
                                 ...state,
                                 activeWalletPortFolio: action.payload.activeWalletPortFolio
-                              };                                                        
+                              };     
+    case WALLET_ACTIVATION_SHOW:
+                              return {
+                                ...state,
+                                walletActivationShow: action.payload.walletActivationShow
+                              };                                                       
     default:
       return state;
   }

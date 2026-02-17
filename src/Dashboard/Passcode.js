@@ -11,6 +11,7 @@ import { alert } from "./reusables/Toasts";
 import Icon from "../icon";
 import { setPlatform } from "../components/Redux/actions/auth";
 import { colors } from "../Screens/ThemeColorsConfig";
+import { AppNavigation } from "../Screens/AppChecks/AppCheckService";
 
 const Passcode = (props) => {
   const [pin, setPin] = useState("");
@@ -33,7 +34,7 @@ const Passcode = (props) => {
           await AsyncStorage.setItem("pin", JSON.stringify(tempPin));
           resetInput();
           setStatus("");
-          props.navigation.navigate("Welcome");
+          AppNavigation(props)
         } else {
           triggerShake();
           setIsError(true);
@@ -51,7 +52,7 @@ const Passcode = (props) => {
           setIsSuccess(true);
           setTimeout(() => {
             resetInput();
-            props.navigation.navigate(user ? "HomeScreen" : "Welcome");
+            AppNavigation(props,user)
           }, 500);
         } else {
           triggerShake();

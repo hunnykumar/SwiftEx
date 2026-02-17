@@ -802,7 +802,6 @@ const CrossChainTx = ({ route="ETH" }) => {
            <View style={{width:wp(50)}}>
             <View style={styles.fromCon}>
              <Text style={[styles.networkHeading, { color: theme.headingTx }]}>From Network </Text>
-              <Icon name={"information-outline"} type={"materialCommunity"} color={theme.headingTx} size={17} />
             </View>
              <View style={styles.fromCon}>
             <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>{currentWalletType==="BNB"?"BNB":"ETH"} Balance : </Text>
@@ -916,7 +915,6 @@ const CrossChainTx = ({ route="ETH" }) => {
            <View style={{width:wp(59)}}>
             <View style={styles.fromCon}>
              <Text style={[styles.networkHeading, { color: theme.headingTx }]}>To Network </Text>
-              <Icon name={"information-outline"} type={"materialCommunity"} color={theme.headingTx} size={17} />
             </View>
            </View>
 

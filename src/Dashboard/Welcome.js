@@ -256,7 +256,7 @@ const Welcome = (props) => {
     <View style={styles.container}>
       <CustomImageSlider images={images} />
       <Animated.View style={[styles.buttonContainer, { opacity: fadeAnim }]}>
-       <Text style={styles.termsTxt}>By continuing, you agree to our <Text style={styles.openLink} onPress={() => { Linking.openURL("https://swiftexwallet.com/terms-of-service") }}>Terms</Text> and <Text style={styles.openLink} onPress={()=>{ Linking.openURL("https://swiftexwallet.com/privacy-policy") }}>Policies</Text></Text>
+       <Text style={styles.termsTxt}>By continuing, you agree to the <Text style={styles.openLink} onPress={() => { Linking.openURL("https://swiftexwallet.com/terms-of-service") }}>Terms</Text> and <Text style={styles.openLink} onPress={()=>{ Linking.openURL("https://swiftexwallet.com/privacy-policy") }}>Privacy Policy.</Text></Text>
         {/* {Loading?null:<TouchableOpacity
           style={styles.createView}
           onPress={() => props.navigation.navigate("GenerateWallet")}

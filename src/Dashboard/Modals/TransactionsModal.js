@@ -24,42 +24,8 @@ const TransactionsModal = ({ modalVisible, setModalVisible, props }) => {
   const [transactions, setTransactions] = useState("");
   const state = useSelector((state) => state);
 
-  const getTransactions = async () => {
-    const token = await state.token;
-    const user = await state.user;
 
-    try {
-      let response = await fetch(
-        `http://${urls.testUrl}/user/getTransactions`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token: token,
-            emailId: user,
-          }),
-        }
-      )
-        .then((response) => response.json())
-        .then((responseJson) => {
-          console.log(responseJson.responseData);
-          setTransactions(responseJson.responseData.reverse());
-        })
-        .catch((error) => {
-          alert(error);
-        });
-    } catch (e) {
-      console.log(e);
-      alert(e);
-    }
-  };
 
-  useEffect(async () => {
-    await getTransactions();
-  }, []);
 
   return (
     <View>

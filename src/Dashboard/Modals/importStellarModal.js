@@ -29,6 +29,7 @@ import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper"
 import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import AccessNativeStorage from "../Wallets/AccessNativeStorage";
 import { genUsrToken } from "../Auth/jwtHandler";
+import { checkWalletExistOrNot } from "../Wallets/WalletManagement";
 const ImportStellarModal = ({
   setWalletVisible,
   Visible,
@@ -42,13 +43,16 @@ const ImportStellarModal = ({
   const navigation = useNavigation();
   const dispatch = useDispatch()
 
-const add_wallet=()=>{
+const add_wallet=async()=>{
     if(!secretkey)
     {
      alert("error","Secret Key Missing.");
     }
     else{
+      const checkWalletName=await checkWalletExistOrNot(walletName);
+      if(!checkWalletName){
         storeData(secretkey)
+      }
     }
 }
   const storeData = async (secretKey) => {

@@ -386,7 +386,7 @@ const CheckNewWalletMnemonic = ({
                 }
               }}
             >
-            {loading ? <ActivityIndicator size="small" color="#FFFF" /> : <Text style={{ color: "white",fontSize:16 }}>Import</Text>}
+            {loading ? <ActivityIndicator size="small" color="#FFFF" /> : <Text style={{ color: "white",fontSize:16 }}>Create</Text>}
             </TouchableOpacity>
         </View>
       </Modal>

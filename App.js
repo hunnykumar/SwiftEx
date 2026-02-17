@@ -18,6 +18,7 @@ import Network_Checker from "./src/utilities/Network_Checker";
 import CustomInfoProvider from "./src/Dashboard/exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 import ErrorBoundary from "./src/utilities/ErrorBoundary";
 import crashlytics from '@react-native-firebase/crashlytics';
+import { CheckAppAvailable } from "./src/Screens/AppChecks/AppCheckService";
 
 LogBox.ignoreLogs(["Setting a timer"]);
 
@@ -48,8 +49,8 @@ export default function App() {
 
   
   useEffect(() => {
+    CheckAppAvailable()
     setTimeout(async () => {
-      
       setReady(true);
       await Moralis.start({
         apiKey: MORALIS_API_KEY.apiKey//API_KEYS.MORALIS

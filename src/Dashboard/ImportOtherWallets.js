@@ -41,6 +41,8 @@ import { useNavigation } from "@react-navigation/native";
 import { recoverMultiChainWallet } from "../utilities/WalletManager";
 import * as StellarSdk from '@stellar/stellar-sdk';
 import AccessNativeStorage from "./Wallets/AccessNativeStorage";
+import apiHelper from "./exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 const { EthereumWallet } = NativeModules;
 
 const ImportBscWallet = (props) => {
@@ -392,6 +394,15 @@ const ImportBscWallet = (props) => {
                 })
 
                 if (walletResponse.success) {
+                  await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+                      "addresses": {
+                        "eth": accountFromMnemonic.ethereum.address,
+                        "xlm": accountFromMnemonic.stellar.publicKey,
+                        "bnb": accountFromMnemonic.ethereum.address,
+                        "multi": accountFromMnemonic.ethereum.address
+                      },
+                      "isPrimary": true
+                    });
                   setLoading(false);
                   alert("success","Wallet import success.");
                   props.navigation.navigate("HomeScreen");

@@ -7,7 +7,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import Icon from "../icon";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
-import { MULTICHAIN_PORTFOLIO, PORTFOLIO_CONFIG, RAPID_STELLAR, SET_ASSET_DATA } from "../components/Redux/actions/type";
+import { MULTICHAIN_PORTFOLIO, PORTFOLIO_CONFIG, RAPID_STELLAR, SET_ASSET_DATA, WALLET_ACTIVATION_SHOW } from "../components/Redux/actions/type";
 import { enableBiometrics } from "../biometrics/biometric";
 import { STELLAR_URL } from "./constants";
 import LinearGradient from "react-native-linear-gradient";
@@ -165,6 +165,12 @@ function InvestmentChart() {
           STELLAR_SECRET_KEY: matchedData.secretKey,
           STELLAR_ADDRESS_STATUS: isActive,
         },
+      });
+      dispatch({
+        type: WALLET_ACTIVATION_SHOW,
+        payload: {
+          walletActivationShow: true
+        }
       });
     }, [dispatch]);
 

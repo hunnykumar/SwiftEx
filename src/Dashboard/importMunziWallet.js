@@ -40,6 +40,8 @@ import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { useNavigation } from "@react-navigation/native";
 import { recoverMultiChainWallet } from "../utilities/WalletManager";
 import AccessNativeStorage from "./Wallets/AccessNativeStorage";
+import apiHelper from "./exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 const xrpl = require("xrpl");
 const { EthereumWallet } = NativeModules;
 
@@ -291,8 +293,23 @@ const ImportMunziWallet = (props) => {
                     walletType: "Multi-coin"
                   })
                   if (walletResponse.success) {
-                    setLoading(false);
-                    props.navigation.navigate("HomeScreen");
+                    const resultApi = await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+                      "addresses": {
+                        "eth": accountFromMnemonic.ethereum.address,
+                        "xlm": accountFromMnemonic.stellar.publicKey,
+                        "bnb": accountFromMnemonic.ethereum.address,
+                        "multi": accountFromMnemonic.ethereum.address
+                      },
+                      "isPrimary": true
+                    });
+                    if (resultApi.success) {
+                       setLoading(false);
+                       alert("success", "wallet synced!");
+                        props.navigation.navigate("HomeScreen");
+                    } else {
+                      alert("error", "unable to sync wallet.");
+                      console.log('Error:', resultApi.error, 'Status:', resultApi.status);
+                    }
                   }
                 } catch (e) {
                   alert("error", e);

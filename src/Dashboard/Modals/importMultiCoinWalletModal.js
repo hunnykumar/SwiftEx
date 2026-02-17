@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   NativeModules,
   Platform,
+  Keyboard,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -34,6 +35,7 @@ import { recoverMultiChainWallet } from "../../utilities/WalletManager";
 import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
 import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import AccessNativeStorage from "../Wallets/AccessNativeStorage";
+import { checkWalletExistOrNot } from "../Wallets/WalletManagement";
 const { EthereumWallet } = NativeModules;
 
 const xrpl = require("xrpl");
@@ -195,6 +197,11 @@ const ImportMultiCoinWalletModal = ({
             style={style.btn}
             disabled={loading||disable || !accountName || !/\S/.test(accountName) ? true : false}
             onPress={async () => {
+              Keyboard.dismiss()
+              const checkWalletName=await checkWalletExistOrNot(accountName);
+              if(checkWalletName){
+                return false;
+              }
               if (!accountName) {
                 return alert("error", "Please enter an wallet name to proceed");
               }

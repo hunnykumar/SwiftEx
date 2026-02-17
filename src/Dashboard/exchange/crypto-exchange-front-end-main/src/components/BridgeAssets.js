@@ -779,7 +779,7 @@ const BridgeAssets = ({ props }) => {
           <View style={styles.section}>
             <View style={styles.headerRow}>
               <View style={styles.networkHeader}>
-                <Text style={styles.labelText}>From Network <Icon type="ionicon" name="information-circle-outline" size={16} color={theme.inactiveTx} /></Text>
+                <Text style={styles.labelText}>From Network</Text>
                 {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : <Text style={styles.balanceAmount}>{selectedFromNetwork.subName} Balance : {fromBalance ? parseFloat(fromBalance?.walletBalance)?.toFixed(6) : "0.000"}</Text>}
               </View>
               <TouchableOpacity
@@ -852,7 +852,7 @@ const BridgeAssets = ({ props }) => {
           <View style={[styles.section, styles.toSection]}>
             <View style={styles.headerRow}>
               <View style={[styles.networkHeader, { marginTop: hp(-1.5) }]}>
-                <Text style={styles.labelText}>To Network <Icon type="ionicon" name="information-circle-outline" size={16} color={theme.inactiveTx} /></Text>
+                <Text style={styles.labelText}>To Network</Text>
                 {/* {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : <Text style={styles.balanceAmount}>{selectedToAsset.subName} Balance : 0.0796₵</Text>} */}
               </View>
               <TouchableOpacity

@@ -88,6 +88,7 @@ import { TransactionView } from "../Dashboard/exchange/crypto-exchange-front-end
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../Screens/ThemeColorsConfig";
 import BridgeAssets from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/BridgeAssets";
+import { AppCheck } from "../Screens/AppChecks/AppCheck";
 
 const Stack = createNativeStackNavigator();
 
@@ -638,6 +639,13 @@ const AuthStack = () => {
         <Stack.Screen
         name="StellarOffers"
         component={OfferView}
+        options={{
+          headerShown:false
+        }}
+      />
+       <Stack.Screen
+        name="AppCheck"
+        component={AppCheck}
         options={{
           headerShown:false
         }}
