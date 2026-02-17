@@ -1,4 +1,4 @@
-package com.app.swiftEx.app
+package org.app.swiftEx.wallet
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

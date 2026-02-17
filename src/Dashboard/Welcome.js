@@ -38,7 +38,7 @@ const Welcome = (props) => {
   const [enableUserAccess,setenableUserAccess]=useState(false);
   const dispatch = useDispatch();
   const navigation=useNavigation();
-  const images = [W1, W2, W3];
+  const images = [W1];
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const Spin = new Animated.Value(0);

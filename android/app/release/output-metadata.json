@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "com.app.swiftEx.app",
+  "applicationId": "org.app.swiftEx.wallet",
   "variantName": "release",
   "elements": [
     {

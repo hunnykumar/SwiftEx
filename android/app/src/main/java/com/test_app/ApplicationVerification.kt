@@ -1,4 +1,4 @@
-package com.app.swiftEx.app
+package org.app.swiftEx.wallet
 
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull

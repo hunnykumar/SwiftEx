@@ -10,7 +10,6 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { REACT_PROXY_HOST } from '../ExchangeConstants';
-import WalletActivationComponent from '../utils/WalletActivationComponent';
 import { getToken, PPOST, proxyRequest } from '../api';
 import { ShowErrotoast } from '../../../../reusables/Toasts';
 import { swap_prepare } from '../../../../../../All_bridge';
@@ -170,7 +169,6 @@ const CrossChainTx = ({ route="ETH" }) => {
   const [chooseModalVisible_choose, setchooseModalVisible_choose] = useState(false);
   const [WALLETADDRESS, setWALLETADDRESS] = useState('');
   const [WALLETBALANCE, setWALLETBALANCE] = useState('');
-  const [ACTIVATION_MODAL_PROD, setACTIVATION_MODAL_PROD] = useState(false);
   const [balanceLoading, setbalanceLoading] = useState(false);
   const [fianl_modal_text, setfianl_modal_text] = useState("Transaction Failed");
   const [fianl_modal_error, setfianl_modal_error] = useState(false);
@@ -294,7 +292,6 @@ const CrossChainTx = ({ route="ETH" }) => {
     setresQuotes(null);
     setnonDirectQoutes(null);
     setgetInfo(false);
-    setACTIVATION_MODAL_PROD(false);
     setbalanceLoading(false);
     setfianl_modal_error(false);
     setfianl_modal_loading(false);
@@ -309,9 +306,6 @@ const CrossChainTx = ({ route="ETH" }) => {
   const fetchUSDCBalnce = async (activeToken=selectedToken,addresses) => {
     try {
       setbalanceLoading(true);
-      const walletStatus=await stellarWalletStatus(state?.STELLAR_PUBLICK_KEY)
-      setACTIVATION_MODAL_PROD(walletStatus);
-
       if (!activeToken) {
         setbalanceLoading(false);
         return;
@@ -802,18 +796,7 @@ const CrossChainTx = ({ route="ETH" }) => {
     : resQuotes?.fee?.stablecoin;
 
   return (
-    <View>
-
-      <WalletActivationComponent
-        isVisible={ACTIVATION_MODAL_PROD}
-        onClose={() => setACTIVATION_MODAL_PROD(false)}
-        onActivate={() => setACTIVATION_MODAL_PROD(false)}
-        navigation={navigation}
-        appTheme={true}
-        shouldNavigateBack={true}
-      />
-
-      <ScrollView style={{ paddingHorizontal: wp(3.5) }}>
+    <View style={{ width:wp(100),paddingHorizontal:wp(3.2) }}>
         <View style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: "column", paddingHorizontal: wp(3) }]}>
           <View style={[styles.exportBottomCon, { backgroundColor: theme.cardBg }]}>
            <View style={{width:wp(50)}}>
@@ -1262,7 +1245,6 @@ const CrossChainTx = ({ route="ETH" }) => {
             </View>
           </View>
         </Modal>
-      </ScrollView>
 
       <View style={styles.allBridgeTxCon}>
         <AllbridgeTxTrack txs={showTxHash} isDarkMode={state?.THEME?.THEME} showTx={showTx} closeTx={() => setshowTx(false)} />

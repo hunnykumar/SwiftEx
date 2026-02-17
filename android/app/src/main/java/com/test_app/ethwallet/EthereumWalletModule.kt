@@ -1,4 +1,4 @@
-package com.app.swiftEx.app.ethwallet
+package org.app.swiftEx.wallet.ethwallet
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.MnemonicUtils;
 import org.web3j.crypto.Bip32ECKeyPair;
