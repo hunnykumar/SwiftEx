@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Image,
+  FlatList,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -225,23 +226,25 @@ const Wallet_selection_bottom = ({ onClose }) => {
   }
 
   return (
-    <ScrollView contentContainerStyle={containerStyle}>
-      <View style={{ marginTop: 10 }}>
-        {wallets.length > 0 ? (
-          wallets.map(renderWalletItem)
-        ) : (
-          <Text style={[style.noText, { color: isDarkTheme ? "#fff" : "black" }]}>
-            No wallets found
-          </Text>
-        )}
+    <View style={{ flex: 1 }}>
+      <View style={style.body}>
+        <FlatList
+          data={wallets.length > 0 ? wallets : []}
+          renderItem={({ item }) => renderWalletItem(item)}
+          keyExtractor={(item, index) => index}
+          ListEmptyComponent={
+            <Text style={[style.noText, { color: isDarkTheme ? "#fff" : "black" }]}>
+              No wallets found
+            </Text>
+          }
+        />
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
 const style = StyleSheet.create({
   body: {
-    minHeight: hp(100),
     width:wp(98),
     paddingBottom: hp(2),
   },

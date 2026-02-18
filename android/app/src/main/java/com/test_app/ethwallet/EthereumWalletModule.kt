@@ -1,6 +1,5 @@
 package org.app.swiftEx.wallet.ethwallet
 import org.web3j.crypto.Credentials;
-import org.web3j.crypto.MnemonicUtils;
 import org.web3j.crypto.Bip32ECKeyPair;
 import org.web3j.utils.Numeric;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -16,82 +15,85 @@ class EthereumWalletModule(reactContext: ReactApplicationContext) : ReactContext
     override fun getName(): String {
         return "EthereumWallet"
     }
-    
+
+    private fun mnemonicToSeed(mnemonic: String, passphrase: String = ""): ByteArray {
+        val factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512")
+        val salt = ("mnemonic" + passphrase).toByteArray(Charsets.UTF_8)
+        val spec = javax.crypto.spec.PBEKeySpec(
+            mnemonic.toCharArray(),
+            salt,
+            2048,
+            512
+        )
+        return factory.generateSecret(spec).encoded
+    }
+
+    private fun deriveStellarFromSeed(seed: ByteArray): Pair<String, String> {
+        val hmac = javax.crypto.Mac.getInstance("HmacSHA512")
+        hmac.init(javax.crypto.spec.SecretKeySpec("ed25519 seed".toByteArray(), "HmacSHA512"))
+        var I = hmac.doFinal(seed)
+
+        val path = intArrayOf(
+            44 or 0x80000000.toInt(),
+            148 or 0x80000000.toInt(),
+            0 or 0x80000000.toInt()
+        )
+
+        for (index in path) {
+            val il = I.copyOfRange(0, 32)
+            val ir = I.copyOfRange(32, 64)
+
+            val data = ByteArray(37)
+            data[0] = 0x00
+            System.arraycopy(il, 0, data, 1, 32)
+            data[33] = (index ushr 24).toByte()
+            data[34] = (index ushr 16).toByte()
+            data[35] = (index ushr 8).toByte()
+            data[36] = index.toByte()
+
+            hmac.init(javax.crypto.spec.SecretKeySpec(ir, "HmacSHA512"))
+            I = hmac.doFinal(data)
+        }
+
+        val privateKey32 = I.copyOfRange(0, 32)
+        val stellarKeyPair = KeyPair.fromSecretSeed(privateKey32)
+        return Pair(stellarKeyPair.accountId, String(stellarKeyPair.secretSeed))
+    }
+
     @ReactMethod
     fun createWallet(promise: Promise) {
         try {
-            // Generate entropy for mnemonic
-            val entropy = ByteArray(16) // 128 bits = 12 words
+            val entropy = ByteArray(16)
             SecureRandom().nextBytes(entropy)
-            
-            // Generate mnemonic phrase
-            val mnemonic = MnemonicUtils.generateMnemonic(entropy)
-            
-            // Generate seed from mnemonic (with empty passphrase)
-            val seed = MnemonicUtils.generateSeed(mnemonic, "")
-            
-            // Create master key pair from seed
+
+            val mnemonic = org.web3j.crypto.MnemonicUtils.generateMnemonic(entropy)
+
+            val seed = mnemonicToSeed(mnemonic)
             val masterKeyPair = Bip32ECKeyPair.generateKeyPair(seed)
-            
-            // Derive the key using BIP-44 path for Ethereum: m/44'/60'/0'/0/0
-            val path = intArrayOf(
-                44 or Bip32ECKeyPair.HARDENED_BIT,  // purpose: BIP-44
-                60 or Bip32ECKeyPair.HARDENED_BIT,  // coin_type: Ethereum
-                0 or Bip32ECKeyPair.HARDENED_BIT,   // account
-                0,                                  // change
-                0                                   // address_index
+
+            // Ethereum
+            val ethPath = intArrayOf(
+                44 or Bip32ECKeyPair.HARDENED_BIT,
+                60 or Bip32ECKeyPair.HARDENED_BIT,
+                0 or Bip32ECKeyPair.HARDENED_BIT,
+                0,
+                0
             )
-            val childKeyPair = Bip32ECKeyPair.deriveKeyPair(masterKeyPair, path)
-            
-            // Create credentials from the derived key pair
-            val credentials = Credentials.create(childKeyPair)
-            
-            // Get address, private key, and public key
-            val address = credentials.address
-            val privateKeyHex = Numeric.toHexStringWithPrefix(childKeyPair.privateKey)
-            val publicKeyHex = Numeric.toHexStringWithPrefix(childKeyPair.publicKey)
+            val ethChildKeyPair = Bip32ECKeyPair.deriveKeyPair(masterKeyPair, ethPath)
+            val credentials = Credentials.create(ethChildKeyPair)
 
-            // stellar wallet
-            // Derive the key using BIP-44 path for Stellar: m/44'/148'/0'/0/0
-            val stellarPath = intArrayOf(
-                44 or Bip32ECKeyPair.HARDENED_BIT,  // purpose: BIP-44
-                148 or Bip32ECKeyPair.HARDENED_BIT, // coin_type: Stellar
-                0 or Bip32ECKeyPair.HARDENED_BIT,   // account
-                0,  // change
-                0   // address_index
-            )
-            val stellarChildKeyPair = Bip32ECKeyPair.deriveKeyPair(masterKeyPair, stellarPath)
+            val (stellarPublicKey, stellarSecretKey) = deriveStellarFromSeed(seed)
 
-            // Create Stellar KeyPair from the derived private key
-            val stellarPrivateKeyBytes = stellarChildKeyPair.privateKey.toByteArray()
-
-            // Ensure the private key is exactly 32 bytes for Stellar
-            val stellarPrivateKey32 = ByteArray(32)
-            if (stellarPrivateKeyBytes.size >= 32) {
-                System.arraycopy(stellarPrivateKeyBytes, stellarPrivateKeyBytes.size - 32, stellarPrivateKey32, 0, 32)
-            } else {
-                System.arraycopy(stellarPrivateKeyBytes, 0, stellarPrivateKey32, 32 - stellarPrivateKeyBytes.size, stellarPrivateKeyBytes.size)
-            }
-
-            val stellarKeyPair = KeyPair.fromSecretSeed(stellarPrivateKey32)
-
-            // Get Stellar public and secret keys
-            val stellarPublicKey = stellarKeyPair.accountId
-            val stellarSecretKey = String(stellarKeyPair.secretSeed)
-
-            // Create response with both Ethereum and Stellar keys
             val result = Arguments.createMap().apply {
                 putString("mnemonic", mnemonic)
 
-                // Ethereum keys
                 val ethKeys = Arguments.createMap().apply {
-                    putString("address", address)
-                    putString("privateKey", privateKeyHex)
-                    putString("publicKey", publicKeyHex)
+                    putString("address", credentials.address)
+                    putString("privateKey", Numeric.toHexStringWithPrefix(ethChildKeyPair.privateKey))
+                    putString("publicKey", Numeric.toHexStringWithPrefix(ethChildKeyPair.publicKey))
                 }
                 putMap("ethereum", ethKeys)
 
-                // Stellar keys
                 val stellarKeys = Arguments.createMap().apply {
                     putString("publicKey", stellarPublicKey)
                     putString("secretKey", stellarSecretKey)
@@ -100,14 +102,6 @@ class EthereumWalletModule(reactContext: ReactApplicationContext) : ReactContext
             }
 
             promise.resolve(result)
-//            // Create response
-//            val result = Arguments.createMap().apply {
-//                putString("address", address)
-//                putString("privateKey", privateKeyHex)
-//                putString("publicKey", publicKeyHex)
-//                putString("mnemonic", mnemonic)
-//            }
-//            promise.resolve(result)
         } catch (e: Exception) {
             e.printStackTrace()
             promise.reject("WALLET_CREATION_ERROR", "Error creating wallet: ${e.message}", e)
@@ -117,62 +111,32 @@ class EthereumWalletModule(reactContext: ReactApplicationContext) : ReactContext
     @ReactMethod
     fun recoverMultiChainWallet(mnemonic: String, promise: Promise) {
         try {
-            // Generate seed from mnemonic (with empty passphrase)
-            val seed = MnemonicUtils.generateSeed(mnemonic, "")
-
-            // Create master key pair from seed
+            val seed = mnemonicToSeed(mnemonic)
             val masterKeyPair = Bip32ECKeyPair.generateKeyPair(seed)
 
-            // === ETHEREUM WALLET ===
+            // Ethereum
             val ethPath = intArrayOf(
-                44 or Bip32ECKeyPair.HARDENED_BIT, // purpose: BIP-44
-                60 or Bip32ECKeyPair.HARDENED_BIT, // coin_type: Ethereum
-                0 or Bip32ECKeyPair.HARDENED_BIT,  // account
-                0,  // change
-                0   // address_index
+                44 or Bip32ECKeyPair.HARDENED_BIT,
+                60 or Bip32ECKeyPair.HARDENED_BIT,
+                0 or Bip32ECKeyPair.HARDENED_BIT,
+                0,
+                0
             )
             val ethChildKeyPair = Bip32ECKeyPair.deriveKeyPair(masterKeyPair, ethPath)
             val ethCredentials = Credentials.create(ethChildKeyPair)
 
-            val ethAddress = ethCredentials.address
-            val ethPrivateKeyHex = Numeric.toHexStringWithPrefix(ethChildKeyPair.privateKey)
-            val ethPublicKeyHex = Numeric.toHexStringWithPrefix(ethChildKeyPair.publicKey)
+            val (stellarPublicKey, stellarSecretKey) = deriveStellarFromSeed(seed)
 
-            // === STELLAR WALLET ===
-            val stellarPath = intArrayOf(
-                44 or Bip32ECKeyPair.HARDENED_BIT,  // purpose: BIP-44
-                148 or Bip32ECKeyPair.HARDENED_BIT, // coin_type: Stellar
-                0 or Bip32ECKeyPair.HARDENED_BIT,   // account
-                0,  // change
-                0   // address_index
-            )
-            val stellarChildKeyPair = Bip32ECKeyPair.deriveKeyPair(masterKeyPair, stellarPath)
-
-            val stellarPrivateKeyBytes = stellarChildKeyPair.privateKey.toByteArray()
-            val stellarPrivateKey32 = ByteArray(32)
-            if (stellarPrivateKeyBytes.size >= 32) {
-                System.arraycopy(stellarPrivateKeyBytes, stellarPrivateKeyBytes.size - 32, stellarPrivateKey32, 0, 32)
-            } else {
-                System.arraycopy(stellarPrivateKeyBytes, 0, stellarPrivateKey32, 32 - stellarPrivateKeyBytes.size, stellarPrivateKeyBytes.size)
-            }
-
-            val stellarKeyPair = KeyPair.fromSecretSeed(stellarPrivateKey32)
-            val stellarPublicKey = stellarKeyPair.accountId
-            val stellarSecretKey = String(stellarKeyPair.secretSeed)
-
-            // Create response with both wallets
             val result = Arguments.createMap().apply {
                 putString("mnemonic", mnemonic)
-                
-                // Ethereum keys
+
                 val ethKeys = Arguments.createMap().apply {
-                    putString("address", ethAddress)
-                    putString("privateKey", ethPrivateKeyHex)
-                    putString("publicKey", ethPublicKeyHex)
+                    putString("address", ethCredentials.address)
+                    putString("privateKey", Numeric.toHexStringWithPrefix(ethChildKeyPair.privateKey))
+                    putString("publicKey", Numeric.toHexStringWithPrefix(ethChildKeyPair.publicKey))
                 }
                 putMap("ethereum", ethKeys)
-                
-                // Stellar keys
+
                 val stellarKeys = Arguments.createMap().apply {
                     putString("publicKey", stellarPublicKey)
                     putString("secretKey", stellarSecretKey)
@@ -210,118 +174,71 @@ class EthereumWalletModule(reactContext: ReactApplicationContext) : ReactContext
     }
 
     private fun importEthereumPrivateKey(privateKeyHex: String): WritableMap {
-        // Remove "0x" prefix if present
         val cleanKey = privateKeyHex.removePrefix("0x")
+        if (cleanKey.length != 64) throw IllegalArgumentException("Invalid private key length")
 
-        // Validate private key length
-        if (cleanKey.length != 64) {
-            throw IllegalArgumentException("Invalid private key length")
-        }
-
-        // Convert hex string to BigInteger
         val privateKeyBigInt = Numeric.toBigInt(cleanKey)
-
-        // Create Ethereum credentials from private key
         val credentials = Credentials.create(privateKeyBigInt.toString(16))
         val ethAddress = credentials.address
 
-        // Generate fresh Stellar wallet
         val stellarWallet = generateFreshStellarWallet()
 
-        // Create response
         val result = Arguments.createMap()
-
         val originalMap = Arguments.createMap().apply {
             putString("type", "ethereum")
             putString("privateKey", privateKeyHex)
             putString("address", ethAddress)
         }
-
         val generatedMap = Arguments.createMap().apply {
             putString("type", "stellar")
             putString("publicKey", stellarWallet["publicKey"])
             putString("secretKey", stellarWallet["secretKey"])
         }
-
         result.putMap("original", originalMap)
         result.putMap("generated", generatedMap)
-
         return result
     }
 
     private fun importStellarPrivateKeyInternal(secretKey: String): WritableMap {
-        // Create Stellar KeyPair from secret key
         val keyPair = KeyPair.fromSecretSeed(secretKey)
         val stellarAddress = keyPair.accountId
 
-        // Generate fresh Ethereum wallet
         val ethereumWallet = generateFreshEthereumWallet()
 
-        // Create response
         val result = Arguments.createMap()
-
         val originalMap = Arguments.createMap().apply {
             putString("type", "stellar")
             putString("secretKey", secretKey)
             putString("publicKey", stellarAddress)
         }
-
         val generatedMap = Arguments.createMap().apply {
             putString("type", "ethereum")
             putString("privateKey", ethereumWallet["privateKey"])
             putString("address", ethereumWallet["address"])
         }
-
         result.putMap("original", originalMap)
         result.putMap("generated", generatedMap)
-
         return result
     }
 
     private fun generateFreshStellarWallet(): Map<String, String> {
-        // Generate new mnemonic
         val entropy = ByteArray(16)
         SecureRandom().nextBytes(entropy)
-        val mnemonic = MnemonicUtils.generateMnemonic(entropy)
-
-        // Generate Stellar wallet from mnemonic
-        val seed = MnemonicUtils.generateSeed(mnemonic, "")
-        val masterKeyPair = Bip32ECKeyPair.generateKeyPair(seed)
-
-        val stellarPath = intArrayOf(
-            44 or Bip32ECKeyPair.HARDENED_BIT,
-            148 or Bip32ECKeyPair.HARDENED_BIT,
-            0 or Bip32ECKeyPair.HARDENED_BIT,
-            0,
-            0
-        )
-        val stellarChildKeyPair = Bip32ECKeyPair.deriveKeyPair(masterKeyPair, stellarPath)
-
-        val stellarPrivateKeyBytes = stellarChildKeyPair.privateKey.toByteArray()
-        val stellarPrivateKey32 = ByteArray(32)
-        if (stellarPrivateKeyBytes.size >= 32) {
-            System.arraycopy(stellarPrivateKeyBytes, stellarPrivateKeyBytes.size - 32, stellarPrivateKey32, 0, 32)
-        } else {
-            System.arraycopy(stellarPrivateKeyBytes, 0, stellarPrivateKey32, 32 - stellarPrivateKeyBytes.size, stellarPrivateKeyBytes.size)
-        }
-
-        val stellarKeyPair = KeyPair.fromSecretSeed(stellarPrivateKey32)
-
+        val mnemonic = org.web3j.crypto.MnemonicUtils.generateMnemonic(entropy)
+        val seed = mnemonicToSeed(mnemonic)
+        val (publicKey, secretKey) = deriveStellarFromSeed(seed)
         return mapOf(
-            "publicKey" to stellarKeyPair.accountId,
-            "secretKey" to String(stellarKeyPair.secretSeed),
+            "publicKey" to publicKey,
+            "secretKey" to secretKey,
             "mnemonic" to mnemonic
         )
     }
 
     private fun generateFreshEthereumWallet(): Map<String, String> {
-        // Generate new mnemonic
         val entropy = ByteArray(16)
         SecureRandom().nextBytes(entropy)
-        val mnemonic = MnemonicUtils.generateMnemonic(entropy)
-
-        // Generate Ethereum wallet from mnemonic
-        val seed = MnemonicUtils.generateSeed(mnemonic, "")
+        val mnemonic = org.web3j.crypto.MnemonicUtils.generateMnemonic(entropy)
+        val seed = mnemonicToSeed(mnemonic)
         val masterKeyPair = Bip32ECKeyPair.generateKeyPair(seed)
 
         val ethPath = intArrayOf(
