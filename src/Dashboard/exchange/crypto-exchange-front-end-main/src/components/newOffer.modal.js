@@ -939,7 +939,7 @@ const selectTradingPair = useCallback((item) => {
                                       ? stellarConfig.DEFAULT_AMOUNT
                                       : Balance === undefined
                                         ? stellarConfig.DEFAULT_AMOUNT
-                                        : Number(Balance).toFixed(stellarConfig.BALANCE_DECIMALS)}
+                                        : Number(Balance)}
                                   </Text>
                             )}
                           </View>
@@ -1784,8 +1784,8 @@ export const stellarConfig = {
     MIN_PRICE: 0.0000001,
   },
   PRICE_DECIMALS: 7,
-  BALANCE_DECIMALS: 5,
-  AMOUNT_DECIMALS: 5,
+  BALANCE_DECIMALS: 7,
+  AMOUNT_DECIMALS: 7,
   PERCENTAGE_BASE: 100,
   DEFAULT_AMOUNT: "0.00000",
   ASSET_TYPES: {

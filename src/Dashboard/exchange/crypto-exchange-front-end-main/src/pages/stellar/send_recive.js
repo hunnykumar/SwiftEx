@@ -404,7 +404,7 @@ const send_recive = ({route}) => {
                 />
               </TouchableOpacity>
             </View>
-            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 16, fontSize: 16, marginTop: 10, color: theme.inactiveTx }]}>Available: {asset_name === "native" || asset_name !== "native" ? !resStellarbal ? <ActivityIndicator /> : resStellarbal === "Error" ? 0.00 : resStellarbal : resStellarbal === "Error" ? 0.00 : resStellarbal}</Text>
+            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 16, fontSize: 16, marginTop: 10, color: theme.inactiveTx }]}>Available: {asset_name === "native" || asset_name !== "native" ? resStellarbal === null || resStellarbal === undefined ||Loading ? <ActivityIndicator /> : resStellarbal === "Error" ? 0.00 : resStellarbal : resStellarbal === "Error" ? 0.00 : resStellarbal}</Text>
           </View>
 
           <View style={[styles.card, { backgroundColor: theme.cardBg,marginTop:2 }]}>

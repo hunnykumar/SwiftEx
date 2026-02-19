@@ -391,16 +391,6 @@ console.log("resQuotes-",resQuotes)
         <View style={[styles.card,{backgroundColor:theme.cardBg,flexDirection:"column",borderBottomLeftRadius:0,borderBottomRightRadius:0}]}>
         <View style={[styles.rowBtnCon, { paddingVertical: hp(-0.5),backgroundColor:theme.cardBg }]}>
             <Text style={[styles.subInputText,{color:theme.inactiveTx,marginTop: hp(0)}]}>USDC Amount</Text>
-            <TouchableOpacity style={styles.maxCon} onPress={() => {
-            if (parseFloat(walletBalance) === 0) {
-             CustomInfoProvider.show("Info", "Insuficint Balance.")
-              setamount(null)
-            } else {
-              handleInputChange(walletBalance)
-            }
-          }}>
-            <Text style={styles.maxBtn}>MAX</Text>
-          </TouchableOpacity>
             </View>
          <View style={[styles.modalOpen, { paddingVertical: hp(0.5),backgroundColor:theme.bg }]}>
             <TextInput maxLength={50} placeholder='Enter USDC Amount' placeholderTextColor={"gray"} keyboardType="number-pad" value={amount} style={[styles.textInputForCrossChain,{fontSize: 18, color: theme.headingTx}]} onChangeText={(value) => { handleInputChange(value) }} returnKeyType="done" />

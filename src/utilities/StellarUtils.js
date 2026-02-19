@@ -64,7 +64,7 @@ export async function GetStellarAvilabelBalance(publicKey) {
     const availableBalance = xlmBalance - totalReserved-transactionBuffer;
 
     const formatValue = (value) => {
-      return value < 0 ? "0.00000" : value.toFixed(5);
+      return value < 0 ? "0.00000" : value;
   };
     return {
       totalReserved: formatValue(totalReserved),
@@ -111,7 +111,7 @@ export async function GetStellarUSDCAvilabelBalance(publicKey,coinName,coinIssue
     }
 
     const formatValue = (value) => {
-        return value < 0 ? "0.00000" : value.toFixed(5);
+        return value < 0 ? "0.00000" : value;
     };
 
     let selectedAsset = null;

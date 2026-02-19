@@ -220,23 +220,28 @@ const Assets_manage = ({ route }) => {
 
             <View style={[styles.main_con, { backgroundColor: theme.bg }]}>
                 <View style={styles.assetCon}>
-                    {assets.map((list, index) => {
+                     <FlatList
+                        data={assets}
+                        keyExtractor={(item, index) => index}
+                        style={{ marginBottom: hp(5) }}
+                        renderItem={({ item, index }) => {
                         return (
-                            <TouchableOpacity key={index} style={[styles.assetCard, { backgroundColor: theme.cardBg }]} onPress={() => { navigation.navigate("send_recive", { bala: list.balance, assetIssuer: list.asset_type === "native" ? "native" : list?.asset_issuer, asset_name: list.asset_type === "native" ? "native" : list.asset_code === "USDC" ? "USDC" : list.asset_code }) }}>
-                                <View style={{flexDirection: "row",alignItems:"center",justifyContent:"center"}}>
+                            <TouchableOpacity key={index} style={[styles.assetCard, { backgroundColor: theme.cardBg }]} onPress={() => { navigation.navigate("send_recive", { bala: item.balance, assetIssuer: item.asset_type === "native" ? "native" : item?.asset_issuer, asset_name: item.asset_type === "native" ? "native" : item.asset_code === "USDC" ? "USDC" : item.asset_code }) }}>
+                                <View style={{flexDirection: "row",alignItems:"center",justifyContent:"flex-start",width:wp(45)}}>
                                     <View style={styles.assetImgCom}>
-                                        {list.asset_type === "native"?<Image source={{uri:stellarTokens?.assets[0]?.icon}} width={43} height={43}/>:
-                                        list.icon===null?<Text style={[styles.assetLatter,{color:theme.headingTx}]}>{list.asset_type === "native" ? "L" : list?.asset_code[0]?.toUpperCase() }</Text>:<Image source={{uri:list.icon}} width={43} height={43}/>}
+                                        {item.asset_type === "native"?<Image source={{uri:stellarTokens?.assets[0]?.icon}} width={43} height={43}/>:
+                                        item.icon===null?<Text style={[styles.assetLatter,{color:theme.headingTx}]}>{item.asset_type === "native" ? "L" : item?.asset_code[0]?.toUpperCase() }</Text>:<Image source={{uri:item.icon}} width={43} height={43}/>}
                                     </View>
                                     <View style={{ flexDirection: "column",marginLeft:10 }}>
-                                        <Text style={[styles.assetName, { color: theme.headingTx }]}>{list.asset_type === "native" ? "XLM" : list.asset_code}</Text>
-                                        <Text style={[styles.domainName, { color: theme.inactiveTx }]}>{list?.asset_issuer ? list?.asset_issuer?.slice(0, 6) + "......" + list?.asset_issuer?.slice(-9) : "Native Lumens"}</Text>
+                                        <Text style={[styles.assetName, { color: theme.headingTx }]}>{item.asset_type === "native" ? "XLM" : item.asset_code}</Text>
+                                        <Text style={[styles.domainName, { color: theme.inactiveTx }]}>{item?.asset_issuer ? item?.asset_issuer?.slice(0, 3) + "...." + item?.asset_issuer?.slice(-3) : "Native Lumens"}</Text>
                                     </View>
                                 </View>
-                                {Loading_assets_bal === true ? <ActivityIndicator color={"#4052D6"} /> : <Text style={[styles.assetName, { color: theme.headingTx }]}>{list.balance.slice(0, 6)}</Text>}
+                                {Loading_assets_bal === true ? <ActivityIndicator color={"#4052D6"} /> : <Text style={[styles.assetValue, { color: theme.headingTx }]} numberOfLines={1}>{item.balance}</Text>}
                             </TouchableOpacity>
                         )
-                    })}
+                    }}
+                    />
                 </View>
                 <TouchableOpacity style={styles.addAssets} onPress={() => { setTRUST_ASSET(true) }}>
                     <Icon name={"plus"} type={"antDesign"} size={24} color={"white"} />
@@ -374,6 +379,11 @@ const styles = StyleSheet.create({
     },
     assetName: {
         textAlign: "left",
+        fontSize: 18,
+    },
+    assetValue: {
+        width: wp(40),
+        textAlign: "right",
         fontSize: 18,
     },
     domainName: {

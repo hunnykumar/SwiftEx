@@ -469,12 +469,12 @@ useEffect(() => {
            
             onPress={() => {
               console.log("pressed", amount, balance);
-              setAmount(balance);
+              setAmount(balance?.toString());
             }}
             style={[style.maxButton]}
           >
             <Text  onPress={()=>{console.log("pressed", amount, balance);
-              setAmount(balance)}} style={style.maxButtonText}>MAX</Text>
+              setAmount(balance?.toString())}} style={style.maxButtonText}>MAX</Text>
           </TouchableOpacity>
         </View>
         </View>

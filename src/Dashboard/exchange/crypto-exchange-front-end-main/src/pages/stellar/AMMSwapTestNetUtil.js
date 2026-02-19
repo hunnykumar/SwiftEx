@@ -9,7 +9,7 @@ async function AMMSWAPTESTNET(
   toTokenCode,
   toTokenIssuer,
   sourcePublic,
-  destAmount,
+  fromAmount,
   trustLineOpt
 ) {
   if (!sourcePublic) {
@@ -41,32 +41,26 @@ async function AMMSWAPTESTNET(
 
     // Find paths
     const pathsResult = await server
-      .strictReceivePaths([assetSend], assetDest, destAmount)
+      .strictSendPaths(assetSend, fromAmount, [assetDest])
       .call();
 
     if (pathsResult.records.length === 0) {
       throw new Error(`No path found from ${fromTokenCode} to ${toTokenCode}.`);
     }
 
-    // Pick the cheapest path (lowest source_amount)
     const bestPathRecord = pathsResult.records.sort(
-      (a, b) => parseFloat(a.source_amount) - parseFloat(b.source_amount)
+      (a, b) => parseFloat(b.destination_amount) - parseFloat(a.destination_amount)
     )[0];
 
-    // Map path assets
     const bestPath = bestPathRecord.path.map(p =>
       p.asset_type === 'native'
         ? StellarSdk.Asset.native()
         : new StellarSdk.Asset(p.asset_code, p.asset_issuer)
     );
 
-    // Add 5% buffer
-    const sendMaxAmt = (parseFloat(bestPathRecord.source_amount) * 1.05).toFixed(7);
+    const destMin = (parseFloat(bestPathRecord.destination_amount) * 0.99).toFixed(7);
 
-    console.log("Best Path:", bestPath);
-    console.log("Send Max (with buffer):", sendMaxAmt);
 
-    // Build transaction
     const tx = new StellarSdk.TransactionBuilder(account, {
       fee: StellarSdk.BASE_FEE,
       networkPassphrase: StellarSdk.Networks.PUBLIC,
@@ -87,12 +81,12 @@ async function AMMSWAPTESTNET(
     }
     
     tx.addOperation(
-        StellarSdk.Operation.pathPaymentStrictReceive({
+        StellarSdk.Operation.pathPaymentStrictSend({
           sendAsset: assetSend,
-          sendMax: sendMaxAmt,
-          destination: sourcePublicKey, // self-swap
+          sendAmount: fromAmount,
+          destination: sourcePublicKey,
           destAsset: assetDest,
-          destAmount: destAmount,
+          destMin: destMin,
           path: bestPath,
         })
       );

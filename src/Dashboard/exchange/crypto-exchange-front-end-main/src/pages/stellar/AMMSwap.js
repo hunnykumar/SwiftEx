@@ -95,14 +95,14 @@ const AMMSwap = () => {
     const res= await BridgeUSDCValidation(asset==="XLM"?"native":asset,assetIssuer);
     if(res!==null)
     {
-      setFromBal(parseFloat(res?.balance).toFixed(4));
+      setFromBal(parseFloat(res?.balance));
     }else{
       setFromBal(0.00);
     }
     const res1= await BridgeUSDCValidation(asset1==="XLM"?"native":asset1,asset1Issuer);
     if(res1!==null)
       {
-        setToBal(parseFloat(res1?.balance).toFixed(4));
+        setToBal(parseFloat(res1?.balance));
       }else{
         setToBal(0.00);
       }
@@ -110,6 +110,9 @@ const AMMSwap = () => {
 
   useEffect(()=>{
     handleInitBal(fromToken?.code,toToken?.code,fromToken?.issuer,toToken?.issuer)
+    if(isValidNumber(fromAmount) && fromAmount !== "null"){
+      handleInputChange(fromAmount)
+    }
   },[fromToken,toToken])
   
 
@@ -165,7 +168,7 @@ const AMMSwap = () => {
     return !isNaN(num) && num !== 0;
   };
   const handleInputChange = (text) => {
-    const replaceComma = text.replace(',', '.');
+    const replaceComma = text?.toString()?.replace(',', '.');
     const numericText = replaceComma.replace(/[^0-9.]/g, '');
     setmessageError(null);
     setFromAmount(numericText);
@@ -317,7 +320,6 @@ const AMMSwap = () => {
     const temp = fromToken;
     setFromToken(toToken);
     setToToken(temp);
-    setFromAmount('');
     setToAmount('');
   };
   
@@ -328,7 +330,6 @@ const AMMSwap = () => {
       {
         setFromToken(item);
         setTokenModalVisible(false);
-        setFromAmount('');
         setToAmount('');
         setexchangeRes(null);
         setIsLoading(false);
@@ -341,7 +342,6 @@ const AMMSwap = () => {
       if (fromToken.code !== item.code) {
         setToToken(item);
         setTokenModalVisible(false);
-        setFromAmount('');
         setToAmount('');
         setexchangeRes(null);
         setIsLoading(false);
@@ -370,7 +370,7 @@ const AMMSwap = () => {
 
   const handleSwap=async()=>{
     settokenBurn(true)
-    const respo=await AMMSWAPTESTNET(fromToken.code,fromToken.issuer,toToken.code,toToken.issuer,state?.STELLAR_PUBLICK_KEY,toAmount,assetTrustRequired)
+    const respo=await AMMSWAPTESTNET(fromToken.code,fromToken.issuer,toToken.code,toToken.issuer,state?.STELLAR_PUBLICK_KEY,fromAmount,assetTrustRequired)
     if(respo.status===true)
     {
       CustomInfoProvider.show("success","Transaction successful!");
@@ -516,15 +516,15 @@ const AMMSwap = () => {
           <TouchableOpacity
             style={[
               styles.swapActionButton,
-              (!fromAmount || parseFloat(fromAmount) <= 0||parseFloat(fromBal)===0||parseFloat(fromAmount)>=parseFloat(fromBal)) && styles.disabledButton,
+              (!fromAmount || parseFloat(fromAmount) <= 0||parseFloat(fromBal)===0||parseFloat(fromAmount)>parseFloat(fromBal)) && styles.disabledButton,
             ]}
-            disabled={!fromAmount || parseFloat(fromAmount) <= 0 || isLoading||parseFloat(fromBal)===0||parseFloat(fromAmount)>=parseFloat(fromBal)}
+            disabled={!fromAmount || parseFloat(fromAmount) <= 0 || isLoading||parseFloat(fromBal)===0||parseFloat(fromAmount)>parseFloat(fromBal)}
             onPress={()=>{handleSwap()}}
           >
               {isLoading||tokenBurn ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={styles.swapActionButtonText}>{parseFloat(fromBal)===0||parseFloat(fromAmount)>=parseFloat(fromBal)?"Insufficient balance":assetTrustRequired.length>0?`Trust ${assetTrustRequired[0].tokenSymbole} and Swap`:"Swap Tokens"}</Text>
+                <Text style={styles.swapActionButtonText}>{parseFloat(fromBal)===0||parseFloat(fromAmount)>parseFloat(fromBal)?"Insufficient balance":assetTrustRequired.length>0?`Trust ${assetTrustRequired[0].tokenSymbole} and Swap`:"Swap Tokens"}</Text>
               )}
           </TouchableOpacity>
 
@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
   },
   swapButton: {
     alignSelf: 'center',
-    marginVertical: -33,
+    marginVertical: -24,
     zIndex: 1,
     position:"relative",
     borderRadius: 20,
