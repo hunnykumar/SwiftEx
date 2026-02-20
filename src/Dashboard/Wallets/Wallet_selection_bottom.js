@@ -32,6 +32,8 @@ import { alert } from "../reusables/Toasts";
 import Icon from "../../icon";
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 import AccessNativeStorage from "./AccessNativeStorage";
+import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 
 const WALLET_ICONS = {
   BSC: Bnbimage,
@@ -124,7 +126,15 @@ const Wallet_selection_bottom = ({ onClose }) => {
           walletData.xrpAddress
         );
         await AccessNativeStorage.updateActiveWallet(item.walletId)
-
+        await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+          "addresses": {
+            "eth": item?.address,
+            "xlm": item?.stellarPublicKey,
+            "bnb": item?.address,
+            "multi": item?.address
+          },
+          "isPrimary": true
+        });
         alert("success", `Wallet selected: ${item.name}`);
 
         setTimeout(() => {

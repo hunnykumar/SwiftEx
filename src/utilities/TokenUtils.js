@@ -291,23 +291,51 @@ const loadTokenLists = () => {
 loadTokenLists();
 
 const getTokenImage = (contractAddress, chain, symbol = null, issuer = null) => {
-  if (chain === 'Stellar' && symbol && issuer) {
-    const assetKey = `${symbol}:${issuer}`.toLowerCase();
-    if (tokenImageCache.xlm[assetKey]) {
-      return tokenImageCache.xlm[assetKey];
+  if (chain === 'Stellar') {
+    if (symbol && issuer) {
+      const assetKey = `${symbol}:${issuer}`.toLowerCase();
+      if (tokenImageCache.xlm[assetKey]) {
+        return tokenImageCache.xlm[assetKey];
+      }
     }
+
+    if (symbol) {
+      const symbolKey = symbol.toUpperCase();
+      if (tokenImageCache.symbols?.[symbolKey]) {
+        return tokenImageCache.symbols[symbolKey];
+      }
+    }
+
+    if (contractAddress && contractAddress !== 'Native') {
+      return tokenImageCache.xlm[contractAddress.toLowerCase()] || null;
+    }
+
+    return null;
   }
 
   if (contractAddress === 'Native' && symbol) {
     const symbolKey = symbol.toUpperCase();
-    if (tokenImageCache.symbols[symbolKey]) {
+    if (tokenImageCache.symbols?.[symbolKey]) {
       return tokenImageCache.symbols[symbolKey];
     }
   }
-  
-  const address = contractAddress.toLowerCase();
-  const chainKey = chain === 'ETH' ? 'eth' : chain === 'BSC' ? 'bnb' : 'xlm';
-  return tokenImageCache[chainKey][address] || null;
+
+  const address = contractAddress?.toLowerCase();
+  if (!address) return null;
+
+  const chainKeyMap = {
+    'ETH': 'eth',
+    'BSC': 'bnb',
+    'Stellar': 'xlm',
+  };
+
+  const chainKey = chainKeyMap[chain] ?? null;
+  if (!chainKey) {
+    console.warn(`getTokenImage: unsupported chain "${chain}"`);
+    return null;
+  }
+
+  return tokenImageCache[chainKey]?.[address] || null;
 };
 
 const getBNBPrice = async () => {
@@ -612,12 +640,13 @@ const getBSCTokens = async (walletAddress, onProgress = null, cacheKey = null) =
 };
 
 const getStellarTokens = async (walletAddress, onProgress = null, cacheKey = null) => {
-  try {
+ try {
     const server = new StellarSdk.Horizon.Server(CONFIG.APIS.STELLAR_HORIZON);
     const account = await server.accounts().accountId(walletAddress).call();
     const tokens = [];
     let totalValueUSD = 0;
     const xlmPrice = await getXLMPrice();
+    const USDC_ISSUER = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
 
     for (const balance of account.balances) {
       if (balance.asset_type === 'native') {
@@ -644,11 +673,50 @@ const getStellarTokens = async (walletAddress, onProgress = null, cacheKey = nul
             chain: 'Stellar',
             tokens: [xlmToken],
             totalValueUSD: parseNumber(totalValueUSD, 2),
-            isPartial: false
+            isPartial: true
           });
         }
-        break;
+      } else if (
+        balance.asset_type === 'credit_alphanum4' &&
+        balance.asset_code === 'USDC' &&
+        balance.asset_issuer === USDC_ISSUER
+      ) {
+        const usdcBalance = parseNumber(balance.balance);
+        const usdcValue = usdcBalance * 1;
+
+        const usdcToken = {
+          chain: 'Stellar',
+          name: 'USD Coin',
+          symbol: 'USDC',
+          balance: usdcBalance,
+          balanceUSD: parseNumber(usdcValue, 2),
+          decimals: 7,
+          contractAddress: USDC_ISSUER,
+          price: 1,
+          imageUrl: getTokenImage(USDC_ISSUER, 'Stellar', 'USDC') || null
+        };
+
+        tokens.push(usdcToken);
+        totalValueUSD += usdcValue;
+
+        if (onProgress) {
+          onProgress({
+            chain: 'Stellar',
+            tokens: [usdcToken],
+            totalValueUSD: parseNumber(totalValueUSD, 2),
+            isPartial: true
+          });
+        }
       }
+    }
+
+    if (onProgress && tokens.length > 0) {
+      onProgress({
+        chain: 'Stellar',
+        tokens,
+        totalValueUSD: parseNumber(totalValueUSD, 2),
+        isPartial: false
+      });
     }
 
     return { tokens, totalValueUSD: parseNumber(totalValueUSD, 2) };
@@ -657,36 +725,49 @@ const getStellarTokens = async (walletAddress, onProgress = null, cacheKey = nul
     if (cacheKey) {
       const cached = getFromCache(cacheKey);
       if (cached && cached.tokens) {
-        const xlmTokens = cached.tokens.filter(t => t.chain === 'Stellar');
-        const xlmValue = xlmTokens.reduce((sum, t) => sum + t.balanceUSD, 0);
+        const stellarTokens = cached.tokens.filter(t => t.chain === 'Stellar');
+        const stellarValue = stellarTokens.reduce((sum, t) => sum + t.balanceUSD, 0);
         console.log('Returning cached Stellar data due to error');
-        return { tokens: xlmTokens, totalValueUSD: xlmValue };
+        return { tokens: stellarTokens, totalValueUSD: stellarValue };
       }
     }
-    
+
     const xlmPrice = await getXLMPrice();
-    const emptyToken = {
-      chain: 'Stellar',
-      name: 'Stellar Lumens',
-      symbol: 'XLM',
-      balance: 0,
-      balanceUSD: 0,
-      decimals: 7,
-      contractAddress: 'Native',
-      price: parseNumber(xlmPrice, 2),
-      imageUrl: getTokenImage('Native', 'Stellar', 'XLM') || null
-    };
+    const emptyTokens = [
+      {
+        chain: 'Stellar',
+        name: 'Stellar Lumens',
+        symbol: 'XLM',
+        balance: 0,
+        balanceUSD: 0,
+        decimals: 7,
+        contractAddress: 'Native',
+        price: parseNumber(xlmPrice, 2),
+        imageUrl: getTokenImage('Native', 'Stellar', 'XLM') || null
+      },
+      {
+        chain: 'Stellar',
+        name: 'USD Coin',
+        symbol: 'USDC',
+        balance: 0,
+        balanceUSD: 0,
+        decimals: 7,
+        contractAddress: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN',
+        price: 1,
+        imageUrl: getTokenImage('GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN', 'Stellar', 'USDC') || null
+      }
+    ];
 
     if (onProgress) {
       onProgress({
         chain: 'Stellar',
-        tokens: [emptyToken],
+        tokens: emptyTokens,
         totalValueUSD: 0,
         isPartial: false
       });
     }
 
-    return { tokens: [emptyToken], totalValueUSD: 0 };
+    return { tokens: emptyTokens, totalValueUSD: 0 };
   }
 };
 

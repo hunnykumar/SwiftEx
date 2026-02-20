@@ -230,8 +230,13 @@ const Asset_info = ({ route }) => {
   };
 
   const handleSend = useCallback(() => {
-    if (asset_type.symbol === "XLM") {
-      navigation.navigate("SendXLM");
+    if(asset_type.chain === "Stellar"){
+      if (asset_type.symbol === "XLM") {
+        navigation.navigate("SendXLM");
+      }
+      if (asset_type.symbol === "USDC") {
+        navigation.navigate("send_recive", { bala: asset_type.balance, assetIssuer:asset_type?.contractAddress, asset_name: asset_type.symbol });
+      }
     } else if (asset_type.symbol==="BNB"||asset_type.symbol==="ETH") {
       navigation.navigate("Send", {
         token: asset_type?.symbol === "ETH" ? "Ethereum" : asset_type?.symbol,
@@ -247,7 +252,7 @@ const Asset_info = ({ route }) => {
   }, [asset_type, navigation]);
 
   const handleRequest = useCallback(() => {
-    if (asset_type.symbol === "XLM") {
+    if (asset_type.chain === "Stellar") {
       setQrValue(state?.STELLAR_PUBLICK_KEY);
       setQrName(asset_type?.name);
       setQrVisible(true);
@@ -550,9 +555,15 @@ const Asset_info = ({ route }) => {
                 icon="bridge"
                 iconProvider={"materialCommunity"}
                 label="Bridge"
-                onPress={()=>{navigation.navigate("BridgeAssets", {
-      Asset_type: assetSymbol === "XLM" ? "ETH" : assetSymbol,
-    })}}
+                onPress={()=>{
+                  if (asset_type.chain === "Stellar") {
+                    navigation.navigate("ExportUSDC", { Asset_type: "ETH" })
+                  } else {
+                    navigation.navigate("BridgeAssets", {
+                      Asset_type: assetSymbol === "XLM" ? "ETH" : assetSymbol,
+                    })
+                  }
+                }}
               />
             </View>
 

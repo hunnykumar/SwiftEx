@@ -168,17 +168,6 @@ const Settings = (props) => {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.card, { borderBottomColor: theme.inactiveTx }]}
-          onPress={async () => {
-            props.navigation.navigate("Biometric");
-          }}
-        >
-          <View style={styles.iconCon}>
-            <Icon type={Platform.OS === 'android' ? "ionicon" : "material"} name={Platform.OS === 'android' ? "finger-print" : "lock-outline"} size={31} color={"#4052D6"} />
-          </View>
-          <Text style={[styles.text, { color: theme.headingTx }]}>{Platform.OS === 'android' ? "Biometric Authenticaton" : "Authenticaton"}</Text>
-        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.card, { borderBottomWidth: 0, borderBottomColor: theme.inactiveTx }]}

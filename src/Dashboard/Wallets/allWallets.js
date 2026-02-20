@@ -33,6 +33,8 @@ import { alert } from "../reusables/Toasts";
 import Icon from "../../icon";
 import { Wallet_screen_header } from "../reusables/ExchangeHeader";
 import AccessNativeStorage from "./AccessNativeStorage";
+import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 
 const WALLET_ICONS = {
   BSC: Bnbimage,
@@ -97,6 +99,7 @@ const AllWallets = () => {
   }, [dispatch, fetchMultiCoinBalances]);
 
   const handleWalletSelect = useCallback(async (item) => {
+    console.debug(item)
     try {
       await AsyncStorageLib.setItem("currentWallet", item.name);
 
@@ -129,8 +132,16 @@ const AllWallets = () => {
         );
         await AccessNativeStorage.updateActiveWallet(item.walletId)
 
+        await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+          "addresses": {
+            "eth": item?.address,
+            "xlm": item?.stellarPublicKey,
+            "bnb": item?.address,
+            "multi": item?.address
+          },
+          "isPrimary": true
+        });
         alert("success", `Wallet selected: ${item.name}`);
-
         setTimeout(() => {
           navigation.navigate("Home");
         }, NAVIGATION_DELAY);
