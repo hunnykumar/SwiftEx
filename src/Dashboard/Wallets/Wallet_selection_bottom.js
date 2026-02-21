@@ -126,15 +126,15 @@ const Wallet_selection_bottom = ({ onClose }) => {
           walletData.xrpAddress
         );
         await AccessNativeStorage.updateActiveWallet(item.walletId)
-        await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
-          "addresses": {
-            "eth": item?.address,
-            "xlm": item?.stellarPublicKey,
-            "bnb": item?.address,
-            "multi": item?.address
-          },
-          "isPrimary": true
-        });
+        // await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+        //   "addresses": {
+        //     "eth": item?.address,
+        //     "xlm": item?.stellarPublicKey,
+        //     "bnb": item?.address,
+        //     "multi": item?.address
+        //   },
+        //   "isPrimary": true
+        // });
         alert("success", `Wallet selected: ${item.name}`);
 
         setTimeout(() => {

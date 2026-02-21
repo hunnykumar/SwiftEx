@@ -37,6 +37,7 @@ import { getAllBalances } from "../../utilities/web3utilities";
 import { PPOST, proxyRequest } from "../exchange/crypto-exchange-front-end-main/src/api";
 import CustomInfoProvider from "../exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 import ShortTermStorage from "../../utilities/ShortTermStorage";
+import { CheckPasscode } from "../../biometrics/utils";
 
 const TransactionPinModal = ({
   pinViewVisible,
@@ -134,10 +135,10 @@ const TransactionPinModal = ({
     const check_pin_len=async()=>{
      try {
       if (enteredPin.length===6) {
-        const Pin = await AsyncStorage.getItem("pin");
+        const validPin=await CheckPasscode(enteredPin);
         setPinViewVisible(false);
         // setLoader(true);
-        if (JSON.parse(Pin) === enteredPin) {
+        if (validPin) {
           const emailid = await state.user;
           const token = await state.token;
   

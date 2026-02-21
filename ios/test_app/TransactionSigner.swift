@@ -40,6 +40,8 @@ class TransactionSigner: NSObject {
           let gasLimit  = safeHexData(tx["gasLimit"] as! String)
           let value     = safeHexData(tx["value"] as! String)
           let dataField = safeHexData(tx["data"] as! String)
+        let hexString = value.map { String(format: "%02x", $0) }.joined()
+        print("0x" + hexString)
 
           let input = EthereumSigningInput.with {
               $0.chainID = intToData(chainId)
@@ -58,7 +60,7 @@ class TransactionSigner: NSObject {
               } else {
                   $0.transaction = .with {
                       $0.contractGeneric = .with {
-                          $0.amount = Data()
+                          $0.amount = value
                           $0.data = dataField
                       }
                   }

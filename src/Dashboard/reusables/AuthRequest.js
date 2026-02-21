@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import { colors } from "../../Screens/ThemeColorsConfig";
 import Snackbar from "react-native-snackbar";
 import { useBiometrics_run } from "../../biometrics/biometric";
+import { CheckPasscode } from "../../biometrics/utils";
 
 const AuthRequest = ({ visible, heading, subHeading, proccedNextStep }) => {
     const state = useSelector((state) => state);
@@ -44,8 +45,8 @@ const AuthRequest = ({ visible, heading, subHeading, proccedNextStep }) => {
         const verifyPasscode = async () => {
             try {
                 if (enteredPin.length === 6) {
-                    const Pin = await AsyncStorage.getItem("pin");
-                    if (JSON.parse(Pin) === enteredPin) {
+                    const validPin=await CheckPasscode(enteredPin);
+                    if (validPin) {
                         pinView.current.clearAll();
                         proccedNextStep()
                     }

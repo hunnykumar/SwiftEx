@@ -3,39 +3,32 @@ import {
   StyleSheet,
   Text,
   View,
-  Button,
   FlatList,
-  Image,
   TouchableOpacity,
   TextInput,
   Keyboard,
-  SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { Animated } from "react-native";
-import title_icon from "../../../assets/title_icon.png";
 import { useDispatch, useSelector } from "react-redux";
 import {
   AddToAllWallets,
-  getBalance,
   setCurrentWallet,
-  setUser,
-  setToken,
-  setWalletType,
 } from "../../components/Redux/actions/auth";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
-import DialogInput from "react-native-dialog-input";
-import { encryptFile } from "../../utilities/utilities";
-import { urls } from "../constants";
 import Modal from "react-native-modal";
-import CheckNewWalletMnemonic from "./checkNewWalletMnemonic";
-import ModalHeader from "../reusables/ModalHeader";
 import Icon from "../../icon";
 import { colors } from "../../Screens/ThemeColorsConfig";
 import { checkWalletExistOrNot } from "../Wallets/WalletManagement";
+import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
+import AccessNativeStorage from "../Wallets/AccessNativeStorage";
+import { alert } from "../reusables/Toasts";
+import { useNavigation } from "@react-navigation/native";
 
 const NewWalletPrivateKey = ({
   props,
@@ -48,28 +41,17 @@ const NewWalletPrivateKey = ({
 }) => {
   const state=useSelector((state)=>state);
   const [accountName, setAccountName] = useState("");
-  const [visible, setVisible] = useState(false);
-  const [newWallet, setNewWallet] = useState(Wallet);
   const [data, setData] = useState();
   const [user, setUser] = useState("");
-  const [text_input_up,settext_input_up]=useState(false);
-
-  const [MnemonicVisible, setMnemonicVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const dispatch = useDispatch();
-
-  const Spin = new Animated.Value(0);
-  const SpinValue = Spin.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
+  const navigation=useNavigation();
 
   useEffect(()=>{
     const  Keybord_state_cls=Keyboard.addListener('keyboardDidHide',()=>{
-      settext_input_up(false);
     });
     const  Keybord_state_opn=Keyboard.addListener('keyboardDidShow',()=>{
-      settext_input_up(true);
     });
     
     return ()=>{
@@ -78,13 +60,7 @@ const NewWalletPrivateKey = ({
     }
   },[]);
   
-
-  const closeModal = () => {
-    SetVisible(false);
-  };
   const mnemonic = Wallet?.mnemonic.match(/\b(\w+)'?(\w+)?\b/g)
-
-  console.log("My mnemonic", mnemonic);
 
   useEffect(() => {
     setAccountName("")
@@ -93,7 +69,6 @@ const NewWalletPrivateKey = ({
         console.log(Wallet);
         let wallet = Wallet;
         wallet.Mnemonic = mnemonic;
-        setNewWallet(wallet);
       } catch (error) {
         console.log("=-===",error)
       }
@@ -106,7 +81,6 @@ const NewWalletPrivateKey = ({
   }, []);
 
   const RenderItem = ({ item, index }) => {
-    console.log("============------------", item);
     setData(data);
     return (
       <TouchableOpacity style={[style.flatBtn,{backgroundColor:theme.cardBg}]}>
@@ -116,13 +90,113 @@ const NewWalletPrivateKey = ({
     );
   };
   const handleUsernameChange = (text) => {
-    // Remove whitespace from the username
     const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
     setAccountName(formattedUsername);
   };
   const theme = state.THEME.THEME ? colors.dark : colors.light;
+
+  const handleWallet = async () => {
+    console.debug(JSON.stringify(Wallet,null,2))
+    try {
+      setLoading(true);
+      const user = await AsyncStorageLib.getItem("user");
+      let wallets = [];
+      const data = await AsyncStorageLib.getItem(
+        `${user}-wallets`
+      )
+        .then((response) => {
+          console.log(response);
+          JSON.parse(response).map((item) => {
+            wallets.push(item);
+          });
+        })
+        .catch((e) => {
+          setModalVisible(false);
+          console.log(e);
+        });
+
+      const allWallets = [
+        {
+          address: Wallet.address,
+          name: Wallet.accountName,
+          walletType: "Multi-coin",
+          xrp: {
+            address: Wallet.xrp.address,
+          },
+          stellarWallet: {
+            publicKey: Wallet.stellarWallet.publicKey,
+          },
+          wallets: wallets,
+        },
+      ];
+
+      dispatch(AddToAllWallets(allWallets, user)).then(
+        async (response) => {
+          if (response) {
+            if (response.status === "Already Exists") {
+              alert(
+                "error",
+                "Account with same name already exists"
+              );
+              setLoading(false);
+              return;
+            } else if (response.status === "success") {
+              const result = await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+                "addresses": {
+                  "eth": Wallet.address,
+                  "xlm": Wallet.stellarWallet.publicKey,
+                  "bnb": Wallet.address,
+                  "multi": Wallet.address
+                },
+                "isPrimary": true
+              });
+              if (result.success) {
+                alert("success", "wallet synced!");
+              } else {
+                alert("error", "unable to sync wallet.");
+                console.log('Error:', result.error, 'Status:', result.status);
+              }
+              AsyncStorageLib.setItem("currentWallet", Wallet?.accountName)
+              await AccessNativeStorage.saveWallet({
+                name: Wallet.accountName,
+                address: Wallet.address,
+                privatekey: Wallet.privateKey,
+                stellarPublicKey: Wallet.stellarWallet.publicKey,
+                stellarPrivateKey: Wallet.stellarWallet.secretKey,
+                mnemonic: Wallet.mnemonic,
+                walletType: "Multi-coin"
+              })
+              dispatch(
+                setCurrentWallet(
+                  Wallet?.address,
+                  Wallet?.accountName,
+                )
+              )
+              setTimeout(() => {
+                setLoading(false);
+                SetVisible(false);
+                setModalVisible(false);
+                setNewWalletVisible(false);
+                navigation.navigate("AllWallets");
+              }, 0);
+            } else {
+              alert("error", "failed please try again");
+              return;
+            }
+          }
+        }
+      );
+    } catch (e) {
+      setLoading(false);
+      SetVisible(false);
+      setModalVisible(false);
+      setNewWalletVisible(false);
+      alert("error", "Failed to import wallet. Please try again");
+    }
+  }
+
   return (
-    <Animated.View // Special animatable View
+    <Animated.View
       style={{ opacity: fadeAnim }}
     >
       <Modal
@@ -145,7 +219,6 @@ const NewWalletPrivateKey = ({
       >
 
         <View style={[style.Body,{backgroundColor:theme.bg}]}>
-          {/* <ModalHeader Function={closeModal} name={'Private Key'}/> */}
           <Icon
             name={"close-circle-outline"} 
             type={"materialCommunity"}
@@ -174,6 +247,7 @@ const NewWalletPrivateKey = ({
             <FlatList
               data={mnemonic}
               renderItem={RenderItem}
+              keyExtractor={(item, index) => index}
               numColumns={3}
               contentContainerStyle={{
                 alignSelf: "center",
@@ -187,68 +261,34 @@ const NewWalletPrivateKey = ({
             Do not share it through email, photos, social media, apps, etc.
             </Text>
           </View>
-          {/* <Text selectable={true} style={style.welcomeText2}>
-            {Wallet ? Wallet.mnemonic : ""}
-          </Text> */}
-          {/* <Text style={style.welcomeText2}> Account Name</Text> */}
-
-          
-
-          {/* <TextInput
-          placeholder="Enter your account name"
-            style={style.input}
-            value={accountName}
-            placeholder='Enter account name'
-            onChangeText={(text) => setAccountName(text)}
-            autoCapitalize={"none"}
-          /> */}
 
           <View style={{ width: wp(100),marginBottom:hp(5) }}>
             <TouchableOpacity
               style={{
-                // backgroundColor:
-                  // accountName && !/\s/.test(accountName) ? "#4CA6EA" : "gray",
-                  backgroundColor:!accountName || !/\S/.test(accountName)?"gray":"#4052D6",
+                backgroundColor:!accountName || !/\S/.test(accountName)||loading?"gray":"#4052D6",
                 width: wp(90),
                 alignSelf: "center",
                 alignItems: "center",
                 borderRadius: 20,
-                marginTop: hp(3),
+                marginVertical: hp(3),
                 paddingVertical: hp(1.7),
               }}
-              // disabled={accountName && !/\s/.test(accountName) ? false : true}
-              disabled={!accountName || !/\S/.test(accountName)}
+              disabled={!accountName || !/\S/.test(accountName)||loading}
               onPress={async() => {
                 Keyboard.dismiss();
                 const checkWalletName=await checkWalletExistOrNot(accountName);
                 if(!checkWalletName){
-                  //setVisible(!visible)
                   let wallet = Wallet;
                   wallet.accountName = accountName;
                   wallet.Mnemonic = mnemonic;
-                  setNewWallet(wallet);
-                  console.log(newWallet);
-                  setMnemonicVisible(true);
+                  handleWallet();
                 }
               }}
             >
-              <Text style={{ color: "white",fontSize:16  }}>Done</Text>
+              <Text style={{ color: "white",fontSize:16  }}>{loading?<ActivityIndicator/>:"Create"}</Text>
             </TouchableOpacity>
           </View>
         </View>
-        {MnemonicVisible && (
-          <CheckNewWalletMnemonic
-            Wallet={newWallet}
-            SetVisible={setMnemonicVisible}
-            onCrossPress={() => {
-              setMnemonicVisible(false);
-            }}
-            Visible={MnemonicVisible}
-            setModalVisible={setModalVisible}
-            SetPrivateKeyVisible={SetVisible}
-            setNewWalletVisible={setNewWalletVisible}
-          />
-        )}
       </Modal>
     </Animated.View>
   );
@@ -267,66 +307,6 @@ const style = StyleSheet.create({
     justifyContent: "flex-end",
     margin: 0,
     width:wp(100)
-  },
-  welcomeText: {
-    fontSize: 20,
-    fontWeight: "200",
-    color: "white",
-    marginTop: hp(5),
-  },
-  welcomeText2: {
-    fontSize: 14,
-    color: "black",
-    textAlign: "center",
-    marginTop: hp(3),
-  },
-  Button: {
-    marginTop: hp(0),
-  },
-  tinyLogo: {
-    width: wp("5"),
-    height: hp("5"),
-    padding: 30,
-    marginTop: hp(10),
-  },
-  Text: {
-    marginTop: hp(5),
-    fontSize: 15,
-    fontWeight: "200",
-    color: "white",
-  },
-  input: {
-    marginTop: hp(2),
-    width: wp("70"),
-    height: hp(5),
-    borderRadius: hp(1),
-    backgroundColor: "white",
-    paddingHorizontal: wp(4),
-    alignSelf: "center",
-    borderWidth: StyleSheet.hairlineWidth * 1,
-  },
-  verifyText: {
-    color: "black",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-    marginTop: hp(2),
-  },
-  wordText: {
-    color: "black",
-    textAlign: "center",
-    marginTop: hp(1),
-    width: wp(88),
-    marginHorizontal: wp(5),
-  },
-  ButtonView: {
-    backgroundColor: "#4CA6EA",
-    width: wp(40),
-    alignSelf: "center",
-    alignItems: "center",
-    borderRadius: 10,
-    marginTop: hp(1.5),
-    paddingVertical: hp(1.7),
   },
   flatBtn: {
     borderRadius: hp(0.5),
@@ -355,17 +335,6 @@ const style = StyleSheet.create({
     marginLeft: 18,
     marginTop: hp(2),
   },
-  dotView1: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: wp(85),
-    marginLeft: 18,
-    marginTop: hp(2),
-  },
-  welcomeText: {
-    color: "black",
-    textAlign: "center",
-  },
   labelInputContainer: {
     marginTop:hp(1),
     width: wp(90),
@@ -386,4 +355,3 @@ const style = StyleSheet.create({
     padding: 10,
   },
 });
-//  const mnemonic = Wallet?.mnemonic.match(/\b(\w+)'?(\w+)?\b/g)

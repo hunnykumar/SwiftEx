@@ -31,6 +31,7 @@ import { SwapTokensToTokens, UniSwap } from "../tokens/UniswapFunctions";
 import { SwapLoadingComponent } from "../../utilities/loadingComponent";
 import { alert } from "../reusables/Toasts";
 import { getAllBalances } from "../../utilities/web3utilities";
+import { CheckPasscode } from "../../biometrics/utils";
 const SwapPinModal = ({
   pinViewVisible,
   setPinViewVisible,
@@ -96,8 +97,8 @@ const SwapPinModal = ({
         if (enteredPin.length === 6) {
           setShowCompletedButton(true);
           // change start
-             const Pin = await AsyncStorage.getItem("pin");
-                        if (JSON.parse(Pin) === enteredPin) {
+              const validPin=await CheckPasscode(enteredPin);
+                        if (validPin) {
                           try {
                             setPinViewVisible(false);
                             setLoader(true);

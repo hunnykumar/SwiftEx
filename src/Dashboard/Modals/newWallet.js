@@ -30,8 +30,6 @@ import AsyncStorageLib from "@react-native-async-storage/async-storage";
 
 const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisible }) => {
   const state=useSelector((state)=>state);
-  const [Checked, setCheckBox] = useState(false);
-  const [Checked2, setCheckBox2] = useState(false);
   const [loading, setLoading] = useState(false);
   const [newWalletPrivateKey, setNewWalletPrivateKey] = useState(false);
   const [Wallet, setWallet] = useState();
@@ -76,7 +74,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
             >
               <Animated.View style={[style.overlay]}>
                 <View style={[style.Body, { backgroundColor: state.THEME.THEME ? "#242426" : "#F4F4F8" }]}>
-          <TouchableOpacity disabled={loading} onPress={()=>{onCrossPress(),setCheckBox2(false),setCheckBox(false)}} style={style.crossIcon}>
+          <TouchableOpacity disabled={loading} onPress={()=>{onCrossPress()}} style={style.crossIcon}>
           <Icon type={'entypo'} name='cross' color={"black"} size={28}/>
           </TouchableOpacity>
           <View style={{alignSelf:"center",alignItems:"center"}}>
@@ -101,14 +99,13 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
               marginTop: hp(5),
               alignItems: "center",
             }}
-            onPress={()=>{setCheckBox(!Checked)}}
+            disabled={true}
           >
             <Icon
             name={"check-circle"}
             type={"materialCommunity"}
             size={25}
-            color={Checked?"green":"gray"}
-            onPress={() => setCheckBox(!Checked)}
+            color={"green"}
             />
             <View style={{ marginLeft: 10 }}>
             <Text style={[style.welcomeText2,{marginTop: hp(0),color:state.THEME.THEME ?"#fff":"black"}]}>
@@ -128,14 +125,13 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
               marginTop: hp(3),
               alignItems: "center",
             }}
-            onPress={() => setCheckBox2(!Checked2)}
+            disabled={true}
           >
             <Icon
           name={"check-circle"}
           type={"materialCommunity"}
           size={25}
-          color={Checked2?"green":"gray"}
-          onPress={() => setCheckBox2(!Checked2)}
+          color={"green"}
           />
             <View style={{ marginLeft: 10 }}>
             <Text style={[style.welcomeText2,{color:state.THEME.THEME ?"#fff":"black"}]}>
@@ -162,8 +158,8 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
 
             </View>
 <TouchableOpacity
-            style={[style.PresssableBtn,{backgroundColor:  Checked && Checked2? "#5B65E1":"gray"}]}
-              disabled={loading ? true : Checked && Checked2 ? false : true}
+            style={[style.PresssableBtn,{backgroundColor:"#5B65E1"}]}
+              disabled={loading ? true : false}
               onPress={async() => {
                 await AsyncStorageLib.setItem('wallet_backup',await state.wallet.address);
                 setLoading(true);
@@ -176,8 +172,6 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
                         console.log(response.wallet);
                         const wallet = response.wallet;
                         setWallet(wallet);
-                        setCheckBox2(false)
-                        setCheckBox(false)
                         setNewWalletPrivateKey(true);
                       } else {
                         setLoading(false);

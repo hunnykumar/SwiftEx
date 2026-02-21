@@ -11,6 +11,7 @@ import { alert } from "../reusables/Toasts";
 import { useBiometrics_run } from "../../biometrics/biometric";
 import Icon from "../../icon";
 import { colors } from "../../Screens/ThemeColorsConfig";
+import { CheckPasscode } from "../../biometrics/utils";
 
 const LockAppModal = ({ pinViewVisible, setPinViewVisible }) => {
   const [pin, setPin] = useState("");
@@ -28,8 +29,8 @@ const LockAppModal = ({ pinViewVisible, setPinViewVisible }) => {
       setPin(newPin);
       if (newPin.length === 6) {
         if (status === "pinset") {
-          const storedPin = await AsyncStorage.getItem("pin");
-          if (JSON.parse(storedPin) === newPin) {
+          const validPin=await CheckPasscode(newPin);
+          if (validPin) {
             setIsSuccess(true);
             setTimeout(() => {
               resetInput();

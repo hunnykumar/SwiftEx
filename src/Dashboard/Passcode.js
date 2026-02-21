@@ -12,6 +12,7 @@ import Icon from "../icon";
 import { setPlatform } from "../components/Redux/actions/auth";
 import { colors } from "../Screens/ThemeColorsConfig";
 import { AppNavigation } from "../Screens/AppChecks/AppCheckService";
+import { AddPassCode, CheckPasscode } from "../biometrics/utils";
 
 const Passcode = (props) => {
   const [pin, setPin] = useState("");
@@ -31,7 +32,7 @@ const Passcode = (props) => {
     if (newPin.length === 6) {
       if (status === "verify") {
         if (tempPin === newPin) {
-          await AsyncStorage.setItem("pin", JSON.stringify(tempPin));
+          await AddPassCode(tempPin)
           resetInput();
           setStatus("");
           AppNavigation(props)
@@ -45,10 +46,10 @@ const Passcode = (props) => {
           }, 200);
         }
       } else if (status === "pinset") {
-        const storedPin = await AsyncStorage.getItem("pin");
+        const validPin=await CheckPasscode(newPin);
         const user = await AsyncStorage.getItem("user");
 
-        if (JSON.parse(storedPin) === newPin) {
+        if (validPin) {
           setIsSuccess(true);
           setTimeout(() => {
             resetInput();

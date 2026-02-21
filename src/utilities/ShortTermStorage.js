@@ -48,6 +48,9 @@ const ShortTermStorage = {
 
       for (const tx of txList) {
         if (tx.status === "pending"||tx.status === "Pending") {
+          const createdAt = tx.createdAt || 0;
+          const oneMinuteAgo = Date.now() - (60 * 1000);
+        if (createdAt < oneMinuteAgo) {
           const receipt = await this.getTxReceiptByChain(tx.chain, tx.hash);
           if (receipt?.status === true || receipt?.status === 1) {
             updatedTxList.push({
@@ -69,6 +72,18 @@ const ShortTermStorage = {
             continue;
           }
 
+          // If createdAt > 1 min ago AND receipt is null, mark as failed
+          if (receipt === null || receipt === undefined) {
+            updatedTxList.push({
+              ...tx,
+              status: "failed",
+              statusColor: "#de2727ff",
+              updatedAt: Date.now(),
+            });
+            continue;
+          }
+        }
+        // Less than 1 min or receipt check passed - keep pending
           updatedTxList.push({
             ...tx,
             status: "pending",

@@ -27,6 +27,7 @@ import AsyncStorageLib from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { decodeUserToken } from "../Auth/jwtHandler";
 import { alert } from "../reusables/Toasts";
+import { CheckPasscode } from "../../biometrics/utils";
 const PinViewModal = ({
   pinViewVisible,
   setPinViewVisible,
@@ -160,12 +161,12 @@ const PinViewModal = ({
                 }
                 if (key === "custom_right") {
                   if (status === "pinset") {
-                    const Pin = await AsyncStorage.getItem("pin");
+                    const validPin=await CheckPasscode(enteredPin);
                     const wallets = await AsyncStorage.getItem(
                       `${username}-wallets`
                     );
 
-                    if (JSON.parse(Pin) === enteredPin) {
+                    if (validPin) {
                       if (username) {
                         await AsyncStorageLib.getItem(`${username}-token`).then(
                           async (token) => {
