@@ -324,6 +324,7 @@ const AMMSwap = () => {
   };
   
   const handleTokenSelection=(item)=>{
+   try {
     if(tokenTypeSelection===0)
     {
       if(toToken.code!==item.code)
@@ -335,8 +336,9 @@ const AMMSwap = () => {
         setIsLoading(false);
       }
       else{
-       CustomInfoProvider.show("Info","To and From asset tokens can be the same.")
+       CustomInfoProvider.show("Info","!Opps","The From and To asset tokens cannot be the same.")
       }
+      setTokenModalVisible(false);
     }
     if (tokenTypeSelection === 1) {
       if (fromToken.code !== item.code) {
@@ -346,9 +348,13 @@ const AMMSwap = () => {
         setexchangeRes(null);
         setIsLoading(false);
       } else {
-       CustomInfoProvider.show("Info", "From and To asset tokens can be the same.")
+       CustomInfoProvider.show("Info","!Opps","The From and To asset tokens cannot be the same.")
       }
+      setTokenModalVisible(false);
     }
+   } catch (error) {
+    console.debug("errr0==",error)
+   }
   }
 
   

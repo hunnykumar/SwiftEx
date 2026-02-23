@@ -17,6 +17,7 @@ import Modal from "react-native-modal";
 import darkBlue from "../../../assets/darkBlue.png";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "../../icon";
+import { Checkbox } from "react-native-paper";
 
 export const GetPrivateKeyModal = ({ visible, setVisible, onCrossPress }) => {
   const state=useSelector((state)=>state);
@@ -29,6 +30,8 @@ export const GetPrivateKeyModal = ({ visible, setVisible, onCrossPress }) => {
 
   const sheetRef = useRef(null);
   useEffect(() => {
+    setCheckBox(false);
+    setCheckBox2(false);
     if (visible) sheetRef.current?.present();
     else sheetRef.current?.dismiss();
   }, [visible]);
@@ -96,12 +99,19 @@ export const GetPrivateKeyModal = ({ visible, setVisible, onCrossPress }) => {
             style={styles.row}
             onPress={() => setCheckBox(!Checked)}
           >
-            <Icon
-              name="check-circle"
-              type="material-community"
-              size={25}
-              color={Checked ? "green" : "gray"}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: Checked?"#fff":"gray" ,
+                borderRadius: 10,
+              }}
+            >
+            <Checkbox
+              status={Checked ? "checked" : "unchecked"}
+              color="#4052D6"
             />
+            </View>
             <Text style={[styles.welcomeText2,{color:themeDark ? "#fff" : "black"}]}>
               If I lose my private key, my funds will be lost
             </Text>
@@ -111,12 +121,19 @@ export const GetPrivateKeyModal = ({ visible, setVisible, onCrossPress }) => {
             style={styles.row}
             onPress={() => setCheckBox2(!Checked2)}
           >
-            <Icon
-              name="check-circle"
-              type="material-community"
-              size={25}
-              color={Checked2 ? "green" : "gray"}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: Checked2?"#fff":"gray" ,
+                borderRadius: 10,
+              }}
+            >
+            <Checkbox
+              status={Checked2 ? "checked" : "unchecked"}
+              color="#4052D6"
             />
+            </View>
             <Text style={[styles.welcomeText2,{color:themeDark ? "#fff" : "black"}]}>
               If I share my private key, my funds can get stolen
             </Text>
@@ -166,7 +183,7 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     color: "white",
-    fontWeight: "900",
+    fontWeight: "600",
     fontSize: 16,
     textAlign: "center",
     marginTop: hp(2),

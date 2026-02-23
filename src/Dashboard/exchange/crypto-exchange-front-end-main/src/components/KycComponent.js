@@ -581,7 +581,7 @@ const KycComponent = ({ route }) => {
                       <Text style={{fontSize:16,fontWeight:"400",color:theme.inactiveTx}}>Provider:</Text>
                       <View style={{flexDirection:"row",alignItems:"center"}}>
                       <Image source={require('../../../../../../assets/AlcamyPay.jpg')} style={styles.image} resizeMode="cover" />
-                      <Text style={{fontSize:16,fontWeight:"600",color:theme.headingTx}}>Alcamy Pay</Text>
+                      <Text style={{fontSize:16,fontWeight:"600",color:theme.headingTx}}>Alchemy Pay</Text>
                       </View>
                     </View>
                    <View style={[styles.infoCon,{backgroundColor:theme.cardBg,borderColor:theme.inactiveTx}]}>

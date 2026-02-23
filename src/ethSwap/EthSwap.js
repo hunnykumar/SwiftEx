@@ -124,8 +124,8 @@ const EthSwap = () => {
       const balance1 = parseFloat(responseBalance?.[1]?.balance || 0);
       const decimals0 = Number(responseBalance?.[0]?.decimals || 18);
       const decimals1 = Number(responseBalance?.[1]?.decimals || 18);
-      setFromTokenBalance(balance0.toFixed(balance0 === 0 ? 3 : Math.min(decimals0, 6)));
-      setToTokenBalance(balance1.toFixed(balance1 === 0 ? 3 : Math.min(decimals1, 6)));
+      setFromTokenBalance(balance0);
+      setToTokenBalance(balance1);
     } catch (error) {
       console.error("Error fetching BSC token balance:", error);
       Snackbar.show({
@@ -250,7 +250,7 @@ const EthSwap = () => {
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <View style={[styles.tokenContainer, { width: wp(40) }]}>
+      <View style={[styles.tokenContainer, { width: wp(30) }]}>
         <Image source={{ uri: token.logoURI }} style={[styles.logoImage, { marginRight: 5 }]} />
         <Text style={[styles.tokenSymbol, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
           {token.symbol}
@@ -259,9 +259,14 @@ const EthSwap = () => {
       {balanceLoading ? (
         <ActivityIndicator size="small" color="#4052D6" />
       ) : (
-        <Text style={styles.tokenBalance} numberOfLines={1}>
-          Balance: {balance}
+        <View>
+         <Text style={styles.tokenBalance} numberOfLines={1}>
+          Available
         </Text>
+        <Text style={styles.tokenBalance} numberOfLines={1}>
+        {balance}
+        </Text>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -1033,7 +1038,7 @@ const styles = StyleSheet.create({
   tokenBalance: {
     fontSize: 14,
     color: '#666',
-    width: wp(40),
+    width: wp(50),
     textAlign: "right"
   },
   input: {

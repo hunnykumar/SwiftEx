@@ -1,54 +1,414 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Modal, View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, TextInput, Image, Platform, Keyboard, Alert, BackHandler, TouchableWithoutFeedback, KeyboardAvoidingView } from 'react-native';
-import Icon from "../../../../../icon";
-import { FlatList, useToast } from 'native-base';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
-import { ScrollView } from 'react-native-gesture-handler';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
-import { REACT_PROXY_HOST } from '../ExchangeConstants';
-import { getToken, PPOST, proxyRequest } from '../api';
-import { ShowErrotoast } from '../../../../reusables/Toasts';
-import { swap_prepare } from '../../../../../../All_bridge';
-import { ethers } from 'ethers';
-import { debounce } from 'lodash';
-import { fetchBSCTokenInfo, fetchTokenInfo } from '../../../../../ethSwap/tokenUtils';
-import { SwapPepare } from '../../../../../utilities/AllbridgeBscUtil';
-import CustomInfoProvider from './CustomInfoProvider';
-import AllbridgeTxTrack from './AllbridgeTxTrack';
-import { convertMultiple } from '../utils/UsdPriceHandler';
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Modal,
+  Image,
+  FlatList,
+  ActivityIndicator,
+  Keyboard,
+} from 'react-native';
+
+import { useSelector } from 'react-redux';
 import { colors } from '../../../../../Screens/ThemeColorsConfig';
-import tokenList from "../../../../../Dashboard/tokens/tokenList.json";
-import PancakeList from "../../../../../Dashboard/tokens/pancakeSwap/PancakeList.json";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
+import { useNavigation } from '@react-navigation/native';
+import Icon from '../../../../../icon';
+import { getTokenBalancesUsingAddress } from '../utils/getWalletInfo/EtherWalletService';
+import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance, stellarWalletStatus } from '../../../../../utilities/StellarUtils';
+import { getChainTokenData, swapPepare } from '../../../../../utilities/AllbridgeUtil';
+import { alert } from '../../../../reusables/Toasts';
+import { debounce } from 'lodash';
 import LocalTxManager from '../../../../../utilities/LocalTxManager';
-import { getWalletBalance } from '../utils/getWalletInfo/EtherWalletService';
-import { stellarWalletStatus } from '../../../../../utilities/StellarUtils';
+import CustomInfoProvider from './CustomInfoProvider';
+import WalletActivationComponent from '../utils/WalletActivationComponent';
+import { swap_prepare } from '../../../../../../All_bridge';
+import { SwapPepare } from '../../../../../utilities/AllbridgeBscUtil';
 
-const CrossChainTx = ({ route="ETH" }) => {
-  const toast = useToast();
+const CrossChainTx = ({ props }) => {
   const navigation = useNavigation();
-  const { Asset_type } = route;
-  const TEMPCHOSE = Asset_type === "ETH" ? "Ethereum" : Asset_type === "BNB" ? "BNB" : "Ethereum";
   const state = useSelector((state) => state);
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.bg,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    card: {
+      paddingHorizontal: wp(3),
+      paddingVertical: hp(2)
+    },
+    section: {
+      marginBottom: hp(1),
+      paddingHorizontal: wp(3),
+      paddingVertical: hp(2),
+      borderRadius: 13,
+      backgroundColor: theme.cardBg
+    },
+    toSection: {
+      marginTop: 8,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    networkHeader: {
+      flexDirection: 'column',
+      alignItems: "flex-start",
+      width:wp(50)
+    },
+    labelText: {
+      color: theme.headingTx,
+      fontSize: 14,
+      fontWeight: '500',
+      textAlign: "center"
+    },
+    networkSelector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.bg,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 9,
+      gap: 8,
+      borderWidth: 1,
+      borderColor: theme.inactiveTx,
+    },
+    networkIcon: {
+      width: 25,
+      height: 25,
+      borderRadius: 12,
+    },
+    networkName: {
+      color: theme.headingTx,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    balanceText: {
+      color: theme.inactiveTx,
+      fontSize: 13,
+      marginBottom: 16,
+      marginTop: -10
+    },
+    balanceAmount: {
+      color: theme.headingTx,
+    },
+    assetContainer: {
+      borderTopLeftRadius: 12,
+      borderTopRightRadius: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: "space-between",
+      borderColor: theme.inactiveTx,
+      borderWidth: 1,
+      marginTop: hp(1.4),
+      paddingHorizontal: wp(1),
+      backgroundColor: theme.bg
+    },
+    assetSelector: {
+      width: wp(40),
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderTopLeftRadius: 12,
+      paddingHorizontal: wp(2),
+      paddingVertical: hp(0.8),
+      gap: 10,
+    },
+    assetIconLarge: {
+      width: wp(9),
+      height: hp(4),
+      borderRadius: 20,
+    },
+    assetInfo: {
+      flex: 1,
+    },
+    assetLabel: {
+      color: theme.inactiveTx,
+      fontSize: 12,
+    },
+    assetName: {
+      color: theme.headingTx,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    addButton: {
+      padding: 4,
+    },
+    amountContainer: {
+      backgroundColor: theme.bg,
+      borderBottomLeftRadius: 12,
+      borderBottomRightRadius: 12,
+      padding: 16,
+      marginBottom: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between"
+    },
+    amountInput: {
+      color: theme.headingTx,
+      fontSize: 20,
+    },
+    availableContainer: {
+      alignItems: 'flex-end',
+      gap: 8,
+      width:wp(30)
+    },
+    availableLabel: {
+      color: theme.headingTx,
+      fontSize: 14,
+    },
+    availableAmount: {
+      color: theme.headingTx,
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    walletAddress: {
+      fontSize: 14,
+      color: theme.headingTx,
+    },
+    usdcContainer: {
+      marginTop: hp(2),
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    toAssetSelector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.bg,
+      padding: 11,
+      borderRadius: 12,
+      gap: 8,
+      borderWidth: 1,
+      borderColor: theme.inactiveTx,
+      width: wp(38)
+    },
+    usdcIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+    },
+    toAssetInfo: {
+      flex: 1,
+    },
+    usdcName: {
+      color: theme.headingTx,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    usdcSource: {
+      color: theme.inactiveTx,
+      fontSize: 12,
+    },
+    relayerFeeContainer: {
+      marginLeft: wp(2)
+    },
+    relayerFeeLabel: {
+      color: theme.headingTx,
+      fontSize: 15,
+      marginTop: hp(-1),
+      marginVertical: hp(0.5)
+    },
+    feeButtons: {
+      flexDirection: 'row',
+    },
+    feeButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.bg,
+      paddingVertical: 9,
+      paddingHorizontal: wp(3.3)
+    },
+    gasFeeNativeCon: {
+      borderTopLeftRadius: 10,
+      borderBottomLeftRadius: 10
+    },
+    gasFeeStableCon: {
+      borderTopRightRadius: 10,
+      borderBottomRightRadius: 10,
+    },
+    feeButtonActive: {
+      backgroundColor: '#4F46E5',
+      borderColor: '#4F46E5',
+    },
+    feeButtonText: {
+      color: theme.inactiveTx,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    feeButtonTextActive: {
+      color: "#fff",
+    },
+    feeIconSmall: {
+      width: 25,
+      height: 25,
+      borderRadius: 15,
+    },
+    toAmountContainer: {
+      marginTop: hp(1.3),
+      borderRadius: 10,
+      paddingVertical: hp(2),
+      paddingHorizontal: wp(2.4),
+      backgroundColor: theme.bg,
+      flexDirection: "row"
+    },
+    toAmount: {
+      color: theme.inactiveTx,
+      fontSize: 20,
+      fontWeight: '400',
+    },
+    toAmountUsd: {
+      color: theme.inactiveTx,
+      fontSize: 14,
+      fontWeight: '400',
+      marginTop: hp(1)
+    },
+    toAmountSubContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between"
+    },
+    minAmount: {
+      color: theme.inactiveTx,
+      fontSize: 13,
+      textAlign: 'right',
+    },
+    confirmButton: {
+      paddingVertical: 18,
+      borderRadius: 16,
+      alignItems: 'center',
+      marginTop: 12,
+    },
+    confirmButtonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: '600',
+    },
 
+
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.2)',
+      justifyContent: 'flex-end',
+    },
+    modalContainer: {
+      backgroundColor: theme.bg,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      maxHeight: '70%',
+      borderWidth: 1,
+      borderColor: theme.bg,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.bg,
+    },
+    modalTitle: {
+      color: theme.headingTx,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    modalList: {
+      padding: 16,
+    },
+    modalItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.bg,
+      padding: 16,
+      borderRadius: 12,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: theme.inactiveTx,
+    },
+    modalItemIcon: {
+      width: wp(10),
+      height: hp(4.5),
+      borderRadius: 20,
+      marginRight: 12,
+    },
+    modalItemInfo: {
+      flex: 1,
+    },
+    modalItemText: {
+      color: theme.headingTx,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    modalItemSubtext: {
+      color: theme.inactiveTx,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    optionCon: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-around",
+      width: wp(36)
+    },
+    optioBtn: {
+      backgroundColor: "#4052D6",
+      height: hp(4),
+      width: wp(16),
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 10
+    },
+    quoteRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    quoteLabel: {
+      fontSize: 14,
+      color: theme.inactiveTx,
+      fontWeight: "500"
+    },
+    quoteValue: {
+      color: theme.headingTx,
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    quoteHeading: {
+      color: theme.headingTx,
+      fontSize: 19,
+      fontWeight: '500',
+      marginBottom: hp(1)
+    },
+    quotesLoadingCon: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignContent: "center",
+      paddingHorizontal: wp(3),
+      paddingVertical: hp(2),
+      borderRadius: 13,
+      backgroundColor: theme.cardBg
+    },
+    quotesLoadingConTxt: {
+      color: "#4F46E5",
+      fontSize: 20,
+      fontWeight: '500',
+    }
+  });
   const chooseItemList = [
-    { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
-    { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
+    { id: 1, chainName: "ETH", subName: "ETH", name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png", walletAddress: state?.wallet?.address },
+    { id: 2, chainName: "BSC", subName: "BNB", name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png", walletAddress: state?.wallet?.address },
+    { id: 3, chainName: "SRB", subName: "STR", name: "Stellar", url: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq", walletAddress: state?.STELLAR_PUBLICK_KEY },
   ];
-  const reciverAsset = {
-        imageUrl: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png",
-        assetNetwork: "Stellar",
-        assetName: "USDC"
-    }
-    const feeAsset = {
-        imageUrl: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
-        assetNetwork: "Stellar",
-        assetName: "USDC"
-    }
-  
+
   const bscSupportTokens = [
     {
       "name": "Binance USDT",
@@ -67,6 +427,7 @@ const CrossChainTx = ({ route="ETH" }) => {
       "logoURI": "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png"
     }
   ];
+
   const ethSupportTokens = [
     {
       "name": "Tether USD",
@@ -74,20 +435,7 @@ const CrossChainTx = ({ route="ETH" }) => {
       "symbol": "USDT",
       "decimals": 6,
       "chainId": 1,
-      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
-      "extensions": {
-        "bridgeInfo": {
-          "10": {
-            "tokenAddress": "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58"
-          },
-          "137": {
-            "tokenAddress": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
-          },
-          "42161": {
-            "tokenAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
-          }
-        }
-      }
+      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png"
     },
     {
       "name": "USDCoin",
@@ -95,1501 +443,675 @@ const CrossChainTx = ({ route="ETH" }) => {
       "symbol": "USDC",
       "decimals": 6,
       "chainId": 1,
-      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
-      "extensions": {
-        "bridgeInfo": {
-          "10": {
-            "tokenAddress": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85"
-          },
-          "56": {
-            "tokenAddress": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"
-          },
-          "130": {
-            "tokenAddress": "0x078D782b760474a361dDA0AF3839290b0EF57AD6"
-          },
-          "137": {
-            "tokenAddress": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
-          },
-          "143": {
-            "tokenAddress": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603"
-          },
-          "1868": {
-            "tokenAddress": "0xbA9986D2381edf1DA03B0B9c1f8b00dc4AacC369"
-          },
-          "42161": {
-            "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
-          },
-          "42220": {
-            "tokenAddress": "0xcebA9300f2b948710d2653dD7B07f33A8B32118C"
-          },
-          "43114": {
-            "tokenAddress": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"
-          }
-        }
-      }
+      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"
     }
-  ]
+  ];
 
-  const defaultUsdts = [
+  const stellarSupportTokens = [
     {
-      "name": "Tether USD",
-      "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-      "symbol": "USDT",
-      "decimals": 6,
-      "chainId": 1,
-      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
-      "extensions": {
-        "bridgeInfo": {
-          "10": {
-            "tokenAddress": "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58"
-          },
-          "137": {
-            "tokenAddress": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
-          },
-          "42161": {
-            "tokenAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
-          }
-        }
-      }
-    },
-    {
-      "name": "Binance USDT",
-      "symbol": "USDT",
-      "address": "0x55d398326f99059fF775485246999027B3197955",
-      "chainId": 56,
-      "decimals": 18,
-      "logoURI": "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png"
-    },
-  ]
+      name: "USDC (Centre)",
+      symbol: "USDC",
+      address: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+      decimals: 6,
+      logoURI: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png"
+    }
+  ];
 
-  const [chooseModalVisible, setChooseModalVisible] = useState(false);
-  const [chooseSelectedItemId, setChooseSelectedItemId] = useState(TEMPCHOSE);
-  const [selectedToken, setSelectedToken] = useState(null);
-  const [amount, setamount] = useState('');
-  const [chooseModalVisible_choose, setchooseModalVisible_choose] = useState(false);
-  const [WALLETADDRESS, setWALLETADDRESS] = useState('');
-  const [WALLETBALANCE, setWALLETBALANCE] = useState('');
+  const [fromAmount, setFromAmount] = useState(0.0);
+  const [selectedRelayerFee, setSelectedRelayerFee] = useState('native');
+  const [showNetworkModal, setShowNetworkModal] = useState(false);
+  const [showFromAssetModal, setShowFromAssetModal] = useState(false);
+  const [showToAssetModal, setShowToAssetModal] = useState(false);
+  const [modalType, setModalType] = useState('from');
+  const [selectedFromNetwork, setSelectedFromNetwork] = useState(chooseItemList[1]);
+  const [selectedToNetwork, setSelectedToNetwork] = useState(chooseItemList[2]);
+  const [selectedFromAsset, setSelectedFromAsset] = useState(bscSupportTokens[0]);
+  const [selectedToAsset, setSelectedToAsset] = useState(stellarSupportTokens[0]);
+  const [showOption, setShowOption] = useState(false);
   const [balanceLoading, setbalanceLoading] = useState(false);
-  const [fianl_modal_text, setfianl_modal_text] = useState("Transaction Failed");
-  const [fianl_modal_error, setfianl_modal_error] = useState(false);
-  const [fianl_modal_loading, setfianl_modal_loading] = useState(false);
-  const [resQuotes, setresQuotes] = useState(null);
-  const [nonDirectQoutes, setnonDirectQoutes] = useState(null);
-  const [getInfo, setgetInfo] = useState(false);
-  const [payFeeType, setPayFeeType] = useState("native");
-  const [errorMsg, seterrorMsg] = useState(null);
-  const [showTx, setshowTx] = useState(false);
-  const [showTxHash, setshowTxHash] = useState([]);
-  const [tokenSearchQuery, setTokenSearchQuery] = useState('');
-  const [networkBalance,setNetworkBalance]=useState(0.0);
-  const [showExpandCon,setShowExpandCon]=useState(false);
+  const [fromBalance, setFromBalance] = useState(0.0);
+  const [pairQuotes, setPairQuotes] = useState(null);
+  const [quotesLoading, setQuotesLoading] = useState(false);
+  const [swapLoading,setSwapLoading] = useState(false);
+  const [showWalletActivation,setShowWalletActivation] = useState(false);
+  const [walletActivationWarning,setWalletActivationWarning] = useState(false);
 
-  const theme = state.THEME.THEME ? colors.dark : colors.light;
-  const currentWalletType = chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
-  const currentTokenList = currentWalletType === "Ethereum" ? ethSupportTokens : bscSupportTokens;
-
- 
-  // let balanceMap = {};
-  // let prioritySet = new Set();
-
-  // if (
-  //   Array.isArray(state?.activeWalletPortFolio?.tokens) &&
-  //   state.activeWalletPortFolio.tokens.length > 0
-  // ) {
-  //   state.activeWalletPortFolio.tokens.forEach(t => {
-  //     let addr = t.contractAddress?.toLowerCase();
-  //     if (!addr) return;
-
-  //     if (addr === "native") {
-  //       addr = "0x0000000000000000000000000000000000000000";
-  //     }
-
-  //     prioritySet.add(addr);
-  //     balanceMap[addr] = {
-  //       balance: t.balance,
-  //       balanceUSD: t.balanceUSD,
-  //       decimals: t.decimals,
-  //       address: addr,
-  //       name: t.name,
-  //       symbol: t.symbol
-  //     };
-  //   });
-  // }
-
-  // const hasAnyWalletMatch = currentTokenList.some(item =>
-  //   prioritySet.has(item.address?.toLowerCase())
-  // );
-
-  // const filteredTokenList = currentTokenList.filter(item => {
-  //   const addr = item.address?.toLowerCase();
-  //   if (!addr) return false;
-  //   const name = item.name?.toLowerCase() || "";
-  //   const symbol = item.symbol?.toLowerCase() || "";
-  //   const query = tokenSearchQuery.toLowerCase();
-
-  //   const matchesSearch = name.includes(query) || symbol.includes(query);
-  //   if (hasAnyWalletMatch) {
-  //     return prioritySet.has(addr) && matchesSearch;
-  //   }
-  //   return matchesSearch;
-  // });
-
-  // const finalTokenList = filteredTokenList.map(item => {
-  //   const addr = item.address?.toLowerCase();
-
-  //   return {
-  //     ...item,
-  //     ...(balanceMap[addr] || {}),
-  //     address: addr,
-  //     decimals: item.decimals ?? balanceMap[addr]?.decimals
-  //   };
-  // });
-
-  // const sortedTokenList = finalTokenList.sort((a, b) => {
-  //   const aPri = prioritySet.has(a.address?.toLowerCase()) ? 1 : 0;
-  //   const bPri = prioritySet.has(b.address?.toLowerCase()) ? 1 : 0;
-  //   return bPri - aPri;
-  // });
-
-  useEffect(() => {
-    if (!selectedToken && currentTokenList.length > 0) {
-      setSelectedToken(currentTokenList[0]);
+  const getFromNetworkTokens = () => {
+    if (selectedFromNetwork.subName === 'BNB') {
+      return bscSupportTokens;
+    } else if (selectedFromNetwork.subName === 'ETH') {
+      return ethSupportTokens;
+    } else if (selectedFromNetwork.subName === 'STR') {
+      return stellarSupportTokens;
     }
-  }, [currentTokenList]);
-
-  useEffect(() => {
-    resetState();
-    if (selectedToken && state?.wallet?.address) {
-      fetchUSDCBalnce(selectedToken, state?.wallet?.address);
-    }
-    setWALLETBALANCE(state?.EthBalance);
-    setWALLETADDRESS(state?.wallet?.address);
-  }, []);
-
-  useEffect(() => {
-    resetState();
-    if (selectedToken && state?.wallet?.address) {
-      fetchUSDCBalnce(selectedToken, state?.wallet?.address);
-    }
-    setWALLETBALANCE(state?.EthBalance);
-    setWALLETADDRESS(state?.wallet?.address);
-  }, [state?.wallet?.address]);
-
-  useEffect(() => {
-    resetState();
-    if (currentTokenList.length > 0 && state?.wallet?.address) {
-      const newToken = currentTokenList[0];
-      setSelectedToken(newToken);
-      fetchUSDCBalnce(newToken, state?.wallet?.address);
-    }
-    setWALLETADDRESS(state?.wallet?.address);
-  }, [chooseSelectedItemId]);
-
-  const resetState = () => {
-    setShowExpandCon(false);
-    setshowTx(false);
-    setshowTxHash([]);
-    setresQuotes(null);
-    setnonDirectQoutes(null);
-    setgetInfo(false);
-    setbalanceLoading(false);
-    setfianl_modal_error(false);
-    setfianl_modal_loading(false);
-    setPayFeeType('native');
-    seterrorMsg(null);
+    return [];
   };
 
-  useEffect(()=>{
-    getQuote(amount, currentWalletType=== "BNB" ? "BNB" : "ETH",selectedToken?.symbol,selectedToken);
-  },[selectedToken])
 
-  const fetchUSDCBalnce = async (activeToken=selectedToken,addresses) => {
+  const getToNetworkTokens = () => {
+    if (selectedToNetwork.subName === 'BNB') {
+      return bscSupportTokens;
+    } else if (selectedToNetwork.subName === 'ETH') {
+      return ethSupportTokens;
+    } else if (selectedToNetwork.subName === 'STR') {
+      return stellarSupportTokens;
+    }
+    return [];
+  };
+
+
+  useEffect(() => {
+    let toAsset = null;
+    if (selectedToNetwork.subName === 'BNB') {
+      toAsset = bscSupportTokens[0];
+    } else if (selectedToNetwork.subName === 'ETH') {
+      toAsset = ethSupportTokens[0];
+    } else if (selectedToNetwork.subName === 'STR') {
+      toAsset = stellarSupportTokens[0];
+    }
+    setSelectedToAsset(toAsset);
+  }, [selectedToNetwork]);
+
+  useEffect(() => {
+    const initService = async () => {
+      if (fromAmount) {
+        setQuotesLoading(true);
+        await fetchPairQuotes(selectedFromNetwork.chainName, selectedToNetwork.chainName, selectedFromAsset.symbol, selectedToAsset.symbol, fromAmount);
+      }
+      await fetchSelectedTokenBalance()
+    }
+    initService();
+  }, [selectedFromAsset, selectedFromNetwork,selectedToAsset,selectedToNetwork]);
+
+  useEffect(() => {
+    const init = async () => {
+      const walletStatus = await stellarWalletStatus(state?.STELLAR_PUBLICK_KEY);
+      setShowWalletActivation(walletStatus);
+    }
+    init()
+  }, [])
+
+  const handleNetworkSelect = (network) => {
+    if (modalType === 'from') {
+      setSelectedFromNetwork(network);
+      if (network.subName === 'BNB') {
+        setSelectedFromAsset(bscSupportTokens[0]);
+      } else if (network.subName === 'ETH') {
+        setSelectedFromAsset(ethSupportTokens[0]);
+      } else if (network.subName === 'STR') {
+        setSelectedFromAsset(stellarSupportTokens[0]);
+      }
+    } else {
+      setSelectedToNetwork(network);
+    }
+    setShowNetworkModal(false);
+  };
+
+  const handleFromAssetSelect = (asset) => {
+    setSelectedFromAsset(asset);
+    setShowFromAssetModal(false);
+  };
+
+  const handleToAssetSelect = (asset) => {
+    setSelectedToAsset(asset);
+    setShowToAssetModal(false);
+  };
+
+  const openNetworkModal = (type) => {
+    setModalType(type);
+    setShowNetworkModal(true);
+  };
+
+  const fetchSelectedTokenBalance = async () => {
     try {
       setbalanceLoading(true);
-      if (!activeToken) {
-        setbalanceLoading(false);
-        return;
-      }
-
-      const activeNetwork = chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
-      const tokenAddress = activeToken?.address;
-
-      if (activeNetwork === "Ethereum") {
-        if (tokenAddress && addresses) {
-          const resposeBalance = await fetchTokenInfo(tokenAddress, addresses);
-          const balance = resposeBalance[0].tokenBalance;
-          setWALLETBALANCE(balance);
-          const nativeBalance = await getWalletBalance(addresses,"ETH");
-          setNetworkBalance(nativeBalance.status?nativeBalance.balance:0.0);
-        }
-      }
-
-      if (activeNetwork === "BNB") {
-        if (tokenAddress && addresses) {
-          const resposeBalance = await fetchBSCTokenInfo(tokenAddress, addresses);
-          const balance = resposeBalance[0].tokenBalance;
-          setWALLETBALANCE(balance);
-          const nativeBalance = await getWalletBalance(addresses,"BSC");
-          setNetworkBalance(nativeBalance.status?nativeBalance.balance:0.0);
-        }
-      }
-
-      setbalanceLoading(false);
-    } catch (error) {
-      setWALLETBALANCE(0.00);
-      setbalanceLoading(false);
-      console.log("Error fetching balance:", error);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        navigation.goBack();
-        return true;
-      };
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
-      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-    }, [navigation])
-  );
-
-  const handleUpdate = (item) => {
-    setChooseSelectedItemId(item.name);
-    setChooseModalVisible(false);
-  };
-
-  const handleTokenUpdate = (item) => {
-    setSelectedToken(null);
-    setTokenSearchQuery('')
-    setSelectedToken(item);
-    setchooseModalVisible_choose(false);
-    fetchUSDCBalnce(item,state?.wallet?.address);
-  };
-
-  const chooseRenderItem = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => handleUpdate(item)}
-      style={styles.chooseItemContainer}
-    >
-      <Image style={styles.chooseItemImage} source={{ uri: item.url }} />
-      <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.name}</Text>
-    </TouchableOpacity>
-  );
-
-  const tokenRenderItem = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => handleTokenUpdate(item)}
-      style={styles.chooseItemContainer}
-    >
-      <Image style={styles.chooseItemImage} source={{ uri: item.logoURI }} />
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.symbol}</Text>
-          {/* <Text style={[styles.chooseItemText, { color: theme.headingTx }]}>{item.balance || "0.0"}</Text> */}
-      </View>
-      <View style={{alignSelf:"flex-end",alignItems:"flex-end"}}>
-          <TouchableOpacity style={[styles.buyBtnCon,{backgroundColor:"#4052D6"}]} onPress={() => {
-            setchooseModalVisible_choose(false),
-              setTimeout(() => {
-                navigation.navigate("KycComponent", {cryptoRequest:item.symbol,cryptoRequestChain:currentWalletType==="BNB"?"BNB":"ETH"})
-              },300)
-          }
-          }>
-            <Text style={[styles.buyBtnTxt,{color:"#fff"}]}>Buy Now</Text>
-          </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const sendEthToContract = async (amount) => {
-    try {
-      const activeNetwork = chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
-      const activeAsset = selectedToken?.symbol;
-
-      if (activeNetwork === "Ethereum" && activeAsset === "USDT" || activeNetwork === "Ethereum" && activeAsset === "USDC") {
-        const respoExe = await swap_prepare(
-          state?.wallet?.address,
-          state?.wallet?.address,
-          state.STELLAR_PUBLICK_KEY,
-          amount,
-          activeAsset,
-          "USDC",
-          "ETH",
-          payFeeType
-        );
-
-        console.log("Bridge swap response:", respoExe);
-
-        if (respoExe?.status_task) {
-          const { res } = respoExe;
-          const txHashes = [];
-
-          if (res.approvalTxHash) {
-            console.log("Approval transaction:", res.approvalTxHash);
-
-            await LocalTxManager.saveTx(
-              state && state.wallet && state.wallet.address,
-              {
-                chain: "ETH",
-                hash: res.approvalTxHash,
-                status: "pending",
-                statusColor: "#eec14fff",
-                type: "approval",
-                timestamp: Date.now()
-              }
-            );
-
-            txHashes.push({
-              chain: "ETH",
-              hash: res.approvalTxHash,
-              type: "Approval"
+      switch (selectedFromNetwork.subName) {
+        case "ETH":
+        case "BNB":
+          const evmBalance = await getTokenBalancesUsingAddress(selectedFromAsset.address, selectedFromNetwork.walletAddress, selectedFromNetwork.subName === "ETH" ? selectedFromNetwork.subName : "BSC");
+          setFromBalance(evmBalance.status ? evmBalance.tokenInfo[0] : 0.0);
+          setbalanceLoading(false);
+          break;
+        case "STR":
+          const nativeBalance = await GetStellarAvilabelBalance(selectedFromNetwork.walletAddress);
+          const tokenBalance = await GetStellarUSDCAvilabelBalance(selectedFromNetwork.walletAddress, selectedFromAsset.symbol, selectedFromAsset.address);
+          if (nativeBalance.availableBalance && tokenBalance.availableBalance) {
+            setFromBalance({
+              walletBalance: nativeBalance.availableBalance ? parseFloat(nativeBalance.availableBalance) : 0.0,
+              tokenBalance: tokenBalance.availableBalance ? parseFloat(tokenBalance.availableBalance) : 0.0
             });
           }
-
-          console.log("Transfer transaction:", res.transferTxHash);
-
-          await LocalTxManager.saveTx(
-            state && state.wallet && state.wallet.address,
-            {
-              chain: "ETH",
-              hash: res.transferTxHash,
-              status: "pending",
-              statusColor: "#eec14fff",
-              type: "transfer",
-              timestamp: Date.now()
-            }
-          );
-
-          txHashes.push({
-            chain: "ETH",
-            hash: res.transferTxHash,
-            type: "Transfer"
-          });
-
-          setfianl_modal_text("Transaction Successful");
-          setfianl_modal_loading(false);
-          setfianl_modal_error(true);
-          setshowTxHash(txHashes);
-
-        } else {
-          console.log("Transaction failed:", respoExe?.res);
-          setfianl_modal_text("Transaction Failed");
-          setfianl_modal_loading(false);
-          setfianl_modal_error(true);
-          throw new Error(respoExe?.res || "Transaction failed");
-        }
-      }
-
-      if (activeNetwork === "BNB" && activeAsset === "USDT" || activeNetwork === "BNB" && activeAsset === "USDC") {
-        const respoExe = await SwapPepare(
-          state?.wallet?.address,
-          state?.wallet?.address,
-          state.STELLAR_PUBLICK_KEY,
-          amount,
-          activeAsset,
-          "USDC",
-          "BNB",
-          payFeeType
-        );
-        console.log("respoExe-=-=BNB-=",respoExe);
-        if (respoExe?.status_task) {
-           const { res } = respoExe;
-          const txHashes = [];
-
-          if (res.approvalTxHash) {
-            console.log("Approval transaction:", res.approvalTxHash);
-
-            await LocalTxManager.saveTx(
-              state && state.wallet && state.wallet.address,
-              {
-                chain: "BSC",
-                hash: res.approvalTxHash,
-                status: "pending",
-                statusColor: "#eec14fff",
-                type: "approval",
-                timestamp: Date.now()
-              }
-            );
-
-            txHashes.push({
-              chain: "BSC",
-              hash: res.approvalTxHash,
-              type: "Approval"
-            });
-          }
-
-          console.log("Transfer transaction:", res.transferTxHash);
-
-          await LocalTxManager.saveTx(
-            state && state.wallet && state.wallet.address,
-            {
-              chain: "BSC",
-              hash: res.transferTxHash,
-              status: "pending",
-              statusColor: "#eec14fff",
-              type: "transfer",
-              timestamp: Date.now()
-            }
-          );
-
-          txHashes.push({
-            chain: "BSC",
-            hash: res.transferTxHash,
-            type: "Transfer"
-          });
-
-          setfianl_modal_text("Transaction Successful");
-          setfianl_modal_loading(false);
-          setfianl_modal_error(true);
-          setshowTxHash(txHashes);
-          // setfianl_modal_text("Transaction Successful");
-          // await LocalTxManager.saveTx(state && state.wallet && state.wallet.address,{ chain: "BSC", hash: respoExe.res.transferTxHash, status:"pending",statusColor:"#eec14fff"  });
-          // setfianl_modal_loading(false);
-          // setfianl_modal_error(true);
-          // setshowTxHash([{ chain: "BSC", hash: respoExe.res.transferTxHash }]);
-        } else {
-          throw new Error("Transaction failed");
-        }
+          setbalanceLoading(false);
+          break;
+        default:
+          setFromBalance(0.0);
+          setbalanceLoading(false);
+          break;
       }
     } catch (error) {
-      setfianl_modal_text("Transaction Failed");
-      console.log("Transaction Failed", error);
-      setfianl_modal_loading(false);
-      setfianl_modal_error(true);
+      setbalanceLoading(false);
+      console.error("Error fetching balance:", error);
     }
   };
 
-  const swapNonDiractToken = async (fromToken, toToken, amount, privateKey) => {
-    try {
-      const wallet = new ethers.Wallet(privateKey);
-      const address = await wallet.getAddress();
-      console.log("---toToken.symbol", fromToken.symbol)
-      const payload = {
-        tokenIn: fromToken,
-        tokenOut: toToken,
-        amount: amount,
-        recipient: address,
-      };
-      console.log("perpare:---:payload", payload)
-      const respo = await proxyRequest("/v1/eth/swap-transaction/prepare", PPOST, payload);
-      console.log("perpare:", respo)
-      if (respo.err?.status) {
-        return {
-          status: false,
-          message: respo.err.message||"Swap failed",
-          details: respo.err.message||"faild to swap"
-        };
-      }
-      const rawTxs = respo.res;
-      const signedTxs = [];
-
-     for (let i = 0; i < rawTxs.length; i++) {
-        const tx = rawTxs[i];
-        if (tx.value) tx.value = BigInt(tx.value);
-        if (tx.gasLimit) tx.gasLimit = BigInt(tx.gasLimit);
-        if (tx.maxFeePerGas) tx.maxFeePerGas = BigInt(tx.maxFeePerGas);
-        if (tx.maxPriorityFeePerGas) tx.maxPriorityFeePerGas = BigInt(tx.maxPriorityFeePerGas);
-        if (tx.chainId) tx.chainId = BigInt(tx.chainId);
-        if (tx.nonce) tx.nonce = BigInt(tx.nonce);
-
-        console.log(`Signing transaction ${i + 1}/${rawTxs.length}:`, tx);
-
-        try {
-          const signedTx = await wallet.signTransaction(tx);
-          signedTxs.push(signedTx);
-          console.log(`Transaction ${i + 1} signed successfully`);
-        } catch (signError) {
-          console.error(`Failed to sign transaction ${i + 1}:`, signError);
-          return {
-            status: false,
-            message: "Transaction signing failed",
-            details: signError.message || "User rejected transaction"
-          };
-        }
-      }
-       console.log("All transactions signed. Broadcasting...");
-      const { res, err } = await proxyRequest("/v1/eth/swap-transaction/execute", PPOST, { txs: signedTxs });
-      console.log("=====execute-----", res)
-      if (err?.status) {
-        return {
-          status: false,
-          message: err.message||"Swap failed",
-          details: err.message||"faild to swap"
-        };
-      } if (res?.[0]?.txResponse?.hash) {
-        console.log("=====execute0-----", res)
-        return {
-          status: true,
-          message: "Swap completed successfully"
-        }
-      }
-    } catch (error) {
-      console.log("error onSwapETHtoUSDC: ", error)
-      return {
-        status: false,
-        message: "Swap failed",
-        details: error.message
-      };
+  const handleInputChange = async (value) => {
+    const replaceComma = value.replace(',', '.');
+    const cleanValue = replaceComma.replace(/[^0-9.]/g, '');
+    setFromAmount(cleanValue)
+    if (parseFloat(cleanValue) === 0 || !cleanValue) {
+      return;
     }
+    setQuotesLoading(true);
+    fetchPairQuotes(selectedFromNetwork.chainName, selectedToNetwork.chainName, selectedFromAsset.symbol, selectedToAsset.symbol, cleanValue);
   }
-
-  const manage_swap = async () => {
-    setfianl_modal_loading(true);
-    const amountValue = parseFloat(amount);
-    const walletBalanceValue = parseFloat(WALLETBALANCE);
-
-    if (isNaN(amountValue) || amountValue == 0) {
-      setfianl_modal_loading(false);
-      ShowErrotoast(toast, "Invalid amount");
-      setamount("");
-    } else if (amountValue <= 0 || amountValue > walletBalanceValue) {
-      setfianl_modal_loading(false);
-      ShowErrotoast(toast, "Insufficient funds");
-      setamount("");
-    } else {
-      const activeNetwork = chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
-      const activeAsset = selectedToken?.symbol;
-      if (activeNetwork === "Ethereum" && activeAsset === "USDT" || activeNetwork === "Ethereum" && activeAsset === "USDC" || activeNetwork === "BNB" && activeAsset === "USDT" || activeNetwork === "BNB" && activeAsset === "USDC") {
-        sendEthToContract(amount);
+  const fetchPairQuotes = useCallback(
+    debounce(async (sourceChainName, destChainName, sourceTokenSymbol, destTokenSymbol, qouteValue) => {
+      const qoutesRep = await getChainTokenData(sourceChainName, destChainName, sourceTokenSymbol, destTokenSymbol, qouteValue);
+      if (qoutesRep.success) {
+        setPairQuotes(qoutesRep.info);
+        setQuotesLoading(false);
+        Keyboard.dismiss();
       } else {
-        const response = await swapNonDiractToken(selectedToken, defaultUsdts[0], amount, state?.wallet?.privateKey);
-        console.log("response-++++++-", response)
-        if (response.status === false) {
-          setfianl_modal_text("Transaction Failed");
-          setfianl_modal_loading(false);
-          setfianl_modal_error(true);
-          CustomInfoProvider.show("Info", "Transaction Faild.");
-        }
-        if (response.status === true) {
-          sendEthToContract(nonDirectQoutes.outputAmount);
-        }
+        setQuotesLoading(false);
+        setPairQuotes(null);
+        Keyboard.dismiss();
+        alert("error", qoutesRep.error)
       }
-    }
-  };
-
-  const isValidNumber = (value) => {
-    const num = parseFloat(value);
-    return !isNaN(num) && num !== 0;
-  };
-
-  const getQuote = useCallback(
-    debounce((value, chaiType, inputToken, sumbitToken) => {
-      if (isValidNumber(value) && value !== "null") {
-        setresQuotes(null);
-        setnonDirectQoutes(null);
-        setgetInfo(true);
-        if (inputToken === "USDT" || inputToken === "USDC") {
-          collectQuotes(value, chaiType, inputToken);
-        } else {
-          console.log("called-collectNonDefaultTokenQuotes")
-          collectNonDefaultTokenQuotes(sumbitToken, chaiType === "BNB" ? defaultUsdts[1] : defaultUsdts[0], value, chaiType === "BNB" ? "bsc" : "eth")
-        }
-      }
-    }, 1000),
+    }, 500),
     []
   );
 
-  const handleInputChange = (text, tokenChain, inputToken, sumbitToken) => {
-    setresQuotes(null);
-    setnonDirectQoutes(null);
-    const replaceComma = text.replace(',', '.');
-    const numericText = replaceComma.replace(/[^0-9.]/g, '');
-    setamount(numericText);
-    getQuote(numericText, tokenChain === "BNB" ? "BNB" : "ETH", inputToken, sumbitToken);
-  };
+  const nextStep=()=>{
+    setSwapLoading(false);
+    navigation.navigate("StellarTransactions");
+  }
 
-  const collectNonDefaultTokenQuotes = async (tokenIn, tokenOut, amountIn, type) => {
-    const { res, err } = await proxyRequest(`/v1/${type}/swap-quote`, PPOST, { tokenIn: tokenIn, tokenOut: tokenOut, amount: amountIn });
-    console.log(res, err)
-    if (err?.status) {
-      CustomInfoProvider.show("error",err?.message||"Unable to get swap quotes");
-      setgetInfo(false);
-      setresQuotes(null);
-      setnonDirectQoutes(null);
-    }
-    else {
-      console.log("--output--", res);
-      setnonDirectQoutes(res);
-      collectQuotes(res.outputAmount, type === "bsc" ? "BNB" : "ETH", tokenOut.symbol);
-    }
-  };
-
-  const collectQuotes = async (value, typeOfchain, spendToken) => {
-    const deviceToken = await getToken();
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Authorization", "Bearer " + deviceToken);
-    myHeaders.append("x-auth-device-token", deviceToken);
-
-    const raw = JSON.stringify({
-      "amount": value,
-      "chainType": typeOfchain,
-      "sourceToken": spendToken
-    });
-
-    const requestOptions = {
-      method: "POST",
-      headers: myHeaders,
-      body: raw,
-      redirect: "follow"
-    };
-
-    fetch(REACT_PROXY_HOST + `/v1/bridge/swap-quotes`, requestOptions)
-      .then((response) => response.json())
-      .then(async (result) => {
-        if (result?.quotes) {
-          Keyboard.dismiss();
-          const respo = await convertMultiple([
-            { token: result?.quotes?.fee?.native?.symbol, amount: result?.quotes?.fee?.native?.amount },
-            { token: result?.quotes?.fee?.stablecoin?.symbol, amount: result?.quotes?.fee?.stablecoin?.amount }
-          ]);
-
-          const mergedQuotes = { ...result?.quotes };
-          for (const item of respo) {
-            if (item.success) {
-              if (item.token === mergedQuotes.fee.native.symbol) {
-                mergedQuotes.fee.native = { ...mergedQuotes.fee.native, ...item };
-              } else if (item.token === mergedQuotes.fee.stablecoin.symbol) {
-                mergedQuotes.fee.stablecoin = { ...mergedQuotes.fee.stablecoin, ...item };
-              }
-            }
-          }
-          setresQuotes(mergedQuotes);
-          setgetInfo(false);
+  const swapManager = async () => {
+    Keyboard.dismiss();
+    if(selectedFromNetwork.chainName!==selectedToNetwork.chainName){
+      if (parseFloat(fromAmount) <= 0) {
+        CustomInfoProvider.show("error","Please enter a valid amount.");
+      } else {
+        if (selectedFromNetwork.subName === "STR") {
+          await executeNonEvmSwap();
         } else {
-          console.log("unable to get qoutes: ", result)
-          setgetInfo(false);
-          setresQuotes(null);
-          CustomInfoProvider.show("Info", result?.message === "Amount must be greater than zero"
-            ? "Oops! Invalid amount."
-            : result.message||"An error occurred. Please try again later.");
+          await executeSwap();
         }
-      })
-      .catch((error) => {
-        setgetInfo(false);
-        setresQuotes(null);
-        console.log("--->errorClasic", error);
-      });
-  };
-
-  useEffect(() => {
-    const init=async()=>{
-      if (!resQuotes) return;
-
-    const feeAmount = payFeeType === "native"
-      ? parseFloat(resQuotes?.fee?.native?.amount || "0")
-      : parseFloat(resQuotes?.fee?.stablecoin?.amount || "0");
-
-    const minReceive = parseFloat(resQuotes?.minimumAmountOut || "0");
-    const netReceive = Math.max(0, minReceive - feeAmount);
-
-    if (netReceive <= 0 || (payFeeType === "stable" && feeAmount > parseFloat(await WALLETBALANCE)) || (payFeeType === "native" && feeAmount > parseFloat(await WALLETBALANCE))) {
-      seterrorMsg("Insufficient funds to pay gas.");
-    } else {
-      seterrorMsg(null);
+      }
+    }else{
+      CustomInfoProvider.show("error","The source and destination networks cannot be the same.");
     }
-    }
-    init()
-  }, [payFeeType, resQuotes, WALLETBALANCE]);
+  }
 
-  const feeData = payFeeType === "native"
-    ? resQuotes?.fee?.native
-    : resQuotes?.fee?.stablecoin;
+  const executeNonEvmSwap=async()=>{
+    console.debug("executeNonEvmSwap");
+    setSwapLoading(true);
+     try {
+      const stellarWallet = {
+        publicKey: state && state.STELLAR_PUBLICK_KEY
+      };
+      const result = await swapPepare(
+        selectedFromNetwork.chainName,
+        selectedToNetwork.chainName,
+        selectedFromAsset.symbol,
+        selectedToAsset.symbol,
+        fromAmount,
+        selectedToNetwork.walletAddress,
+        stellarWallet,
+        selectedRelayerFee
+      );
+      console.debug("swap-result->", result)
+      if (result.success) {
+        setSwapLoading(false);
+        CustomInfoProvider.show("success", "Bridge Successfull.", [
+          { text: "Okay", onPress: nextStep },
+        ]);
+      } else {
+        setSwapLoading(false);
+        CustomInfoProvider.show("error", result.error||"Bridge Faild.");
+        console.debug("Bridge Faild:-", result);
+      }
+    } catch (error) {
+      setSwapLoading(false);
+      console.error("error in Bridge swap execute:", error)
+      CustomInfoProvider.show("error","Bridge Faild.");
+    }
+  }
+
+  const executeSwap = async () => {
+    console.debug("executeSwap");
+    setSwapLoading(true);
+    try {
+      const resultOfBidirectional = selectedFromNetwork.chainName === "ETH" ? await swap_prepare(
+        state?.wallet?.address,
+        selectedFromNetwork.walletAddress,
+        selectedToNetwork.walletAddress,
+        fromAmount.toString(),
+        selectedFromAsset.symbol,
+        selectedToAsset.symbol,
+        selectedFromNetwork.chainName === "BSC" ? "BNB" : selectedFromNetwork.chainName,
+        selectedRelayerFee,
+        selectedToNetwork.chainName === "BSC" ? "BNB" : selectedToNetwork.chainName,
+      ) : await SwapPepare(
+        state?.wallet?.address,
+        state?.wallet?.address,
+        selectedToNetwork.walletAddress,
+        fromAmount.toString(),
+        selectedFromAsset.symbol,
+        selectedToAsset.symbol,
+        selectedFromNetwork.chainName === "BSC" ? "BNB" : selectedFromNetwork.chainName,
+        selectedRelayerFee,
+        selectedToNetwork.chainName === "BSC" ? "BNB" : selectedToNetwork.chainName,
+      );
+      console.debug("swap bidirectional response:", resultOfBidirectional);
+      if (resultOfBidirectional?.status_task) {
+        const { res } = resultOfBidirectional;
+        const txHashes = [];
+        if (res.approvalTxHash) {
+          await LocalTxManager.saveTx(
+            state && state.wallet && state.wallet.address,
+            {
+              chain: selectedFromNetwork.chainName,
+              hash: res.approvalTxHash,
+              status: "pending",
+              statusColor: "#eec14fff",
+              type: "approval",
+              timestamp: Date.now()
+            }
+          );
+          txHashes.push({
+            chain: selectedFromNetwork.chainName,
+            hash: res.approvalTxHash,
+            type: "Approval"
+          });
+        }
+        await LocalTxManager.saveTx(
+          state && state.wallet && state.wallet.address,
+          {
+            chain: selectedFromNetwork.chainName,
+            hash: res.transferTxHash,
+            status: "pending",
+            statusColor: "#eec14fff",
+            type: "transfer",
+            timestamp: Date.now()
+          }
+        );
+        txHashes.push({
+          chain: selectedFromNetwork.chainName,
+          hash: res.transferTxHash,
+          type: "Transfer"
+        });
+        CustomInfoProvider.show("success", "Bridge Successfull.", [
+          { text: "Okay", onPress: nextStep },
+        ]);
+      } else {
+        setSwapLoading(false);
+        console.error("Transaction failed:", resultOfBidirectional?.res);
+        CustomInfoProvider.show("error", resultOfBidirectional?.res||"Bridge Faild.");
+      }
+    } catch (error) {
+      setSwapLoading(false);
+      console.error("Transaction error:", error);
+      CustomInfoProvider.show("error", "Bridge Faild.");
+    }
+  }
 
   return (
-    <View style={{ width:wp(100),paddingHorizontal:wp(3.2) }}>
-        <View style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: "column", paddingHorizontal: wp(3) }]}>
-          <View style={[styles.exportBottomCon, { backgroundColor: theme.cardBg }]}>
-           <View style={{width:wp(50)}}>
-            <View style={styles.fromCon}>
-             <Text style={[styles.networkHeading, { color: theme.headingTx }]}>From Network </Text>
-            </View>
-             <View style={styles.fromCon}>
-            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>{currentWalletType==="BNB"?"BNB":"ETH"} Balance : </Text>
-             {balanceLoading ? (
-                    <ActivityIndicator color={"green"} />
-                  ):<View style={{ width: wp(15)}}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <Text style={{ fontSize: 14, color: theme.headingTx }}>{networkBalance}</Text>
-              </ScrollView>
-            </View>}
-            </View>
-           </View>
-
-            <TouchableOpacity
-              style={[styles.FromSelectionCon, { backgroundColor: theme.bg}]}
-              onPress={() => setChooseModalVisible(true)}
-              disabled={balanceLoading}
-            >
-              <View style={{ flexDirection: "row",alignItems:"center" }}>
-                <Image
-                  source={{ uri: chooseItemList.find(item => item.name === currentWalletType)?.url }}
-                  style={styles.fromConImg}
-                />
-                  <Text style={[styles.networkHeading, { color: theme.headingTx }]}>
-                    {currentWalletType}
-                  </Text>
-              </View>
-              <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30} />
-            </TouchableOpacity>
-
-          </View>
-          <View  style={[styles.card, { backgroundColor: theme.bg, flexDirection: "column", paddingVertical: 0,paddingHorizontal:0 }]}>
-            <View style={[styles.card, { backgroundColor: theme.bg, flexDirection: "row", paddingVertical: 0, justifyContent: "space-between", borderColor: theme.inactiveTx, borderWidth: 0.4,marginTop:0,borderBottomLeftRadius:0,borderBottomRightRadius:0 }]}>
-              <TouchableOpacity
-                style={[styles.exportCon, { backgroundColor: theme.bg }]}
-                onPress={() => { resetState(), setchooseModalVisible_choose(true) }}
-                disabled={balanceLoading}
-              >
-                <View style={{ flexDirection: "row" }}>
-                  <Image
-                    source={{ uri: selectedToken?.logoURI || currentTokenList[0]?.logoURI }}
-                    style={styles.logoImg_TOP_1}
-                  />
-                  <View>
-                    <Text style={styles.networkSubHeading}>Assets</Text>
-                    <Text style={[styles.networkHeading, { color: theme.headingTx }]} numberOfLines={1} ellipsizeMode="tail">{(selectedToken?.symbol || currentTokenList[0]?.symbol)?.slice(0, 10)}</Text>
-                  </View>
+    <View style={styles.container}>
+      <WalletActivationComponent
+       isVisible={showWalletActivation}
+       onClose={() => {setWalletActivationWarning(true),setShowWalletActivation(false)}}
+       onActivate={()=>{setWalletActivationWarning(true),setShowWalletActivation(false)}}
+       navigation={navigation}
+       appTheme={state.THEME.THEME}
+       shouldNavigateBack={true}
+      />
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.card}>
+          <View style={styles.section}>
+            <View style={styles.headerRow}>
+              <View style={styles.networkHeader}>
+                <Text style={styles.labelText}>From Network</Text>
+                {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : 
+                <View style={{flexDirection:"row"}}>
+                <Text style={styles.balanceAmount}>{selectedFromNetwork.subName} Balance : </Text>
+                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                   <Text style={styles.balanceAmount}>
+                   {fromBalance ? parseFloat(fromBalance?.walletBalance) : "0.000"}
+                   </Text>
+                   </ScrollView>
                 </View>
-                <Icon name={"chevron-down"} type={"materialCommunity"} color={theme.headingTx} size={30} />
+                }
+              </View>
+              <TouchableOpacity
+                style={styles.networkSelector}
+                onPress={() => openNetworkModal('from')}
+              >
+                <Image
+                  source={{ uri: selectedFromNetwork.url }}
+                  style={styles.networkIcon}
+                />
+                <Text style={styles.networkName}>{selectedFromNetwork.subName}</Text>
+                <Icon type="ionicon" name="chevron-down" size={20} color={theme.headingTx} />
               </TouchableOpacity>
-              <View style={{alignItems:"center",flexDirection:"row",justifyContent:"center"}}>
-              {showExpandCon && <View style={[styles.InsufficientActionsCon]}>
-                <TouchableOpacity style={[styles.InsufficientActionsBtn, { backgroundColor: "#4052D6" }]} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId, activeAsset: selectedToken }) }}>
-                  <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" }}>Swap</Text>
+            </View>
+
+            <View style={styles.assetContainer}>
+              <TouchableOpacity
+                style={styles.assetSelector}
+                onPress={() => setShowFromAssetModal(true)}
+              >
+                <Image
+                  source={{ uri: selectedFromAsset.logoURI }}
+                  style={styles.assetIconLarge}
+                />
+                <View style={styles.assetInfo}>
+                  <Text style={styles.assetLabel}>Assets</Text>
+                  <Text style={styles.assetName}>{selectedFromAsset.symbol}</Text>
+                </View>
+                <Icon type="ionicon" name="chevron-down" size={20} color={theme.headingTx} />
+              </TouchableOpacity>
+              {showOption && <View style={styles.optionCon}>
+                <TouchableOpacity style={styles.optioBtn} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: selectedFromNetwork.subName, activeAsset: selectedFromAsset }) }}>
+                  <Text style={[styles.amountInput, { color: "#fff" }]}>Swap</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.InsufficientActionsBtn, { backgroundColor: "#fff" }]} onPress={() => { { navigation.navigate("KycComponent", { cryptoRequest: selectedToken.symbol, cryptoRequestChain: currentWalletType === "BNB" ? "BNB" : "ETH" }) } }}>
-                  <Text style={{ color: "#4052D6", fontSize: 14, fontWeight: "600" }}>Buy</Text>
+                <TouchableOpacity style={[styles.optioBtn, { backgroundColor: "#fff" }]} onPress={() => { navigation.navigate("KycComponent", { cryptoRequest: selectedFromAsset.symbol, cryptoRequestChain: selectedFromNetwork.subName }) }}>
+                  <Text style={[styles.amountInput, { color: "#4052D6" }]}>Buy</Text>
                 </TouchableOpacity>
               </View>}
-                <TouchableOpacity onPress={() => { setShowExpandCon(!showExpandCon ? true : false) }}>
-                <Icon name={showExpandCon?"close-circle-outline":"plus-circle-outline"} type={"materialCommunity"} color={theme.headingTx} size={30} />
+              <TouchableOpacity style={styles.addButton} onPress={() => { setShowOption(!showOption ? true : false) }}>
+                <Icon type="ionicon" name={showOption ? "close-circle-outline" : "add-circle-outline"} size={28} color={theme.headingTx} />
               </TouchableOpacity>
-              </View>
             </View>
-            <View style={[styles.modalOpen, { paddingVertical: hp(1), backgroundColor: theme.bg }]}>
+
+            <View style={styles.amountContainer}>
               <TextInput
-                maxLength={50}
-                placeholder={`Enter ${selectedToken?.symbol} amount`}
-                placeholderTextColor={"gray"}
-                keyboardType="decimal-pad"
-                value={amount}
-                style={[styles.textInputForCrossChain, { fontSize: 20, color: theme.headingTx }]}
-                onChangeText={(value) => handleInputChange(
-                  value,
-                  currentWalletType,
-                  selectedToken?.symbol,
-                  selectedToken
-                )}
+                style={styles.amountInput}
+                placeholder={`Enter ${selectedFromAsset.symbol} amount`}
+                placeholderTextColor={theme.inactiveTx}
+                value={fromAmount}
+                onChangeText={(value) => { handleInputChange(value) }}
+                keyboardType="numeric"
                 returnKeyType="done"
               />
-               <View style={styles.formBalanceCon}>
-              <Text style={[styles.subInputText, { color: theme.inactiveTx,fontSize:16 }]}>Available <TouchableOpacity onPress={async()=>{await fetchUSDCBalnce(selectedToken || currentTokenList[0],state?.wallet?.address)}} style={{marginTop:-2,marginRight:8}}>
-                <Icon name={"refresh"} type={"materialCommunity"} size={20} color={theme.headingTx} />
-              </TouchableOpacity></Text>
-              <View style={{ width: wp(17) }}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {balanceLoading ? (
-                    <ActivityIndicator color={"green"} />
-                  ) : (
-                    <Text style={{ color: theme.headingTx, fontSize: 14 }}>
-                      {WALLETBALANCE}
-                    </Text>
-                  )}
-                </ScrollView>
+              <View style={styles.availableContainer}>
+                <TouchableOpacity style={{ flexDirection: "row" }} onPress={async () => { await fetchSelectedTokenBalance() }}>
+                  <Text style={styles.availableLabel}>Available</Text>
+                  <Icon type="ionicon" name="refresh" size={16} color={theme.headingTx} />
+                </TouchableOpacity>
+                {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> :
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <Text style={styles.availableAmount}>{fromBalance ? parseFloat(fromBalance?.tokenBalance) : "0.000"}</Text>
+                  </ScrollView>}
               </View>
-            </View>
-            </View>
-          </View>
-          <View style={[styles.accountDetailsCon,{marginTop:hp(0.3)}]}>
-            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Active Wallet :</Text>
-            <View style={{ width: "72%" }}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <Text style={{ fontSize: 14, color: theme.headingTx }}>{WALLETADDRESS}</Text>
-              </ScrollView>
-            </View>
-          </View>
-        </View>
-
-        <View style={[styles.card, { backgroundColor: theme.cardBg }]}>
-          <View style={[styles.exportBottomCon, { backgroundColor: theme.cardBg }]}>
-           <View style={{width:wp(59)}}>
-            <View style={styles.fromCon}>
-             <Text style={[styles.networkHeading, { color: theme.headingTx }]}>To Network </Text>
-            </View>
-           </View>
-
-            <TouchableOpacity
-              style={[styles.FromSelectionCon, { backgroundColor: theme.bg,padding:6, width: wp(25)}]}
-            >
-              <View style={{ flexDirection: "row",alignItems:"center" }}>
-                <Image
-                  source={{ uri: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq" }}
-                  style={styles.fromConImg}
-                />
-                  <Text style={[styles.networkHeading, { color: theme.headingTx }]}>
-                    Stellar
-                  </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        <View style={[{ backgroundColor: theme.cardBg, flexDirection: "row",marginTop:hp(2) }]}>
-
-          <View style={[styles.receiveAssetCon, { backgroundColor: theme.bg }]}>
-            <Image
-              source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }}
-              style={styles.receiveAssetImg}
-            />
-            <View>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={[styles.networkHeading, { color: theme.headingTx }]}>USDC</Text>
-              </View>
-              <Text style={{ color: "gray", fontSize: 13 }}>(centre.io)</Text>
-            </View>
-          </View>
-          <View style={{ flexDirection: "column" }}>
-            <View style={{ flexDirection: "row",marginTop:-6 }}>
-              <Text style={[styles.subInputText, { fontSize: 15, color: theme.headingTx }]}>Relayer Fee </Text>
-              <Icon name={"gas-station"} type={"materialCommunity"} size={18} color={theme.headingTx} />
             </View>
             <View style={{ flexDirection: "row" }}>
+              <Text style={styles.walletAddress} numberOfLines={1}>Active Wallet : </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(70) }}>
+                <Text style={styles.walletAddress} numberOfLines={1}>{selectedFromAsset.chainId===56||selectedFromAsset.chainId===1?state && state.wallet && state.wallet.address:state && state.STELLAR_PUBLICK_KEY}</Text>
+              </ScrollView>
+            </View>
+          </View>
+
+          <View style={[styles.section, styles.toSection]}>
+            <View style={styles.headerRow}>
+              <View style={[styles.networkHeader, { marginTop: hp(-1.5) }]}>
+                <Text style={styles.labelText}>To Network</Text>
+
+              </View>
               <TouchableOpacity
-                style={[styles.feePayCon, { backgroundColor: payFeeType === "native" ? "#4052D6" : theme.bg,borderTopRightRadius:0,borderBottomRightRadius:0}]}
-                onPress={() => setPayFeeType("native")}
+                style={styles.networkSelector}
+                onPress={() => openNetworkModal('to')}
+                disabled={true}
               >
                 <Image
-                  source={{ uri: chooseItemList.find(item => item.name === currentWalletType)?.url }}
-                  style={[styles.fromConImg,{marginRight:wp(0),marginLeft:hp(0)}]}
+                  source={{ uri: selectedToNetwork.url }}
+                  style={styles.networkIcon}
                 />
-                <Text style={[styles.feePayTx, { color: payFeeType === "native" ? "#fff" : theme.headingTx }]}>Native</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.feePayCon, { backgroundColor: payFeeType === "stable" ? "#4052D6" : theme.bg,borderTopLeftRadius:0,borderBottomLeftRadius:0}]}
-                onPress={() => setPayFeeType("stable")}
-              >
-                <Image source={{ uri: selectedToken?.symbol === "USDC" ? reciverAsset.imageUrl : feeAsset.imageUrl }} style={styles.feeImage} />
-                <Text style={[styles.feePayTx, { color: payFeeType === "stable" ? "#fff" : theme.headingTx }]}>{selectedToken?.symbol === "USDC" ? "USDC" : "USDT"}</Text>
+                <Text style={styles.networkName}>Stellar</Text>
               </TouchableOpacity>
             </View>
-            </View>
-          </View>
-          
-          <View style={[styles.receiveAmountCon, { backgroundColor: theme.smallCardBg }]}>
-            <TextInput
-              maxLength={100}
-              placeholder={"0.00"}
-              placeholderTextColor={"gray"}
-              value={resQuotes?Math.max(
-                    0,
-                    parseFloat(resQuotes.minimumAmountOut || "0") -
-                    parseFloat(
-                      payFeeType === "native"
-                        ? resQuotes?.fee?.native?.amount || "0"
-                        : resQuotes?.fee?.stablecoin?.amount || "0"
-                    )
-                  ).toFixed(6):"0.00"}
-              style={[styles.textInputForCrossChain, { fontSize: 20, color: theme.inactiveTx }]}
-              editable={false}
-            />
-            <View style={[styles.accountDetailsCon,{marginTop:hp(0.3)}]}>
-            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>≈ {feeData?.formattedUSD || `$${Number(feeData?.usdValue || 0).toFixed(2)}`}</Text>
-            <Text style={[styles.subInputText, { color: theme.inactiveTx }]}>Min {resQuotes?resQuotes.minimumAmountOut:"0.00"} USDC</Text>
-            </View>
-          </View>
-        </View>
 
-        {getInfo && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0066cc" />
-            <Text style={styles.loadingText}>Getting best quote...</Text>
-          </View>
-        )}
-
-        {resQuotes !== null && (
-          <View style={[styles.modalQoutesCon, { backgroundColor: theme.cardBg }]}>
-            <Text style={[styles.quoteTitle, { color: theme.headingTx }]}>Transaction Details</Text>
-            {nonDirectQoutes !== null && (
-              <>
-                <View style={[styles.quoteDetailsContainer, { marginBottom: hp(1) }]}>
-                  <View style={styles.quoteRow}>
-                    <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Provider</Text>
-                    <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{currentWalletType === "Ethereum" ? "Uniswap" : "Pancake"}</Text>
+            {selectedToAsset && (
+              <View style={styles.usdcContainer}>
+                <TouchableOpacity
+                  style={[styles.toAssetSelector,{borderWidth: 0}]}
+                  onPress={() => setShowToAssetModal(true)}
+                  disabled={true}
+                >
+                  <Image
+                    source={{ uri: selectedToAsset.logoURI }}
+                    style={styles.assetIconLarge}
+                  />
+                  <View style={styles.toAssetInfo}>
+                    <Text style={styles.assetLabel}>Assets</Text>
+                    <Text style={styles.usdcName}>{selectedToAsset.symbol}</Text>
                   </View>
+                </TouchableOpacity>
 
-                  <View style={styles.quoteRow}>
-                    <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Rate</Text>
-                    <Text style={[styles.quoteValue, { color: theme.headingTx }]}>
-                      1 {selectedToken?.symbol} = {nonDirectQoutes.pricePerToken} USDT
-                    </Text>
-                  </View>
+                <View style={styles.relayerFeeContainer}>
+                  <Text style={styles.relayerFeeLabel}>Relayer Fee <Icon name={"gas-station"} type={"materialCommunity"} size={16} color={theme.headingTx} /></Text>
+                  <View style={styles.feeButtons}>
+                    <TouchableOpacity
+                      style={[
+                        styles.feeButton,
+                        selectedRelayerFee === 'native' && styles.feeButtonActive,
+                        styles.gasFeeNativeCon
+                      ]}
+                      onPress={() => setSelectedRelayerFee('native')}
+                    >
+                      <Image
+                        source={{ uri: selectedFromNetwork.url }}
+                        style={styles.feeIconSmall}
+                      />
+                      <Text style={[
+                        styles.feeButtonText,
+                        selectedRelayerFee === 'native' && styles.feeButtonTextActive
+                      ]}> Native</Text>
+                    </TouchableOpacity>
 
-                  <View style={styles.quoteRow}>
-                    <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Slippage</Text>
-                    <Text style={[styles.quoteValue, { color: theme.headingTx }]}>
-                      1 %
-                    </Text>
-                  </View>
-
-                  <View style={styles.quoteRow}>
-                    <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Minimum Received</Text>
-                    <View style={{ width: wp(25), flexDirection: 'row' }}>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{nonDirectQoutes.outputAmount}</Text>
-                      </ScrollView>
-                      <Text style={[styles.quoteValue, { color: theme.headingTx }]}> USDT</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.quoteRow}>
-                    <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Network Fee</Text>
-                    <Text style={[styles.quoteValue, { color: theme.headingTx }]}>
-                      {nonDirectQoutes?.fee}{" Gwei"}
-                    </Text>
-                  </View>
-                </View>
-              </>
-            )}
-            <View style={[styles.quoteDetailsContainer]}>
-              <View style={styles.quoteRow}>
-                <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Provider</Text>
-                <Text style={[styles.quoteValue, { color: theme.headingTx }]}>Allbridge</Text>
-              </View>
-
-              <View style={styles.quoteRow}>
-                <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Conversion Rate</Text>
-                <Text style={[styles.quoteValue, { color: theme.headingTx }]}>
-                  1 USDT = {resQuotes.conversionRate} USDC
-                </Text>
-              </View>
-
-              <View style={styles.quoteRow}>
-                <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Slippage</Text>
-                <Text style={[styles.quoteValue, { color: theme.headingTx }]}>
-                  {resQuotes.slippageTolerance}%
-                </Text>
-              </View>
-
-              <View style={styles.quoteRow}>
-                <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Minimum Received</Text>
-                <View style={{ width: wp(25), flexDirection: 'row' }}>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{resQuotes.minimumAmountOut}</Text>
-                  </ScrollView>
-                  <Text style={[styles.quoteValue, { color: theme.headingTx }]}> USDC</Text>
-                </View>
-              </View>
-
-              <View style={styles.quoteRow}>
-                <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Network Fee</Text>
-                <View style={{ width: wp(25), flexDirection: "row", alignItems: "center" }}>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <Text style={[styles.quoteValue, { color: theme.headingTx }]}>
-                      {feeData?.amount}
-                    </Text>
-                  </ScrollView>
-                  <Text style={[styles.quoteValue, { color: theme.headingTx }]}>
-                    {" " + feeData?.symbol}
-                  </Text>
-                </View>
-              </View>
-
-
-              <View style={styles.quoteRow}>
-                <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Estimated time</Text>
-                <Text style={[styles.quoteValue, { color: theme.headingTx }]}>
-                  {resQuotes.completionTime ? (resQuotes.completionTime / (1000 * 60) + " Min") : "getting.."}
-                </Text>
-              </View>
-                {payFeeType === "stable"&&<Text style={[styles.quoteLabel, { color: "orange",fontStyle:"italic" }]}>Note: The amount you enter includes the network fee, which will be deducted automatically.</Text>}
-            </View>
-
-            <View style={[styles.quoteTextCon, { borderColor: theme.inactiveTx }]}>
-              <Text style={[styles.quoteText, { color: theme.headingTx }]}>≈</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <Text style={[styles.quoteText, { color: theme.headingTx }]}>
-                  {Math.max(
-                    0,
-                    parseFloat(resQuotes.minimumAmountOut || "0") -
-                    parseFloat(
-                      payFeeType === "native"
-                        ? resQuotes?.fee?.native?.amount || "0"
-                        : resQuotes?.fee?.stablecoin?.amount || "0"
-                    )
-                  ).toFixed(6)}
-                </Text>
-              </ScrollView>
-              <Text style={[styles.quoteText, { color: theme.headingTx }]}>USDC</Text>
-            </View>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={[styles.nextButton, { backgroundColor: !amount || balanceLoading || getInfo || errorMsg !== null ? "gray" : '#4052D6' }]}
-          disabled={!amount || fianl_modal_loading || balanceLoading || getInfo || errorMsg !== null}
-          onPress={() => { Keyboard.dismiss(); manage_swap(); }}
-        >
-          {fianl_modal_loading || getInfo ? (
-            <ActivityIndicator color={"white"} />
-          ) : (
-            <Text style={styles.nextButtonText}>{errorMsg !== null ? errorMsg : parseFloat(WALLETBALANCE) <= 0?"Insufficient Balance":"Confirm Transaction"}</Text>
-          )}
-        </TouchableOpacity>
-
-        <Modal animationType="slide" transparent={true} visible={chooseModalVisible}>
-          <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setChooseModalVisible(false)}>
-            <View style={[styles.chooseModalContent, { backgroundColor: theme.cardBg }]}>
-              <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical: hp(1), color: theme.headingTx }}>Select Network</Text>
-              <FlatList
-                data={chooseItemList}
-                renderItem={chooseRenderItem}
-                keyExtractor={(item) => item.id.toString()}
-              />
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
-        <Modal animationType="slide" transparent={true} visible={chooseModalVisible_choose}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}
-          >
-            <TouchableOpacity
-              style={styles.chooseModalContainer}
-              activeOpacity={1}
-              onPress={() => {
-                Keyboard.dismiss();
-              }}
-            >
-              <TouchableWithoutFeedback>
-                <View style={[styles.chooseModalContent, { backgroundColor: theme.cardBg }]}>
-                  <View style={styles.modalHeader}>
-                    <Text style={{ fontSize: 20, fontWeight: "bold", color: theme.headingTx }}>
-                      Choose Asset
-                    </Text>
-                    <TouchableOpacity onPress={() => {
-                      setchooseModalVisible_choose(false);
-                      setTokenSearchQuery('');
-                      Keyboard.dismiss();
-                    }}>
-                      <Icon name={"close"} type={"materialCommunity"} color={theme.headingTx} size={24} />
+                    <TouchableOpacity
+                      style={[
+                        styles.feeButton,
+                        selectedRelayerFee === 'stablecoin' && styles.feeButtonActive,
+                        styles.gasFeeStableCon
+                      ]}
+                      onPress={() => setSelectedRelayerFee('stablecoin')}
+                    >
+                      <Image
+                        source={{ uri: selectedFromAsset.logoURI }}
+                        style={styles.feeIconSmall}
+                      />
+                      <Text style={[
+                        styles.feeButtonText,
+                        selectedRelayerFee === 'stablecoin' && styles.feeButtonTextActive
+                      ]}> {selectedFromAsset.symbol}</Text>
                     </TouchableOpacity>
                   </View>
-
-                  {/* <View style={[styles.searchContainer, { backgroundColor: theme.bg }]}>
-                    <Icon name={"magnify"} type={"materialCommunity"} color={theme.inactiveTx} size={20} />
-                    <TextInput
-                      placeholder="Search token..."
-                      placeholderTextColor={theme.inactiveTx}
-                      value={tokenSearchQuery}
-                      onChangeText={setTokenSearchQuery}
-                      style={[styles.searchInput, { color: theme.headingTx }]}
-                    />
-                    {tokenSearchQuery.length > 0 && (
-                      <TouchableOpacity onPress={() => setTokenSearchQuery('')}>
-                        <Icon name={"close-circle"} type={"materialCommunity"} color={theme.inactiveTx} size={20} />
-                      </TouchableOpacity>
-                    )}
-                  </View> */}
-
-                  <FlatList
-                    data={currentTokenList}
-                    renderItem={tokenRenderItem}
-                    keyExtractor={(item, index) => item.address || `${item.symbol}-${index}`}
-                    keyboardShouldPersistTaps="handled"
-                    ListEmptyComponent={
-                      <Text style={[styles.emptyText, { color: theme.inactiveTx }]}>
-                        No tokens found
-                      </Text>
-                    }
-                  />
                 </View>
-              </TouchableWithoutFeedback>
-            </TouchableOpacity>
-          </KeyboardAvoidingView>
-        </Modal>
+              </View>
+            )}
 
-        <Modal animationType="fade" transparent={true} visible={fianl_modal_error}>
-          <View style={styles.modalContainer}>
-            <View style={{
-              backgroundColor: 'rgba(33, 43, 83, 1)',
-              padding: 20,
-              borderRadius: 10,
-              alignItems: 'center',
-              width: "90%",
-              height: "30%",
-            }}>
-              <Icon
-                name={fianl_modal_text === "Transaction Failed" ? "alert-circle-outline" : "check-circle-outline"}
-                type={"materialCommunity"}
-                size={60}
-                color={fianl_modal_text === "Transaction Failed" ? "red" : "green"}
-                style={{ marginTop: 19 }}
-              />
-              <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical: 19, color: "#fff" }}>{fianl_modal_text}</Text>
-              <TouchableOpacity
-                style={styles.alertBtn}
-                onPress={() => {
-                  if (fianl_modal_text === "Transaction Failed") {
-                    setfianl_modal_error(false);
-                  } else {
-                    setfianl_modal_error(false);
-                    // setshowTx(true);
-                    navigation.navigate("StellarTransactions")
-                  }
-                }}
-              >
-                <Text style={styles.alertBtnText}>Ok</Text>
-              </TouchableOpacity>
+            <View style={styles.toAmountContainer}>
+              <Text style={styles.toAmount}>≈ </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <Text style={styles.toAmount}>{pairQuotes ? selectedRelayerFee === "native" ? pairQuotes?.minimumAmountOut : Math.max(0,parseFloat(pairQuotes?.minimumAmountOut || "0") - parseFloat(pairQuotes?.fee[selectedRelayerFee].amount)) : `${selectedToAsset.symbol} will be recived`}</Text>
+              </ScrollView>
+              <Text style={styles.toAmount}>{selectedToAsset.symbol}</Text>
             </View>
           </View>
-        </Modal>
 
-      <View style={styles.allBridgeTxCon}>
-        <AllbridgeTxTrack txs={showTxHash} isDarkMode={state?.THEME?.THEME} showTx={showTx} closeTx={() => setshowTx(false)} />
-      </View>
+          {quotesLoading && <View style={styles.quotesLoadingCon}>
+            <ActivityIndicator color={"#4F46E5"} size={"small"} />
+            <Text style={styles.quotesLoadingConTxt}> Please wait...</Text>
+          </View>}
+
+          {pairQuotes && !quotesLoading && <View style={[styles.section, styles.toSection]}>
+            <Text style={styles.quoteHeading}>Quote Details</Text>
+            <View style={styles.quoteRow}>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Provider</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>Allbridge</Text>
+            </View>
+            <View style={styles.quoteRow}>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Conversion Rate</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>1 {selectedFromAsset.symbol} = {pairQuotes.conversionRate} {selectedToAsset.symbol}</Text>
+            </View>
+            <View style={styles.quoteRow}>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Slippage</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>1%</Text>
+            </View>
+            <View style={styles.quoteRow}>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Minimum Received</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{parseFloat(pairQuotes.minimumAmountOut).toFixed(5)} {selectedToAsset.symbol}</Text>
+            </View>
+            <View style={styles.quoteRow}>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Network Fee</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{parseFloat(pairQuotes.fee[selectedRelayerFee].amount).toFixed(5)} {pairQuotes.fee[selectedRelayerFee].symbol}</Text>
+            </View>
+            <View style={styles.quoteRow}>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Estimated time</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{pairQuotes.completionTime}</Text>
+            </View>
+          </View>}
+
+          <TouchableOpacity style={[styles.confirmButton, { backgroundColor: walletActivationWarning||quotesLoading||swapLoading||parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > (selectedRelayerFee==="native"?parseFloat(fromBalance?.walletBalance):parseFloat(fromBalance?.tokenBalance)) ? theme.inactiveTx : "#4F46E5" }]} disabled={walletActivationWarning||quotesLoading||swapLoading||parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > (selectedRelayerFee==="native"?parseFloat(fromBalance?.walletBalance):parseFloat(fromBalance?.tokenBalance))} onPress={()=>{swapManager()}}>
+            <Text style={styles.confirmButtonText}>
+              {walletActivationWarning ? "Stellar wallet Activation Required" :
+                swapLoading ? "Wait transaction under process..." :
+                  parseFloat(fromAmount) +
+                    parseFloat(pairQuotes?.fee?.native?.amount || 0) +
+                    0.0015 >
+                    parseFloat(selectedRelayerFee === "native" ?
+                      fromBalance?.walletBalance :
+                      fromBalance?.tokenBalance
+                    ) ? "Insufficient Balance" : "Confirm Transaction"
+              }
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
+      <Modal
+        visible={showNetworkModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowNetworkModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                Select {modalType === 'from' ? 'From' : 'To'} Network
+              </Text>
+              <TouchableOpacity onPress={() => setShowNetworkModal(false)}>
+                <Icon type="ionicon" name="close" size={24} color={theme.headingTx} />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={chooseItemList.slice(0,2)}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => handleNetworkSelect(item)}
+                >
+                  <Image source={{ uri: item.url }} style={styles.modalItemIcon} />
+                  <Text style={styles.modalItemText}>{item.name}</Text>
+                  {((modalType === 'from' && selectedFromNetwork.id === item.id) ||
+                    (modalType === 'to' && selectedToNetwork.id === item.id)) && (
+                      <Icon type="ionicon" name="checkmark-circle" size={24} color="#4F46E5" />
+                    )}
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.modalList}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showFromAssetModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowFromAssetModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select From Asset</Text>
+              <TouchableOpacity onPress={() => setShowFromAssetModal(false)}>
+                <Icon type="ionicon" name="close" size={24} color={theme.headingTx} />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={getFromNetworkTokens()}
+              keyExtractor={(item) => item.address}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => handleFromAssetSelect(item)}
+                >
+                  <Image source={{ uri: item.logoURI }} style={styles.modalItemIcon} />
+                  <View style={styles.modalItemInfo}>
+                    <Text style={styles.modalItemText}>{item.symbol}</Text>
+                    <Text style={styles.modalItemSubtext}>{item.name}</Text>
+                  </View>
+                  {selectedFromAsset.address === item.address && (
+                    <Icon type="ionicon" name="checkmark-circle" size={24} color="#4F46E5" />
+                  )}
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.modalList}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showToAssetModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowToAssetModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select To Asset</Text>
+              <TouchableOpacity onPress={() => setShowToAssetModal(false)}>
+                <Icon type="ionicon" name="close" size={24} color={theme.headingTx} />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={getToNetworkTokens()}
+              keyExtractor={(item) => item.address}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => handleToAssetSelect(item)}
+                >
+                  <Image source={{ uri: item.logoURI }} style={styles.modalItemIcon} />
+                  <View style={styles.modalItemInfo}>
+                    <Text style={styles.modalItemText}>{item.symbol}</Text>
+                    <Text style={styles.modalItemSubtext}>{item.name}</Text>
+                  </View>
+                  {selectedToAsset.address === item.address && (
+                    <Icon type="ionicon" name="checkmark-circle" size={24} color="#4F46E5" />
+                  )}
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.modalList}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
-};
+}
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
-  },
-  headingText: {
-    fontSize: 18,
-    fontWeight: "400",
-    marginBottom: 12,
-  },
-  exportBottomCon: {
-    gap: 5,
-    flexDirection: "row"
-  },
-  exportCon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderRadius: 8,
-    width: wp(34)
-  },
-  logoImg_TOP_1: {
-    width: 33,
-    height: 33,
-    borderRadius: 20,
-    marginRight: 3,
-  },
-  networkSubHeading: {
-    fontSize: 12,
-    color: 'gray',
-  },
-  networkHeading: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  infoText: {
-    fontSize: 13,
-    marginBottom: 12,
-  },
-  rowBtnCon: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  subInputText: {
-    fontSize: 14,
-  },
-  maxCon: {
-    paddingHorizontal: 19,
-    paddingVertical: 4,
-    borderRadius: 6,
-    alignItems:"center",
-    justifyContent:"center"
-  },
-  maxBtn: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  modalOpen: {
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    flexDirection:"row"
-  },
-  textInputForCrossChain: {
-    width: wp(61),
-    paddingVertical:hp(0.5),
-    marginLeft:wp(1)
-  },
-  accountDetailsCon: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 2,
-  },
-  feePayCon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical:hp(0.9),
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    marginTop: 2,
-  },
-  feePayTx: {
-    marginLeft: 8,
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#0066cc',
-  },
-  modalQoutesCon: {
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
-  },
-  quoteTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  quoteDetailsContainer: {
-    gap: 12,
-  },
-  quoteRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  quoteLabel: {
-    fontSize: 14,
-  },
-  quoteValue: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  quoteTextCon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
-    gap: 8,
-  },
-  quoteText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  nextButton: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: hp(2.5)
-  },
-  nextButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  chooseModalContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  chooseItemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 4,
-  },
-  chooseItemImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
-  },
-  chooseItemText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  chooseItemSymbol: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  alertBtn: {
-    backgroundColor: '#4052D6',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  alertBtnText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  allBridgeTxCon: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  chooseModalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
-    paddingBottom: Platform.OS === 'ios' ? hp(4) : hp(2),
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: hp(1),
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginBottom: 12,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    paddingVertical: 4,
-  },
-  emptyText: {
-    textAlign: 'center',
-    padding: 20,
-    fontSize: 14,
-  },
-  buyBtnCon: {
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 9,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-
-  },
-  buyBtnTxt:{
-    color:"#fff",
-    fontSize:16,
-    fontWeight:"600",
-    textAlign:"center"
-  },
-  feeImage: {
-    width: 25,
-    height: 25,
-    borderRadius: 20,
-    marginRight: 3,
-  },
-  swapSuggestCon:{
-    marginTop:hp(1),
-    justifyContent:"space-between"
-  },
-  swapSuggestTex:{
-    fontSize:16,
-    color:"#fff",
-    textAlign:"center"
-  },
-  swapSuggestBtn:{
-    borderRadius:10,
-    paddingHorizontal:wp(6),
-    paddingVertical:hp(1.5),
-    backgroundColor:"#4052D6"
-  },
-  InsufficientActionsCon:{
-    flexDirection:"row",
-    alignItems:"center",
-    justifyContent:"space-between",
-    width:wp(35),
-    paddingVertical:10,
-  },
-  InsufficientActionsBtn:{
-    borderRadius:8,
-    width:wp(16),
-    paddingVertical:hp(1.1),
-    alignItems:"center"
-  },
-  dismissCon:{
-    position:"absolute",
-    alignSelf:"flex-end",
-    right:wp(1.5),
-    top:hp(0.6)
-  },
-  fromCon: {
-    width: wp(30),
-    flexDirection: "row",
-    marginLeft:wp(1)
-  },
-  fromConImg: {
-    width: 25,
-    height: 25,
-    borderRadius: 20,
-    marginRight:hp(0.5),
-    marginLeft:hp(0.5),    
-  },
-  FromSelectionCon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 8,
-    width: wp(35),
-    padding:5,
-    marginTop:-2,
-    borderColor:"gray",
-    borderWidth:0.6
-  },
-  formBalanceCon: {
-    justifyContent: 'space-between',
-    alignContent: 'center',
-    paddingVertical: 4,
-    width:wp(39),
-    alignSelf:"flex-end",
-    marginBottom:hp(1)
-  },
-  receiveAssetCon:{
-    flexDirection: "row",
-    width:wp(36),
-    alignItems:"center",
-    justifyContent:"center",
-    borderRadius:13,
-    marginRight:wp(3),
-    marginVertical:-3
-  },
-  receiveAssetImg:{
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight:wp(2)
-  },
-  receiveAmountCon: {
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: hp(1),
-    marginTop:hp(1.3)
-  },
-  suggestTag: {
-    alignSelf: "flex-start",
-    marginLeft:wp(1),
-    fontSize:13
-  }
-});
-
-export default CrossChainTx
+export default CrossChainTx;

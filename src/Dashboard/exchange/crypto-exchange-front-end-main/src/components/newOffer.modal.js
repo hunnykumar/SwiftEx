@@ -22,7 +22,7 @@ import Modal from "react-native-modal";
 import { useSelector } from "react-redux";
 import { ShowErrotoast, Showsuccesstoast } from "../../../../reusables/Toasts";
 import Icon from "../../../../../icon";
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useIsFocused } from '@react-navigation/native';
 import { STELLAR_URL } from "../../../../constants";
 import { useToast } from "native-base";
@@ -258,7 +258,7 @@ export const NewOfferModal = () => {
       
       return 'Request placed successfully';
     } catch (error) {
-      console.log("----err-or--",error)
+      console.debug("----err-or--",error)
       handleTransactionError(error, stellarConfig.TRADE_TYPES.SELL);
     }
   }, [offer_amount, offer_price, SelectedBaseValue, selectedValue, AssetIssuerPublicKey, AssetIssuerPublicKey1, validateAmount, validatePrice, createStellarAsset, toast, navigation, handleTransactionError]);
@@ -321,6 +321,7 @@ export const NewOfferModal = () => {
       
       return 'Request placed successfully';
     } catch (error) {
+      console.debug("error",error)
       handleTransactionError(error, stellarConfig.TRADE_TYPES.BUY);
     }
   }, [offer_amount, offer_price, top_value, top_value_0, AssetIssuerPublicKey, AssetIssuerPublicKey1, validateAmount, validatePrice, createStellarAsset, toast, navigation, handleTransactionError]);
@@ -364,7 +365,7 @@ export const NewOfferModal = () => {
           const result = await GetStellarUSDCAvilabelBalance(
             state.STELLAR_PUBLICK_KEY,
             asset,
-            stellarConfig.ISSUERS.USDC,
+            asset?stellarConfig.ISSUERS[asset]:stellarConfig.ISSUERS.USDC,
             { signal }
           );
           if (!result) return;
@@ -628,18 +629,18 @@ const selectTradingPair = useCallback((item) => {
       if (anyPair) {
         console.log(`${assetType}/USDC pair not found, using ${anyPair.name}`);
         selectTradingPair(anyPair);
-        setTimeout(() => {
-          CustomInfoProvider.show(
-            "Trading Pair Info", 
-            `${assetType}/USDC pair not available. Showing ${anyPair.name} instead.`
-          );
-        }, 500);
+        // setTimeout(() => {
+        //   CustomInfoProvider.show(
+        //     "Trading Pair Info", 
+        //     `${assetType}/USDC pair not available. Showing ${anyPair.name} instead.`
+        //   );
+        // }, 500);
       } else {
         console.log(`No trading pair found for ${assetType}`);
-        CustomInfoProvider.show(
-          "Asset Not Found", 
-          `No trading pair found for ${assetType}. Please select a pair manually.`
-        );
+        // CustomInfoProvider.show(
+        //   "Asset Not Found", 
+        //   `No trading pair found for ${assetType}. Please select a pair manually.`
+        // );
       }
     }
   }
@@ -687,6 +688,12 @@ const selectTradingPair = useCallback((item) => {
     );
     return () => backHandler.remove();
   }, [showOneTap]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setshowOneTap(false);
+    }, [])
+  );
 
   return (
     <View style={[styles.scrollView0, { backgroundColor: theme.bg }]}>

@@ -63,7 +63,8 @@ const BridgeAssets = ({ props }) => {
     },
     networkHeader: {
       flexDirection: 'column',
-      alignItems: "flex-start"
+      alignItems: "flex-start",
+      width:wp(50)
     },
     labelText: {
       color: theme.headingTx,
@@ -157,8 +158,9 @@ const BridgeAssets = ({ props }) => {
       fontSize: 20,
     },
     availableContainer: {
-      alignItems: 'center',
+      alignItems: 'flex-end',
       gap: 8,
+      width:wp(30)
     },
     availableLabel: {
       color: theme.headingTx,
@@ -780,7 +782,16 @@ const BridgeAssets = ({ props }) => {
             <View style={styles.headerRow}>
               <View style={styles.networkHeader}>
                 <Text style={styles.labelText}>From Network</Text>
-                {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : <Text style={styles.balanceAmount}>{selectedFromNetwork.subName} Balance : {fromBalance ? parseFloat(fromBalance?.walletBalance)?.toFixed(6) : "0.000"}</Text>}
+                {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : 
+                <View style={{flexDirection:"row"}}>
+                <Text style={styles.balanceAmount}>{selectedFromNetwork.subName} Balance : </Text>
+                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                   <Text style={styles.balanceAmount}>
+                   {fromBalance ? parseFloat(fromBalance?.walletBalance) : "0.000"}
+                   </Text>
+                   </ScrollView>
+                </View>
+                }
               </View>
               <TouchableOpacity
                 style={styles.networkSelector}
@@ -838,13 +849,16 @@ const BridgeAssets = ({ props }) => {
                   <Text style={styles.availableLabel}>Available</Text>
                   <Icon type="ionicon" name="refresh" size={16} color={theme.headingTx} />
                 </TouchableOpacity>
-                {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : <Text style={styles.availableAmount}>{fromBalance ? parseFloat(fromBalance?.tokenBalance)?.toFixed(6) : "0.000"}</Text>}
+                {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> :
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <Text style={styles.availableAmount}>{fromBalance ? parseFloat(fromBalance?.tokenBalance) : "0.000"}</Text>
+                  </ScrollView>}
               </View>
             </View>
             <View style={{ flexDirection: "row" }}>
               <Text style={styles.walletAddress} numberOfLines={1}>Active Wallet : </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(70) }}>
-                <Text style={styles.walletAddress} numberOfLines={1}>{selectedFromAsset.address}</Text>
+                <Text style={styles.walletAddress} numberOfLines={1}>{selectedFromAsset.chainId===56||selectedFromAsset.chainId===1?state && state.wallet && state.wallet.address:state && state.STELLAR_PUBLICK_KEY}</Text>
               </ScrollView>
             </View>
           </View>
@@ -931,7 +945,7 @@ const BridgeAssets = ({ props }) => {
             <View style={styles.toAmountContainer}>
               <Text style={styles.toAmount}>≈ </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <Text style={styles.toAmount}>{pairQuotes ? selectedRelayerFee === "native" ? pairQuotes?.minimumAmountOut : Math.max(0,parseFloat(pairQuotes?.minimumAmountOut || "0") - parseFloat(pairQuotes?.fee[selectedRelayerFee].amount)).toFixed(6) : `${selectedToAsset.symbol} will be recived`}</Text>
+                <Text style={styles.toAmount}>{pairQuotes ? selectedRelayerFee === "native" ? pairQuotes?.minimumAmountOut : Math.max(0,parseFloat(pairQuotes?.minimumAmountOut || "0") - parseFloat(pairQuotes?.fee[selectedRelayerFee].amount)) : `${selectedToAsset.symbol} will be recived`}</Text>
               </ScrollView>
               <Text style={styles.toAmount}>{selectedToAsset.symbol}</Text>
             </View>

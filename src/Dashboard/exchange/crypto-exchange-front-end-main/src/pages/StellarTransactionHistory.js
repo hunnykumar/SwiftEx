@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -71,8 +71,6 @@ const getTransactionType = (operation, userPublicKey, isReceived) => {
           return 'Swap Out';
       case 'manage_buy_offer':
           return 'Swap In';
-      case 'create_account':
-          return 'Create Account';
       case 'invoke_host_function':
           if (isReceived) {
             const assetSymbol = operation.asset_balance_changes?.find(
@@ -208,8 +206,10 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
   const txType = operation.asset_balance_changes?.find(resObj => resObj.to === userPublicKey);
   const isReceived =
     operation?.to === userPublicKey ||
-      operation.type === 'create_account' || operation.type === 'change_trust' || operation.type === 'invoke_host_function' && txType ? true : false;
-  
+    operation.type === 'create_account' ||
+    operation.type === 'change_trust' ||
+    (operation.type === 'invoke_host_function' && !!txType);
+
   const multiTxType = [
     ...new Set(operations.map(op => getTransactionType(op, userPublicKey, isReceived)))
   ].join(' & ');
@@ -287,7 +287,7 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
           styles.transactionCard,
           { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }
         ]}
-        disabled={operation.type === 'sellCry' || operation.type === 'buyCry'}
+        disabled={operation.type === 'sellCry' || operation.type === 'buyCry' || (isWalletTx && item.success === "pending")}
         onPress={() => {
           item.success === false || item.success === "failed" || item.success === "Failed"?CustomInfoProvider.show("error","Opps!","Transaction failed try again."):
           txViewrManager(item?.operations?.records[0]?.transaction_hash || item?.operations?.records[0]?.hash,operation.type,isReceived);
@@ -430,6 +430,45 @@ const TransactionCard = ({ item, userPublicKey, isDarkMode, onRefreshTx }) => {
   );
 };
 
+const processStellarTx = async (tx, publicKey) => {
+  const operations = await tx.operations();
+  const firstOp = operations.records[0];
+  let amount = '0';
+  let isReceived = false;
+
+  if (firstOp.type === 'payment') {
+    amount = firstOp.amount;
+    isReceived = firstOp.to === publicKey;
+  } else if (firstOp.type === 'create_account') {
+    amount = firstOp.starting_balance;
+    isReceived = true;
+  } else if (firstOp.type === 'invoke_host_function') {
+    const resBal = firstOp.asset_balance_changes?.find(
+      resObj => (resObj.to === publicKey || resObj.from === publicKey) && resObj.type === 'transfer'
+    ) || null;
+    if (resBal) {
+      amount = resBal?.amount || '0';
+      isReceived = resBal.to === publicKey;
+    }
+  } else if (['change_trust'].includes(firstOp.type)) {
+    isReceived = true;
+  } else if (firstOp.type === 'manage_sell_offer' || firstOp.type === 'manage_buy_offer') {
+    isReceived = false;
+    amount = firstOp.amount;
+  }
+
+  return {
+    id: tx.id,
+    date: formatDate(tx.created_at),
+    amount: amount,
+    success: tx.successful,
+    memo: tx.memo || 'No memo',
+    operations: operations,
+    isReceived: isReceived,
+    sortTime: new Date(tx.created_at).getTime(),
+  };
+};
+
 const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
   const colors = getThemeColors(isDarkMode);
   const [allTransactions, setAllTransactions] = useState([]);
@@ -443,6 +482,12 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
   const [stellarCursor, setStellarCursor] = useState(null);
   const [isFetchingStellar, setIsFetchingStellar] = useState(false);
   const state = useSelector((state) => state);
+  const stellarCursorRef = useRef(null);
+
+  const updateStellarCursor = (token) => {
+    setStellarCursor(token);
+    stellarCursorRef.current = token;
+  };
 
   const refreshSingleTx = async (chainSymbol, txHash) => {
     try {
@@ -525,15 +570,6 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
             const isSRBPending = tx.chain === "SRB" && txStatus === "pending";
 
             if (isSRBPending && isOlderThan10Min && tx.hash) {
-              console.log("Marking SRB tx as failed:", {
-                chain: tx.chain,
-                hash: tx.hash,
-                timestamp: tx.timestamp,
-                currentTime: currentTime,
-                ageInMinutes: (currentTime - tx.timestamp) / (60 * 1000),
-                status: tx.status
-              });
-
               await LocalTxManager.updateTxStatus(state?.wallet?.address, {
                 chain: tx.chain,
                 hash: tx.hash,
@@ -634,46 +670,11 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
         .limit(STELLAR_BATCH_SIZE)
         .call();
 
-      setStellarCursor(transactionsData.records[transactionsData.records.length - 1]?.paging_token || null);
+      const lastRecord = transactionsData.records[transactionsData.records.length - 1];
+      updateStellarCursor(lastRecord?.paging_token || null);
+
       const processedTransactions = await Promise.all(
-        transactionsData.records.map(async (tx) => {
-          const operations = await tx.operations();
-          const firstOp = operations.records[0];
-          let amount = '0';
-          let isReceived = false;
-
-          if (firstOp.type === 'payment') {
-            amount = firstOp.amount;
-            isReceived = firstOp.to === publicKey;
-          } else if (firstOp.type === 'create_account') {
-            amount = firstOp.starting_balance;
-            isReceived = true;
-          } else if (firstOp.type === 'invoke_host_function') {
-            const resBal = firstOp.asset_balance_changes?.find(
-              resObj => (resObj.to === publicKey || resObj.from === publicKey) && resObj.type === 'transfer'
-            ) || null;
-            if (resBal) {
-              amount = resBal?.amount || '0';
-              isReceived = resBal.to === publicKey;
-            }
-          } else if (['change_trust', 'create_account', 'invoke_host_function'].includes(firstOp.type)) {
-            isReceived = true;
-          } else if (firstOp.type === 'manage_sell_offer' || firstOp.type === 'manage_buy_offer') {
-            isReceived = false;
-            amount = firstOp.amount;
-          }
-
-          return {
-            id: tx.id,
-            date: formatDate(tx.created_at),
-            amount: amount,
-            success: tx.successful,
-            memo: tx.memo || 'No memo',
-            operations: operations,
-            isReceived: isReceived,
-            sortTime: new Date(tx.created_at).getTime(),
-          };
-        })
+        transactionsData.records.map(tx => processStellarTx(tx, publicKey))
       );
 
       // Merge and sort all transactions by time (latest first)
@@ -684,8 +685,8 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
       const initialDisplay = allTxs.slice(0, INITIAL_LOAD);
       setDisplayedTransactions(initialDisplay);
       setCurrentPage(1);
-      setHasMore(allTxs.length > INITIAL_LOAD);
-      
+      setHasMore(allTxs.length > INITIAL_LOAD || lastRecord?.paging_token != null);
+
     } catch (error) {
       console.log('Error fetching transactions:', error);
     } finally {
@@ -695,7 +696,7 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
   };
 
   const fetchMoreStellarTransactions = async () => {
-    if (isFetchingStellar || !stellarCursor) return [];
+    if (isFetchingStellar || !stellarCursorRef.current) return [];
 
     setIsFetchingStellar(true);
     try {
@@ -703,52 +704,16 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
         .transactions()
         .forAccount(publicKey)
         .order('desc')
-        .cursor(stellarCursor)
+        .cursor(stellarCursorRef.current)
         .limit(STELLAR_BATCH_SIZE)
         .call();
 
       if (transactionsData.records.length > 0) {
-        setStellarCursor(transactionsData.records[transactionsData.records.length - 1]?.paging_token || null);
-        
+        const lastRecord = transactionsData.records[transactionsData.records.length - 1];
+        updateStellarCursor(lastRecord?.paging_token || null);
+
         const processedTransactions = await Promise.all(
-          transactionsData.records.map(async (tx) => {
-            const operations = await tx.operations();
-            const firstOp = operations.records[0];
-            let amount = '0';
-            let isReceived = false;
-
-            if (firstOp.type === 'payment') {
-              amount = firstOp.amount;
-              isReceived = firstOp.to === publicKey;
-            } else if (firstOp.type === 'create_account') {
-              amount = firstOp.starting_balance;
-              isReceived = true;
-            } else if (firstOp.type === 'invoke_host_function') {
-              const resBal = firstOp.asset_balance_changes?.find(
-                resObj => (resObj.to === publicKey || resObj.from === publicKey) && resObj.type === 'transfer'
-              ) || null;
-              if (resBal) {
-                amount = resBal?.amount || '0';
-                isReceived = resBal.to === publicKey;
-              }
-            } else if (['change_trust', 'create_account', 'invoke_host_function'].includes(firstOp.type)) {
-              isReceived = true;
-            } else if (firstOp.type === 'manage_sell_offer' || firstOp.type === 'manage_buy_offer') {
-              isReceived = false;
-              amount = firstOp.amount;
-            }
-
-            return {
-              id: tx.id,
-              date: formatDate(tx.created_at),
-              amount: amount,
-              success: tx.successful,
-              memo: tx.memo || 'No memo',
-              operations: operations,
-              isReceived: isReceived,
-              sortTime: new Date(tx.created_at).getTime(),
-            };
-          })
+          transactionsData.records.map(tx => processStellarTx(tx, publicKey))
         );
 
         return processedTransactions;
@@ -787,6 +752,7 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
           tx.isReceived &&
           opType !== 'path_payment_strict_send' &&
           opType !== 'path_payment_strict_receive' &&
+          opType !== 'wallet_tx' &&
           opType !== 'sellCry' &&
           opType !== 'buyCry' &&
           opType !== 'create_account'
@@ -810,7 +776,7 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
     const filteredTxs = getFilteredTransactions(allTransactions, tab);
     setDisplayedTransactions(filteredTxs.slice(0, INITIAL_LOAD));
     setCurrentPage(1);
-    setHasMore(filteredTxs.length > INITIAL_LOAD);
+    setHasMore(filteredTxs.length > INITIAL_LOAD || stellarCursorRef.current !== null);
   };
 
   const loadMoreTransactions = useCallback(async () => {
@@ -819,52 +785,56 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
     setLoadingMore(true);
 
     try {
-      const filteredAll = getFilteredTransactions(allTransactions, selectedTab); // selectedTab pass karo
-      const currentDisplayed = getFilteredTransactions(displayedTransactions, selectedTab).length;
+      const filteredAll = getFilteredTransactions(allTransactions, selectedTab);
+      const currentDisplayedCount = displayedTransactions.filter(tx =>
+        getFilteredTransactions([tx], selectedTab).length > 0
+      ).length;
 
-      if (currentDisplayed < filteredAll.length) {
-        const nextBatch = filteredAll.slice(currentDisplayed, currentDisplayed + PAGE_SIZE);
-        setDisplayedTransactions(prev => {
-          const allCurrent = [...prev, ...nextBatch];
-          return allCurrent;
-        });
-        setHasMore(currentDisplayed + PAGE_SIZE < filteredAll.length || stellarCursor !== null);
-      } else if (stellarCursor) {
+      if (currentDisplayedCount < filteredAll.length) {
+        const nextBatch = filteredAll.slice(currentDisplayedCount, currentDisplayedCount + PAGE_SIZE);
+        setDisplayedTransactions(prev => [...prev, ...nextBatch]);
+        setHasMore(
+          currentDisplayedCount + PAGE_SIZE < filteredAll.length ||
+          stellarCursorRef.current !== null
+        );
+      } else {
+        if (!stellarCursorRef.current) {
+          setHasMore(false);
+          return;
+        }
+
         const newStellarTxs = await fetchMoreStellarTransactions();
 
         if (newStellarTxs.length > 0) {
-          setAllTransactions(prev => {
-            const updated = [...prev, ...newStellarTxs];
-            updated.sort((a, b) => b.sortTime - a.sortTime);
-            return updated;
-          });
+          const updatedAll = [...allTransactions, ...newStellarTxs].sort(
+            (a, b) => b.sortTime - a.sortTime
+          );
+          setAllTransactions(updatedAll);
 
-          const newFiltered = getFilteredTransactions(newStellarTxs, selectedTab); // selectedTab pass karo
+          const newFiltered = getFilteredTransactions(newStellarTxs, selectedTab);
           setDisplayedTransactions(prev => [...prev, ...newFiltered.slice(0, PAGE_SIZE)]);
-          setHasMore(newStellarTxs.length >= STELLAR_BATCH_SIZE || stellarCursor !== null);
+          setHasMore(newStellarTxs.length >= STELLAR_BATCH_SIZE || stellarCursorRef.current !== null);
         } else {
           setHasMore(false);
         }
-      } else {
-        setHasMore(false);
       }
     } catch (error) {
       console.error('Error loading more transactions:', error);
     } finally {
       setLoadingMore(false);
     }
-  }, [allTransactions, displayedTransactions, loadingMore, hasMore, stellarCursor, selectedTab]);
+  }, [allTransactions, displayedTransactions, loadingMore, hasMore, selectedTab]);
 
   useEffect(() => {
     fetchTransactions();
   }, [publicKey]);
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    setStellarCursor(null);
+    updateStellarCursor(null);
     setDisplayedTransactions([]);
     setAllTransactions([]);
-    fetchTransactions();
+    await fetchTransactions();
   };
 
   if (loading) {
@@ -1076,11 +1046,11 @@ const styles = StyleSheet.create({
     maxHeight: "50%",
     bottom: 25
   },
-  tryAgainBtn:{
-    backgroundColor:"#4052D6",
-    borderRadius:10,
-    paddingHorizontal:10,
-    paddingVertical:5
+  tryAgainBtn: {
+    backgroundColor: "#4052D6",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5
   },
   footerLoader: {
     paddingVertical: 20,

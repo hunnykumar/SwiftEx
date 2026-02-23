@@ -308,11 +308,11 @@ const Assets_manage = ({ route }) => {
                     />
                 </View>
             </Modal>
-            <ClaimableBalanceChecker
+            {/* <ClaimableBalanceChecker
                 publicKey={state.STELLAR_PUBLICK_KEY}
                 autoFetch={true}
                 isDark={state.THEME.THEME}
-            />
+            /> */}
         </>
     )
 }
