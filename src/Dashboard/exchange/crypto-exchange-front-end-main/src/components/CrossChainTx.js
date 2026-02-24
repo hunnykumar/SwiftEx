@@ -755,6 +755,16 @@ const CrossChainTx = ({ props }) => {
       CustomInfoProvider.show("error", "Bridge Faild.");
     }
   }
+  const fromAmt = Number(fromAmount || 0);
+  const tokenBal = Number(fromBalance?.tokenBalance || 0);
+  const walletBal = Number(fromBalance?.walletBalance || 0);
+  const stableFee = Number(pairQuotes?.fee?.stablecoin?.amount || 0);
+  const nativeFee = Number(pairQuotes?.fee?.native?.amount || 0);
+  const isTokenInsufficient = fromAmt > tokenBal;
+  const isStableFeeInsufficient = selectedRelayerFee === "stablecoin" && stableFee > tokenBal;
+  const isNativeFeeInsufficient = selectedRelayerFee === "native" && nativeFee > walletBal;
+  const isInsufficientBalance = isTokenInsufficient || isStableFeeInsufficient || isNativeFeeInsufficient;
+  const isDisabled = walletActivationWarning || quotesLoading || swapLoading || fromAmt <= 0 || isInsufficientBalance;
 
   return (
     <View style={styles.container}>
@@ -844,7 +854,7 @@ const CrossChainTx = ({ props }) => {
                 </TouchableOpacity>
                 {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> :
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <Text style={styles.availableAmount}>{fromBalance ? parseFloat(fromBalance?.tokenBalance) : "0.000"}</Text>
+                    <Text selectable={true} style={styles.availableAmount}>{fromBalance ? fromBalance?.tokenBalance : "0.000"}</Text>
                   </ScrollView>}
               </View>
             </View>
@@ -969,7 +979,7 @@ const CrossChainTx = ({ props }) => {
             </View>
             <View style={styles.quoteRow}>
               <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Relayer Fee</Text>
-              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{parseFloat(pairQuotes.fee[selectedRelayerFee].amount)} {pairQuotes.fee[selectedRelayerFee].symbol}</Text>
+              <Text selectable={true} style={[styles.quoteValue, { color: theme.headingTx }]}>{pairQuotes.fee[selectedRelayerFee].amount} {pairQuotes.fee[selectedRelayerFee].symbol}</Text>
             </View>
             <View style={styles.quoteRow}>
               <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Estimated time</Text>
@@ -977,18 +987,22 @@ const CrossChainTx = ({ props }) => {
             </View>
           </View>}
 
-          <TouchableOpacity style={[styles.confirmButton, { backgroundColor: walletActivationWarning||quotesLoading||swapLoading||parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > (selectedRelayerFee==="native"?parseFloat(fromBalance?.walletBalance):parseFloat(fromBalance?.tokenBalance)) ? theme.inactiveTx : "#4F46E5" }]} disabled={walletActivationWarning||quotesLoading||swapLoading||parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > (selectedRelayerFee==="native"?parseFloat(fromBalance?.walletBalance):parseFloat(fromBalance?.tokenBalance))} onPress={()=>{swapManager()}}>
+          <TouchableOpacity
+            style={[
+              styles.confirmButton,
+              { backgroundColor: isDisabled ? theme.inactiveTx : "#4F46E5" }
+            ]}
+            disabled={isDisabled}
+            onPress={swapManager}
+          >
             <Text style={styles.confirmButtonText}>
-              {walletActivationWarning ? "Stellar wallet Activation Required" :
-                swapLoading ? "Wait transaction under process..." :
-                  parseFloat(fromAmount) +
-                    parseFloat(pairQuotes?.fee?.native?.amount || 0) +
-                    0.0015 >
-                    parseFloat(selectedRelayerFee === "native" ?
-                      fromBalance?.walletBalance :
-                      fromBalance?.tokenBalance
-                    ) ? "Insufficient Balance" : "Confirm Transaction"
-              }
+              {walletActivationWarning
+                ? "Stellar wallet Activation Required"
+                : swapLoading
+                  ? "Wait transaction under process..."
+                  : isInsufficientBalance
+                    ? "Insufficient Balance"
+                    : "Confirm Transaction"}
             </Text>
           </TouchableOpacity>
         </View>
