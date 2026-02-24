@@ -16,6 +16,14 @@
     "logoURI": "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png"
   },
   {
+    "name": "BNB",
+    "symbol": "BNB",
+    "address": "0X0000000000000000000000000000000000000000",
+    "chainId": 56,
+    "decimals": 18,
+    "logoURI": "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png"
+  },
+  {
     "name": "BNB Token",
     "symbol": "BNB",
     "address": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
@@ -846,13 +854,5 @@
     "chainId": 56,
     "decimals": 18,
     "logoURI": "https://tokens.pancakeswap.finance/images/0x8443f091997f06a61670B735ED92734F5628692F.png"
-  },
-  {
-    "name": "BNB",
-    "symbol": "BNB",
-    "address": "0X0000000000000000000000000000000000000000",
-    "chainId": 56,
-    "decimals": 18,
-    "logoURI": "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png"
   }
 ]

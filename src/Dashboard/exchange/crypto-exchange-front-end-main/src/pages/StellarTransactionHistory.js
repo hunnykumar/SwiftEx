@@ -830,10 +830,16 @@ const StellarTransactionHistory = ({ publicKey, isDarkMode }) => {
   }, [publicKey]);
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    updateStellarCursor(null);
-    setDisplayedTransactions([]);
     setAllTransactions([]);
+    setDisplayedTransactions([]);
+    setLoading(true);
+    setLoadingMore(false);
+    setRefreshing(false);
+    setSelectedTab('all');
+    setCurrentPage(1);
+    setHasMore(true);
+    setStellarCursor(null);
+    setIsFetchingStellar(false);
     await fetchTransactions();
   };
 

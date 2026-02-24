@@ -945,9 +945,9 @@ const BridgeAssets = ({ props }) => {
             <View style={styles.toAmountContainer}>
               <Text style={styles.toAmount}>≈ </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <Text style={styles.toAmount}>{pairQuotes ? selectedRelayerFee === "native" ? pairQuotes?.minimumAmountOut : Math.max(0,parseFloat(pairQuotes?.minimumAmountOut || "0") - parseFloat(pairQuotes?.fee[selectedRelayerFee].amount)) : `${selectedToAsset.symbol} will be recived`}</Text>
+                <Text style={styles.toAmount}>{pairQuotes ? selectedRelayerFee === "native" ? pairQuotes?.minimumAmountOut : Math.max(0,parseFloat(pairQuotes?.minimumAmountOut || "0") - parseFloat(pairQuotes?.fee[selectedRelayerFee].amount)) : `Expected ${selectedToAsset.symbol} will be recieved`}</Text>
               </ScrollView>
-              <Text style={styles.toAmount}>{selectedToAsset.symbol}</Text>
+              {/* <Text style={styles.toAmount}>{selectedToAsset.symbol}</Text> */}
             </View>
           </View>
 
@@ -972,11 +972,11 @@ const BridgeAssets = ({ props }) => {
             </View>
             <View style={styles.quoteRow}>
               <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Minimum Received</Text>
-              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{parseFloat(pairQuotes.minimumAmountOut).toFixed(5)} {selectedToAsset.symbol}</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{parseFloat(pairQuotes.minimumAmountOut)} {selectedToAsset.symbol}</Text>
             </View>
             <View style={styles.quoteRow}>
-              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Network Fee</Text>
-              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{parseFloat(pairQuotes.fee[selectedRelayerFee].amount).toFixed(5)} {pairQuotes.fee[selectedRelayerFee].symbol}</Text>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Relayer Fee</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{parseFloat(pairQuotes.fee[selectedRelayerFee].amount)} {pairQuotes.fee[selectedRelayerFee].symbol}</Text>
             </View>
             <View style={styles.quoteRow}>
               <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Estimated time</Text>

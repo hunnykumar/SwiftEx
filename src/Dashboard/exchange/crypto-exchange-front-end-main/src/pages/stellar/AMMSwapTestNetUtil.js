@@ -113,7 +113,7 @@ async function AMMSWAPTESTNET(
     return {
       status: false,
       tx: '',
-      error: err.message,
+      error: err.response?.data?.extras||err.message,
     };
   }
 }

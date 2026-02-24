@@ -200,7 +200,7 @@ const AMMSwap = () => {
         setexchangeRes(null);
         setToAmount('');
         setIsLoading(false)
-        CustomInfoProvider.show("Info",res?.error||"Unable to fetch quotes");
+        CustomInfoProvider.show("Info","!Opps",res?.error||"Unable to fetch quotes");
       }
   }
   function URLBuilder(
@@ -258,7 +258,7 @@ const AMMSwap = () => {
   
       const records = json._embedded?.records;
       if (!records || records.length === 0) {
-        return { status: false, error: "No available swap paths found." };
+        return { status: false, error: "No swap paths found for this amount. Try increasing the amount." };
       }
   
       // Pick best path (first one usually highest return)
@@ -389,7 +389,7 @@ const AMMSwap = () => {
     else{
       settokenBurn(false)
       console.log("--Error--",respo.error)
-      CustomInfoProvider.show("error","Transaction Faild.");
+      CustomInfoProvider.show("error","!Opps",respo.error.result_codes==="op_under_dest_min"?"Swap cannot be completed because the amount is too small.":"Transaction Faild.");
     }
   }
 

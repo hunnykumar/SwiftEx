@@ -230,7 +230,7 @@ const ChainSelector = ({ activeChain, onSelect, colors }) => {
 
 // Filter Chips Component
 const FilterChips = ({ activeFilter, onFilterChange, colors }) => {
-  const filters = ['All', 'Send', 'Receive', 'Recent'];
+  const filters = ['All', 'Recent'];
 
   return (
     <View style={styles.filterContainer}>
@@ -465,6 +465,10 @@ const TransactionHistory = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [sentPageKey, setSentPageKey] = useState(null);
+  const [receivedPageKey, setReceivedPageKey] = useState(null);
+  const [hasNextPage, setHasNextPage] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Get previous screen name from navigation state
   const previousScreen = useNavigationState(state => {
@@ -538,43 +542,64 @@ const TransactionHistory = () => {
     }
   };
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (isLoadMore = false) => {
     if (activeChain === 'STR') return;
+    if (loadingMore) return;
 
     try {
-      setLoading(true);
-      setError(null);
+      if (!isLoadMore) {
+        setLoading(true);
+        setError(null);
+        setSentPageKey(null);
+        setReceivedPageKey(null);
+        setHasNextPage(true);
+        setApiTransactions([]);
+      } else {
+        setLoadingMore(true);
+      }
 
-      const endpoint = activeChain === 'ETH' 
-        ? `/v1/transaction-history/${walletAddress}/eth`
-        : `/v1/transaction-history/${walletAddress}/bsc`;
+      const chain = activeChain === 'ETH' ? 'eth' : 'bsc';
+      let endpoint = `/v1/transaction-history/${walletAddress}/${chain}`;
+
+      const params = new URLSearchParams();
+      if (isLoadMore && sentPageKey) params.append('sentPageKey', sentPageKey);
+      if (isLoadMore && receivedPageKey) params.append('receivedPageKey', receivedPageKey);
+      if (params.toString()) endpoint += `?${params.toString()}`;
 
       const { res, err } = await proxyRequest(endpoint, PGET);
 
       if (err?.status) {
         setError('Failed to fetch transactions');
-        setLoading(false);
-        setRefreshing(false);
         return;
       }
 
       if (res) {
-        // Simply set API transactions - no matching, no removing
-        const formattedApiTxs = res.map(tx => ({
-        ...tx,
-        timestamp: tx.metadata?.blockTimestamp || tx.timestamp
-      }));
-        setApiTransactions(formattedApiTxs);
-      }
+        const formattedApiTxs = res.data.map(tx => ({
+          ...tx,
+          timestamp: tx.metadata?.blockTimestamp || tx.timestamp
+        }));
 
-      setLoading(false);
-      setRefreshing(false);
+        setApiTransactions(prev =>
+          isLoadMore ? [...prev, ...formattedApiTxs] : formattedApiTxs
+        );
+
+        setSentPageKey(res.pagination.nextSentPageKey);
+        setReceivedPageKey(res.pagination.nextReceivedPageKey);
+        setHasNextPage(res.pagination.hasNextPage);
+      }
     } catch (error) {
       console.error('Error fetching transactions:', error);
       setError('Something went wrong');
+    } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
+  };
+
+  const handleLoadMore = () => {
+    if (!hasNextPage || loadingMore || loading) return;
+    fetchTransactions(true);
   };
 
   // Updated filteredTransactions logic
@@ -610,7 +635,7 @@ const TransactionHistory = () => {
       fetchRecentTransactions();
       setRefreshing(false);
     } else {
-      fetchTransactions();
+      fetchTransactions(false);
     }
   };
 
@@ -703,30 +728,50 @@ const TransactionHistory = () => {
         <EmptyState activeFilter={activeFilter} colors={colors} />
       ) : (
         // Transaction List
-        <FlatList
-          data={sections}
-          keyExtractor={(item, index) => `section-${index}`}
-          renderItem={({ item: section }) => (
-            <View>
-              {renderSectionHeader({ section })}
-              {section.data.map((tx, index) => (
-                <View key={`${tx.hash}-${index}`}>
-                  {renderTransaction({ item: tx })}
-                </View>
-              ))}
-            </View>
-          )}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[colors.accent]}
-              tintColor={colors.accent}
-            />
-          }
-        />
+              <FlatList
+                data={sections}
+                keyExtractor={(item, index) => `section-${index}`}
+                renderItem={({ item: section }) => (
+                  <View>
+                    {renderSectionHeader({ section })}
+                    {section.data.map((tx, index) => (
+                      <View key={`${tx.hash}-${index}`}>
+                        {renderTransaction({ item: tx })}
+                      </View>
+                    ))}
+                  </View>
+                )}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                onEndReached={handleLoadMore}       
+                onEndReachedThreshold={0.3}        
+                ListFooterComponent={() => (
+                  loadingMore ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={colors.accent}
+                      style={{ marginVertical: 16 }}
+                    />
+                  ) : !hasNextPage && apiTransactions.length > 0 ? (
+                    <Text style={{
+                      textAlign: 'center',
+                      color: colors.textTertiary,
+                      marginVertical: 16,
+                      fontSize: 13
+                    }}>
+                      No more transactions
+                    </Text>
+                  ) : null
+                )}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    colors={[colors.accent]}
+                    tintColor={colors.accent}
+                  />
+                }
+              />
       )}
     </View>
   );

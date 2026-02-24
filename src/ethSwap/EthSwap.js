@@ -939,6 +939,22 @@ const EthSwap = () => {
                 </View>
               )}
 
+              {quoteInfo.networkFee &&(
+                <View style={styles.quoteRow}>
+                  <Text style={styles.quoteLabel}>Network Fee</Text>
+                   <View style={{ width: wp(25), flexDirection: "row" }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <Text style={[styles.quoteValue, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                      {quoteInfo.networkFee}
+                    </Text>
+                  </ScrollView>
+                  <Text style={[styles.quoteValue, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                    {' '}{NETWORK[currentNetwork].symbol}
+                  </Text>
+                </View>
+                </View>
+              )}
+
               <View style={styles.quoteRow}>
                 <Text style={styles.quoteLabel}>Minimum Received</Text>
                 <View style={{ width: wp(25), flexDirection: "row" }}>

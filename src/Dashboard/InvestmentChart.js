@@ -46,6 +46,11 @@ function InvestmentChart() {
     let isMounted = true;
     async function checkBiometric() {
       try {
+        const res = await AsyncStorage.getItem("AppStatusChecks");
+        const response = JSON.parse(res);
+        if (response.isRestricted || response.maintenance === "true") {
+          navigation.navigate("AppCheck", { info: response.isRestricted ? 0 : 1 });
+        }
         const biometric = await AsyncStorage.getItem('Biometric');
         if (isMounted) {
           if (biometric !== 'SET') {

@@ -25,6 +25,7 @@ import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { PPOST, proxyRequest } from "./exchange/crypto-exchange-front-end-main/src/api";
 import ShortTermStorage from "../utilities/ShortTermStorage";
 import { colors } from "../Screens/ThemeColorsConfig";
+import { ethers } from "ethers";
 
 const ConfirmTransaction = (props) => {
   const state = useSelector((state) => state);
@@ -126,20 +127,6 @@ const ConfirmTransaction = (props) => {
           </View>
 
          <View style={{backgroundColor:theme.bg,width:wp(90),alignSelf:"center",padding:5,margin:13,borderRadius:10}}>
-         <View style={style.networkTxt}>
-            <Text style={{ color: theme.headingTx }}>Network fee</Text>
-            <Text style={[style.dollarTxt,{color:theme.inactiveTx}]}>
-              {Cost ? Cost : "evaluating fees"} {props?.route?.params?.info?.type}
-            </Text>
-          </View>
-
-          <View style={style.networkTxt}>
-            <Text style={{ color: theme.headingTx }}>Max Total</Text>
-            <Text style={[style.dollarTxt,{color:theme.inactiveTx}]}>
-              (Amount+fee) : {props?.route?.params?.info?.finalAmount}
-            </Text>
-          </View>
-
           <View style={style.networkTxt}>
             <Text style={{ color: theme.headingTx }}>Amount</Text>
 
@@ -147,6 +134,22 @@ const ConfirmTransaction = (props) => {
               {props?.route?.params?.info?.amount}
             </Text>
           </View>
+         <View style={style.networkTxt}>
+            <Text style={{ color: theme.headingTx }}>Network fee</Text>
+            <Text style={[style.dollarTxt,{color:theme.inactiveTx}]}>
+              <Text style={[style.dollarTxt,{color:theme.inactiveTx}]}>
+              {ethers.utils.formatEther(ethers.BigNumber.from(props?.route?.params?.info?.fee?.toHexString()))}
+            </Text>
+            </Text>
+          </View>
+
+          <View style={style.networkTxt}>
+            <Text style={{ color: theme.headingTx }}>Max Total</Text>
+            <Text style={[style.dollarTxt,{color:theme.inactiveTx}]}>
+              {props?.route?.params?.info?.finalAmount}
+            </Text>
+          </View>
+
          </View>
 
         </View>

@@ -20,19 +20,20 @@ const sendEth = async (
     return;
   }
 
-  const gasPriceBN = ethers.BigNumber.from(res.gasFeeData.gasPrice || res.gasFeeData.maxFeePerGas);
   const gasLimit = 21000;
-  const estimatedFeeBN = gasPriceBN.mul(gasLimit);
+  const rawGasPrice = res.gasFeeData.gasPrice || res.gasFeeData.maxFeePerGas;
+  const gasPriceBN = ethers.BigNumber.from(rawGasPrice.toString());
+  const bumpedGasPrice = gasPriceBN.mul(120).div(100);
+  const estimatedFeeBN = bumpedGasPrice.mul(gasLimit);
   const feeInEth = ethers.utils.formatEther(estimatedFeeBN);
 
   if (Number(amount) === Number(balance)) {
-    let Amount = Number(amount) - Number(feeInEth);
-    amount = Amount.toString();
+    amount = (Number(amount) - Number(feeInEth)).toString();
   }
 
-  let transaction = {
+  const transaction = {
     nonce: ethers.utils.hexlify(res.transactionCount),
-    gasPrice: ethers.utils.hexlify(gasPriceBN),
+    gasPrice: ethers.utils.hexlify(bumpedGasPrice),
     gasLimit: ethers.utils.hexlify(gasLimit),
     to: addressTo,
     value: ethers.utils.hexlify(ethers.utils.parseEther(amount)),

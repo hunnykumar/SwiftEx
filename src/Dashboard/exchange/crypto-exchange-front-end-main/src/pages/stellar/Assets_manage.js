@@ -214,6 +214,16 @@ const Assets_manage = ({ route }) => {
 
     const theme = state.THEME.THEME ? colors.dark : colors.light;
 
+    const fillteredAssets = stellarTokens?.assets
+        ?.slice(1)
+        ?.sort((a, b) => {
+            const first = assets.some((x) => x.asset_issuer === a.issuer);
+            const exist = assets.some((x) => x.asset_issuer === b.issuer);
+
+            if (first === exist) return 0;
+            return first ? -1 : 1;
+        });
+
     return (
         <>
             <Exchange_screen_header title="Assets" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
@@ -279,7 +289,7 @@ const Assets_manage = ({ route }) => {
                     </View>
                     <></>
                     <FlatList
-                        data={stellarTokens?.assets.slice(1)}
+                        data={fillteredAssets}
                         keyExtractor={(item, index) => index.toString()}
                         style={{ marginBottom: hp(5) }}
                         renderItem={({ item, index }) => {
@@ -292,7 +302,7 @@ const Assets_manage = ({ route }) => {
                                         <Text style={[styles.modal_sub_heading, { fontSize: 10, color: theme.inactiveTx }]}>{item.domain}</Text>
                                     </View>
                                 </View>
-                                {assets.some((list_item) => list_item.asset_code === item.code) ?
+                                {assets.some((list_item) => list_item.asset_issuer === item.issuer) ?
                                     <TouchableOpacity style={[styles.btn,{backgroundColor:"#4052D6"}]} disabled={Loading!==null} onPress={()=>{removeTrustLine(item.code, item.issuer)}}>
                                         {Loading === item.code ? <ActivityIndicator color={"#FFF"} /> : <Text style={[styles.modal_sub_heading,{fontSize:15,color:"#fff"}]}>Remove</Text>}
                                     </TouchableOpacity> :
