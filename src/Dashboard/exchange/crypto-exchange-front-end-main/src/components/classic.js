@@ -160,7 +160,7 @@ const classic = ({ props }) => {
     availableContainer: {
       alignItems: 'flex-end',
       gap: 8,
-      width:wp(30)
+      width:wp(19)
     },
     availableLabel: {
       color: theme.headingTx,
@@ -846,7 +846,7 @@ const classic = ({ props }) => {
 
             <View style={styles.amountContainer}>
               <TextInput
-                style={styles.amountInput}
+                style={[styles.amountInput,{width:wp(60),height:hp(6),padding:0}]}
                 placeholder={`Enter ${selectedFromAsset.symbol} amount`}
                 placeholderTextColor={theme.inactiveTx}
                 value={fromAmount}

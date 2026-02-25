@@ -70,8 +70,17 @@ export async function getChainTokenData(sourceChain, destChain, sourceToken, des
       }
     };
   } catch (error) {
-    console.log("Error in allbridge quotes:", error.message || error);
-    return { success: false, error: error.message || "Unknown error occurred." };
+    const errorMsg = error.message || "Unknown error occurred.";
+    console.debug("Error in allbridge quotes:", errorMsg);
+
+    if (errorMsg.toLowerCase().includes("amount must be greater than zero")) {
+      return {
+        success: false,
+        error: "Amount too low. Please enter a higher amount to proceed with the bridge."
+      };
+    }
+
+    return { success: false, error: errorMsg };
   }
 }
 

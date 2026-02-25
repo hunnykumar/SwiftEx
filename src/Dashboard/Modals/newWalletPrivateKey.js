@@ -29,6 +29,7 @@ import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/E
 import AccessNativeStorage from "../Wallets/AccessNativeStorage";
 import { alert } from "../reusables/Toasts";
 import { useNavigation } from "@react-navigation/native";
+import Clipboard from "@react-native-clipboard/clipboard";
 
 const NewWalletPrivateKey = ({
   props,
@@ -261,6 +262,16 @@ const NewWalletPrivateKey = ({
             Do not share it through email, photos, social media, apps, etc.
             </Text>
           </View>
+
+          <TouchableOpacity
+            onPress={() => {
+              Clipboard.setString(Wallet?.mnemonic);
+              alert("success", "Copied");
+            }}
+            style={{backgroundColor:"#4052D6",borderRadius:15,width:wp(90),marginTop:hp(1.5),paddingVertical:14,alignSelf:"center",alignItems:"center" }}
+          >
+            <Text style={{ color: "white",fontSize:16  }}>Copy</Text>
+          </TouchableOpacity>
 
           <View style={{ width: wp(100),marginBottom:hp(5) }}>
             <TouchableOpacity
