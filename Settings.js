@@ -242,7 +242,7 @@ const Settings = (props) => {
 
         <TouchableOpacity
           style={[styles.card, { borderBottomWidth: 0, borderBottomColor: theme.inactiveTx }]}
-          onPress={() => { Clipboard.setString("info@swiftexwallet.com") }}
+          onPress={() => { Clipboard.setString("info@swiftexwallet.com"),alert("success","E-mail successfully copied") }}
         >
           <View style={styles.iconCon}>
             <Icon type={"feather"} name="help-circle" size={31} color={"#4052D6"} />

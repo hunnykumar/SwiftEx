@@ -818,11 +818,7 @@ const selectTradingPair = useCallback((item) => {
       </View>
 
       <ScrollView style={{ width: "99%" }}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : null}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-          style={{ flex: 1, backgroundColor: theme.bg }}
-        >
+        
           <InfoComponent
             visible={infoVisible}
             type={infotype}
@@ -1219,7 +1215,6 @@ const selectTradingPair = useCallback((item) => {
               )}
             </ScrollView>
           </View>
-        </KeyboardAvoidingView>
       </ScrollView>
       
       <WalletActivationComponent

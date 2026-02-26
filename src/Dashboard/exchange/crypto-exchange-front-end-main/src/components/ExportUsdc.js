@@ -393,7 +393,7 @@ console.log("resQuotes-",resQuotes)
             <Text style={[styles.subInputText,{color:theme.inactiveTx,marginTop: hp(0)}]}>USDC Amount</Text>
             </View>
          <View style={[styles.modalOpen, { paddingVertical: hp(0.5),backgroundColor:theme.bg }]}>
-            <TextInput maxLength={50} placeholder='Enter USDC Amount' placeholderTextColor={"gray"} keyboardType="number-pad" value={amount} style={[styles.textInputForCrossChain,{fontSize: 18, color: theme.headingTx}]} onChangeText={(value) => { handleInputChange(value) }} returnKeyType="done" />
+            <TextInput maxLength={50} placeholder='Enter USDC Amount' placeholderTextColor={"gray"} keyboardType="numeric" value={amount} style={[styles.textInputForCrossChain,{fontSize: 18, color: theme.headingTx}]} onChangeText={(value) => { handleInputChange(value) }} returnKeyType="done" />
         </View>
         </View>
 

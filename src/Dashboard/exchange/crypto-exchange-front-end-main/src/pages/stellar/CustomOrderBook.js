@@ -428,7 +428,7 @@ const connectEventSource = useCallback(() => {
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading order book for {selectedPair.displayName}...</Text>
+          <Text style={styles.loadingText}>Loading details for {selectedPair.displayName}...</Text>
         </View>
       );
     }

@@ -228,7 +228,7 @@ const NewWalletPrivateKey = ({
             style={style.croosIcon}
             onPress={onCrossPress}
           />
-            <Text style={[style.label,{color:theme.headingTx}]}>Account Name</Text>
+            <Text style={[style.label,{color:theme.headingTx}]}>Wallet Name</Text>
             <TextInput
               value={accountName}
               returnKeyType="done"
@@ -236,9 +236,10 @@ const NewWalletPrivateKey = ({
                 handleUsernameChange(text)
               }}
               style={[style.labelInputContainer,{color:theme.headingTx,backgroundColor:theme.cardBg}]}
-              placeholder={user ? user : "Enter your account name"}
+              placeholder={user ? user : "Enter your wallet name"}
               placeholderTextColor={"gray"}
               maxLength={20}
+              autoFocus={true}
             />
 
           <Text style={[style.backupText,{color:theme.headingTx}]}>Backup Mnemonic Phrase</Text>
@@ -257,21 +258,23 @@ const NewWalletPrivateKey = ({
           </View>
 
           <View style={style.dotView}>
-            <Icon name="dot-single" type={"entypo"} size={24} color={theme.inactiveTx}/>
-            <Text style={{ color: theme.inactiveTx, width: "90%" }}>
+           <View style={{flexDirection:"row"}}>
+             <Icon name="dot-single" type={"entypo"} size={24} color={theme.inactiveTx}/>
+            <Text style={{ color: theme.inactiveTx, width: wp(56) }}>
             Do not share it through email, photos, social media, apps, etc.
             </Text>
-          </View>
+           </View>
 
-          <TouchableOpacity
-            onPress={() => {
-              Clipboard.setString(Wallet?.mnemonic);
-              alert("success", "Copied");
-            }}
-            style={{backgroundColor:"#4052D6",borderRadius:15,width:wp(90),marginTop:hp(1.5),paddingVertical:14,alignSelf:"center",alignItems:"center" }}
-          >
-            <Text style={{ color: "white",fontSize:16  }}>Copy</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                Clipboard.setString(Wallet?.mnemonic);
+                alert("success", "Copied");
+              }}
+              style={{ backgroundColor: "#4052D6", borderRadius: 15, paddingVertical: 10,paddingHorizontal:wp(2.3), alignSelf: "center", alignItems: "center" }}
+            >
+              <Text style={{ color: "white", fontSize: 16 }}>Copy Phrase</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={{ width: wp(100),marginBottom:hp(5) }}>
             <TouchableOpacity

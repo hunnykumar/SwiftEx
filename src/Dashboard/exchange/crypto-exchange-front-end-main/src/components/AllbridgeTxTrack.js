@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  Modal,
   StyleSheet,
   ActivityIndicator,
   Linking,
@@ -16,6 +15,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { AllbridgeCoreSdk, nodeRpcUrlsDefault } from "@allbridge/bridge-core-sdk";
 import { STELLAR_URL } from "../../../../constants";
 import CustomInfoProvider from "./CustomInfoProvider";
+import Modal from "react-native-modal";
 
 const sdk = new AllbridgeCoreSdk(nodeRpcUrlsDefault);
 
@@ -434,25 +434,37 @@ export default function AllbridgeTxTrack({ txs, isDarkMode, showTx, closeTx }) {
 
   if (showTx) {
     return (
-      <View style={[styles.container, { backgroundColor: getThemedColor('#F8F9FA', '#000000') }]}>
-        <Modal
-          visible={modalVisible}
-          animationType="slide"
-          onRequestClose={closeModal}
-          transparent={true}
+      <Modal
+        isVisible={modalVisible}
+        onBackdropPress={closeModal}
+        onBackButtonPress={closeModal}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        backdropOpacity={0.5}
+        style={{ justifyContent: "flex-end", margin: 0 }}
+      >
+        <View
+          style={[
+            styles.bottomSheet,
+            { backgroundColor: getThemedColor('#FFFFFF', '#1C1C1E') }
+          ]}
         >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.bottomSheet, { backgroundColor: getThemedColor('#FFFFFF', '#1C1C1E') }]}>
-              <ScrollView
-                contentContainerStyle={styles.modalScrollContent}
-                showsVerticalScrollIndicator={false}
-              >
-                <ModalContent />
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-      </View>
+          <TouchableOpacity style={{
+            zIndex:20,
+            position:"absolute",
+            alignSelf:"flex-end",
+            padding:10
+          }}>
+            <Ionicons name="close-circle-outline" size={34} color={"#fff"} onPress={() => { closeModal() }}/>
+          </TouchableOpacity>
+          <ScrollView
+            contentContainerStyle={styles.modalScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <ModalContent />
+          </ScrollView>
+        </View>
+      </Modal>
     );
   }
 }
@@ -681,14 +693,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
   },
   bottomSheet: {
-    maxHeight: "69%",
+    maxHeight: "70%",
     width: "100%",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingVertical: 10,
-    flex: 1
   },
   modalScrollContent: {
+    marginTop:10,
     paddingBottom: 20,
   },
 });

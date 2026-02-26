@@ -389,7 +389,7 @@ const AMMSwap = () => {
     else{
       settokenBurn(false)
       console.log("--Error--",respo.error)
-      CustomInfoProvider.show("error","!Opps",respo.error.result_codes==="op_under_dest_min"?"Swap cannot be completed because the amount is too small.":"Transaction Faild.");
+      CustomInfoProvider.show("error","!Opps",respo.error.result_codes==="op_under_dest_min"?"Swap cannot be completed because the amount is too small.":"Transaction Failed.");
     }
   }
 

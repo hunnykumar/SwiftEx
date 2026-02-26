@@ -6,7 +6,7 @@ import {
   Platform,
   UIManager,
   TouchableOpacity,
-  StatusBar, SafeAreaView, Modal, TouchableWithoutFeedback, ActivityIndicator
+  StatusBar, SafeAreaView, TouchableWithoutFeedback, ActivityIndicator
 } from "react-native";
 import { Text } from "react-native-paper";
 import SendModal from "./Modals/SendModal";
@@ -35,6 +35,7 @@ import Icon from "../icon";
 import Wallet_selection_bottom from "./Wallets/Wallet_selection_bottom";
 import CustomInfoProvider from "./exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
 import { PORTFOLIO_CONFIG } from "../components/Redux/actions/type";
+import Modal from "react-native-modal";
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -293,13 +294,15 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
       />
 
       <Modal
-        animationType="slide"
-        transparent
-        visible={Wallet_modal}
-        onRequestClose={() => setWallet_modal(false)}
+        isVisible={Wallet_modal}
+        onBackdropPress={() => { setWallet_modal(false) }}
+        onBackButtonPress={() => { setWallet_modal(false) }}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        backdropOpacity={0.5}
+        style={{ justifyContent: "flex-end", margin: 0 }}
       >
-        <TouchableWithoutFeedback onPress={() => setWallet_modal(false)}>
-          <View style={styles.modalBackground}>
+
             <View
               style={[
                 styles.modalView,
@@ -336,8 +339,6 @@ const MyHeader2 = ({ title, changeState, state, extended, setExtended }) => {
               </View>
               <Wallet_selection_bottom onClose={handleClosewalletmodal} />
             </View>
-          </View>
-        </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>
   );
