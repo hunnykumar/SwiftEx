@@ -40,6 +40,9 @@ import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { useNavigation } from "@react-navigation/native";
 import { recoverMultiChainWallet } from "../utilities/WalletManager";
 import * as StellarSdk from '@stellar/stellar-sdk';
+import AccessNativeStorage from "./Wallets/AccessNativeStorage";
+import apiHelper from "./exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 const { EthereumWallet } = NativeModules;
 
 const ImportBscWallet = (props) => {
@@ -133,7 +136,7 @@ const ImportBscWallet = (props) => {
           <TouchableOpacity
             style={
               label == "privateKey"
-                ? { ...style.tabBtns, borderColor: "#4CA6EA" }
+                ? { ...style.tabBtns, borderColor: "#5B65E1" }
                 : style.tabBtns
             }
             // color={label == "privateKey" ? "green" : "grey"}
@@ -145,7 +148,7 @@ const ImportBscWallet = (props) => {
               }
             }}
           >
-            <Text style={{ color: label == "privateKey" ? "#4CA6EA" : "grey" }}>
+            <Text style={{ color: "black" }}>
               PrivateKey
             </Text>
           </TouchableOpacity>
@@ -153,7 +156,7 @@ const ImportBscWallet = (props) => {
           <TouchableOpacity
             style={
               label == "mnemonic"
-                ? { ...style.tabBtns, borderColor: "#4CA6EA" }
+                ? { ...style.tabBtns, borderColor: "#5B65E1" }
                 : style.tabBtns
             } // color={label == "mnemonic" ? "green" : "grey"}
             onPress={() => {
@@ -164,7 +167,7 @@ const ImportBscWallet = (props) => {
               }
             }}
           >
-            <Text style={{ color: label == "mnemonic" ? "#4CA6EA" : "grey" }}>
+            <Text style={{ color: "black" }}>
               Mnemonic
             </Text>
           </TouchableOpacity>
@@ -172,7 +175,7 @@ const ImportBscWallet = (props) => {
           <TouchableOpacity
             style={
               label == "JSON"
-                ? { ...style.tabBtns, borderColor: "#4CA6EA" }
+                ? { ...style.tabBtns, borderColor: "#5B65E1" }
                 : style.tabBtns
             }
             // color={label == "JSON" ? "green" : "grey"}
@@ -184,7 +187,7 @@ const ImportBscWallet = (props) => {
               }
             }}
           >
-            <Text style={{ color: label == "JSON" ? "#4CA6EA" : "grey" }}>
+            <Text style={{ color: "black" }}>
               JSON key
             </Text>
           </TouchableOpacity>
@@ -198,14 +201,16 @@ const ImportBscWallet = (props) => {
             onChangeText={(text) => {
               handleUsernameChange(text)
             }}
-            style={{ width: wp("78%"),color:"black" }}
+            style={style.input}
             placeholder={accountName ? accountName : "Wallet 1"}
             placeholderTextColor={"gray"}
           />
         </View>
 
         <View style={style.inputView}>
-          <TouchableOpacity onPress={async ()=>{
+          <View style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center",marginTop:20}}>
+          <Text style={style.label}>Phrase</Text>
+          <TouchableOpacity style={style.pasteCon} onPress={async ()=>{
            // setText('abc')
            setDisable(false)
             if (label === "privateKey") {
@@ -238,9 +243,9 @@ const ImportBscWallet = (props) => {
           }}>
           <Text style={style.paste}>Paste</Text>
           </TouchableOpacity>
-          <Text style={{color:"#4CA6EA"}}>Phrase</Text>
+          </View>
           <TextInput
-            style={[style.input,{color:"black"}]}
+            style={style.input}
             value={text}
             onChangeText={(text) => {
               if (label === "privateKey") {
@@ -316,21 +321,16 @@ const ImportBscWallet = (props) => {
                     "Incorrect Mnemonic. Please provide a valid Mnemonic"
                   );
                 }
-                const accountFromMnemonic = Platform.OS === "android" ? await EthereumWallet.recoverMultiChainWallet(trimmedPhrase) : await recoverMultiChainWallet(trimmedPhrase);
+                const accountFromMnemonic = Platform.OS === "android" ? await EthereumWallet.recoverMultiChainWallet(trimmedPhrase) : await EthereumWallet.recoverWallet(trimmedPhrase,"");
                 const wallet = {
                   address: accountFromMnemonic.ethereum.address,
-                  privateKey: accountFromMnemonic.ethereum.privateKey,
                   xrp: {
                     address: "000000000",
-                    privateKey: "000000000",
                   },
                   stellarWallet: {
                     publicKey: accountFromMnemonic.stellar.publicKey,
-                    secretKey: accountFromMnemonic.stellar.secretKey
                   },
                 };
-
-                console.log(pin);
                 const body = {
                   accountName: accountName,
                   pin: JSON.parse(pin),
@@ -340,18 +340,14 @@ const ImportBscWallet = (props) => {
 
                 const accounts = {
                   address: wallet.address,
-                  privateKey: wallet.privateKey,
-                  mnemonic: trimmedPhrase,
                   name: accountName,
                   xrp: {
                   address: "000000000",
-                  privateKey: "000000000",
                   },
                   stellarWallet: {
                     publicKey: wallet.stellarWallet.publicKey,
-                    secretKey: wallet.stellarWallet.secretKey
                   },
-                  walletType: "BSC",
+                  walletType: "Multi-coin",
                   wallets: [],
                 };
                 let wallets = [];
@@ -359,10 +355,8 @@ const ImportBscWallet = (props) => {
                 const allWallets = [
                   {
                     address: wallet.address,
-                    privateKey: wallet.privateKey,
                     name: accountName,
-                    mnemonic: trimmedPhrase,
-                    walletType: "BSC",
+                    walletType: "Multi-coin",
                   },
                 ];
 
@@ -382,118 +376,148 @@ const ImportBscWallet = (props) => {
                 dispatch(
                   setCurrentWallet(
                     wallet.address,
-                    accountName,
-                    wallet.privateKey,
-                    trimmedPhrase
+                    accountName
                   )
                 );
                 dispatch(AddToAllWallets(wallets, accountName));
                 dispatch(getBalance(wallet.address));
                 dispatch(setToken(token));
-                //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
-                dispatch(setWalletType("BSC"));
+                dispatch(setWalletType("Multi-coin"));
+                const walletResponse = await AccessNativeStorage.saveWallet({
+                  name: accountName,
+                  address: accountFromMnemonic.ethereum.address,
+                  privatekey: accountFromMnemonic.ethereum.privateKey,
+                  stellarPublicKey: accountFromMnemonic.stellar.publicKey,
+                  stellarPrivateKey: accountFromMnemonic.stellar.secretKey,
+                  mnemonic: trimmedPhrase,
+                  walletType: "Multi-coin"
+                })
 
-                setLoading(false);
-                props.navigation.navigate("HomeScreen");
-
-                //setVisible(!visible)
+                if (walletResponse.success) {
+                  const resultApi = await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+                    "addresses": {
+                      "eth": accountFromMnemonic.ethereum.address,
+                      "xlm": accountFromMnemonic.stellar.publicKey,
+                      "bnb": accountFromMnemonic.ethereum.address,
+                      "multi": accountFromMnemonic.ethereum.address
+                    },
+                    "isPrimary": true
+                  });
+                  if (resultApi.success) {
+                    setLoading(false);
+                    alert("success", "Wallet import success and synced.");
+                    props.navigation.navigate("HomeScreen");
+                  } else {
+                    setLoading(false);
+                    alert("success", "Wallet import success.");
+                    props.navigation.navigate("HomeScreen");
+                  }
+                }else{
+                  setLoading(false);
+                  alert("error","Wallet import faild.");
+                }
               } catch (e) {
                 console.log(e);
                 alert("error", e);
                 setLoading(false);
               }
             } else if (label === "privateKey") {
-                try {
-                  console.log('starting private key')
-                  const check = ethers.utils.isHexString(privateKey, 32);
-                  if (!check) {
-                    setLoading(false);
-                    return alert(
-                      "error",
-                      "Incorrect PrivateKey. Please provide a valid privatekey"
-                    );
-                  }
-                  const pair =await StellarSdk.Keypair.random();
-                  console.log("StellaeKeys-using-private keys:---",pair.publicKey(),"privat--",pair.secret())
-                  const walletPrivateKey = new ethers.Wallet(privateKey);
-                  console.log(walletPrivateKey.mnemonic);
-                  const Keys = walletPrivateKey._signingKey();
-                  const privatekey = Keys.privateKey;
-                  const wallet = {
-                    address: walletPrivateKey.address,
-                    privateKey: privatekey,
-                    xrp: {
-                      address: "000000000",
-                      privateKey: "000000000",
-                    },
-                    stellarWallet: {
-                      publicKey: pair.publicKey(),
-                      secretKey: pair.secret()
-                    },
-                  };
-                  
-                  console.log(pin);
-                  const body = {
-                    accountName: accountName,
-                    pin: JSON.parse(pin),
-                  };
-                  const token = genUsrToken(body);
-                  console.log(token);
-
-                  const accounts = {
-                    address: wallet.address,
-                    privateKey: wallet.privateKey,
-                    name: accountName,
-                    xrp: {
-                      address: "000000000",
-                      privateKey: "000000000",
-                    },
-                    stellarWallet: {
-                      publicKey: wallet.stellarWallet.publicKey,
-                      secretKey: wallet.stellarWallet.secretKey
-                    },
-                    walletType: "BSC",
-                    wallets: [],
-                  };
-                  let wallets = [];
-                  wallets.push(accounts);
-                  const allWallets = [
-                    {
-                      address: wallet.address,
-                      privateKey: wallet.privateKey,
-                      name: accountName,
-                      walletType: "BSC",
-                    },
-                  ];
-
-                  AsyncStorageLib.setItem(
-                    "wallet",
-                    JSON.stringify(allWallets[0])
-                  );
-                  AsyncStorageLib.setItem(
-                    `${accountName}-wallets`,
-                    JSON.stringify(allWallets)
-                  );
-                  AsyncStorageLib.setItem("user", accountName);
-                  AsyncStorageLib.setItem("token", token);
-                  AsyncStorageLib.setItem("currentWallet", accountName);
-
-                  dispatch(setUser(accountName));
-                  dispatch(
-                    setCurrentWallet(
-                      wallet.address,
-                      accountName,
-                      wallet.privateKey
-                    )
-                  );
-                  dispatch(AddToAllWallets(wallets, accountName));
-                  dispatch(getBalance(wallet.address));
-                  dispatch(setToken(token));
-                  //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
-                  dispatch(setWalletType("BSC"));
-
+              try {
+                console.log('starting private key')
+                const check = ethers.utils.isHexString(privateKey, 32);
+                if (!check) {
                   setLoading(false);
-                  props.navigation.navigate("HomeScreen");
+                  return alert(
+                    "error",
+                    "Incorrect PrivateKey. Please provide a valid privatekey"
+                  );
+                }
+                const etherWalletRes = await NativeModules.EthereumWallet.importEthPrivateKey(privateKey);
+                if (!etherWalletRes.generated) {
+                  setLoading(false);
+                  alert('error', "Account Not import yet.");
+                } else {
+                  const walletResponse = await AccessNativeStorage.saveWallet({
+                    name: accountName,
+                    address: etherWalletRes.original.address,
+                    privatekey: etherWalletRes.original.privateKey,
+                    stellarPublicKey: etherWalletRes.generated.publicKey,
+                    stellarPrivateKey: etherWalletRes.generated.secretKey,
+                    mnemonic: "",
+                    walletType: "Multi-coin"
+                  })
+                  if (walletResponse.success) {
+                    const wallet = {
+                      address: etherWalletRes.original.address,
+                      xrp: {
+                        address: "000000000",
+                      },
+                      stellarWallet: {
+                        publicKey: etherWalletRes.generated.publicKey
+                      },
+                    };
+                    const body = {
+                      accountName: accountName,
+                      pin: JSON.parse(pin),
+                    };
+                    const token = genUsrToken(body);
+                    const accounts = {
+                      address: wallet.address,
+                      name: accountName,
+                      xrp: {
+                        address: "000000000",
+                      },
+                      stellarWallet: {
+                        publicKey: wallet.stellarWallet.publicKey
+                      },
+                      walletType: "Multi-coin",
+                      wallets: [],
+                    };
+                    let wallets = [];
+                    wallets.push(accounts);
+                    const allWallets = [
+                      {
+                        address: wallet.address,
+                        name: accountName,
+                        walletType: "Multi-coin",
+                      },
+                    ];
+                    AsyncStorageLib.setItem(
+                      "wallet",
+                      JSON.stringify(allWallets[0])
+                    );
+                    AsyncStorageLib.setItem(
+                      `${accountName}-wallets`,
+                      JSON.stringify(allWallets)
+                    );
+                    AsyncStorageLib.setItem("user", accountName);
+                    AsyncStorageLib.setItem("token", token);
+                    AsyncStorageLib.setItem("currentWallet", accountName);
+
+                    dispatch(setUser(accountName));
+                    dispatch(
+                      setCurrentWallet(
+                        wallet.address,
+                        accountName
+                      )
+                    );
+                    dispatch(AddToAllWallets(wallets, accountName));
+                    dispatch(getBalance(wallet.address));
+                    dispatch(setToken(token));
+                    dispatch(setWalletType("Multi-coin"));
+                    await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+                      "addresses": {
+                        "eth": wallet.address,
+                        "xlm": wallet.stellarWallet.publicKey,
+                        "bnb": wallet.address,
+                        "multi": wallet.address
+                      },
+                      "isPrimary": true
+                    });
+                    setLoading(false);
+                    props.navigation.navigate("HomeScreen");
+                  }
+                }
                 } catch (e) {
                   console.log(e);
                   setLoading(false);
@@ -502,7 +526,7 @@ const ImportBscWallet = (props) => {
               }
           }}
         >
-          <Text style={{ color: "white" }}>Import</Text>
+          <Text style={{ color: "white",fontSize:19 }}>Import</Text>
         </TouchableOpacity>
       </View>
     </Animated.View>
@@ -536,7 +560,6 @@ const style = StyleSheet.create({
     justifyContent: "space-between",
     width: wp(85),
     marginTop: hp(3),
-    marginBottom: hp(3),
     alignSelf: "center",
   },
   tinyLogo: {
@@ -550,15 +573,6 @@ const style = StyleSheet.create({
     fontSize: 15,
     fontWeight: "200",
     color: "white",
-  },
-  input: {
-    height: hp("5%"),
-    marginBottom: hp("2"),
-    color: "black",
-    marginTop: hp("2"),
-    width: wp("90"),
-    paddingRight: wp("7"),
-    backgroundColor: "white",
   },
   textInput: {
     borderWidth: 1,
@@ -595,42 +609,52 @@ const style = StyleSheet.create({
     elevation: 24,
   },
   labelInputContainer: {
-    position: "relative",
     width: wp(90),
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "flex-start",
     alignSelf: "center",
     marginTop: hp(3),
     borderRadius: wp(2),
-    backgroundColor: "white",
-    borderWidth: 1,
+    backgroundColor: "#F4F4F8",
     paddingLeft: wp(3),
-    paddingVertical: hp(1.2),
-    borderColor: "#DADADA",
+    paddingVertical: hp(2),
   },
   label: {
-    position: "absolute",
-    zIndex: 100,
-    backgroundColor: "white",
-    paddingHorizontal: 5,
-    left: 12,
-    color: "#4CA6EA",
-    top: -12,
+    left: 10,
+    color: "gray",
+    fontSize:16
   },
-  inputView: {
-    borderWidth: 1,
+  inputView:{
+    backgroundColor:"#F4F4F8",
     width: wp(90),
     alignSelf: "center",
-    padding: 10,
-    marginTop: hp(3),
+    paddingHorizontal:wp(3),
+    marginTop: hp(1.5),
     borderRadius: hp(1),
-    borderColor: "#DADADA",
   },
-  input: { paddingVertical: hp(4) },
-  paste: { textAlign: "right", color: "#4CA6EA" },
+  input:{
+    marginVertical:hp(2),
+    paddingVertical: hp(2),
+    backgroundColor:"#fff",
+    borderRadius:10,
+    paddingLeft:10,
+    color:"black",
+    fontSize:15,
+    width:wp(83)
+  },
+  pasteCon:{
+    paddingVertical:5,
+    paddingHorizontal:10,
+    backgroundColor:"#5B65E1",
+    borderRadius:10
+  },
+  paste:{ 
+    fontSize:16,
+    color:"#FFF"
+  },
   btn: {
-    backgroundColor: "#4CA6EA",
+    backgroundColor: "#5B65E1",
     paddingVertical: hp(1.6),
     width: wp(90),
     alignSelf: "center",
@@ -638,13 +662,14 @@ const style = StyleSheet.create({
     alignItems: "center",
   },
   jsonInput: {
-    borderWidth: StyleSheet.hairlineWidth * 1,
-    marginTop: hp(3),
+    backgroundColor:"#F4F4F8",
+    marginTop: hp(1.5),
     width: wp(90),
     borderRadius: hp(1),
     paddingVertical: hp(1.6),
     alignSelf: "center",
     paddingHorizontal: wp(2),
+    paddingLeft:30
   },
   tabBtns: {
     borderBottomWidth: 1,

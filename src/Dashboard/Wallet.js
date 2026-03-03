@@ -11,7 +11,8 @@ import {
   Modal,
   FlatList,
   TouchableOpacity,
-  Alert,StatusBar,Platform
+  Alert,StatusBar,Platform,
+  ScrollView
 } from "react-native";
 import { TextInput } from "react-native-paper";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,10 +28,10 @@ import SelectWallet from "./Modals/SelectWallet";
 import "react-native-get-random-values";
 import "@ethersproject/shims";
 import NewWalletModal from "./Modals/newWallet";
-import Icon from "react-native-vector-icons/FontAwesome";
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useIsFocused } from "@react-navigation/native";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
+import Icon from "../icon";
 var ethers = require("ethers");
 const xrpl = require("xrpl");
 
@@ -53,49 +54,33 @@ const Wallet = ({ navigation }) => {
 
   return (
     <Animated.View>
-      {Platform.OS === 'ios' &&  <StatusBar hidden={true}/>}
       <Wallet_screen_header title="Wallet" onLeftIconPress={() => navigation.goBack()} />
-      <View
-        style={{
-          height: hp(100),
-          marginTop: "auto",
-          backgroundColor: state.THEME.THEME===false?"#fff":"black",
-          borderRadius: 0,
-        }}
-      >
-        <View style={{height:hp(38)}}>
+        <View style={{
+          paddingBottom:hp(13),
+          backgroundColor: state.THEME.THEME===false?"#fff":"#1B1B1C",
+        }}>
+        
+      <ScrollView>
+        <View style={[styles.topCon,{backgroundColor:state.THEME.THEME?"#242426":"#F4F4F8",}]}>
         <Animated.Image
-          style={{
-            width: wp("70"),
-            height: hp(26),
-            padding: 30,
-            marginTop: hp(4),
-            marginLeft: wp(15),
-            borderRadius: wp(10),
-          }}
+          style={styles.imageCon}
           source={walletImage}
         />
         <View
-          style={{
-            marginTop: hp(0.1),
-            display: "flex",
-            alignContent: "center",
-            alignItems: "center",
-          }}
+          style={[styles.bigCard,{backgroundColor:state.THEME.THEME?"black":"#FFFFFF",}]}
         >
-          <Text style={{ fontSize: 20, color: state.THEME.THEME===false?"black":"#fff",fontWeight:"600"}}>
+          <Text style={{ fontSize: 18, color: state.THEME.THEME===false?"black":"#fff",fontWeight:"500"}}>
             Private and Secure
           </Text>
-          <Text style={{ color: state.THEME.THEME===false?"black":"#fff",fontWeight:"500" }}>
+          <Text style={{ color: state.THEME.THEME===false?"black":"#fff",fontWeight:"400",fontSize: 16 }}>
             Private Keys never leave your device
           </Text>
         </View>
         </View>
-        <TouchableOpacity onPress={() => {navigation.navigate("MyWallet")}}>
-        <View style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#18181C"}]}>
+        <TouchableOpacity onPress={() => {navigation.navigate("MyWallet")}} style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F8":"#242426"}]}>
             <View style={styles.ConHeading}>
-              <View style={styles.iconCon}>
-              <MaterialCommunityIcon name="wallet-outline" size={hp("3")} color={"#2164C1"}/>
+              <View style={[styles.iconCon,{backgroundColor:state.THEME.THEME?"#1B1B1C":"#FFFFFF"}]}>
+              <MaterialCommunityIcon name="wallet-outline" size={hp("3")} color={state.THEME.THEME?"#E6E8EB":"#272729"}/>
               </View>
             <View>
             <Text style={[styles.Heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>My Wallet</Text>
@@ -103,18 +88,18 @@ const Wallet = ({ navigation }) => {
             </View>
             </View>
           <Icon
-            name="chevron-right"
-            size={hp("2")}
+            name={"arrow-right"}
+            type={"materialCommunity"}
+            size={30}
             color={state.THEME.THEME===false?"black":"#fff"}
           />
-        </View>
+
         </TouchableOpacity>
         <View>
-        <TouchableOpacity onPress={() => {setNewWalletModal(true)}}>
-        <View style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#18181C"}]}>
+        <TouchableOpacity onPress={() => {setNewWalletModal(true)}} style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F8":"#242426"}]}>
             <View style={styles.ConHeading}>
-              <View style={styles.iconCon}>
-              <MaterialCommunityIcon name="plus" size={hp("3")} color={"#2164C1"}/>
+              <View style={[styles.iconCon,{backgroundColor:state.THEME.THEME?"#1B1B1C":"#FFFFFF"}]}>
+              <MaterialCommunityIcon name="plus" size={hp("3")} color={state.THEME.THEME?"#E6E8EB":"#272729"}/>
               </View>
             <View>
             <Text style={[styles.Heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Create Wallet</Text>
@@ -122,18 +107,17 @@ const Wallet = ({ navigation }) => {
             </View>
             </View>
           <Icon
-            name="chevron-right"
-            size={hp("2")}
+            name={"arrow-right"}
+            type={"materialCommunity"}
+            size={30}
             color={state.THEME.THEME===false?"black":"#fff"}
           />
-        </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => {setVisible(true)}}>
-        <View style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#18181C"}]}>
+        <TouchableOpacity onPress={() => {setVisible(true)}} style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F8":"#242426"}]}>
             <View style={styles.ConHeading}>
-              <View style={styles.iconCon}>
-              <MaterialCommunityIcon name="cloud-download-outline" size={hp("3")} color={"#2164C1"}/>
+              <View style={[styles.iconCon,{backgroundColor:state.THEME.THEME?"#1B1B1C":"#FFFFFF"}]}>
+              <MaterialCommunityIcon name="cloud-download-outline" size={hp("3")} color={state.THEME.THEME?"#E6E8EB":"#272729"}/>
               </View>
             <View>
             <Text style={[styles.Heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Import Wallet</Text>
@@ -141,18 +125,17 @@ const Wallet = ({ navigation }) => {
             </View>
             </View>
           <Icon
-            name="chevron-right"
-            size={hp("2")}
+            name={"arrow-right"}
+            type={"materialCommunity"}
+            size={30}
             color={state.THEME.THEME===false?"black":"#fff"}
           />
-        </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => {navigation.navigate("AllWallets")}}>
-        <View style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F4":"#18181C"}]}>
+        <TouchableOpacity onPress={() => {navigation.navigate("AllWallets")}} style={[styles.wallet,{backgroundColor:state.THEME.THEME===false?"#F4F4F8":"#242426"}]}>
             <View style={styles.ConHeading}>
-              <View style={styles.iconCon}>
-              <MaterialCommunityIcon name="swap-horizontal" size={hp("3")} color={"#2164C1"}/>
+              <View style={[styles.iconCon,{backgroundColor:state.THEME.THEME?"#1B1B1C":"#FFFFFF"}]}>
+              <MaterialCommunityIcon name="swap-horizontal" size={hp("3")} color={state.THEME.THEME?"#E6E8EB":"#272729"}/>
               </View>
             <View>
             <Text style={[styles.Heading,{color:state.THEME.THEME===false?"black":"#fff"}]}>Choose Wallet</Text>
@@ -160,25 +143,26 @@ const Wallet = ({ navigation }) => {
             </View>
             </View>
           <Icon
-            name="chevron-right"
-            size={hp("2")}
+            name={"arrow-right"}
+            type={"materialCommunity"}
+            size={30}
             color={state.THEME.THEME===false?"black":"#fff"}
           />
-        </View>
         </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
       <SelectWallet
         visible={visible}
         setVisible={setVisible}
         setModalVisible={setModalVisible}
-      />
+        />
       <NewWalletModal
         visible={newWalletModal}
         onCrossPress={()=>{setNewWalletModal(false)}}
         setVisible={setNewWalletModal}
         setModalVisible={setModalVisible}
-      />
+        />
+        </View>
     </Animated.View>
   );
 };
@@ -258,15 +242,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   wallet:{
-    backgroundColor:"#F4F4F4",
-    borderRadius:hp(1),
+    borderRadius:19,
     flexDirection:"row",
     alignSelf:"center",
     alignItems:"center",
     justifyContent:"space-between",
     marginTop:hp(0.9),
-    width:wp(90),
-    padding:hp(2)
+    width:wp(95),
+    padding:hp(2),
   },
   ConHeading:{
     flexDirection:"row",
@@ -274,8 +257,8 @@ const styles = StyleSheet.create({
   },
   iconCon:{
     backgroundColor:"#2164C140",
-    marginRight:wp(1.5),
-    borderRadius:50,
+    marginRight:wp(2.5),
+    borderRadius:20,
     alignItems:"center",
     justifyContent:"center",
     padding:10
@@ -288,5 +271,30 @@ const styles = StyleSheet.create({
     color:"gray",
     fontWeight:"400",
     fontSize:14
+  },
+  topCon:{
+    marginHorizontal:10,
+    borderRadius:20,
+    paddingVertical:hp(0.5),
+    marginBottom:hp(0.5)
+  },
+  imageCon:{
+    width: wp("70"),
+    height: hp(25),
+    alignSelf:"center"
+  },
+  bigCard:{
+    marginTop: hp(-2),
+    alignItems: "center",
+    alignSelf:"center",
+    paddingVertical:hp(2),
+    width:wp(80),
+    shadowColor: '#5B65E1',
+    shadowOffset: { width: 10, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 20,
+    marginBottom:10,
+    borderRadius:20
   }
 });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { AppState, View } from "react-native";
+import { AppState, Platform, View } from "react-native";
 import "react-native-gesture-handler";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -84,6 +84,11 @@ import StellarTransactionViewer from "../Dashboard/exchange/crypto-exchange-fron
 import TxDetails from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/txDetails";
 import FloatingScreen from "../../FloatingComponet/FloatingScreen";
 import ExportUSDC from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/ExportUsdc";
+import { TransactionView } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/pages/transaction";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { colors } from "../Screens/ThemeColorsConfig";
+import BridgeAssets from "../Dashboard/exchange/crypto-exchange-front-end-main/src/components/BridgeAssets";
+import { AppCheck } from "../Screens/AppChecks/AppCheck";
 
 const Stack = createNativeStackNavigator();
 
@@ -618,6 +623,34 @@ const AuthStack = () => {
         options={{headerShown:false}}
       />
       <Stack.Screen
+        name="StellarTransactions"
+        component={TransactionView}
+        options={{
+          headerShown:false
+        }}
+      />
+      <Stack.Screen
+        name="BridgeAssets"
+        component={BridgeAssets}
+        options={{
+          headerShown: false,
+        }}
+      />
+        <Stack.Screen
+        name="StellarOffers"
+        component={OfferView}
+        options={{
+          headerShown:false
+        }}
+      />
+       <Stack.Screen
+        name="AppCheck"
+        component={AppCheck}
+        options={{
+          headerShown:false
+        }}
+      />
+      <Stack.Screen
         name="TxDetails"
         options={{headerShown:false}}
         >
@@ -721,6 +754,7 @@ const NavigationProvider = () => {
   }
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: statee && statee.THEME && statee.THEME.THEME === false ? colors.light.bg : colors.dark.bg,marginTop:Platform.OS==="ios"&&-50 }}>
     <AuthStack
       getHeaderTitle={getHeaderTitle}
       extended={extended}
@@ -729,6 +763,7 @@ const NavigationProvider = () => {
       Header2={Header2}
       dispatch={dispatch}
     />
+    </SafeAreaView>
   );
 };
 export default NavigationProvider;

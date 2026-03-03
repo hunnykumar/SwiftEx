@@ -6,80 +6,46 @@ const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 // Function to calculate total reserved and available balance
 export async function GetStellarAvilabelBalance(publicKey) {
   try {
-    // Fetch account data
     const account = await server.loadAccount(publicKey);
-
-    // Base reserve and extra calculations
-    const baseReserve = 0.5; // 0.5 XLM per entry
-    const minAccountBalance = 2 * baseReserve; // 1 XLM base reserve for account
-
-    // Extract account details
-    const subEntries = account.subentry_count;
-    const balances = account.balances;
-    const signers = account.signers.length - 1;
-    const sponsoringEntries = account.num_sponsoring;
-    const sponsoredEntries = account.num_sponsored;
-
-    // Calculate reserved for entries
-    const reservedForEntries = 0.5;
-
-    // Fetch active offers using Axios
-    let xlmInOffers = 0;
-    let offerCount = 0;
-    try {
-      const apiUrl = `${STELLAR_URL.URL}/accounts/${publicKey}/offers?limit=200&order=desc`;
-      const response = await axios.get(apiUrl);
-      
-      // Log the response for debugging
-      console.log('Fetched Offers:', response.data);
-
-      const fetchedOffers = response.data._embedded?.records || [];
-
-      offerCount = fetchedOffers.length; // Count the number of offers
-      xlmInOffers = fetchedOffers.reduce((total, offer) => {
-        return total + parseFloat(offer.amount);
-      }, 0);
-
-    } catch (offerError) {
-      console.log('No active offers or Error: ', offerError.message);
-    }
-
-    // Include offer reserve (0.5 XLM per offer)
-    const offerReserve = offerCount * baseReserve;
-
-    const totalTrustReserve=account.balances.length-1===1?baseReserve:0;
-    // Total reserved
-    const totalReserved = minAccountBalance + reservedForEntries + xlmInOffers + offerReserve+totalTrustReserve;
-
-    // Calculate total XLM balance in the account
+    
+    // Match your exact buffer expectation
+    const transactionBuffer = 0.022;  // Your original value
+    
+    const latestLedger = await server.ledgers().order('desc').limit(1).call();
+    const baseReserve = parseFloat(latestLedger.records[0].base_reserve_in_stroops) / 10000000;
+    
+    const subentryCount = account.subentry_count || 0;
+    const numSponsoring = account.num_sponsoring || 0;
+    const numSponsored = account.num_sponsored || 0;
+    
+    const minBalance = (2 + subentryCount + numSponsoring - numSponsored) * baseReserve;
+    
     let xlmBalance = 0;
-    balances.forEach((balance) => {
+    let sellingLiabilities = 0;
+    account.balances.forEach((balance) => {
       if (balance.asset_type === "native") {
         xlmBalance = parseFloat(balance.balance);
+        sellingLiabilities = parseFloat(balance.selling_liabilities || '0');
       }
     });
-
-    const transactionBuffer = 0.022;
-    // Available balance (Total balance - Total reserved)
-    const availableBalance = xlmBalance - totalReserved-transactionBuffer;
-
-    const formatValue = (value) => {
-      return value < 0 ? "0.00000" : value.toFixed(5);
-  };
+    
+    const totalReserved = minBalance + sellingLiabilities;
+    const availableBalance = Math.max(0, xlmBalance - totalReserved - transactionBuffer);
+    
+    const formatValue = (value) => value < 0 ? "0.0000000" : value.toFixed(7);
+    
     return {
+      availableBalance: formatValue(availableBalance),  // Now: "13.1842044"
       totalReserved: formatValue(totalReserved),
-      availableBalance: formatValue(availableBalance),
+      details: { baseReserve: baseReserve.toFixed(7), subentryCount }
     };
-
+    
   } catch (error) {
-    console.error("Error fetching account details:", error.message);
-    return {
-      totalReserved: 'Error',
-      availableBalance: 'Error',
-    };
+    console.error("Error:", error.message);
+    return { availableBalance: 'Error', totalReserved: 'Error' };
   }
-  
 }
+
 
 
 
@@ -111,7 +77,7 @@ export async function GetStellarUSDCAvilabelBalance(publicKey,coinName,coinIssue
     }
 
     const formatValue = (value) => {
-        return value < 0 ? "0.00000" : value.toFixed(5);
+        return value < 0 ? "0.00000" : value;
     };
 
     let selectedAsset = null;
@@ -133,7 +99,7 @@ export async function GetStellarUSDCAvilabelBalance(publicKey,coinName,coinIssue
     });
 
     if (!selectedAsset) {
-        return { error: `Token ${coinName} not found in account`,status:false };
+        return { error: `Trust ${coinName} to use it in your wallet.`,status:false,tokenSymbole:coinName,tokenIssuer:coinIssuer,userPublicKey:publicKey};
     }
 
     return selectedAsset;
@@ -143,3 +109,39 @@ export async function GetStellarUSDCAvilabelBalance(publicKey,coinName,coinIssue
     return { error: error.message };
 }
 }
+
+export async function HandleStellarTrustLine(secretKey, assetCode, assetIssuer, addTrustline = true) {
+  try {
+    const keypair = StellarSdk.Keypair.fromSecret(secretKey);
+    const publicKey = keypair.publicKey();
+    const account = await server.loadAccount(publicKey);
+    const asset = new StellarSdk.Asset(assetCode, assetIssuer);
+    const transaction = new TransactionBuilder(account, {
+      fee: await server.fetchBaseFee(),
+      networkPassphrase: StellarSdk.Networks.PUBLIC,
+    })
+      .addOperation(
+        addTrustline
+          ? Operation.changeTrust({ asset })
+          : Operation.changeTrust({ asset, limit: '0' })
+      )
+      .setTimeout(100)
+      .build();
+    transaction.sign(keypair);
+    const txResult = await server.submitTransaction(transaction);
+    console.log('updating trustline:', txResult);
+    return { response: txResult, status: true };
+  } catch (error) {
+    console.error('Error updating trustline:', error);
+    return { response: error, status: false };
+  }
+}
+
+export const stellarWalletStatus = async (publicKey) => {
+  try {
+    await server.loadAccount(publicKey);
+    return false;
+  } catch (error) {
+    return true;
+  }
+};

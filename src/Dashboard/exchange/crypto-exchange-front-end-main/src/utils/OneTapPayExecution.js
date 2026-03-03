@@ -81,11 +81,11 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
     const respo = await proxyRequest("/v1/eth/swap-transaction/prepare", PPOST, payload);
     console.log("prepare response:", respo);
 
-    if (respo.err?.status === 500) {
+    if (respo.err?.status) {
       return {
         status: false,
-        message: "Swap failed",
-        details: "failed to prepare swap"
+        message: respo.err.message||"Swap failed",
+        details: respo.err.message||"failed to prepare swap"
       };
     }
 
@@ -123,11 +123,11 @@ async function onSwapETHtoUSDC(amount, privateKey, fees) {
       { txs: signedTxs }
     );
 console.log("execute---",res,err)
-    if (err?.status === 500) {
+    if (err?.status) {
       return {
         status: false,
-        message: "Swap failed",
-        details: "failed to execute swap"
+        message: err.message||"Swap failed",
+        details: err.message||"failed to execute swap"
       };
     }
 

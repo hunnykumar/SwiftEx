@@ -36,6 +36,8 @@ import { alert, ShowToast } from "../reusables/Toasts";
 import { getAllBalances } from "../../utilities/web3utilities";
 import { PPOST, proxyRequest } from "../exchange/crypto-exchange-front-end-main/src/api";
 import CustomInfoProvider from "../exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
+import ShortTermStorage from "../../utilities/ShortTermStorage";
+import { CheckPasscode } from "../../biometrics/utils";
 
 const TransactionPinModal = ({
   pinViewVisible,
@@ -133,10 +135,10 @@ const TransactionPinModal = ({
     const check_pin_len=async()=>{
      try {
       if (enteredPin.length===6) {
-        const Pin = await AsyncStorage.getItem("pin");
+        const validPin=await CheckPasscode(enteredPin);
         setPinViewVisible(false);
         // setLoader(true);
-        if (JSON.parse(Pin) === enteredPin) {
+        if (validPin) {
           const emailid = await state.user;
           const token = await state.token;
   
@@ -151,6 +153,7 @@ const TransactionPinModal = ({
   
             if (res.txHash) {
               try {
+                await ShortTermStorage.saveTx(state && state.wallet && state.wallet.address,{chain: "ETH",typeTx: "Send",status: "Pending",hash: res?.txHash});
                 ShowToast(toast, "Transaction Successful");
   
                 setLoading(false);
@@ -217,12 +220,13 @@ const TransactionPinModal = ({
               setLoader(false);
               setLoading(false);
               console.log(err);
-              alert("error","Something went wrong...")
+              alert("error",err.message||"Something went wrong...")
             }
       
          if (res.txHash) {
               try {
                 ShowToast(toast, "Transaction Successful");
+                await ShortTermStorage.saveTx(state && state.wallet && state.wallet.address,{chain: "BSC",typeTx: "Send",status: "Pending",hash: res?.txHash});
                 setLoading(false);
                 setLoader(false);
                 setDisable(false);

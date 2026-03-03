@@ -17,6 +17,8 @@ import { ExchangeNavigation } from "./exchange/crypto-exchange-front-end-main/sr
 import { ExchangeLogin } from "./exchange/crypto-exchange-front-end-main/src/pages/auth/ExchangeLogin";
 import { AppHeader } from "./reusables/AppHeader";
 import { useIsFocused } from "@react-navigation/native";
+import { HomeView } from "./exchange/crypto-exchange-front-end-main/src/pages/home";
+import Icon from "../icon";
 
 const Tab = createBottomTabNavigator();
 
@@ -87,75 +89,77 @@ const Dashboard = ({ navigation }) => {
 
   return (
     <Tab.Navigator
-      shifting={false}
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size = 25 }) => {
-          let iconName;
+  shifting={false}
+  screenOptions={({ route }) => ({
+    tabBarIcon: ({ focused, color, size = 25 }) => {
+      let iconName;
+      let iconProvider;
 
-          switch (route.name) {
+      switch (route.name) {
             case "Home":
-              iconName = "home-sharp";
+              iconName = focused?"home":"home-outline";
+              iconProvider = "ionicon";
               break;
             case "Wallet":
-              iconName = "wallet-sharp";
+              iconName = focused?"wallet":"wallet-outline";
+              iconProvider = "ionicon";
               break;
             case "Assets":
-              iconName = "ios-pie-chart-sharp";
+              iconName = focused?"ios-pie-chart":"ios-pie-chart-outline";
+              iconProvider = "ionicon";
               break;
-            case "Market":
-              iconName = "bar-chart-sharp";
+            case "Discover":
+              iconName = focused?"candlestick-chart":"candlestick-chart";
+              iconProvider = "material";
               break;
             case "Settings":
-              iconName = "settings-sharp";
+              iconName = focused?"settings":"settings-outline";
+              iconProvider = "ionicon";
               break;
-            case "Exchange":
-              iconName = "swap-vertical-outline";
+            case "ExchangeHome":
+              iconName = focused?"git-pull-request":"git-pull-request-outline";
+              iconProvider = "ionicon";
               break;
             default:
               iconName = "ios-home-sharp";
+              iconProvider = "ionicon";
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
+          return <Icon name={iconName} type={iconProvider} size={size} color={color} />;
+    },
 
-        tabBarLabel: ({ focused }) => {
-          const iconColor = focused
-            ? statee.THEME.THEME === false
-              ? "#131E3A"
-              : "#145DA0"
-            : statee.THEME.THEME === false
-            ? "#131E3A"
-            : "gray";
+    tabBarLabel: ({ focused }) => {
+      const iconColor = focused
+        ? (statee.THEME.THEME === false ? "#5B65E1" : "#4052D6")
+        : (statee.THEME.THEME === false ? "black" : "#FFF");
 
-          return (
-            <Text
-              style={{
-                color: iconColor,
-                fontSize: 16,
-                textAlign: "center",
-                marginBottom: Platform.OS === "android" ? 10 : 1,
-                marginHorizontal:1
-              }}
-            >
-              {route.name}
-            </Text>
-          );
-        },
+      return (
+        <Text
+          style={{
+            color: iconColor,
+            fontSize: 16,
+            marginTop: 4,
+            marginBottom: Platform.OS === "android" ? 8 : 1,
+          }}
+        >
+          {route.name==="ExchangeHome"?"SDEX":route.name}
+        </Text>
+      );
+    },
 
-        tabBarActiveTintColor:
-          statee.THEME.THEME === false ? "#131E3A" : "#145DA0",
+    tabBarActiveTintColor:
+          statee.THEME.THEME === false ? "#5B65E1" : "#4052D6",
         tabBarInactiveTintColor:
-          statee.THEME.THEME === false ? "white" : "gray",
-        tabBarStyle: {
-          backgroundColor: statee.THEME.THEME === false ? "#4CA6EA" : "black",
-          height: Platform.OS === "android" ? 70 : 80,
-          borderTopColor:
-            statee.THEME.THEME === false ? "#131E3A" : "#145DA0",
-          borderTopWidth: 1,
-        },
-        headerTitleAlign: "center",
-      })}
-    >
+          statee.THEME.THEME === false ? "black" : "#FFFF",
+    tabBarStyle: {
+      backgroundColor: statee.THEME.THEME === false ? "#FFFFFF" : "#1B1B1C",
+      height: Platform.OS === "android" ? 70 : 56,
+      paddingBottom: Platform.OS === "android" ? 1 : 1,
+      paddingTop: 8,
+    },
+    headerTitleAlign: "center",
+  })}
+>
       <Tab.Screen
         name="Home"
         component={Home2}
@@ -177,39 +181,21 @@ const Dashboard = ({ navigation }) => {
         }}
       />
       <Tab.Screen
-        name="Market"
+        name="Discover"
         component={Market}
         options={{
           headerShown: false,
           unmountOnBlur: true,
         }}
       />
-      {token ? (
         <Tab.Screen
-          name="Exchange"
-          component={ExchangeNavigation}
+          name="ExchangeHome"
+          component={HomeView}
           options={{
             headerShown: false,
-            tabBarStyle: { display: "none" },
+            unmountOnBlur: true,
           }}
         />
-      ) : (
-        <Tab.Screen
-          name="Exchange"
-          component={ExchangeLogin}
-          options={{
-            headerShown: false,
-            tabBarStyle: { display: "none" },
-          }}
-        />
-      )}
-      <Tab.Screen
-        name="Settings"
-        component={Settings}
-        options={{
-          headerShown: false,
-        }}
-      />
     </Tab.Navigator>
   );
 };

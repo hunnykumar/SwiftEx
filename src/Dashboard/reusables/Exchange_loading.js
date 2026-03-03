@@ -85,7 +85,27 @@ export function Wallet_market_loading () {
                 ]}
               />
             </View>
-            <View style={{width:"99%"}}>
+            <View style={{flexDirection:"row",justifyContent:"space-around",width:"88%"}}>
+              <View style={{width:"46%"}}>
+              <View style={[styles.Wallet_loadBlock,{ width:"62%",}]}>
+                <Animated.View
+                  style={[
+                    styles.shimmer,
+                    { transform: [{ translateX: shimmerTranslateX }] },
+                  ]}
+                />
+              </View>
+              <View style={[styles.WalletLoadSub,{ width:"31%"}]}>
+                <Animated.View
+                  style={[
+                    styles.shimmer,
+                    { transform: [{ translateX: shimmerTranslateX }] },
+                  ]}
+                />
+              </View>
+            </View>
+
+            <View style={{width:"46%",alignItems:"flex-end"}}>
               <View style={styles.Wallet_loadBlock}>
                 <Animated.View
                   style={[
@@ -94,7 +114,7 @@ export function Wallet_market_loading () {
                   ]}
                 />
               </View>
-              <View style={styles.Wallet_loadBlock}>
+              <View style={styles.WalletLoadSub}>
                 <Animated.View
                   style={[
                     styles.shimmer,
@@ -102,6 +122,7 @@ export function Wallet_market_loading () {
                   ]}
                 />
               </View>
+            </View>
             </View>
           </View>
         )
@@ -226,11 +247,22 @@ const styles = StyleSheet.create({
     flexDirection:"row",
     alignContent:"center",
     paddingHorizontal:"5%",
-    width:"99%"
+    width:"99%",
+    marginTop:16
   },
   Wallet_loadBlock:{
-    height: 25,
-    width:"50%",
+    height: 22,
+    width:"67%",
+    marginHorizontal:10,
+    marginVertical:3,
+    backgroundColor: 'gray',
+    opacity:5,
+    borderRadius: 13,
+    overflow: 'hidden',
+  },
+  WalletLoadSub:{
+    height: 16,
+    width:"44%",
     marginHorizontal:10,
     marginVertical:3,
     backgroundColor: 'gray',

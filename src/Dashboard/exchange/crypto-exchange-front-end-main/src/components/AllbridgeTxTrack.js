@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  Modal,
   StyleSheet,
   ActivityIndicator,
   Linking,
@@ -16,6 +15,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { AllbridgeCoreSdk, nodeRpcUrlsDefault } from "@allbridge/bridge-core-sdk";
 import { STELLAR_URL } from "../../../../constants";
 import CustomInfoProvider from "./CustomInfoProvider";
+import Modal from "react-native-modal";
 
 const sdk = new AllbridgeCoreSdk(nodeRpcUrlsDefault);
 
@@ -86,10 +86,10 @@ export default function AllbridgeTxTrack({ txs, isDarkMode, showTx, closeTx }) {
 
 
   useEffect(() => {
-    if (txs.length < 2) {
+    if (showTx && txs.length === 1) {
       openModal(txs[0], 0)
     }
-  }, [txs])
+  }, [txs, showTx])
 
   const getThemedColor = (lightColor, darkColor) => {
     return isDarkMode ? darkColor : lightColor;
@@ -100,27 +100,29 @@ export default function AllbridgeTxTrack({ txs, isDarkMode, showTx, closeTx }) {
     setLoading(true);
     setModalVisible(true);
     const res = await getAllbridgeTxStatus(item.chain, item.hash);
-    if (res.currentStatus === "Error") {
+    if (res.currentStatus !== "Error") {
+      setTxData(res);
       setLoading(false);
-      CustomInfoProvider.show("Transaction Status", "Unable to determine transaction status.")
+    } else {
+      setLoading(false);
+      CustomInfoProvider.show("Transaction Status", "Transaction under process please wait for confirmation.")
       setModalVisible(false);
       setTxData(null);
     }
-    setTxData(res);
-    setLoading(false);
   };
 
   const refreshTx = async (txData) => {
     setLoading(true);
     const res = await getAllbridgeTxStatus(txData.sourceChain, txData?.response?.txId);
-    if (res.currentStatus === "Error") {
+    if (res.currentStatus !== "Error") {
+      setTxData(res);
       setLoading(false);
-      CustomInfoProvider.show("Transaction Status", "Unable to determine transaction status.")
+    } else {
+      setLoading(false);
+      CustomInfoProvider.show("Transaction Status", "This transaction under process please wait for confirmation.")
       setModalVisible(false);
       setTxData(null);
     }
-    setTxData(res);
-    setLoading(false);
   };
 
   const closeModal = () => {
@@ -432,26 +434,37 @@ export default function AllbridgeTxTrack({ txs, isDarkMode, showTx, closeTx }) {
 
   if (showTx) {
     return (
-      <View style={[styles.container, { backgroundColor: getThemedColor('#F8F9FA', '#000000') }]}>
-        <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={getThemedColor("#FFFFFF", "#000000")} />
-        <Modal
-          visible={modalVisible}
-          animationType="slide"
-          onRequestClose={closeModal}
-          transparent={true}
+      <Modal
+        isVisible={modalVisible}
+        onBackdropPress={closeModal}
+        onBackButtonPress={closeModal}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        backdropOpacity={0.5}
+        style={{ justifyContent: "flex-end", margin: 0 }}
+      >
+        <View
+          style={[
+            styles.bottomSheet,
+            { backgroundColor: getThemedColor('#FFFFFF', '#1C1C1E') }
+          ]}
         >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.bottomSheet, { backgroundColor: getThemedColor('#FFFFFF', '#1C1C1E') }]}>
-              <ScrollView
-                contentContainerStyle={styles.modalScrollContent}
-                showsVerticalScrollIndicator={false}
-              >
-                <ModalContent />
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-      </View>
+          <TouchableOpacity style={{
+            zIndex:20,
+            position:"absolute",
+            alignSelf:"flex-end",
+            padding:10
+          }}>
+            <Ionicons name="close-circle-outline" size={34} color={"#fff"} onPress={() => { closeModal() }}/>
+          </TouchableOpacity>
+          <ScrollView
+            contentContainerStyle={styles.modalScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <ModalContent />
+          </ScrollView>
+        </View>
+      </Modal>
     );
   }
 }
@@ -680,14 +693,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
   },
   bottomSheet: {
-    maxHeight: "69%",
+    maxHeight: "70%",
     width: "100%",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingVertical: 10,
-    flex: 1
   },
   modalScrollContent: {
+    marginTop:10,
     paddingBottom: 20,
   },
 });

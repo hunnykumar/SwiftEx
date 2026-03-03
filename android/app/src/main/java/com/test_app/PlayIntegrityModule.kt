@@ -1,4 +1,4 @@
-package com.app.swiftEx.app
+package org.app.swiftEx.wallet
 
 import android.util.Base64
 import com.facebook.react.bridge.*

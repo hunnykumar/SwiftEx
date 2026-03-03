@@ -1,0 +1,130 @@
+import Foundation
+import stellarsdk
+
+@objc(StellarSigner)
+class StellarSigner: NSObject {
+  
+  let sdk = StellarSDK(withHorizonUrl: "https://horizon.stellar.org")
+  let serviceName = "com.appSwiftEx.appStorage"
+  
+  private func getPrivateKey(chain: String) throws -> String? {
+    guard let walletJson = retrieveFromKeychain(key: "activeUserWallet", service: serviceName) else {
+      throw NSError(domain: "KEYCHAIN", code: -1, userInfo: [NSLocalizedDescriptionKey: "No wallet found"])
+    }
+    
+    guard let jsonData = walletJson.data(using: .utf8),
+          let walletJson = try JSONSerialization.jsonObject(with: jsonData,options: []) as? [String: Any] else {
+      throw NSError(domain: "KEYCHAIN", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid wallet JSON"])
+    }
+    
+    guard let privateKeyString = walletJson["stellarPrivateKey"] as? String else {
+      throw NSError(domain: "KEYCHAIN", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid private key"])
+    }
+    
+    return privateKeyString
+  }
+  
+  private func retrieveFromKeychain(key: String, service: String) -> String? {
+    let query: [String: Any] = [
+      kSecClass as String: kSecClassGenericPassword,
+      kSecAttrService as String: service,
+      kSecAttrAccount as String: key,
+      kSecReturnData as String: true,
+      kSecMatchLimit as String: kSecMatchLimitOne
+    ]
+    
+    var result: AnyObject?
+    let status = SecItemCopyMatching(query as CFDictionary, &result)
+    
+    guard status == errSecSuccess,
+          let data = result as? Data,
+          let walletJson = String(data: data, encoding: .utf8) else {
+      return nil
+    }
+    
+    return walletJson
+  }
+  
+  @objc
+  static func requiresMainQueueSetup() -> Bool { return false }
+  
+  @objc
+  func getAssets(
+    _ publicKey: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    Task {
+      do {
+        let responseEnum = await sdk.accounts.getAccountDetails(accountId: publicKey)
+        
+        guard case .success(let accountDetails) = responseEnum else {
+          throw NSError(domain: "STELLAR", code: -1, userInfo: [NSLocalizedDescriptionKey: "Account not found"])
+        }
+        
+        var balancesArray: [[String: Any]] = []
+        
+        for balance in accountDetails.balances {
+          if balance.assetType == AssetTypeAsString.NATIVE {
+            balancesArray.append([
+              "assetType": "native",
+              "balance": balance.balance
+            ])
+          } else {
+            balancesArray.append([
+              "assetType": "credit",
+              "assetCode": balance.assetCode ?? "",
+              "issuer": balance.assetIssuer ?? "",
+              "balance": balance.balance
+            ])
+          }
+        }
+        
+        let result: [String: Any] = [
+          "accountId": accountDetails.accountId,
+          "sequence": accountDetails.sequenceNumber,
+          "balances": balancesArray
+        ]
+        
+        await MainActor.run {
+          resolve(result)
+        }
+      } catch {
+        await MainActor.run {
+          reject("STELLAR_ERROR", error.localizedDescription, error)
+        }
+      }
+    }
+  }
+  
+  @objc
+  func signTransaction(
+    _ transactionXDR: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    Task {
+      do {
+        let secretKey = try getPrivateKey(chain: "stellar")!
+        let sourceKeyPair = try KeyPair(secretSeed: secretKey)
+        let envelopeXDR = try TransactionEnvelopeXDR(xdr: transactionXDR)
+        let network = Network.public
+        let hash = try envelopeXDR.txHash(network: network)
+        let signature = sourceKeyPair.sign([UInt8](hash))
+        let signatureBase64 = Data(signature).base64EncodedString()
+        
+        await MainActor.run {
+          resolve([
+            "signature": signatureBase64,
+            "publicKey": sourceKeyPair.accountId
+          ])
+        }
+      } catch {
+        await MainActor.run {
+          reject("SIGN_ERROR", error.localizedDescription, error)
+        }
+      }
+    }
+  }
+  
+}

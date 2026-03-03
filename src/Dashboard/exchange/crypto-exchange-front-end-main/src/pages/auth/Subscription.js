@@ -24,7 +24,7 @@ const Subscription = () => {
 
    const manage_function_call = async (higligh) => {
       if (higligh===0) {
-         navigation.navigate("exchange");
+         navigation.navigate("Settings");
       }
       else{
          navigation.navigate("Subcription_payment",{ID:higligh});

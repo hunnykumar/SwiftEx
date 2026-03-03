@@ -81,14 +81,14 @@ const Setup_password = (props) => {
                             //    saveTokeninLocal(props.route.params.Email)
                             saveTokeninLocal(result.token)
                                 // navigation.navigate("Subscription",{auth_token:props.route.params.Email});
-                            navigation.navigate("exchange");
+                            navigation.navigate("Settings");
 
                             }
                             if(props?.route?.params?.type==="old_res")
                             {
                             saveTokeninLocal(result.token)
                             //    saveTokeninLocal(props.route.params.Email)
-                                navigation.navigate("exchange");
+                                navigation.navigate("Settings");
                             }
                         } else {
                             setpasscode("");

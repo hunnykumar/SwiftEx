@@ -410,7 +410,6 @@ const Generate_Wallet = async (
 // };
 
 const Generate_Wallet2 = async () => {
-  if(Platform.OS==="android"){
   console.log("starting");
   // const wallet = ethers.Wallet.createRandom();
   // const words = wallet.mnemonic.phrase;
@@ -448,39 +447,6 @@ const Generate_Wallet2 = async () => {
       wallet: Wallet,
     };
   }
-}
-else{
-  console.log("starting");
-  const result = await createWallet();
-  console.log("result--------")
-  console.log("result: ",result)
-  console.log("result--------End")
-  const Wallet = {
-    address: result.ethereum.address,
-    privateKey: result.ethereum.privateKey,
-    mnemonic: result.mnemonic,
-    xrp:{
-      // address:xrpWallet.classicAddress, // UNCOMMENT
-      // privateKey:xrpWallet.seed // UNCOMMENT
-      address: "000000000",
-      privateKey: "000000000",
-    },
-    stellarWallet: {
-        publicKey: result.stellar.publicKey,
-        secretKey: result.stellar.secretKey
-    },
-    walletType: "Multi-coin",
-  };
-  if (Wallet) {
-    // AsyncStorage.setItem("Wallet", JSON.stringify(Wallet));
-
-    return {
-      status: "success",
-      message: "Wallet generation successful",
-      wallet: Wallet,
-    };
-  }
-}
 };
 
 async function ImportWallet(privatekey, mnemonic, name, wallets, user) {

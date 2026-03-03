@@ -39,6 +39,9 @@ import styles from "../Screens/splash/style";
 import { Wallet_screen_header } from "./reusables/ExchangeHeader";
 import { useNavigation } from "@react-navigation/native";
 import { recoverMultiChainWallet } from "../utilities/WalletManager";
+import AccessNativeStorage from "./Wallets/AccessNativeStorage";
+import apiHelper from "./exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 const xrpl = require("xrpl");
 const { EthereumWallet } = NativeModules;
 
@@ -114,7 +117,7 @@ const ImportMunziWallet = (props) => {
             value={accountName}
             maxLength={20}
             onChangeText={(text) => {handleUsernameChange(text)}}
-            style={{ width: wp("78%"),color:"black" }}
+            style={style.textInputForCrossChain}
             placeholder={accountName?accountName: "Wallet"}
             placeholderTextColor={"gray"}
           />
@@ -122,16 +125,18 @@ const ImportMunziWallet = (props) => {
         <View
           style={style.inputView}
         >
-          <TouchableOpacity onPress={async ()=>{
-           // setText('abc')
+          <View style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center",marginTop:20}}>
+          <Text style={style.label}>Phrase</Text>
+          <TouchableOpacity style={style.pasteCon} onPress={async ()=>{
               Paste(setMnemonic)
               setDisable(false)        
           }}>
           <Text style={style.paste}>Paste</Text>
           </TouchableOpacity>
-          <Text style={{color: "#4CA6EA"}}>Phrase</Text>
+          </View>
+
           <TextInput
-            style={[style.input,{color:"black"}]}
+            style={style.input}
             value={mnemonic}
             placeholder="Please enter your mnemonic phrase here"
             placeholderTextColor={"gray"}
@@ -160,7 +165,7 @@ const ImportMunziWallet = (props) => {
         </View>
 
           <TouchableOpacity
-            style={[style.btn,{backgroundColor:!accountName || !/\S/.test(accountName)?"gray":"green",}]}
+            style={[style.btn,{backgroundColor:disable||!accountName || !/\S/.test(accountName)?"gray":"#5B65E1",}]}
             disabled={disable||!accountName || !/\S/.test(accountName)?true:false}
             onPress={async () => {
               const pin = await AsyncStorageLib.getItem("pin");
@@ -194,19 +199,14 @@ const ImportMunziWallet = (props) => {
                   // ); // This is suggested because we will get seeds also // UNCOMMENT
                   // console.log(xrpWallet); // Produces different addresses // UNCOMMENT
 
-                  const accountFromMnemonic = Platform.OS==="android"?await EthereumWallet.recoverMultiChainWallet(trimmedPhrase):await recoverMultiChainWallet(trimmedPhrase);
+                  const accountFromMnemonic = Platform.OS==="android"?await EthereumWallet.recoverMultiChainWallet(trimmedPhrase):await EthereumWallet.recoverWallet(trimmedPhrase,"");
                   const wallet = {
                     address: accountFromMnemonic.ethereum.address,
-                    privateKey: accountFromMnemonic.ethereum.privateKey,
                     xrp: {
-                     // address: xrpWallet.classicAddress, // UNCOMMENT
-                    // privateKey: xrpWallet.seed, // UNCOMMENT
-                    address: "000000000",
-                    privateKey: "000000000",
+                    address: "000000000"
                     },
                     stellarWallet: {
-                      publicKey: accountFromMnemonic.stellar.publicKey,
-                      secretKey: accountFromMnemonic.stellar.secretKey
+                      publicKey: accountFromMnemonic.stellar.publicKey
                     },
                   };
                   /* const response = saveUserDetails(accountFromMnemonic.address).then((response)=>{
@@ -231,18 +231,12 @@ const ImportMunziWallet = (props) => {
 
                   const accounts = {
                     address: wallet.address,
-                    privateKey: wallet.privateKey,
-                    mnemonic: trimmedPhrase,
                     name: accountName,
                     xrp: {
-                     // address: xrpWallet.classicAddress, // UNCOMMENT
-                    // privateKey: xrpWallet.seed, // UNCOMMENT
                     address: "000000000",
-                    privateKey: "000000000",
                     },
                     stellarWallet: {
                       publicKey: wallet.stellarWallet.publicKey,
-                      secretKey: wallet.stellarWallet.secretKey
                     },
                     walletType: "Multi-coin",
                     wallets: [],
@@ -252,18 +246,12 @@ const ImportMunziWallet = (props) => {
                   const allWallets = [
                     {
                       address: wallet.address,
-                      privateKey: wallet.privateKey,
-                      mnemonic: trimmedPhrase,
                       name: accountName,
                       xrp: {
-                       // address: xrpWallet.classicAddress, // UNCOMMENT
-                       // privateKey: xrpWallet.seed, // UNCOMMENT
                        address: "000000000",
-                       privateKey: "000000000",
                       },
                       stellarWallet: {
                         publicKey: wallet.stellarWallet.publicKey,
-                        secretKey: wallet.stellarWallet.secretKey
                       },
                       walletType: "Multi-coin",
                     },
@@ -285,10 +273,6 @@ const ImportMunziWallet = (props) => {
                     setCurrentWallet(
                       wallet.address,
                       accountName,
-                      wallet.privateKey,
-                      trimmedPhrase,
-                      // xrpWallet.classicAddress,// UNCOMMENT
-                      // xrpWallet.seed,// UNCOMMENT
                       "000000000",
                       "000000000",
                       (walletType = "Multi-coin")
@@ -299,9 +283,34 @@ const ImportMunziWallet = (props) => {
                   dispatch(setToken(token));
                   //dispatch(setProvider('https://data-seed-prebsc-1-s1.binance.org:8545'))
                   dispatch(setWalletType("Multi-coin"));
-                  setLoading(false);
-
-                  props.navigation.navigate("HomeScreen");
+                  const walletResponse = await AccessNativeStorage.saveWallet({
+                    name: accountName,
+                    address: accountFromMnemonic.ethereum.address,
+                    privatekey: accountFromMnemonic.ethereum.privateKey,
+                    stellarPublicKey: accountFromMnemonic.stellar.publicKey,
+                    stellarPrivateKey: accountFromMnemonic.stellar.secretKey,
+                    mnemonic: trimmedPhrase,
+                    walletType: "Multi-coin"
+                  })
+                  if (walletResponse.success) {
+                    const resultApi = await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+                      "addresses": {
+                        "eth": accountFromMnemonic.ethereum.address,
+                        "xlm": accountFromMnemonic.stellar.publicKey,
+                        "bnb": accountFromMnemonic.ethereum.address,
+                        "multi": accountFromMnemonic.ethereum.address
+                      },
+                      "isPrimary": true
+                    });
+                    if (resultApi.success) {
+                       setLoading(false);
+                       alert("success", "wallet synced!");
+                        props.navigation.navigate("HomeScreen");
+                    } else {
+                      alert("error", "unable to sync wallet.");
+                      console.log('Error:', resultApi.error, 'Status:', resultApi.status);
+                    }
+                  }
                 } catch (e) {
                   alert("error", e);
                   setLoading(false);
@@ -312,7 +321,7 @@ const ImportMunziWallet = (props) => {
               }, 1);
             }}
           >
-            <Text style={{color:"white"}}>Import</Text>
+            <Text style={{color:"white",fontSize:19}}>Import</Text>
           </TouchableOpacity>
       </View>
     </Animated.View>
@@ -357,15 +366,6 @@ const style = StyleSheet.create({
     fontWeight: "200",
     color: "white",
   },
-  input: {
-    height: hp("5%"),
-    marginBottom: hp("2"),
-    color: "black",
-    marginTop: hp("2"),
-    width: wp("90"),
-    paddingRight: wp("7"),
-    backgroundColor: "white",
-  },
   textInput: {
     width: wp(90),
     borderWidth: StyleSheet.hairlineWidth * 1,
@@ -394,19 +394,16 @@ const style = StyleSheet.create({
     elevation: 24,
   },
   labelInputContainer: {
-    position: "relative",
     width: wp(90),
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "flex-start",
     alignSelf: "center",
     marginTop: hp(3),
     borderRadius: wp(2),
-    backgroundColor: "white",
-    borderWidth: 1,
+    backgroundColor: "#F4F4F8",
     paddingLeft: wp(3),
-    paddingVertical: hp(1.2),
-    borderColor: "#DADADA",
+    paddingVertical: hp(2),
   },
   labelInputContainer1: {
     position: "relative",
@@ -424,36 +421,59 @@ const style = StyleSheet.create({
     borderColor: "#DADADA",
   },
   label: {
-    position: "absolute",
-    zIndex: 100,
-    backgroundColor: "white",
-    paddingHorizontal: 5,
-    left: 12,
-    color: "#4CA6EA",
-    top: -12,
+    left: 10,
+    color: "gray",
+    fontSize:16
   },
   text: {
     marginHorizontal: wp(6),
-    marginTop: hp(5),
+    marginTop: hp(2),
     color: "gray",
   },
   inputView:{
-    borderWidth: 1,
+    backgroundColor:"#F4F4F8",
     width: wp(90),
     alignSelf: "center",
-    padding: 10,
-    marginTop: hp(3),
+    paddingHorizontal:wp(3),
+    marginTop: hp(1.5),
     borderRadius: hp(1),
-    borderColor: "#DADADA",
   },
-  input:{ paddingVertical: hp(4) },
-  paste:{ textAlign: "right",color:"#4CA6EA" },
+  input:{
+    marginVertical:hp(2),
+    width:"98%",
+    paddingHorizontal: wp(2),
+    paddingVertical:  Platform.OS=="android"?hp(1):hp(2),
+    backgroundColor:"#fff",
+    borderRadius:10,
+    color:"black",
+    fontSize:15
+  },
+  pasteCon:{
+    paddingVertical:5,
+    paddingHorizontal:10,
+    backgroundColor:"#5B65E1",
+    borderRadius:10
+  },
+  paste:{ 
+    fontSize:16,
+    color:"#FFF"
+  },
   btn:{
-    backgroundColor: "#4CA6EA",
-    paddingVertical: hp(1.6),
+    backgroundColor: "#5B65E1",
+    paddingVertical: hp(2),
     width: wp(90),
     alignSelf: "center",
     borderRadius: hp(1),
     alignItems: "center",
-  }
+  },
+  textInputForCrossChain: {
+    width:"95%",
+    paddingHorizontal: wp(2),
+    paddingVertical:  Platform.OS=="android"?hp(1):hp(2),
+    backgroundColor:"#fff",
+    borderRadius:10,
+    marginTop:4,
+    color:"black",
+    fontSize:15
+  },
 });

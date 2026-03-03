@@ -115,7 +115,7 @@ const FOCUSED=useIsFocused();
       Showsuccesstoast(toast,"Success");
     }
     else{
-      navigation.navigate("exchange");
+      navigation.navigate("Settings");
       Showsuccesstoast(toast,"Success");
     }
   } catch (error) {

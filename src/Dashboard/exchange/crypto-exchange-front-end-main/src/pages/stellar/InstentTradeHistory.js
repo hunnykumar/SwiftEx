@@ -15,6 +15,11 @@ import {
 import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import CustomInfoProvider from '../../components/CustomInfoProvider';
+import { useSelector } from 'react-redux';
+import { colors } from '../../../../../../Screens/ThemeColorsConfig';
+
+
+
 
 // API Functions
 function getCanonicalAsset(code, issuer) {
@@ -97,33 +102,41 @@ async function getLiquidityPoolTradeHistory(codeA, issuerA, codeB, issuerB) {
 }
 
 // Components
-const Header = ({ title, onSelectPair }) => (
-    <TouchableOpacity style={styles.header} onPress={onSelectPair}>
-      <Text style={styles.headerTitle}>{title} </Text>
-       <Ionicons name="chevron-down" size={25} color="#8A8A8F" />
+const Header = ({ title, onSelectPair,theme }) => (
+  <View style={[styles.header,{backgroundColor:theme.bg}]}>
+    <TouchableOpacity style={[styles.selectionPair,{backgroundColor:theme.cardBg}]} onPress={onSelectPair}>
+      <Text style={[styles.headerTitle,{color:theme.headingTx}]}>{title} </Text>
+       <Ionicons name="chevron-down" size={25} color={theme.headingTx} />
     </TouchableOpacity>
-);
-
-const TableHeader = () => (
-  <View style={styles.tableHeader}>
-    <Text style={styles.tableHeaderCell}>Sold</Text>
-    <Text style={styles.tableHeaderCell}>Bought</Text>
-    <Text style={styles.tableHeaderCell}>Account</Text>
-    <Text style={styles.tableHeaderCell}>Time</Text>
   </View>
 );
 
-const TradeRow = ({ item }) => (
-  <View style={styles.tableRow}>
-    <Text style={[styles.tableCell,{flex:0.3}]}>{item.soldAmount}</Text>
-    <Text style={[styles.tableCell,{flex:0.3}]}>{item.boughtAmount}</Text>
-    <Text style={[styles.tableCell,{flex:0.5}]}>{item.account}</Text>
+const TableHeader = () => {
+  const state = useSelector((state) => state);
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
+  return(
+  <View style={[styles.tableHeader,{backgroundColor:theme.cardBg}]}>
+    <Text style={[styles.tableHeaderCell,{color:theme.headingTx}]}>Sold</Text>
+    <Text style={[styles.tableHeaderCell,{color:theme.headingTx}]}>Bought</Text>
+    <Text style={[styles.tableHeaderCell,{color:theme.headingTx}]}>Account</Text>
+    <Text style={[styles.tableHeaderCell,{color:theme.headingTx}]}>Time</Text>
+  </View>
+)}
+
+const TradeRow = ({ item }) => {
+  const state = useSelector((state) => state);
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
+  return(
+  <View style={[styles.tableRow,{backgroundColor:theme.cardBg}]}>
+    <Text style={[styles.tableCell,{color:theme.headingTx,flex:0.3}]}>{item.soldAmount}</Text>
+    <Text style={[styles.tableCell,{color:theme.headingTx,flex:0.3}]}>{item.boughtAmount}</Text>
+    <Text style={[styles.tableCell,{color:theme.headingTx,flex:0.5}]}>{item.account}</Text>
     <View>
-    <Text style={[styles.tableCell,{flex:0.3}]}>{item.time}</Text>
-    <Text style={[styles.tableCell,{ fontSize:12,flex:0.3 }]}>{item.date}</Text>
+    <Text style={[styles.tableCell,{color:theme.headingTx,flex:0.3}]}>{item.time}</Text>
+    <Text style={[styles.tableCell,{color:theme.headingTx, fontSize:12,flex:0.3 }]}>{item.date}</Text>
     </View>
   </View>
-);
+)}
 
 const EmptyState = () => (
   <View style={styles.emptyState}>
@@ -139,7 +152,8 @@ const PairSelectionModal = ({ visible, onClose, onSelectPair, currentPair }) => 
     { assetA: { code: 'XLM', issuer: '' }, assetB: { code: 'yXLM', issuer: 'GARDNV3Q7YGT4AKSDF25LT32YSCCW4EV22Y2TV3I2PU2MMXJTEDL5T55' } },
     { assetA: { code: 'XLM', issuer: '' }, assetB: { code: 'AQUA', issuer: 'GBNZILSTVQZ4R7IKQDGHYGY2QXL5QOFJYQMXPKWRRM5PAV7Y4M67AQUA' } },
   ];
-
+  const state = useSelector((state) => state);
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
   return (
     <Modal
       visible={visible}
@@ -148,9 +162,9 @@ const PairSelectionModal = ({ visible, onClose, onSelectPair, currentPair }) => 
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent,{backgroundColor:theme.bg}]}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Pair</Text>
+            <Text style={[styles.modalTitle,{color:theme.headingTx}]}>Select Pair</Text>
             <TouchableOpacity onPress={onClose}>
               <Text style={styles.closeButton}>✕</Text>
             </TouchableOpacity>
@@ -167,13 +181,13 @@ const PairSelectionModal = ({ visible, onClose, onSelectPair, currentPair }) => 
               
               return (
                 <TouchableOpacity 
-                  style={[styles.pairItem, isSelected && styles.selectedPair]} 
+                  style={[[styles.pairItem,{backgroundColor:theme.cardBg}], isSelected && styles.selectedPair]} 
                   onPress={() => {
                     onSelectPair(item);
                     onClose();
                   }}
                 >
-                  <Text style={[styles.pairItemText, isSelected && styles.selectedPairText]}>
+                  <Text style={[[styles.pairItemText,{color:theme.headingTx}], isSelected && styles.selectedPairText]}>
                     {pairName}
                   </Text>
                   {isSelected && (
@@ -236,10 +250,11 @@ const InstentTradeHistory = () => {
     setCurrentPair(pair);
     setLoading(true);
   };
-  
+  const state = useSelector((state) => state);
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer,{backgroundColor:theme.bg}]}>
         <ActivityIndicator size="large" color="#3873F0" />
         <Text style={styles.loadingText}>Loading Transaction history...</Text>
       </View>
@@ -247,12 +262,12 @@ const InstentTradeHistory = () => {
   }
   
   const pairName = `${currentPair.assetA.code}/${currentPair.assetB.code}`;
-  
   return (
-    <View style={styles.container}>
+    <View style={[styles.container,{backgroundColor:theme.bg}]}>
       <Header 
         title={`${pairName}`} 
         onSelectPair={() => setModalVisible(true)} 
+        theme={theme}
       />
       
       <TableHeader />
@@ -295,13 +310,11 @@ const InstentTradeHistory = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#011434',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#011434',
   },
   loadingText: {
     marginTop: 12,
@@ -312,11 +325,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: "flex-start",
-    paddingHorizontal: "6%",
-    paddingVertical: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EAEDF0',
-    backgroundColor: '#011434',
+    paddingHorizontal: "2%",
+    paddingVertical: 10,
+    borderRadius:10
+  },
+  selectionPair: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: "flex-start",
+    paddingHorizontal: "5%",
+    paddingVertical: 8,
+    borderRadius:10
   },
   headerTitle: {
     fontSize: 15,
@@ -327,9 +346,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 1,
     paddingVertical: 12,
-    backgroundColor: '#011434',
-    borderBottomWidth: 1,
-    borderBottomColor: '#D1D9E6',
     justifyContent:"space-around"
   },
   tableHeaderCell: {
@@ -341,8 +357,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EAEDF0',
+    marginBottom:2,
     backgroundColor: '#011434',
     justifyContent:'space-between',
     alignItems:"center"
@@ -419,8 +434,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'gray',
+    marginBottom:3
   },
   selectedPair: {
     backgroundColor: 'rgba(0, 122, 255, 0.1)',

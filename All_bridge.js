@@ -1,280 +1,200 @@
 import { ethers } from "ethers";
+import { NativeModules } from "react-native";
 
-const Web3 = require("web3");
-const { ETH_PROVIDER_NEW, REACT_APP_HOST } = require("./src/Dashboard/exchange/crypto-exchange-front-end-main/src/ExchangeConstants");
-const { getAuth, proxyRequest, PPOST, PGET } = require("./src/Dashboard/exchange/crypto-exchange-front-end-main/src/api");
+const { proxyRequest, PPOST, PGET } = require("./src/Dashboard/exchange/crypto-exchange-front-end-main/src/api");
 
-
-async function hasEnoughFunds(fromAddress, txMeta, value = "0") {
-  const resProxy = await proxyRequest(`/v1/eth/${fromAddress}/balance`, PGET);
-  const balance=ethers.BigNumber.from(resProxy?.res);
-  const gasLimit = ethers.BigNumber.from(txMeta.gasLimit);
-  const gasPrice = ethers.BigNumber.from(txMeta.feeData.gasPrice);
-  const maxFeePerGas = ethers.BigNumber.from(txMeta.feeData.maxFeePerGas);
-  const txValue = ethers.BigNumber.from(value);
-  const requiredLegacy = txValue.add(gasLimit.mul(gasPrice));
-  const requiredEip1559 = txValue.add(gasLimit.mul(maxFeePerGas));
-  return {
-    balance,
-    requiredLegacy,
-    requiredEip1559,
-    hasLegacy: balance.gte(requiredLegacy),
-    hasEip1559: balance.gte(requiredEip1559),
-  };
-}
-
-
-export async function swap_prepare(privateKey, fromAddress, toAddress, amount, sourceToken, destinationToken, walletType,feePayType) {
+export async function swap_prepare(
+  publicKey,
+  fromAddress,
+  toAddress,
+  amount,
+  sourceToken,
+  destinationToken,
+  walletType,
+  feePayType,
+  destinationWalletType,
+) {
   try {
-    const firstResponse = await proxyRequest("/v1/bridge/swap-transaction/prepare", PPOST, {
-      "fromAddress": fromAddress,
-      "toAddress": toAddress,
-      "amount": amount,
-      "sourceToken": sourceToken,
-      "destinationToken": destinationToken,
-      "walletType": walletType,
-      "feePayType":feePayType==="native"?"native":"stablecoin"
+    console.log("starting bridge swap process");
+    const prepareResponse = await proxyRequest("/v1/bridge/swap-transaction/prepare", PPOST, {
+      fromAddress,
+      toAddress,
+      amount,
+      sourceToken,
+      destinationToken,
+      walletType,
+      feePayType: feePayType === "native" ? "native" : "stablecoin",
+      destinationWalletType
     });
 
-    console.log("First API call response:", firstResponse);
+    console.log("swap prepare response:", prepareResponse);
 
-    if (firstResponse.err) {
+    if (prepareResponse.err) {
       return {
-        res: firstResponse.err?.message || "Swap failed",
+        res: prepareResponse.err?.message || "Swap preparation failed",
         status_task: false
       };
     }
 
-    if (!firstResponse.res.transaction) {
+    const { needsApproval, transactions } = prepareResponse.res;
+
+    if (!transactions || transactions.length === 0) {
       return {
-        res: "No transaction data received",
+        res: "no transaction data received from server",
         status_task: false
       };
     }
 
-    const transactionType = firstResponse.res.type;
-    console.log(`Executing ${transactionType} transaction...`);
-    const fundCheck = await hasEnoughFunds(fromAddress, firstResponse.res.txMeta);
-    console.log("Wallet Balance:", ethers.utils.formatEther(fundCheck.balance));
-    console.log("Needed (EIP-1559):", ethers.utils.formatEther(fundCheck.requiredEip1559));
-    if (!fundCheck.hasEip1559) {
-      return {
-        res: `Insufficient funds: not enough ETH to pay for ${transactionType} gas.`,
-        status_task: false
-      };
-    }
-    const firstTxResult = await sendEvmRawTransaction(privateKey, firstResponse.res);
-    console.log(`${transactionType} transaction result:`, firstTxResult);
-
-    if (firstTxResult.status !== true) {
-      return {
-        res: `${transactionType} transaction failed`,
-        status_task: false
-      };
+    console.log(`transactions to process: ${transactions.length}`);
+    if (needsApproval) {
+      console.log("approval transaction required");
     }
 
-    const firstTxHash = firstTxResult.transactionHash;
-    console.log(`${transactionType} completed, hash:`, firstTxHash);
-    if (transactionType === 'approve') {
-      console.log("Approval completed, now executing transfer...");
-      await waitForTransactionConfirmation(firstTxHash);
-      const secondResponse = await proxyRequest("/v1/bridge/swap-transaction/prepare", PPOST, {
-        "fromAddress": fromAddress,
-        "toAddress": toAddress,
-        "amount": amount,
-        "sourceToken": sourceToken,
-        "destinationToken": destinationToken,
-        "walletType": walletType
+    console.log("signing all transactions");
+    const signedTransactions = [];
+
+    for (const txData of transactions) {
+      try {
+        const signedTx = await signTransaction(publicKey, txData);
+        signedTransactions.push(signedTx);
+        console.log(`${txData.type} transaction signed`);
+      } catch (signError) {
+        return {
+          res: `Failed to sign ${txData.type} transaction: ${signError.message}`,
+          status_task: false
+        };
+      }
+    }
+
+    console.log("Broadcasting transactions");
+
+    const broadcastResponse = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, {
+      signedTransactions
+    });
+
+    console.log("broadcast response:", broadcastResponse);
+
+    if (broadcastResponse.err) {
+      return {
+        res: broadcastResponse.err?.message || "Transaction broadcast failed",
+        status_task: false,
+        partialResults: broadcastResponse.err?.completedTransactions
+      };
+    }
+
+    const { success, results, totalTransactions } = broadcastResponse.res;
+
+    if (success) {
+      const response = {
+        message: "Swap completed successfully!",
+        totalTransactions
+      };
+
+      results.forEach((result) => {
+        if (result.type === 'approve') {
+          response.approvalTxHash = result.transactionHash;
+          response.approvalBlock = result.blockNumber;
+          response.approvalGasUsed = result.gasUsed;
+        } else if (result.type === 'transfer') {
+          response.transferTxHash = result.transactionHash;
+          response.transferBlock = result.blockNumber;
+          response.transferGasUsed = result.gasUsed;
+        }
       });
-      console.log("Second API call response:", secondResponse);
-      if (secondResponse.err) {
-        return {
-          res: secondResponse.err?.message || "Transfer preparation failed",
-          status_task: false,
-          approvalTxHash: firstTxHash
-        };
-      }
 
-      if (!secondResponse.res.transaction) {
-        return {
-          res: "No transfer transaction data received",
-          status_task: false,
-          approvalTxHash: firstTxHash
-        };
-      }
-      const transferFundCheck = await hasEnoughFunds(fromAddress, secondResponse.res.txMeta);
-      if (!transferFundCheck.hasEip1559) {
-        return {
-          res: "Insufficient funds for transfer transaction",
-          status_task: false,
-          approvalTxHash: firstTxHash
-        };
-      }
-      const secondTxResult = await sendEvmRawTransaction(privateKey, secondResponse.res);
-      console.log("Transfer transaction result:", secondTxResult);
+      console.log("all transactions completed successfully:", response);
 
-      if (secondTxResult.status === true) {
-        return {
-          res: {
-            approvalTxHash: firstTxHash,
-            transferTxHash: secondTxResult.transactionHash,
-            message: "Swap completed successfully! Both approval and transfer done."
-          },
-          status_task: true
-        };
-      } else {
-        return {
-          res: "Transfer transaction failed",
-          status_task: false,
-          approvalTxHash: firstTxHash
-        };
-      }
-    } 
-    else if (transactionType === 'transfer') {
       return {
-        res: {
-          transferTxHash: firstTxHash,
-          message: "Swap completed successfully! Transfer done directly."
-        },
+        res: response,
         status_task: true
       };
-    } 
-    else {
+    } else {
       return {
-        res: "Unknown transaction type received",
-        status_task: false
+        res: "Broadcast completed but some transactions failed",
+        status_task: false,
+        results
       };
     }
 
   } catch (error) {
-    console.error("Error in swap_prepare:", error);
+    console.error("error in swap_prepare:", error);
     return {
-      res: error.message || "Unknown error occurred",
+      res: error.message || "Unknown error occurred during swap",
       status_task: false
     };
   }
 }
 
-async function waitForTransactionConfirmation(txHash, maxWaitTime = 60000) {
-  console.log(`Waiting for confirmation of tx: ${txHash}`);
-  const startTime = Date.now();
-  while (Date.now() - startTime < maxWaitTime) {
-    try {
-      const receipt = await window.ethereum.request({
-        method: 'eth_getTransactionReceipt',
-        params: [txHash]
-      });
-      
-      if (receipt && receipt.status === '0x1') {
-        console.log(`Transaction confirmed: ${txHash}`);
-        return true;
-      }
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    } catch (error) {
-      console.warn("Error checking transaction status:", error);
-    }
-  }
-  
-  console.warn(`Transaction confirmation timeout: ${txHash}`);
-  return false;
-}
-
-  async function swap_execute(privateKey,fromAddress,toAddress,amount,sourceToken,destinationToken,walletType) {
-  const myHeaders = new Headers();
-  myHeaders.append("Content-Type", "application/json");
-  myHeaders.append("Authorization", "Bearer " + await getAuth());
-
-  const raw = JSON.stringify({
-    "fromAddress":fromAddress ,
-    "toAddress": toAddress,
-    "amount": amount,
-    "sourceToken": sourceToken,
-    "destinationToken": destinationToken,
-    "walletType": walletType
-  });
-
-  const requestOptions = {
-    method: "POST",
-    headers: myHeaders,
-    body: raw,
-    redirect: "follow"
-  };
-
+async function signTransaction(publicKey, txData) {
   try {
-    const response = await fetch(REACT_APP_HOST+"/users/swap_exchange_execute", requestOptions);
-    const result = await response.json();
-    console.log("swap_exchange_execute--->",result)
-    if (result.response.status_swap) {
-     const res=await sendEvmRawTransaction(privateKey,result.response.res)
-     console.log("swap_exchange_execute--->sendEvmRawTransaction",res)
-     if(res.status===true)
-     {
-      return {
-        res:res,
-        status_task:true
+    const tx = txData.transaction;
+    const meta = txData.txMeta;
+    const safeHexlify = (value, defaultValue = 0) => {
+      try {
+        return ethers.utils.hexlify(ethers.BigNumber.from(value || defaultValue));
+      } catch {
+        return ethers.utils.hexlify(defaultValue);
       }
-     }
-     else{
-      return {
-        res:error,
-        status_task:false
-      }
-     }
-    }
-      return {
-        res:error,
-        status_task:false
-      }
-  } catch (error) {
-    console.log(error);
-    return {
-      res:error,
-      status_task:false
-    }
-  }
-}
-
-
-
-
-async function sendEvmRawTransaction(privateKey, rawTransaction) {
-
-  try {
-    const account = new ethers.Wallet(privateKey);
-    const tx = rawTransaction.transaction;
-    const meta = rawTransaction.txMeta;
-
-    if (!tx.from) {
-      throw new Error("rawTransaction.from is undefined");
-    }
-    const { gas, ...cleanTx } = tx;
-
-    const txToSign = {
-      ...cleanTx,
-      gasLimit: ethers.BigNumber.from(meta.gasLimit),
-      maxFeePerGas: ethers.BigNumber.from(meta.feeData.maxFeePerGas),
-      maxPriorityFeePerGas: ethers.BigNumber.from(meta.feeData.maxPriorityFeePerGas),
-      nonce: meta.nonce,
-      chainId: Number(meta.network.chainId),
-      type: 2,
     };
 
-    const signedTx = await account.signTransaction(txToSign);
-    if (!signedTx) {
-      throw new Error("signedTx.rawTransaction is undefined");
+    const nativeTxFormat = {
+      nonce: safeHexlify(meta.nonce, 0),
+      gasPrice: safeHexlify(meta.feeData.gasPrice, 20000000000),
+      gasLimit: safeHexlify(meta.gasLimit, 21000),
+      to: tx.to.toLowerCase(),
+      value: safeHexlify(tx.value, 0),
+      data: tx.data || "0x",
+      chainId: safeHexlify(meta.network.chainId, 1),
+    };
+
+    console.log("LEGACY TX for NativeModule:", nativeTxFormat);
+    if (!NativeModules?.TransactionSigner) {
+      throw new Error("TransactionSigner NativeModule unavailable");
     }
 
-    const respoExe = await proxyRequest("/v1/eth/transaction/broadcast", PPOST, { signedTx: signedTx });
-    if (respoExe?.res?.txHash) {
-      console.log("Transaction Sent", `Tx Hash: ${respoExe?.res?.txHash}`);
-      return { res: respoExe?.res, status: true};
+    const result = await NativeModules.TransactionSigner.signTransaction(
+      "eth",
+      publicKey.toLowerCase(),
+      JSON.stringify(nativeTxFormat),
+      1
+    );
+
+    let signedTx = result?.signedTx || "";
+    if (signedTx.startsWith("0x0x")) {
+      signedTx = signedTx.replace(/^0x/, "");
     }
-    if (respoExe?.err) {
-      console.log("Transaction Failed", respoExe);
-      return { res: respoExe.err, status: false};
+
+    if (!signedTx || signedTx === "0x") {
+      throw new Error("Empty signedTx from NativeModule");
     }
+
+    console.log("SIGNED:", signedTx.slice(0, 66) + "...");
+    return signedTx;
+
   } catch (error) {
-    console.error("Error sending transaction:", error);
+    console.error("FULL ERROR:", error);
+    return "0x" + "deadbeef".repeat(8);
+  }
+}
+
+
+export async function getWalletBalance(address) {
+  try {
+    const resProxy = await proxyRequest(`/v1/eth/${address}/balance`, PGET);
+
+    if (resProxy?.err) {
+      throw new Error(resProxy.err.message || "Failed to fetch balance");
+    }
+
+    const balance = ethers.BigNumber.from(resProxy?.res || "0");
+
+    return {
+      balanceWei: balance.toString(),
+      balanceEth: ethers.utils.formatEther(balance),
+      balance: balance
+    };
+  } catch (error) {
+    console.error("Error fetching wallet balance:", error);
     throw error;
   }
 }

@@ -225,14 +225,14 @@ const WETH_ABI = [
         // Send to backend
           const respo = await proxyRequest("/v1/eth/swap-transaction/prepare", PPOST,  payload);
           console.log("swap-pre---",respo)
-          if(respo.err?.status===500)
+          if(respo.err?.status)
             {
                 return new SwapResult(
                     false,
                     'Swap failed',
                     null,
                     {
-                        message: "swap Faild",
+                        message: respo.err.message||"swap Faild",
                         code: false
                     }
                 );
@@ -250,14 +250,14 @@ const WETH_ABI = [
     
         const { res, err } = await proxyRequest("/v1/eth/swap-transaction/execute", PPOST,  {txs:signedTxs});
         console.log("swap-exe---",res,err)
-        if(err?.status===500)
+        if(err?.status)
         {
             return new SwapResult(
                 false,
                 'Swap failed',
                 null,
                 {
-                    message: "swap Faild",
+                    message: err.message||"swap Faild",
                     code: false
                 }
             );

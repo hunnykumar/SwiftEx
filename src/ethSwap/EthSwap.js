@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,7 +11,9 @@ import {
   Alert,
   Image,
   ScrollView,
-  Keyboard
+  Keyboard,
+  TouchableWithoutFeedback,
+  NativeModules
 } from 'react-native';
 import {
   widthPercentageToDP as wp,
@@ -20,43 +21,20 @@ import {
 } from "react-native-responsive-screen";
 import { ethers } from 'ethers';
 import { Wallet_screen_header } from '../Dashboard/reusables/ExchangeHeader';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/Ionicons";
 import { useSelector } from 'react-redux';
 import ErrorComponet from '../utilities/ErrorComponet';
 import { fetchBSCTokenInfo, fetchTokenInfo } from './tokenUtils';
-import { main, swapUSDCtoWETH } from './SwapExecution';
 import Snackbar from 'react-native-snackbar';
-import { swapETHtoUSDC } from './MutiStepSwap';
-import { SaveTransaction } from '../utilities/utilities';
 import { PGET, PPOST, proxyRequest } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/api';
-
 import EtherTokens from "../Dashboard/tokens/tokenList.json";
 import BNBTokens from "../Dashboard/tokens/pancakeSwap/PancakeList.json";
 import { getTokenBalancesUsingAddress, getWalletBalance } from '../Dashboard/exchange/crypto-exchange-front-end-main/src/utils/getWalletInfo/EtherWalletService';
+import ShortTermStorage from '../utilities/ShortTermStorage';
+import { debounce } from 'lodash';
 
-// Token List
-const TOKENS = [
-  {
-    symbol: 'WETH',
-    name: 'Wrapped Ethereum',
-    decimals: 18,
-    address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', 
-    balance: '1.5',
-    logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-
-  },
-  {
-    symbol: 'USDC',
-    name: 'USD Coin',
-    decimals: 6,
-    address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
-    balance: '1000',
-    logoURI:'https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png'
-  }
-];
-
-const NETWORK=[
+const NETWORK = [
   {
     symbol: 'ETH',
     logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
@@ -65,228 +43,281 @@ const NETWORK=[
     symbol: 'BNB',
     logoURI:'https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png'
   }
-]
+];
 
 const EthSwap = () => {
-  const navigation=useNavigation();
-  const FOCUSED=useIsFocused();
-  const state=useSelector((state)=>state);
-  const [ErroVisible,setErroVisible]=useState(false);
-  const [fromToken, setFromToken] = useState(TOKENS[0]);
-  const [toToken, setToToken] = useState(TOKENS[1]);
+  const navigation = useNavigation();
+  const routeParam=useRoute();
+  const FOCUSED = useIsFocused();
+  const state = useSelector((state) => state);
+  
+  const [errorVisible, setErrorVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [fromToken, setFromToken] = useState(EtherTokens[0]);
+  const [toToken, setToToken] = useState(EtherTokens[1]);
   const [amount, setAmount] = useState('');
   const [quoteInfo, setQuoteInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showTokenList, setShowTokenList] = useState(false);
   const [selectingFor, setSelectingFor] = useState('from');
-  const [WETHBAL, setWETHBAL] = useState(0.00);
-  const [USDCBAL, setUSDCBAL] = useState(0.00);
-  const [allblnLoading, setallblnLoading] = useState(false);
-  const [btnMessage,setbtnMessage]=useState("Swap");
-  const [btnDisable,setbtnDisable]=useState(false);
-  const [SwapExecution,setSwapExecution]=useState(false);
-  const [currentNetwork,setCurrentNetwork]=useState(0);
+  const [fromTokenBalance, setFromTokenBalance] = useState('0.00');
+  const [toTokenBalance, setToTokenBalance] = useState('0.00');
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [btnMessage, setbtnMessage] = useState("Swap");
+  const [btnDisable, setbtnDisable] = useState(true);
+  const [swapExecuting, setSwapExecuting] = useState(false);
+  const [currentNetwork, setCurrentNetwork] = useState(0);
+  const abortControllerRef = useRef(null);
 
-
-  const getSwapQuote = async (tokenIn, tokenOut, amountIn,type) => {
-    const { res, err } = await proxyRequest(`/v1/${type}/swap-quote`, PPOST, { tokenIn: tokenIn, tokenOut: tokenOut, amount: amountIn });
-    console.log(res, err)
-    if (err?.status === 500) {
-      setErroVisible(true);
-      setQuoteInfo(null);
-      setLoading(false);
-    }
-    else {
+  const getSwapQuote = useCallback(async (tokenIn, tokenOut, amountIn, type) => {
+    try {
+      const { res, err } = await proxyRequest(
+        `/v1/${type}/swap-quote`, 
+        PPOST, 
+        { 
+          tokenIn: tokenIn, 
+          tokenOut: tokenOut, 
+          amount: amountIn 
+        }
+      );
+      
+      if (err?.status) {
+        setErrorMessage(err.message || 'Failed to get quote. Please try again.');
+        setErrorVisible(true);
+        return null;
+      }
+      
       return res;
+    } catch (error) {
+      console.error('Quote error:', error);
+      setErrorMessage('Network error. Please check your connection.');
+      setErrorVisible(true);
+      return null;
     }
-  };
+  }, []);
 
+  const fetchTokenBalances = useCallback(async (token0Addr, token1Addr, network) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setBalanceLoading(true);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      const walletAddress = state?.wallet?.address;
+      if (!walletAddress) return;
+
+      const addresses = [token0Addr, token1Addr];
+      let responseBalance;
+
+      if (network === 0) {
+        responseBalance = await fetchTokenInfo(addresses, walletAddress, {
+          signal: controller.signal
+        });
+      } else {
+        responseBalance = await fetchBSCTokenInfo(addresses, walletAddress, {
+          signal: controller.signal
+        });
+      }
+      const balance0 = parseFloat(responseBalance?.[0]?.balance || 0);
+      const balance1 = parseFloat(responseBalance?.[1]?.balance || 0);
+      const decimals0 = Number(responseBalance?.[0]?.decimals || 18);
+      const decimals1 = Number(responseBalance?.[1]?.decimals || 18);
+      setFromTokenBalance(balance0);
+      setToTokenBalance(balance1);
+    } catch (error) {
+      console.error("Error fetching BSC token balance:", error);
+      Snackbar.show({
+        text: "Unable to fetch balance",
+        duration: Snackbar.LENGTH_SHORT,
+        backgroundColor: '#ff6b6b',
+      });
+    } finally {
+      setBalanceLoading(false);
+    }
+  }, [state?.wallet?.address]);
+
+  const debouncedFetchBalances = useCallback(
+    debounce((token0Addr, token1Addr, network) => {
+      fetchTokenBalances(token0Addr, token1Addr, network);
+    }, 400),
+    [fetchTokenBalances]
+  );
+
+  // Update quote when amount changes
   useEffect(() => {
+    let timeoutId;
+
     const updateQuote = async () => {
-      if (!amount || parseFloat(amount) === 0) {
+      if (!amount || parseFloat(amount) <= 0) {
         setQuoteInfo(null);
+        setbtnDisable(true);
+        setbtnMessage("Enter amount");
         return;
       }
 
       setLoading(true);
+      
       try {
-        if (currentNetwork === 0) {
-        await getTokesBalance(fromToken.address,toToken.address)
-        const quote = await getSwapQuote(fromToken, toToken, amount,"eth");
-        setQuoteInfo(quote);
-        }
-        if (currentNetwork === 1) {
-         await getBSCTokenBalance(fromToken.address, toToken.address)
-          const quote = await getSwapQuote(fromToken, toToken, amount,"bsc");
+        const type = currentNetwork === 0 ? "eth" : "bsc";
+        const quote = await getSwapQuote(fromToken, toToken, amount, type);
+        
+        if (quote) {
           setQuoteInfo(quote);
+          
+          // Validate balance
+          const amountNum = parseFloat(amount);
+          const balanceNum = parseFloat(fromTokenBalance);
+          
+          if (amountNum > balanceNum) {
+            setbtnDisable(true);
+            setbtnMessage("Insufficient Balance");
+          } else {
+            setbtnDisable(false);
+            setbtnMessage("Swap");
+          }
+        } else {
+          setbtnDisable(true);
+          setbtnMessage("No route found");
         }
       } catch (error) {
-        console.log(error);
-        // CustomInfoProvider.show('error', 'Failed to get quote');
-        setErroVisible(true);
+        console.error('Update quote error:', error);
         setQuoteInfo(null);
+        setbtnDisable(true);
+        setbtnMessage("Quote failed");
       } finally {
-        if (Number(amount)===0) {
-          if (!amount) {
-            setbtnDisable(true);
-            setbtnMessage("Swap");
-          } else {
-            setbtnDisable(true);
-            setbtnMessage("Invalid Amount");
-          }
-        }
-        if (Number(amount)>Number(WETHBAL)) {
-          setbtnDisable(true);
-          setbtnMessage("Insufficient Balance");
-        }
-        else {
-          setbtnDisable(false);
-          setbtnMessage("Swap")
-        }
         setLoading(false);
       }
     };
 
-    updateQuote();
-  }, [amount, fromToken, toToken]);
+    // Debounce quote updates
+    timeoutId = setTimeout(() => {
+      updateQuote();
+    }, 500);
 
+    return () => clearTimeout(timeoutId);
+  }, [amount, fromToken, toToken, currentNetwork, fromTokenBalance, getSwapQuote]);
 
+  // Fetch balances when tokens change
   useEffect(() => {
-    const updateBalances=async()=>{
+    if (balanceLoading) return;
+    debouncedFetchBalances(fromToken.address, toToken.address, currentNetwork);
+    return () => {
+      debouncedFetchBalances.cancel();
+    };
+  }, [fromToken.address, toToken.address, currentNetwork]);
+
+  // Network change handler
+  useEffect(() => {
+    setAmount('');
+    setQuoteInfo(null);
+
+    const timer = setTimeout(() => {
       if (currentNetwork === 0) {
-        setallblnLoading(true);
-        setFromToken(EtherTokens[0])
-        setToToken(EtherTokens[1])
-        await getTokesBalance(EtherTokens[0].address,EtherTokens[1].address)
-        if (Number(amount)===0) {
-          if (!amount) {
-            setbtnDisable(true);
-            setbtnMessage("Swap");
-          } else {
-            setbtnDisable(true);
-            setbtnMessage("Invalid Amount");
-          }
-        }
-        if (Number(amount)>Number(WETHBAL)) {
-          setbtnDisable(true);
-          setbtnMessage("Insufficient Balance");
-        }
-        else {
-          setbtnDisable(false);
-          setbtnMessage("Swap")
-        }
+        setFromToken(EtherTokens[0]);
+        setToToken(routeParam.params?.activeAsset || EtherTokens[1]);
       } else {
-        await getBSCTokenBalance(BNBTokens[0].address,BNBTokens[1].address)
-        setallblnLoading(true);
-        setFromToken(BNBTokens[0])
-        setToToken(BNBTokens[1])
-        setallblnLoading(false);
-        if (Number(amount)===0) {
-          if (!amount) {
-            setbtnDisable(true);
-            setbtnMessage("Swap");
-          } else {
-            setbtnDisable(true);
-            setbtnMessage("Invalid Amount");
-          }
-        }
-        if (Number(amount)>Number(WETHBAL)) {
-          setbtnDisable(true);
-          setbtnMessage("Insufficient Balance");
-        }
-        else {
-          setbtnDisable(false);
-          setbtnMessage("Swap")
-        }
+        setFromToken(BNBTokens[0]);
+        setToToken(routeParam.params?.activeAsset || BNBTokens[1]);
       }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [currentNetwork]);
+
+  // Focus handler
+  useEffect(() => {
+    if (!FOCUSED) return;
+    if (routeParam.params?.activeNetwork === "BNB") {
+      setCurrentNetwork(1);
+    } else if (routeParam.params?.activeNetwork === "Ethereum") {
+      setCurrentNetwork(0);
+    } else {
+      setCurrentNetwork(0);
     }
-    updateBalances();
-  }, [currentNetwork])
+  }, [FOCUSED]);
 
-  useEffect(()=>{
-    setCurrentNetwork(0)
-    console.log("---",state)
-    setallblnLoading(true);
-  },[FOCUSED])
 
-  const getTokesBalance = async (token0, token1) => {
-    try {
-      const addresses = [token0, token1];
-      const WALLET_ADDRESS = state?.wallet?.address;
-      const resposeBalance = await fetchTokenInfo(addresses, WALLET_ADDRESS)
-      console.log("resposeBalance", resposeBalance)
-      setWETHBAL(parseFloat(resposeBalance[0]?.balance||0)?.toFixed(parseFloat(resposeBalance[0]?.balance)===0?3:Number(resposeBalance[0].decimals)));
-      setUSDCBAL(parseFloat(resposeBalance[1]?.balance||0)?.toFixed(parseFloat(resposeBalance[1]?.balance)===0?3:Number(resposeBalance[1].decimals)));
-      setallblnLoading(false);
-      setShowTokenList(false);
-    } catch (error) {
-      console.log("Error fetching token info:", error);
-      setallblnLoading(false);
-      setShowTokenList(false);
-      Snackbar.show({
-        text: "Unable to find balance",
-        duration: Snackbar.LENGTH_LONG,
-        backgroundColor: 'red',
-      });
-    }
-  }
-
-  const getBSCTokenBalance = async (token0, token1) => {
-    try {
-      const addresses = [token0, token1];
-      console.log("addresses:",addresses)
-      const WALLET_ADDRESS = state?.wallet?.address;
-      const resposeBalance = await fetchBSCTokenInfo(addresses, WALLET_ADDRESS)
-      console.log("resposeBalance", resposeBalance)
-      setWETHBAL(parseFloat(resposeBalance[0]?.balance||0)?.toFixed(parseFloat(resposeBalance[0]?.balance)===0?3:Number(resposeBalance[0].decimals)));
-      setUSDCBAL(parseFloat(resposeBalance[1]?.balance||0)?.toFixed(parseFloat(resposeBalance[1]?.balance)===0?3:Number(resposeBalance[1].decimals)));
-      setallblnLoading(false);
-      setShowTokenList(false);
-    } catch (error) {
-      console.log("Error fetching token info:", error);
-      setallblnLoading(false);
-      setShowTokenList(false);
-      Snackbar.show({
-        text: "Unable to find balance",
-        duration: Snackbar.LENGTH_LONG,
-        backgroundColor: 'red',
-      });
-    }
-  }
-
-  const TokenSelector = ({ token, onPress,balance }) => (
-    <TouchableOpacity disabled={loading} style={[styles.tokenSelector,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]} onPress={onPress}>
-      <View style={styles.tokenContainer}>
-      <Image source={{ uri: token.logoURI }} style={[styles.logoImage,{marginRight:5}]} />
-      <Text style={[styles.tokenSymbol,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{token.symbol}</Text>
+  // Token selector component
+  const TokenSelector = ({ token, onPress, balance }) => (
+    <TouchableOpacity 
+      disabled={balanceLoading || loading}
+      style={[
+        styles.tokenSelector,
+        { backgroundColor: state?.THEME?.THEME === false ? "#FFFFFF" : "#1B1B1C",opacity: balanceLoading || loading ? 0.7 : 1}
+      ]} 
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.tokenContainer, { width: wp(30) }]}>
+        <Image source={{ uri: token.logoURI }} style={[styles.logoImage, { marginRight: 5 }]} />
+        <Text style={[styles.tokenSymbol, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+          {token.symbol}
+        </Text>
       </View>
-      {allblnLoading?<ActivityIndicator size={"small"} color={"green"}/>:<Text style={styles.tokenBalance}>Balance: {balance}</Text>}
+      {balanceLoading ? (
+        <ActivityIndicator size="small" color="#4052D6" />
+      ) : (
+        <View>
+         <Text style={styles.tokenBalance} numberOfLines={1}>
+          Available
+        </Text>
+        <Text style={styles.tokenBalance} numberOfLines={1}>
+        {balance}
+        </Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 
+  // Token list modal
   const TokenListModal = () => {
     const [searchQuery, setSearchQuery] = useState('');
+    
     const filteredTokens = useMemo(() => {
-      const tokens = NETWORK[currentNetwork].symbol === "ETH" ? EtherTokens : BNBTokens;
-      
+      const tokens = currentNetwork === 0 ? EtherTokens : BNBTokens;
+
       if (!searchQuery.trim()) {
         return tokens;
       }
       
       const query = searchQuery.toLowerCase().trim();
-      
-      return tokens.filter(token => {
-        const symbolMatch = token.symbol?.toLowerCase().includes(query);
-        const nameMatch = token.name?.toLowerCase().includes(query);
-        const addressMatch = token.address?.toLowerCase().includes(query);
-        return symbolMatch || nameMatch || addressMatch;
-      });
+
+      return tokens.filter(token => 
+        token.symbol?.toLowerCase().includes(query) ||
+        token.name?.toLowerCase().includes(query) ||
+        token.address?.toLowerCase().includes(query)
+      );
     }, [searchQuery, currentNetwork]);
-  
-    const clearSearch = () => {
-      setSearchQuery('');
-    };
-  
+
+    const handleTokenSelect = useCallback((item) => {
+      if (balanceLoading) {
+        Snackbar.show({
+          text: "Please wait for balances to load",
+          duration: Snackbar.LENGTH_SHORT,
+          backgroundColor: '#ff6b6b',
+        });
+        return;
+      }
+
+      setShowTokenList(false);
+      
+      requestAnimationFrame(() => {
+        if (selectingFor === 'from' && item.address !== toToken.address) {
+          setFromToken(item);
+        } else if (selectingFor === 'to' && item.address !== fromToken.address) {
+          setToToken(item);
+        } else {
+          Snackbar.show({
+            text: "Cannot select same token twice",
+            duration: Snackbar.LENGTH_SHORT,
+            backgroundColor: '#ff6b6b',
+          });
+        }
+      });
+    }, [selectingFor, fromToken.address, toToken.address, balanceLoading]);
+
     return (
       <Modal
         visible={showTokenList}
@@ -294,374 +325,684 @@ const EthSwap = () => {
         animationType="slide"
         onRequestClose={() => setShowTokenList(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, {backgroundColor: state?.THEME?.THEME === false ? "#fff" : "#171616"}]}>
-            <Text style={[styles.modalTitle, {color: state?.THEME?.THEME === false ? "black" : "#fff"}]}>
-              Select Token
-            </Text>
-            <View style={[styles.searchContainer, {
-              backgroundColor: state?.THEME?.THEME === false ? "#f8f9fa" : "#2a2a2a",
-              borderColor: state?.THEME?.THEME === false ? "#e9ecef" : "#404040"
-            }]}>
-              <TextInput
-                style={[styles.searchInput, {
-                  color: state?.THEME?.THEME === false ? "black" : "#fff"
-                }]}
-                placeholder="Search by name, symbol, or address..."
-                placeholderTextColor={state?.THEME?.THEME === false ? "#6c757d" : "#888"}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-                  <Text style={[styles.clearButtonText, {
-                    color: state?.THEME?.THEME === false ? "#6c757d" : "#888"
-                  }]}>×</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            {searchQuery.trim() && (
-              <Text style={[styles.resultsText, {
-                color: state?.THEME?.THEME === false ? "#6c757d" : "#888"
-              }]}>
-                {filteredTokens.length} token{filteredTokens.length !== 1 ? 's' : ''} found
-              </Text>
-            )}
-            
-            <FlatList
-              data={filteredTokens}
-              keyExtractor={(item) => item.symbol}
-              renderItem={({ item }) => (
+        <TouchableWithoutFeedback onPress={() => setShowTokenList(false)}>
+          <View style={styles.modalContainer}>
+            <TouchableWithoutFeedback>
+              <View style={[
+                styles.modalContent, 
+                { backgroundColor: state?.THEME?.THEME === false ? "#F4F4F8" : "#242426" }
+              ]}>
+                <Text style={[
+                  styles.modalTitle, 
+                  { color: state?.THEME?.THEME === false ? "black" : "#fff" }
+                ]}>
+                  Select Token
+                </Text>
+                
+                <View style={[styles.searchContainer, {
+                  backgroundColor: state?.THEME?.THEME === false ? "#f8f9fa" : "#2a2a2a",
+                  borderColor: state?.THEME?.THEME === false ? "#e9ecef" : "#404040"
+                }]}>
+                  <TextInput
+                    style={[styles.searchInput, {
+                      color: state?.THEME?.THEME === false ? "black" : "#fff"
+                    }]}
+                    placeholder="Search by name, symbol, or address..."
+                    placeholderTextColor={state?.THEME?.THEME === false ? "#6c757d" : "#888"}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  {searchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                      <Text style={[styles.clearButtonText, {
+                        color: state?.THEME?.THEME === false ? "#6c757d" : "#888"
+                      }]}>×</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                
+                <FlatList
+                  data={filteredTokens}
+                  keyExtractor={(item, index) => index.toString()}
+                  style={{height:hp(60)}}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.tokenListItem}
+                      onPress={() => handleTokenSelect(item)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.tokenContainer}>
+                        <Image source={{ uri: item.logoURI }} style={styles.logoImage} />
+                        <View style={styles.tokenDetaisContainer}>
+                          <Text style={[
+                            styles.tokenListSymbol, 
+                            { color: state?.THEME?.THEME === false ? "black" : "#fff" }
+                          ]}>
+                            {item.symbol}
+                          </Text>
+                          <Text style={[
+                            styles.tokenListName, 
+                            { color: state?.THEME?.THEME === false ? "#666" : "#888" }
+                          ]}>
+                            {item.name}
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  ListEmptyComponent={() => (
+                    <View style={styles.emptyContainer}>
+                      <Text style={[styles.emptyText, {
+                        color: state?.THEME?.THEME === false ? "#6c757d" : "#888"
+                      }]}>
+                        No tokens found matching "{searchQuery}"
+                      </Text>
+                    </View>
+                  )}
+                />
+                
                 <TouchableOpacity
-                  style={styles.tokenListItem}
+                  style={[
+                    styles.closeButton, 
+                    { backgroundColor: state?.THEME?.THEME === false ? "#f8f9fa" : "#080a0a" }
+                  ]}
                   onPress={() => {
-                    if (selectingFor === 'from') {
-                      setFromToken(item);
-                      if(item.symbol === "WBNB") {
-                        navigation.navigate("BnbSwap");
-                      }
-                    } else {
-                      setToToken(item);
-                    }
                     setShowTokenList(false);
                     setSearchQuery('');
                   }}
                 >
-                  <View style={styles.tokenContainer}>
-                    <Image source={{ uri: item.logoURI }} style={styles.logoImage} />
-                    <View style={styles.tokenDetaisContainer}>
-                      <Text style={[styles.tokenListSymbol, {color: state?.THEME?.THEME === false ? "black" : "#fff"}]}>
-                        {item.symbol}
-                      </Text>
-                      <Text style={[styles.tokenListName, {color: state?.THEME?.THEME === false ? "black" : "#fff"}]}>
-                        {item.name}
-                      </Text>
-                      {item.address && searchQuery.trim() && 
-                       item.address.toLowerCase().includes(searchQuery.toLowerCase()) && (
-                        <Text style={[styles.tokenAddress, {
-                          color: state?.THEME?.THEME === false ? "#6c757d" : "#888"
-                        }]}>
-                          {`${item.address.slice(0, 6)}...${item.address.slice(-4)}`}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={() => (
-                <View style={styles.emptyContainer}>
-                  <Text style={[styles.emptyText, {
-                    color: state?.THEME?.THEME === false ? "#6c757d" : "#888"
-                  }]}>
-                    No tokens found matching "{searchQuery}"
+                  <Text style={[
+                    styles.closeButtonText, 
+                    { color: state?.THEME?.THEME === false ? "black" : "#fff" }
+                  ]}>
+                    Close
                   </Text>
-                </View>
-              )}
-            />
-            
-            <TouchableOpacity
-              style={[styles.closeButton, {backgroundColor: state?.THEME?.THEME === false ? "#f8f9fa" : "#080a0a"}]}
-              onPress={() => {
-                setShowTokenList(false);
-                setSearchQuery('');
-              }}
-            >
-              <Text style={[styles.closeButtonText, {color: state?.THEME?.THEME === false ? "black" : "#fff"}]}>
-                Close
-              </Text>
-            </TouchableOpacity>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     );
   };
-  const handleChange = (text,decimals) => {
-    const regex = new RegExp(`^\\d*(\\.\\d{0,${decimals}})?$`);
-    if (regex.test(text)) {
-      setAmount(text);
-    }
+
+  // Handle amount input
+  const handleChange = (text, decimals) => {
+    const replaceComma = text.replace(',', '.');
+    const numericText = replaceComma.replace(/[^0-9.]/g, '');
+    setAmount(numericText);
   };
-  const tokenHande=()=>{
-    setAmount('');
+
+  // Swap tokens
+  const tokenHandle = () => {
     setFromToken(toToken);
     setToToken(fromToken);
-  }
+    setFromTokenBalance(toTokenBalance);
+    setToTokenBalance(fromTokenBalance);
+  };
 
-  useEffect(() => {
-    // if (Number(amount)===0) {
-    //   if (!amount) {
-    //     setbtnDisable(true);
-    //     setbtnMessage("Swap");
-    //   } else {
-    //     setbtnDisable(true);
-    //     setbtnMessage("Invalid Amount");
-    //   }
-    // }
-    // if (Number(amount)>Number(WETHBAL)) {
-    //   setbtnDisable(true);
-    //   setbtnMessage("Insufficient Balance");
-    // }
-    // else {
-    //   setbtnDisable(false);
-    //   setbtnMessage("Swap")
-    // }
-  }, [amount])
+  // Execute swap
+  const handleSwap = async () => {
+    Keyboard.dismiss();
+    
+    if (!amount || parseFloat(amount) === 0) {
+      Snackbar.show({
+        text: "Please enter a valid amount",
+        duration: Snackbar.LENGTH_SHORT,
+        backgroundColor: '#ff6b6b',
+      });
+      return;
+    }
 
+    if (parseFloat(amount) > parseFloat(fromTokenBalance)) {
+      Snackbar.show({
+        text: "Insufficient balance",
+        duration: Snackbar.LENGTH_SHORT,
+        backgroundColor: '#ff6b6b',
+      });
+      return;
+    }
 
-  async function handleSwap(amount, privateKey, SWAPTYPE) {
-    Keyboard.dismiss()
-    setSwapExecution(true);
-    if (SWAPTYPE === "ETH") {
-      try {
-        const etherSwapRes=await swapForEth(amount, privateKey)
-        console.log("etherSwapRes---",etherSwapRes)
-        if (etherSwapRes.status) {
-          setSwapExecution(false);
-          Snackbar.show({
-            text: "Swap Success",
-            duration: Snackbar.LENGTH_LONG,
-            backgroundColor: 'green',
-          });
-          navigation.navigate("Transactions")
-        } else {
-          setSwapExecution(false);
-          // Error UI update
-          console.log('Swap failed:', result.message);
-          if (result.error) {
-            console.log('Error details:', result.error);
-          }
-          Snackbar.show({
-            text: "Faild to swap",
-            duration: Snackbar.LENGTH_LONG,
-            backgroundColor: 'red',
-          });
-        }
-      } catch (error) {
-        setSwapExecution(false);
-        console.log('Unexpected error:', error);
+    setSwapExecuting(true);
+
+    try {
+      // const result = await swapForEth(amount, state?.wallet?.privateKey);
+      const result = currentNetwork === 0 ? await swapForEth(amount, state?.wallet?.address): await swapBnb(amount, state?.wallet?.address);
+      console.log("swap result",result)
+      if (result.status) {
         Snackbar.show({
-          text: "Faild to swap",
+          text: "Swap successful!",
           duration: Snackbar.LENGTH_LONG,
-          backgroundColor: 'red',
+          backgroundColor: '#51cf66',
+        });
+        
+        // Reset form
+        setAmount('');
+        setQuoteInfo(null);
+        
+        
+        // Navigate after short delay
+        setTimeout(() => {
+          navigation.navigate("Transactions");
+        }, 1000);
+      } else {
+        Snackbar.show({
+          text: result.message || "Swap failed",
+          duration: Snackbar.LENGTH_LONG,
+          backgroundColor: '#ff6b6b',
         });
       }
+    } catch (error) {
+      console.error('Swap error:', error);
+      Snackbar.show({
+        text: error.message || "Swap failed. Please try again",
+        duration: Snackbar.LENGTH_LONG,
+        backgroundColor: '#ff6b6b',
+      });
+    } finally {
+      setSwapExecuting(false);
     }
-  }
+  };
 
-
-  async function swapForEth(amount, privateKey) {
+  // Swap execution function
+  const swapForEth = async (amount, address) => {
     try {
-      const wallet = new ethers.Wallet(privateKey);
-      const address = await wallet.getAddress();
-      console.log("---toToken.symbol",fromToken.symbol)
-      const ethBalance=fromToken.symbol==="WETH"?await getWalletBalance(address,"ETH"):await getTokenBalancesUsingAddress(fromToken.address,address,"ETH");
-      console.log("---toToken.ba",ethBalance)
-      const amountIn = ethers.utils.parseEther(amount);
-      const balanceWei = ethers.utils.parseEther(fromToken.symbol==="WETH"?ethBalance.balance.toString():ethBalance.tokenInfo[0].balance.toString());
-      if (balanceWei.lt(amountIn)) {
-        return {
-          status: false,
-          message: "Insufficient ETH balance",
-          details: {
-            requiredAmount: amount,
-            currentBalance: fromToken.symbol==="WETH"?ethBalance.balance:ethBalance.tokenInfo[0].balance
-          }
-        };
-      }
+
       const payload = {
         tokenIn: fromToken,
         tokenOut: toToken,
         amount: amount,
         recipient: address,
       };
-      console.log("perpare:---:payload", payload)
+
+      console.log("Preparing swap:", payload);
+
       const respo = await proxyRequest("/v1/eth/swap-transaction/prepare", PPOST, payload);
-      console.log("perpare:", respo)
-      if (respo.err?.status === 500) {
+
+      if (respo.err?.status) {
         return {
           status: false,
-          message: "Swap failed",
-          details: "faild to swap"
+          message: respo.err.message || "Failed to prepare swap",
         };
       }
+
       const rawTxs = respo.res;
+      
+      if (!rawTxs || rawTxs.length === 0) {
+        return {
+          status: false,
+          message: "No transactions to sign",
+        };
+      }
+
       const signedTxs = [];
 
-      for (const tx of rawTxs) {
-        if (tx.value) tx.value = BigInt(tx.value);
-        if (tx.gasLimit) tx.gasLimit = BigInt(tx.gasLimit);
-        if (tx.maxFeePerGas) tx.maxFeePerGas = BigInt(tx.maxFeePerGas);
-        if (tx.maxPriorityFeePerGas) tx.maxPriorityFeePerGas = BigInt(tx.maxPriorityFeePerGas);
-        const signedTx = await wallet.signTransaction(tx);
-        signedTxs.push(signedTx);
+      for (let i = 0; i < rawTxs.length; i++) {
+        const tx = rawTxs[i];
+        
+        try {
+          let transaction;
+          let chainId = tx.chainId ? Number(tx.chainId) : 1;
+          const isEIP1559 = tx.maxFeePerGas !== undefined && tx.maxPriorityFeePerGas !== undefined;
+          
+          if (isEIP1559) {
+            const gasPrice = tx.maxFeePerGas;
+            transaction = {
+              nonce: ethers.utils.hexlify(tx.nonce || 0),
+              gasPrice: ethers.utils.hexlify(ethers.BigNumber.from(gasPrice.toString())),
+              gasLimit: ethers.utils.hexlify(ethers.BigNumber.from(tx.gasLimit?.toString() || "21000")),
+              to: tx.to,
+              value: ethers.utils.hexlify(ethers.BigNumber.from(tx.value?.toString() || "0")),
+              data: tx.data || "0x",
+            };
+          } else {
+            transaction = {
+              nonce: ethers.utils.hexlify(tx.nonce || 0),
+              gasPrice: ethers.utils.hexlify(ethers.BigNumber.from(tx.gasPrice?.toString() || "0")),
+              gasLimit: ethers.utils.hexlify(ethers.BigNumber.from(tx.gasLimit?.toString() || "21000")),
+              to: tx.to,
+              value: ethers.utils.hexlify(ethers.BigNumber.from(tx.value?.toString() || "0")),
+              data: tx.data || "0x",
+            };
+          }
+          const signedTx = await NativeModules.TransactionSigner.signTransaction(
+            "eth",
+            address,
+            JSON.stringify(transaction),
+            chainId
+          );
+
+          let rawTransaction = signedTx.signedTx;
+          if (rawTransaction.startsWith("0x0x")) {
+            rawTransaction = rawTransaction.replace(/^0x/, "");
+          }
+          signedTxs.push(rawTransaction);
+          console.log(`Transaction ${i + 1}/${rawTxs.length} signed`);
+        } catch (signError) {
+          console.error(`Sign error:`, signError);
+          return {
+            status: false,
+            message: "Transaction signing failed",
+          };
+        }
       }
+
+      console.log("Broadcasting transactions...");
+      
       const { res, err } = await proxyRequest("/v1/eth/swap-transaction/execute", PPOST, { txs: signedTxs });
-      console.log("=====execute-----", res)
-      if (err?.status === 500) {
+
+      if (err?.status) {
         return {
           status: false,
-          message: "Swap failed",
-          details: "faild to swap"
+          message: err.message || "Broadcast failed",
         };
-      } if (res?.[0]?.receipt.status === 1) {
-        console.log("=====execute0-----", res)
+      }
+
+      if (Array.isArray(res) && res.length > 0) {
+        const validTxs = res.filter(item => item?.txResponse?.hash);
+        
+        for (const tx of validTxs) {
+          await ShortTermStorage.saveTx(state?.wallet?.address, {
+            chain: "ETH",
+            typeTx: "Swap",
+            status: "Pending",
+            hash: tx.txResponse.hash,
+          });
+        }
+
         return {
           status: true,
           message: "Swap completed successfully",
-          inputAmount: `${amount} ETH`,
-          // outputAmount: `${QuotedAmountOutRes?.res?.outputAmount}`,
-          transactions: {
-            approve: res?.[0]?.receipt.hash
-          },
-          swap: res?.[1]?.receipt.hash,
-        }
+        };
       }
-    } catch (error) {
-      console.log("error onSwapETHtoUSDC: ", error)
+
       return {
         status: false,
-        message: "Swap failed",
-        details: error.message
+        message: "No transaction hash received",
+      };
+    } catch (error) {
+      console.error("Swap execution error:", error);
+      return {
+        status: false,
+        message: error.message || "Swap failed",
       };
     }
-  }
+  };
+
+  // Bnb Swap execution function
+  const swapBnb = async (amount, address) => {
+    try {
+
+      const payload = {
+        tokenIn: fromToken,
+        tokenOut: toToken,
+        amount: amount,
+        recipient: address,
+        slippage: 1,
+      };
+
+      console.log("Preparing BSC swap:", payload);
+
+      const respo = await proxyRequest("/v1/bsc/swap-transaction/prepare", PPOST, payload);
+
+      if (respo.err?.status) {
+        return {
+          status: false,
+          message: respo.err.message || "Failed to prepare swap",
+        };
+      }
+
+      const rawTxs = respo.res;
+
+      if (!rawTxs || rawTxs.length === 0) {
+        return {
+          status: false,
+          message: "No transactions to sign",
+        };
+      }
+
+      console.log(`Signing ${rawTxs.length} transaction(s)...`);
+      const signedTxs = [];
+
+      for (let i = 0; i < rawTxs.length; i++) {
+        const tx = rawTxs[i];
+
+        const formattedTx = {
+          chainId: parseInt(tx.chainId) || 56,
+          to: tx.to,
+          nonce: ethers.utils.hexlify(Number(tx.nonce)),
+          gasPrice: ethers.utils.hexlify(Number(tx.gasPrice)),
+          gasLimit: ethers.utils.hexlify(Number(tx.gasLimit)),  // 🔧 MAIN FIX
+          value: ethers.utils.hexlify(ethers.BigNumber.from(tx.value || 0)),
+          data: tx.data?.startsWith("0x") ? tx.data : "0x" + (tx.data || ""),
+        };
+
+        console.log(`Signing tx ${i + 1}:`, {
+          to: formattedTx.to,
+          nonce: formattedTx.nonce,
+          gasLimit: formattedTx.gasLimit.toString(),
+          gasPrice: formattedTx.gasPrice.toString(),
+          value: formattedTx.value.toString(),
+        });
+
+        try {
+        const signedTx = await NativeModules.TransactionSigner.signTransaction(
+            "bsc",
+            address,
+            JSON.stringify(formattedTx),
+            56
+          );
+
+          let rawTx = signedTx.signedTx;
+          if (rawTx.startsWith("0x0x")) {
+            rawTx = rawTx.replace(/^0x/, "");
+          }
+          signedTxs.push(rawTx);
+          console.log(`Transaction ${i + 1}/${rawTxs.length} signed`);
+        } catch (signError) {
+          console.log(`Sign error for tx ${i}:`, signError);
+          return {
+            status: false,
+            message: `Transaction ${i + 1} signing failed: ${signError.shortMessage || signError.message}`,
+          };
+        }
+      }
+
+      console.log("Broadcasting BSC transactions...");
+      const broadcastPayload = signedTxs.length === 1
+        ? { signedTx: signedTxs[0] }
+        : { signedTransactions: signedTxs };
+
+      const { res, err } = await proxyRequest(
+        "/v1/bsc/transaction/broadcast",
+        PPOST,
+        broadcastPayload
+      );
+
+      if (err?.status) {
+        return {
+          status: false,
+          message: err.message || "Broadcast failed",
+        };
+      }
+
+      console.log("Broadcast response:", res);
+
+      if (res?.txHash) {
+        await ShortTermStorage.saveTx(state?.wallet?.address, {
+          chain: "BNB",
+          typeTx: "Swap",
+          status: "Pending",
+          hash: res.txHash,
+        });
+
+        return {
+          status: true,
+          message: "Swap completed successfully",
+          txHash: res.txHash,
+        };
+      }
+
+      if (res?.success && res?.results && Array.isArray(res.results)) {
+        console.log(`Saving ${res.results.length} transactions...`);
+
+        for (let i = 0; i < res.results.length; i++) {
+          const result = res.results[i];
+
+          console.log(`Saving transaction ${i + 1}:`, {
+            hash: result.transactionHash,
+            type: result.type,
+            status: result.status,
+          });
+
+          try {
+            await ShortTermStorage.saveTx(state?.wallet?.address, {
+              chain: "BNB",
+              typeTx: result.type === 'approve' ? 'Approve' : 'Swap',
+              status: "Pending",
+              hash: result.transactionHash,
+            });
+
+            console.log(`Transaction ${i + 1} saved successfully`);
+          } catch (saveError) {
+            console.log(`Failed to save transaction ${i + 1}:`, saveError);
+          }
+        }
+
+        console.log('All transactions saved');
+
+        return {
+          status: true,
+          message: "Swap completed successfully",
+          txCount: res.totalTransactions,
+          results: res.results,
+        };
+      }
+
+      return {
+        status: false,
+        message: "No transaction hash received",
+      };
+    } catch (error) {
+      console.error("BSC swap execution error:", error);
+      return {
+        status: false,
+        message: error.message || "BSC swap failed",
+      };
+    }
+  };
+
   return (
-    <>
-      <Wallet_screen_header title="Swap" onLeftIconPress={() => {navigation.goBack()}} />
-      <ErrorComponet
-          isVisible={ErroVisible}
-          onClose={() => setErroVisible(false)}
-          message="We encountered an issue while attempting to fetch the requested quote. Please try again later."
+    <View style={{ backgroundColor: state?.THEME?.THEME === false ? "#FFF" : "#1B1B1C", flex: 1 }}>
+      <Wallet_screen_header title="Swap" onLeftIconPress={() => navigation.goBack()} />
+      
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <ErrorComponet
+          isVisible={errorVisible}
+          onClose={() => setErrorVisible(false)}
+          message={errorMessage}
         />
-    <View style={[styles.container,{backgroundColor:state?.THEME?.THEME===false?"#fff":"black"}]}>
-      <View style={[styles.card,{backgroundColor:state?.THEME?.THEME===false?"#ebebeb":"#171616"}]}>
-        <View style={[styles.inputContainer,{backgroundColor:state?.THEME?.THEME===false?"#ebebeb":"#171616"}]}>
+
+        <View style={[styles.container, { backgroundColor: state?.THEME?.THEME === false ? "#FFF" : "#1B1B1C" }]}>
+          {/* Network Selector */}
+          <View style={[styles.card, { backgroundColor: state?.THEME?.THEME === false ? "#F4F4F8" : "#242426" }]}>
+            <View style={styles.networkCon}>
+              <Text style={styles.label}>Network</Text>
+            </View>
+            <TouchableOpacity 
+              style={[styles.headerCard, { backgroundColor: state?.THEME?.THEME === false ? "#FFFFFF" : "#1B1B1C" }]} 
+              onPress={() => setCurrentNetwork(currentNetwork === 0 ? 1 : 0)}
+            >
+              <View style={styles.assetInfo}>
+                <Image source={{ uri: NETWORK[currentNetwork].logoURI }} style={styles.assetIcon} />
+                <View>
+                  <Text style={[styles.assetName, { color: state?.THEME?.THEME ? "#FFF" : "#000" }]}>
+                    {NETWORK[currentNetwork].symbol}
+                  </Text>
+                  <Text style={[styles.assetSymbol, { color: state?.THEME?.THEME ? "#8B8B99" : "#666" }]}>
+                    Active Network
+                  </Text>
+                </View>
+              </View>
+              <Icon name="arrow-down" size={30} color="#666" />
+            </TouchableOpacity>
+          </View>
+
+          {/* From Token */}
+          <View style={[styles.card, { backgroundColor: state?.THEME?.THEME === false ? "#F4F4F8" : "#242426", marginTop: hp(1) }]}>
             <View style={styles.networkCon}>
               <Text style={styles.label}>From</Text>
-              <TouchableOpacity style={styles.networkSelector} onPress={()=>{currentNetwork===0?setCurrentNetwork(1):setCurrentNetwork(0)}}>
-              <Icon name={"arrow-down"} size={19} color={"#666"}/>
-                <Text style={[styles.label,{marginBottom: 0}]}> {NETWORK[currentNetwork].symbol}</Text>
-              </TouchableOpacity>
             </View>
-          <TokenSelector
-            token={fromToken}
-            onPress={() => {
-              setSelectingFor('from');
-              setShowTokenList(true);
-            }}
-            balance={WETHBAL}
-          />
-          <TextInput
-            maxLength={30}
-            returnKeyType='done'
-            style={[styles.input,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a",color:state?.THEME?.THEME===false?"black":"#fff"}]}
-            value={amount}
-            onChangeText={(text)=>{handleChange(text,fromToken.decimals)}}
-            placeholder="0.0"
-            keyboardType="decimal-pad"
-            placeholderTextColor="#666"
-          />
-        </View>
-         
-         <View style={styles.swapButton}>
+            <TokenSelector
+              token={fromToken}
+              onPress={() => {
+                if (!balanceLoading && !loading) {
+                  setSelectingFor('from');
+                  setShowTokenList(true);
+                }
+              }}
+              balance={fromTokenBalance}
+            />
+            <TextInput
+              maxLength={30}
+              returnKeyType="done"
+              style={[
+                styles.input,
+                { 
+                  backgroundColor: state?.THEME?.THEME === false ? "#FFFFFF" : "#1B1B1C",
+                  color: state?.THEME?.THEME === false ? "black" : "#fff" 
+                }
+              ]}
+              value={amount}
+              onChangeText={(text) => handleChange(text, fromToken.decimals)}
+              placeholder="0.0"
+              keyboardType="decimal-pad"
+              placeholderTextColor="#666"
+            />
+          </View>
 
-        <View style={[styles.divider,{backgroundColor:state?.THEME?.THEME===false?"#c7c5c5":"#080a0a"}]} />
-          <TouchableOpacity style={styles.swapButtonCircle} onPress={()=>{tokenHande()}}>
-          <Icon
-            name={"swap-vertical"}
-            size={23}
-            color={"#3574B6"}
-          />
+          {/* Swap Button */}
+          <TouchableOpacity 
+            style={[styles.swapButton, { backgroundColor: state?.THEME?.THEME === false ? "#FFFFFF" : "#1B1B1C" }]} 
+            onPress={tokenHandle}
+          >
+            <Icon name="swap-vertical" size={24} color="#4052D6" />
           </TouchableOpacity>
-        <View style={[styles.divider,{backgroundColor:state?.THEME?.THEME===false?"#c7c5c5":"#080a0a"}]} />
-         </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>To</Text>
-          <TokenSelector
-            token={toToken}
-            onPress={() => {
-              setSelectingFor('to');
-              setShowTokenList(true);
-            }}
-            balance={USDCBAL}
-          />
-          {quoteInfo && (
-            <View style={[styles.quoteTextCon,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>
-              <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>≈</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>{quoteInfo.outputAmount}</Text>
-              </ScrollView>
-            <Text style={[styles.quoteText,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>{quoteInfo.outputToken}</Text>
+          {/* To Token */}
+          <View style={[styles.card, { backgroundColor: state?.THEME?.THEME === false ? "#F4F4F8" : "#242426", marginTop: -2 }]}>
+            <View style={styles.networkCon}>
+              <Text style={styles.label}>To</Text>
             </View>
-          )}
-        </View>
+            <TokenSelector
+              token={toToken}
+              onPress={() => {
+                if (!balanceLoading && !loading) {
+                  setSelectingFor('to');
+                  setShowTokenList(true);
+                }
+              }}
+              balance={toTokenBalance}
+            />
+            {quoteInfo && (
+              <View style={[
+                styles.quoteTextCon,
+                { backgroundColor: state?.THEME?.THEME === false ? "#fff" : "#1B1B1C" }
+              ]}>
+                <Text style={[styles.quoteText, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                  ≈
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <Text style={[styles.quoteText, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                    {quoteInfo.outputAmount}
+                  </Text>
+                </ScrollView>
+                <Text style={[styles.quoteText, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                  {quoteInfo.outputToken}
+                </Text>
+              </View>
+            )}
+          </View>
 
-        {quoteInfo && (
-          <View style={[styles.quoteDetailsContainer,{backgroundColor:state?.THEME?.THEME===false?"#f8f9fa":"#080a0a"}]}>
-            <Text style={[styles.quoteTitle,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>Quote Details</Text>
-            
-            <View style={styles.quoteRow}>
-              <Text style={styles.quoteLabel}>Rate</Text>
-              <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>
-                1 {quoteInfo.inputToken} = {quoteInfo.pricePerToken} {quoteInfo.outputToken}
+          {/* Quote Details */}
+          {quoteInfo && (
+            <View style={[
+              styles.quoteDetailsContainer,
+              { backgroundColor: state?.THEME?.THEME === false ? "#F4F4F8" : "#242426" }
+            ]}>
+              <Text style={[styles.quoteTitle, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                Quote Details
+              </Text>
+              
+              <View style={styles.quoteRow}>
+                <Text style={styles.quoteLabel}>Rate</Text>
+                <Text style={[styles.quoteValue, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                  1 {quoteInfo.inputToken} = {parseFloat(quoteInfo.pricePerToken).toFixed(6)} {quoteInfo.outputToken}
+                </Text>
+              </View>
+
+              <View style={styles.quoteRow}>
+                <Text style={styles.quoteLabel}>Fee Tier</Text>
+                <Text style={[styles.quoteValue, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                  {quoteInfo.fee.includes(',') ? 'Multi-hop' : `${parseFloat(quoteInfo.fee) / 10000}%`}
+                </Text>
+              </View>
+
+              {quoteInfo.route && quoteInfo.route !== 'direct' && (
+                <View style={styles.quoteRow}>
+                  <Text style={styles.quoteLabel}>Route</Text>
+                  <Text style={[styles.quoteValue, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                    {quoteInfo.route}
+                  </Text>
+                </View>
+              )}
+
+              {quoteInfo.networkFee &&(
+                <View style={styles.quoteRow}>
+                  <Text style={styles.quoteLabel}>Network Fee</Text>
+                   <View style={{ width: wp(25), flexDirection: "row" }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <Text style={[styles.quoteValue, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                      {quoteInfo.networkFee}
+                    </Text>
+                  </ScrollView>
+                  <Text style={[styles.quoteValue, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                    {' '}{NETWORK[currentNetwork].symbol}
+                  </Text>
+                </View>
+                </View>
+              )}
+
+              <View style={styles.quoteRow}>
+                <Text style={styles.quoteLabel}>Minimum Received</Text>
+                <View style={{ width: wp(25), flexDirection: "row" }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <Text style={[styles.quoteValue, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                      {parseFloat(quoteInfo.outputAmount).toFixed(6)}
+                    </Text>
+                  </ScrollView>
+                  <Text style={[styles.quoteValue, { color: state?.THEME?.THEME === false ? "black" : "#fff" }]}>
+                    {' '}{quoteInfo.outputToken}
+                  </Text>
+                </View>
+              </View>
+              
+              <Text style={[styles.disclaimerText, { color: state?.THEME?.THEME === false ? "#666" : "#888" }]}>
+                * This transaction may include extra fees if it involves multiple hops.
               </Text>
             </View>
+          )}
 
-            <View style={styles.quoteRow}>
-              <Text style={styles.quoteLabel}>Fee Tier</Text>
-              <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{parseFloat(quoteInfo.fee) / 10000}%</Text>
+          {/* Loading */}
+          {loading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#4052D6" />
+              <Text style={styles.loadingText}>Getting best quote...</Text>
             </View>
+          )}
 
-            <View style={styles.quoteRow}>
-              <Text style={styles.quoteLabel}>Minimum Received</Text>
-              <View style={{width:wp(25),flexDirection:"row"}}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}>{quoteInfo.outputAmount}</Text>
-                </ScrollView>
-                <Text style={[styles.quoteValue,{color:state?.THEME?.THEME===false?"black":"#fff"}]}> {quoteInfo.outputToken}</Text>
-              </View>
-            </View>
-          </View>
-        )}
+          {/* Swap Button */}
+          <TouchableOpacity 
+            style={[
+              styles.swapButtonCon,
+              { backgroundColor: btnDisable || swapExecuting ? "#666" : "#4052D6" }
+            ]} 
+            disabled={btnDisable || swapExecuting} 
+            onPress={handleSwap}
+          >
+            {swapExecuting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.swapButtonConText}>{btnMessage}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
-        {loading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0066cc" />
-            <Text style={styles.loadingText}>Getting best quote...</Text>
-          </View>
-        )}
-      </View>
-
-      <TouchableOpacity style={[styles.swapButtonCon,{backgroundColor:btnDisable||SwapExecution?"gray":"#3574B6"}]} disabled={btnDisable||SwapExecution} onPress={()=>{handleSwap(amount,state?.wallet?.privateKey,currentNetwork === 0?"ETH":"BSC")}}>
-        {SwapExecution?<ActivityIndicator color={"green"}/>:<Text style={styles.swapButtonConText}>{btnMessage}</Text>}
-      </TouchableOpacity>
-
-      <TokenListModal />
+        <TokenListModal />
+      </ScrollView>
     </View>
-    </>
   );
 };
 
@@ -671,32 +1012,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignSelf: "center",
     width: "100%",
-    height:"100%"
+    minHeight: hp(80),
   },
   card: {
-    backgroundColor: '#ebebeb',
+    backgroundColor: '#F4F4F8',
     borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(3),
   },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  swapButtonCircle:{
-    borderColor:"#3574B6",
-    borderWidth:2,
-    borderRadius:100,
-    padding:5
-  },
-  swapButton:{
-    flexDirection: "row",
-    paddingHorizontal:10,
-    alignItems: "center",
-    justifyContent: "space-between"
+  swapButton: {
+    borderColor: "#4052D6",
+    borderWidth: 1,
+    borderRadius: 100,
+    padding: 10,
+    alignSelf: 'center',
+    marginVertical: -16,
+    zIndex: 1,
+    position: "relative",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   label: {
     fontSize: 16,
@@ -715,11 +1049,13 @@ const styles = StyleSheet.create({
   tokenSymbol: {
     fontSize: 18,
     fontWeight: 'bold',
-    color:"black"
+    color: "black"
   },
   tokenBalance: {
     fontSize: 14,
     color: '#666',
+    width: wp(50),
+    textAlign: "right"
   },
   input: {
     fontSize: 24,
@@ -728,22 +1064,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     color: '#000',
   },
-  divider: {
-    height: wp(0.5),
-    width:wp(33),
-    backgroundColor: '#c7c5c5',
-  },
   quoteTextCon: {
-    flexDirection:"row",
+    flexDirection: "row",
     padding: 12,
     backgroundColor: '#f8f9fa',
     borderRadius: 8,
   },
   quoteText: {
     fontSize: 24,
-    color: '#666',
-    // padding: 12,
-    backgroundColor: '#f8f9fa',
     borderRadius: 8,
   },
   quoteDetailsContainer: {
@@ -756,7 +1084,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
-    color:"black"
+    color: "black"
   },
   quoteRow: {
     flexDirection: 'row',
@@ -771,11 +1099,17 @@ const styles = StyleSheet.create({
   quoteValue: {
     fontSize: 14,
     fontWeight: '500',
-    color:"black"
+    color: "black"
+  },
+  disclaimerText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 8,
+    fontStyle: 'italic',
   },
   loadingContainer: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: hp(1.5),
   },
   loadingText: {
     marginTop: 8,
@@ -806,7 +1140,7 @@ const styles = StyleSheet.create({
   tokenListSymbol: {
     fontSize: 18,
     fontWeight: 'bold',
-    color:"black"
+    color: "black"
   },
   tokenListName: {
     fontSize: 14,
@@ -823,47 +1157,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'black',
   },
-  tokenContainer:{
-    flexDirection:"row",
-    alignItems:"center"
+  tokenContainer: {
+    flexDirection: "row",
+    alignItems: "center"
   },
-  tokenDetaisContainer:{
-    marginLeft:10
+  tokenDetaisContainer: {
+    marginLeft: 10
   },
-  logoImage:{
+  logoImage: {
     height: hp(4),
-    width: wp(8.5)
+    width: wp(8.5),
+    borderRadius: hp(2),
   },
   swapButtonCon: {
     width: wp(90),
-    backgroundColor: "#3574B6",
+    backgroundColor: "#4052D6",
     justifyContent: "center",
     alignItems: "center",
-    marginTop:wp(5),
-    padding:14,
-    borderRadius:20
+    alignSelf: "center",
+    marginTop: hp(2.5),
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(2),
+    borderRadius: 10,
   },
-  swapButtonConText:{
-    fontSize:18,
-    color:"#fff",
-    fontWeight:"400"
+  swapButtonConText: {
+    fontSize: 18,
+    color: "#fff",
+    fontWeight: "500"
   },
-  networkCon:{
-    width:"99%",
-    justifyContent:"space-between",
-    flexDirection:"row",
-    alignContent:"space-evenly",
-    padding:10
-  },
-  networkSelector:{
-    padding:5,
-    paddingHorizontal:10,
-    flexDirection:"row",
-    alignItems:"center",
-    justifyContent:"center",
-    borderRadius:10,
-    borderColor:"#3574B6",
-    borderWidth:0.9
+  networkCon: {
+    width: "99%",
+    justifyContent: "space-between",
+    flexDirection: "row",
+    alignContent: "space-evenly",
+    padding: 1
   },
   searchContainer: {
     flexDirection: 'row',
@@ -877,7 +1204,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    paddingVertical: 0, // Remove default padding
+    paddingVertical: 0,
   },
   clearButton: {
     padding: 5,
@@ -892,11 +1219,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: 15,
   },
-  tokenAddress: {
-    fontSize: 12,
-    marginTop: 2,
-    fontFamily: 'monospace',
-  },
   emptyContainer: {
     padding: 30,
     alignItems: 'center',
@@ -904,6 +1226,34 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     textAlign: 'center',
+  },
+  headerCard: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: wp(2),
+    borderRadius: 16,
+  },
+  assetInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  assetIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: wp(3),
+  },
+  assetName: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  assetSymbol: {
+    fontSize: 14,
+  },
+  loadingBalanceText: {
+    fontSize: 12,
+    marginTop: 4,
   },
 });
 

@@ -8,12 +8,14 @@ import {
   ActivityIndicator,
   Dimensions,
   StyleSheet,
+  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import FAIcon from "react-native-vector-icons/FontAwesome";
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { STELLAR_URL } from "../../../../../constants";
 import LinearGradient from "react-native-linear-gradient";
+import { colors } from "../../../../../../Screens/ThemeColorsConfig";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.5;
@@ -32,7 +34,7 @@ const ClaimableBalanceChecker = ({
   const [viewAllTx, setViewAllTx] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const theme = isDark ? darkTheme : lightTheme;
+  const theme = isDark ? colors.dark : colors.light;
 
   const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
   const fetchClaimableBalances = async () => {
@@ -147,8 +149,8 @@ const ClaimableBalanceChecker = ({
             </LinearGradient>
 
             <View style={styles.assetBalCon}>
-              <Text style={[styles.assetBal, theme.text]}>{formatAmount(balance.amount)}</Text>
-              <Text style={styles.tokenName}>{formatAsset(balance.asset)}</Text>
+              <Text style={[styles.assetBal, {color:theme.headingTx}]}>{formatAmount(balance.amount)}</Text>
+              <Text style={[styles.tokenName,{color:theme.inactiveTx}]}>{formatAsset(balance.asset)}</Text>
             </View>
           </View>
 
@@ -158,49 +160,53 @@ const ClaimableBalanceChecker = ({
           </View>
         </View>
 
-        <View style={[styles.assetIssuerCon, theme.assetView]}>
-          <Text style={[styles.assetIssuerSub, theme.subText]}>Issuer</Text>
-          <Text style={styles.assetIssuerAddress}>{balance.asset.split(":")[1].slice(0, 10)}....{balance.asset.slice(-10)}</Text>
+        <View style={[styles.assetIssuerCon]}>
+          <Text style={[styles.assetIssuerSub, {color:theme.inactiveTx}]}>Asset Issuer</Text>
+          <Text style={styles.assetIssuerAddress}>{balance.asset.split(":")[1].slice(0, 11)}....{balance.asset.slice(-11)}</Text>
         </View>
 
-        <View style={[styles.assetBaseInfoCon, theme.assetView]}>
+        <View style={[styles.assetBaseInfoCon]}>
           <View style={styles.assetBaseSubCon}>
-            <Text style={[styles.assetBaseHeaading, theme.text]}>{balance.claimants?.length || 0}</Text>
-            <Text style={[styles.assetTxtInfo, theme.subText]}>CLAIMANTS</Text>
+            <Text style={[styles.assetBaseHeaading, {color:theme.headingTx}]}>{balance.claimants?.length || 0}</Text>
+            <Text style={[styles.assetTxtInfo, {color:theme.inactiveTx}]}>CLAIMANTS</Text>
           </View>
 
-          <View style={styles.assetConDiv} />
+          <View style={[styles.assetConDiv,{backgroundColor: isDark?'rgba(255,255,255,0.4)':"gray"}]} />
 
           <View style={styles.assetBaseSubCon}>
-            <Text style={[styles.assetBaseHeaading, theme.text]}>{formatDate(balance.last_modified_time).date}</Text>
-            <Text style={[styles.assetBaseSub, theme.subText]}>{formatDate(balance.last_modified_time).time}</Text>
-            <Text style={[styles.assetTxtInfo, theme.subText]}>CREATED</Text>
+            <Text style={[styles.assetBaseHeaading, {color:theme.headingTx}]}>{formatDate(balance.last_modified_time).date}</Text>
+            <Text style={[styles.assetBaseSub, {color:theme.inactiveTx}]}>{formatDate(balance.last_modified_time).time}</Text>
+            <Text style={[styles.assetTxtInfo, {color:theme.inactiveTx}]}>CREATED</Text>
           </View>
 
-          <View style={styles.assetConDiv} />
+          <View style={[styles.assetConDiv,{backgroundColor: isDark?'rgba(255,255,255,0.4)':"gray"}]} />
 
           <View style={styles.assetBaseSubCon}>
-            <Text style={[styles.assetBaseHeaading, theme.text]}>{balance.sponsor?.slice(0, 3)}...
+            <Text style={[styles.assetBaseHeaading, {color:theme.headingTx}]}>{balance.sponsor?.slice(0, 3)}...
               {balance.sponsor?.slice(-3)}</Text>
-            <Text style={[styles.assetTxtInfo, theme.subText]}>SPONSOR</Text>
+            <Text style={[styles.assetTxtInfo, {color:theme.inactiveTx}]}>SPONSOR</Text>
           </View>
         </View>
 
         <View style={styles.assetBtnCon}>
           <TouchableOpacity
-            style={[styles.assetAcceptBtnCon, theme.assetActionCon, {}]}
-            onPress={() => { }}
+            style={[styles.assetAcceptBtnCon,{borderColor:theme.smallCardBorderColor}]}
+            onPress={() => {
+              Alert.alert("info", "Comming Soon")
+              setIsVisible(false);
+              onClose();
+            }}
             activeOpacity={0.8}
           >
-            <Text style={[styles.assetAcceptBtnTxt, theme.text]}>Claim Balance</Text>
+            <Text style={[styles.assetAcceptBtnTxt, {color:theme.bg}]}>Claim Balance</Text>
           </TouchableOpacity>
           {balances.length > 1 &&
             <TouchableOpacity
-              style={[styles.assetAcceptBtnCon, theme.assetActionCon]}
+              style={[styles.assetAcceptBtnCon,{borderColor:theme.smallCardBorderColor}]}
               onPress={() => {nextView()}}
               activeOpacity={0.7}
             >
-              <Text style={[styles.assetAcceptBtnTxt, theme.text]}>Next</Text>
+              <Text style={[styles.assetAcceptBtnTxt, {color:theme.headingTx}]}>Next</Text>
             </TouchableOpacity>}
         </View>
 
@@ -221,30 +227,29 @@ const ClaimableBalanceChecker = ({
       <View style={styles.overlay}>
         <TouchableOpacity
           style={styles.backdrop}
-          activeOpacity={1}
           onPress={() => {
             setIsVisible(false);
             onClose();
           }}
         />
 
-        <View style={[styles.bottomSheet, theme.sheetBackground, styles.sheetBorderColor]}>
-          <View style={[styles.dragIndicator, theme.drag]} />
+        <View style={[styles.bottomSheet, styles.sheetBorderColor,{backgroundColor:theme.cardBg}]}>
+          <View style={[styles.dragIndicator]} />
           {balances.length > 0 && !viewAllTx && (
             <>
               <Icon
                 name="generating-tokens"
-                size={150}
-                color={"#4F8EF7"}
+                size={100}
+                color={"#4052D6"}
                 style={{ alignSelf: "center", marginTop: 19 }}
               />
-              <Text style={[styles.heading, theme.text]}>Tokens Are on the Way</Text>
-              <Text style={[styles.subText, theme.text]}>Your wallet has pending transactions that need your attention. Review what’s waiting, confirm the activity, and add your new tokens safely.</Text>
-              <TouchableOpacity onPress={() => { setViewAllTx(true) }} style={[styles.nextBtnCon, theme.btnColor]}>
-                <Text style={styles.nextBtnTxt}>See all</Text>
+              <Text style={[styles.heading, {color:theme.headingTx}]}>Tokens Are on the Way</Text>
+              <Text style={[styles.subText, {color:theme.inactiveTx}]}>Your wallet has pending transactions that need your attention. Review what’s waiting, confirm the activity, and add your new tokens safely.</Text>
+              <TouchableOpacity onPress={() => { setViewAllTx(true) }} style={[styles.nextBtnCon, {backgroundColor:"#4052D6"}]}>
+                <Text style={[styles.nextBtnTxt,{color:theme.bg}]}>View all</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => { setIsVisible(false) }} >
-                <Text style={styles.prevBtnTxt}>No, thanks</Text>
+              <TouchableOpacity onPress={() => { setIsVisible(false) }} style={{marginBottom:"9%"}}>
+                <Text style={[styles.prevBtnTxt,{color:theme.inactiveTx}]}>No, thanks</Text>
               </TouchableOpacity>
             </>
           )}
@@ -257,23 +262,23 @@ const ClaimableBalanceChecker = ({
                 <View style={styles.centerContent}>
                   <ActivityIndicator
                     size="large"
-                    color={isDark ? "#60A5FA" : "#3B82F6"}
+                    color={"#4052D6"}
                   />
-                  <Text style={[styles.loadingText, theme.subText]}>
+                  <Text style={[styles.loadingText, {color:theme.inactiveTx}]}>
                     Loading claimable balances...
                   </Text>
                 </View>
               )}
 
               {error && (
-                <View style={[styles.errorContainer, theme.errorBackground]}>
+                <View style={[styles.errorContainer, {backgroundColor:theme.cardBg}]}>
                   <Icon
                     name="error-outline"
                     size={20}
                     color={isDark ? "#FCA5A5" : "#B91C1C"}
                     style={{ marginRight: 6 }}
                   />
-                  <Text style={[styles.errorText, theme.errorText]}>{error}</Text>
+                  <Text style={[styles.errorText, {color:theme.inactiveTx}]}>{error}</Text>
                 </View>
               )}
 
@@ -285,7 +290,7 @@ const ClaimableBalanceChecker = ({
                     color={isDark ? "#9CA3AF" : "#6B7280"}
                     style={{ marginBottom: 12 }}
                   />
-                  <Text style={[styles.noResultsText, theme.subText]}>
+                  <Text style={[styles.noResultsText, {color:theme.inactiveTx}]}>
                     No claimable balances found for this account.
                   </Text>
                 </View>
@@ -293,10 +298,6 @@ const ClaimableBalanceChecker = ({
 
               {balances.length > 0 && (
                 <View style={styles.resultsContainer}>
-                  <Text style={[styles.resultsHeader, theme.subText]}>
-                    Found {balances.length} claimable balance
-                    {balances.length !== 1 ? "s" : ""}:
-                  </Text>
                       {renderBalanceItem(balances)}
                 </View>
               )}
@@ -306,34 +307,6 @@ const ClaimableBalanceChecker = ({
       </View>
     </Modal>
   );
-};
-
-const lightTheme = {
-  sheetBackground: { backgroundColor: "white" },
-  cardBackground: { backgroundColor: "white" },
-  text: { color: "#111827" },
-  subText: { color: "#6B7280" },
-  errorBackground: { backgroundColor: "#FEF2F2", borderColor: "#FECACA" },
-  errorText: { color: "#B91C1C" },
-  closeButton: { backgroundColor: "#F3F4F6" },
-  drag: { backgroundColor: "#D1D5DB" },
-  btnColor: { backgroundColor: "#4F8EF7" },
-  assetView:{backgroundColor: 'rgba(86, 87, 87, 0.28)'},
-  assetActionCon:{ backgroundColor: 'rgba(86, 87, 87, 0.28)'}
-};
-
-const darkTheme = {
-  sheetBackground: { backgroundColor: "black" },
-  cardBackground: { backgroundColor: "#1E1E1E" },
-  text: { color: "#F9FAFB" },
-  subText: { color: "#9CA3AF" },
-  errorBackground: { backgroundColor: "#7F1D1D", borderColor: "#FECACA" },
-  errorText: { color: "#FCA5A5" },
-  closeButton: { backgroundColor: "#374151" },
-  drag: { backgroundColor: "#4B5563" },
-  btnColor: { backgroundColor: "#2164C1"}, 
-  assetView:{backgroundColor: 'rgba(255,255,255,0.05)'},
-  assetActionCon:{ backgroundColor: 'rgba(255,255,255,0.08)'}
 };
 
 const styles = StyleSheet.create({
@@ -346,14 +319,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomSheet: {
-    height: SHEET_HEIGHT,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 10,
+    maxHeight: SHEET_HEIGHT,
+    minHeight: '41%'
   },
   dragIndicator: {
     width: 40,
@@ -400,13 +367,13 @@ const styles = StyleSheet.create({
   },
   nextBtnCon: {
     marginHorizontal: 16,
-    borderRadius: 30,
+    borderRadius: 19,
     justifyContent: "center",
     alignItems: "center",
     padding: 16
   },
   nextBtnTxt: {
-    fontSize: 20,
+    fontSize: 19,
     color: "#fff",
     fontWeight: "500"
   },
@@ -418,33 +385,34 @@ const styles = StyleSheet.create({
     fontWeight: "500"
   },
   subText: {
-    fontSize: 20,
-    marginTop: 15,
-    marginBottom: 30,
+    fontSize: 15,
+    marginTop: 13,
+    marginBottom: 17,
     textAlign: "center",
-    fontWeight: "300"
+    fontWeight: "300",
+    maxWidth:"90%",
+    alignSelf:"center"
   },
   prevBtnTxt: {
-    fontSize: 19,
+    fontSize: 16,
     color: "gray",
     textAlign: "center",
-    marginTop: 19,
+    marginTop: 15,
   },
   sheetBorderColor: {
-    borderWidth: 1,
-    borderTopColor: "#4F8EF7",
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35
   },
   assetContainer: {
     flex: 1,
-    paddingHorizontal: 19,
+    paddingHorizontal: 1,
+    paddingVertical:10
   },
   assetContainerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 10,
   },
   assetIconCon: {
     flexDirection: 'row',
@@ -452,12 +420,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   assetIconGrad: {
-    width: 64,
-    height: 64,
+    width: 62,
+    height: 62,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 5,
     shadowColor: '#10b981',
     shadowOffset: {
       width: 0,
@@ -476,17 +444,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   assetBal: {
-    fontSize: 36,
-    fontWeight: '800',
+    fontSize: 19,
+    fontWeight: '600',
     color: '#ffffff',
     letterSpacing: -1,
     marginBottom: 4,
   },
   tokenName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: 'gray',
-    marginRight: 8,
   },
   assetStatusCon: {
     flexDirection: 'row',
@@ -509,10 +476,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     paddingVertical: 14,
-    borderRadius: 16,
-    marginBottom: 24,
+    marginBottom: 10,
   },
   assetIssuerSub: {
     fontSize: 16,
@@ -527,16 +493,16 @@ const styles = StyleSheet.create({
   assetBaseInfoCon: {
     flexDirection: 'row',
     borderRadius: 20,
-    padding: 20,
     marginBottom: 28,
   },
   assetBaseSubCon: {
     flex: 1,
+    justifyContent:"center",
     alignItems: 'center',
   },
   assetBaseHeaading: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '500',
     color: '#ffffff',
     marginBottom: 2,
   },
@@ -554,7 +520,6 @@ const styles = StyleSheet.create({
   },
   assetConDiv: {
     width: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     marginHorizontal: 16,
   },
   assetBtnCon: {
@@ -569,7 +534,8 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',
-    maxWidth:"100%"
+    maxWidth:"100%",
+    backgroundColor:"#4052D6"
   },
   assetAcceptBtnTxt: {
     color: '#ffffff',

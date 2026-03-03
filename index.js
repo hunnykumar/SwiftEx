@@ -7,7 +7,7 @@ import { Buffer } from 'buffer';
 global.Buffer = Buffer;
 global.process = require('process');
 
-import { AppRegistry } from 'react-native';
+import { AppRegistry, Platform } from 'react-native';
 import App from './App';
 import { name as appName } from './app.json';
 import PushNotification from "react-native-push-notification";
@@ -80,8 +80,8 @@ PushNotification.configure({
 //     firebaseNotification(remoteMessage.notification.title,'SwiftEx',remoteMessage.notification.message,remoteMessage.notification.body,remoteMessage?.notification?.android?.imageUrl,remoteMessage?.data?.transaction)
 // });
 messaging().onMessage(async (remoteMessage) => {
-    firebaseNotification(remoteMessage.notification.title,'SwiftEx',remoteMessage.notification.message,remoteMessage.notification.body,remoteMessage?.notification?.android?.imageUrl,remoteMessage?.data?.transaction)
+    firebaseNotification(remoteMessage.notification.title,'SwiftEx',remoteMessage.notification.message,remoteMessage.notification.body,remoteMessage?.notification?.android?.imageUrl,remoteMessage?.data)
   });
 
 requestPermission();
-AppRegistry.registerComponent(appName, () => App);
+AppRegistry.registerComponent(Platform.OS==="ios"?"test_app":appName, () => App);

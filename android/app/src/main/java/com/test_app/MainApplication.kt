@@ -1,4 +1,4 @@
-package com.app.swiftEx.app
+package org.app.swiftEx.wallet
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -11,10 +11,9 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
 import com.google.firebase.FirebaseApp // Import FirebaseApp
-import com.app.swiftEx.app.ethwallet.EthereumWalletPackage
+import org.app.swiftEx.wallet.ethwallet.EthereumWalletPackage
 import java.security.Security
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-
 class MainApplication : Application(), ReactApplication {
 
    companion object {
@@ -32,6 +31,7 @@ class MainApplication : Application(), ReactApplication {
               // Packages that cannot be autolinked yet can be added manually here, for example:
               // add(MyReactNativePackage())
               add(EthereumWalletPackage())
+              add(walletTransactionPackage())
              // add(PlayIntegrityPackage())
             }
 

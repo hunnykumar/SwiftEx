@@ -30,8 +30,6 @@ import AsyncStorageLib from "@react-native-async-storage/async-storage";
 
 const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisible }) => {
   const state=useSelector((state)=>state);
-  const [Checked, setCheckBox] = useState(false);
-  const [Checked2, setCheckBox2] = useState(false);
   const [loading, setLoading] = useState(false);
   const [newWalletPrivateKey, setNewWalletPrivateKey] = useState(false);
   const [Wallet, setWallet] = useState();
@@ -64,27 +62,20 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
-      <Modal
-        animationIn="slideInRight"
-        animationOut="slideOutRight"
-        animationInTiming={500}
-        animationOutTiming={650}
-        style={{}}
-        
-        isVisible={visible}
-        // statusBarTranslucent={true}
-        useNativeDriver={true}
-        useNativeDriverForBackdrop={true}
-        backdropTransitionOutTiming={0}
-        hideModalContentWhileAnimating
-        onBackdropPress={() => setVisible(false)}
-        onBackButtonPress={() => {
-          setVisible(false);
-        }}
-      >
-        <SafeAreaView style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
-          <TouchableOpacity disabled={loading} onPress={()=>{onCrossPress(),setCheckBox2(false),setCheckBox(false)}}>
-          <Icon name={"arrow-left"} type={"materialCommunity"} size={29} color={"white"} style={style.crossIcon} />
+         <Modal
+            isVisible={visible}
+            onBackdropPress={() => setVisible(false)}
+            onBackButtonPress={() => setVisible(false)}
+            animationIn="slideInUp"
+            animationOut="slideOutDown"
+            useNativeDriver
+            hideModalContentWhileAnimating
+            style={style.modal}
+            >
+              <Animated.View style={[style.overlay]}>
+                <View style={[style.Body, { backgroundColor: state.THEME.THEME ? "#242426" : "#F4F4F8" }]}>
+          <TouchableOpacity disabled={loading} onPress={()=>{onCrossPress()}} style={style.crossIcon}>
+          <Icon type={'entypo'} name='cross' color={"black"} size={28}/>
           </TouchableOpacity>
           <View style={{alignSelf:"center",alignItems:"center"}}>
           <Animated.Image
@@ -97,8 +88,8 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
             source={darkBlue}
           />
 
-          <Text style={style.welcomeText}>Back up you wallet now</Text>
-          <Text style={style.welcomeText}>
+          <Text style={[style.welcomeText,{color:state.THEME.THEME ?"#fff":"black"}]}>Back up you wallet now</Text>
+          <Text style={[style.welcomeSubText,{color:state.THEME.THEME ?"#fff":"black"}]}>
             In the next page, you will see your secret phrase
           </Text>
           <TouchableOpacity
@@ -108,17 +99,16 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
               marginTop: hp(5),
               alignItems: "center",
             }}
-            onPress={()=>{setCheckBox(!Checked)}}
+            disabled={true}
           >
             <Icon
             name={"check-circle"}
             type={"materialCommunity"}
             size={25}
-            color={Checked?"green":"gray"}
-            onPress={() => setCheckBox(!Checked)}
+            color={"green"}
             />
             <View style={{ marginLeft: 10 }}>
-            <Text style={[style.welcomeText2,{marginTop: hp(0)}]}>
+            <Text style={[style.welcomeText2,{marginTop: hp(0),color:state.THEME.THEME ?"#fff":"black"}]}>
               If I loose my private key, my funds will be lost
             </Text>
               {/* <Switch
@@ -132,20 +122,19 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
             style={{
               display: "flex",
               flexDirection: "row",
-              marginTop: hp(5),
+              marginTop: hp(3),
               alignItems: "center",
             }}
-            onPress={() => setCheckBox2(!Checked2)}
+            disabled={true}
           >
             <Icon
           name={"check-circle"}
           type={"materialCommunity"}
           size={25}
-          color={Checked2?"green":"gray"}
-          onPress={() => setCheckBox2(!Checked2)}
+          color={"green"}
           />
             <View style={{ marginLeft: 10 }}>
-            <Text style={style.welcomeText2}>
+            <Text style={[style.welcomeText2,{color:state.THEME.THEME ?"#fff":"black"}]}>
               If I share my private key, my funds can get stolen
             </Text>
               {/* <Switch
@@ -154,9 +143,7 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
               /> */}
             </View>
           </TouchableOpacity>
-          {loading ? (
-            <ActivityIndicator size="large" color="white" />
-          ) : (
+         
             <>
             <View style={style.infoCon}>
             <Icon
@@ -165,14 +152,14 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
           size={25}
           color={"#F7CC49"}
           />
-          <Text style={{width:wp(80),fontSize:15,color:"white"}}>
-          Your private key is solely your responsibility SwfitEx cannot be held liable for any loss or sharing of your private key.
+          <Text style={{width:wp(80),fontSize:13,color:"#ECB742"}}>
+          Your private key is solely your responsibility SwiftEx cannot be held liable for any loss or sharing of your private key.
           </Text>
 
             </View>
 <TouchableOpacity
-            style={[style.PresssableBtn,{backgroundColor:  Checked && Checked2? "#2164C1":"gray"}]}
-              disabled={loading ? true : Checked && Checked2 ? false : true}
+            style={[style.PresssableBtn,{backgroundColor:"#5B65E1"}]}
+              disabled={loading ? true : false}
               onPress={async() => {
                 await AsyncStorageLib.setItem('wallet_backup',await state.wallet.address);
                 setLoading(true);
@@ -185,8 +172,6 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
                         console.log(response.wallet);
                         const wallet = response.wallet;
                         setWallet(wallet);
-                        setCheckBox2(false)
-                        setCheckBox(false)
                         setNewWalletPrivateKey(true);
                       } else {
                         setLoading(false);
@@ -219,15 +204,19 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
             // style={style.PresssableBtn}
           > */}
 
-              <Text style={{ color: "white",fontSize:16 }}>Continue</Text>
+{loading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+              <Text style={{ color: "white",fontSize:16 }}>Continue</Text>)}
           {/* </LinearGradient> */}
             </TouchableOpacity>
             </>
-          )}
+
           </View>
           {/* <ModalHeader Function={closeModal} name={"Import"} /> */}
           
-        </SafeAreaView>
+        </View>
+        </Animated.View>
         <NewWalletPrivateKey
           Wallet={Wallet}
           onCrossPress={()=>{setNewWalletPrivateKey(false)}}
@@ -244,21 +233,27 @@ const NewWalletModal = ({ props,onCrossPress, visible, setVisible, setModalVisib
 export default NewWalletModal;
 
 const style = StyleSheet.create({
+  modal: {
+    justifyContent: "flex-end",
+    margin: 0,
+  },
+  overlay: {
+    justifyContent: "flex-end",
+  },
   Body: {
-    // borderColor:"#145DA0",
-    // borderWidth:0.9,
-    // paddingTop:hp(1),
-    // paddingBottom:hp(8),
-    // justifyContent: "center",
     width: wp(100),
-    height:hp(93),
-    // alignItems: "center",
-    alignSelf:"center",
-    textAlign: "center",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    alignSelf: "center",
+    paddingHorizontal: 15,
   },
   welcomeText: {
-    color: "white",
-    marginTop: hp(2),
+    marginTop: hp(1.5),
+    fontSize:16,
+    fontWeight:"600"
+  },
+  welcomeSubText: {
+    fontSize:14,
     fontWeight:"600"
   },
   welcomeText2: {
@@ -299,20 +294,24 @@ const style = StyleSheet.create({
     alignSelf: "center",
     paddingHorizontal: wp(3),
     borderRadius: 50,
-    marginBottom: hp(2),
+    marginBottom: hp(4),
     alignItems: "center",
   },
-  crossIcon:{
-    alignSelf:"flex-start",
-    padding:hp(1)
+  crossIcon: {
+    marginTop:10,
+    padding: 3,
+    borderRadius: 30,
+    alignSelf:"flex-end",
+    backgroundColor: "#FFFFFF"
   },
   infoCon:{
     marginVertical:hp(4),
     flexDirection:"row",
-    backgroundColor:"#F9FC691A",
+    alignItems:"center",
+    backgroundColor:"#FEF6D8",
     padding:5,
     width:wp(90),
     justifyContent:"space-around",
-    borderRadius:10
+    borderRadius:20
   }
 });

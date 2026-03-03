@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
         bottom: 0,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#011434',
+        backgroundColor: 'black',
     },
     loadingText: {
         marginTop: 10,

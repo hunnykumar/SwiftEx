@@ -30,6 +30,8 @@ import Icon from "../../icon";
 import Snackbar from "react-native-snackbar";
 import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
 import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
+import { colors } from "../../Screens/ThemeColorsConfig";
+import AccessNativeStorage from "../Wallets/AccessNativeStorage";
 const CheckNewWalletMnemonic = ({
   Wallet,
   Visible,
@@ -142,7 +144,6 @@ const CheckNewWalletMnemonic = ({
       useNativeDriver: true,
     }).start();
     let wallet = Wallet;
-    console.log("mnemonic+++",Wallet.mnemonic)
     console.log(wallet);
   }, [fadeAnim, Spin]);
 
@@ -191,40 +192,44 @@ const CheckNewWalletMnemonic = ({
   //     </TouchableOpacity>
   //   );
   // };
+
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
   return (
     <Animated.View // Special animatable View
       style={{ opacity: fadeAnim }}
     >
       <Modal
-        animationIn="slideInRight"
-        animationOut="slideOutRight"
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
         animationInTiming={500}
         animationOutTiming={650}
         isVisible={Visible}
         useNativeDriver={true}
+        hideModalContentWhileAnimating
         onBackdropPress={() => SetVisible(false)}
         onBackButtonPress={() => {
           SetVisible(false);
         }}
+        style={style.modalCon}
       >
-        <SafeAreaView style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
+        <View style={[style.Body,{backgroundColor:theme.bg}]}>
           {/* <ModalHeader Function={closeModal} name={'Check Mnemonic'}/> */}
-          <Icon name={"arrow-left"} type={"materialCommunity"} color={'#fff'} size={24} style={style.crossIcon} onPress={onCrossPress}/>
-          <Text style={style.verifyText}>Verify Secret Phrase</Text>
-          <Text style={style.wordText}>
+          <Icon name={"close-circle-outline"} type={"materialCommunity"} color={theme.headingTx} size={30} style={style.crossIcon} onPress={onCrossPress}/>
+          <Text style={[style.verifyText,{color:theme.headingTx}]}>Verify Secret Phrase</Text>
+          <Text style={[style.wordText,{color:theme.inactiveTx}]}>
            Please top on the correct answer of the below seed phrases.
           </Text>
           {shuffledQuestions.map((q, index) => (
             <View key={index} style={{ marginVertical: 5 }}>
-              <Text style={{ marginHorizontal: wp(5),color:"#fff"}}>{q.question}</Text>
+              <Text style={{ marginHorizontal: wp(5),color:theme.headingTx}}>{q.question}</Text>
              <View style={{flexDirection:"row",marginHorizontal: wp(5)}}>
              {q.options.map((option, optIndex) => (
                 <TouchableOpacity
                   key={optIndex}
                   style={{
-                    backgroundColor: answers[index] === option ? 'lightblue' : 'white',
+                    backgroundColor: answers[index] === option ? '#4052D6' : theme.cardBg,
                     borderRadius:6,
-                    borderColor:"#4CA6EA",
+                    borderColor:theme.smallCardBorderColor,
                     borderWidth:0.6,
                     marginHorizontal:wp(1.5),
                     width:wp(26),
@@ -235,7 +240,7 @@ const CheckNewWalletMnemonic = ({
                   }}
                   onPress={() => handleAnswer(index, option)}
                 >
-                  <Text style={{color:"black"}}>{option}</Text>
+                  <Text style={{color:answers[index] === option ? '#fff':theme.headingTx,fontSize:14}}>{option}</Text>
                 </TouchableOpacity>
               ))}
              </View>
@@ -243,21 +248,10 @@ const CheckNewWalletMnemonic = ({
           ))}
       
 
-          {loading ?
-            <View style={[style.ButtonView,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
-            <ActivityIndicator size="large" color="green" />
-            </View>
-         :
-          <View
-            style={{
-              display: "flex",
-              alignSelf: "center",
-              width: wp(30),
-              margin: 10,
-            }}
-          >
+          
             <TouchableOpacity
-              style={style.ButtonView}
+              disabled={loading}
+              style={[style.ButtonView,{backgroundColor:"#4052D6"}]}
               onPress={async () => {
                 const isCorrect = answers.every((answer, index) => answer === shuffledQuestions[index].correct);
                 if (isCorrect) {
@@ -285,17 +279,13 @@ const CheckNewWalletMnemonic = ({
                       const allWallets = [
                         {
                           address: Wallet.address,
-                          privateKey: Wallet.privateKey,
                           name: Wallet.accountName,
-                          mnemonic: Wallet.mnemonic,
                           walletType: "Multi-coin",
                           xrp: {
                             address: Wallet.xrp.address,
-                            privateKey: Wallet.xrp.privateKey,
                           },
                           stellarWallet: {
                             publicKey: Wallet.stellarWallet.publicKey,
-                            secretKey: Wallet.stellarWallet.secretKey
                           },
                           wallets: wallets,
                         },
@@ -314,8 +304,12 @@ const CheckNewWalletMnemonic = ({
                               return;
                             } else if (response.status === "success") {
                               const result =await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
-                                "multiChainAddress":Wallet.address,
-                                "stellarAddress": Wallet.stellarWallet.publicKey,
+                                "addresses": {
+                                  "eth": Wallet.address,
+                                  "xlm": Wallet.stellarWallet.publicKey,
+                                  "bnb": Wallet.address,
+                                  "multi": Wallet.address
+                                },
                                 "isPrimary": true
                               });
                               console.log("result---result",result)
@@ -327,12 +321,19 @@ const CheckNewWalletMnemonic = ({
                                 console.log('Error:', result.error, 'Status:', result.status);
                               }
                               AsyncStorageLib.setItem("currentWallet",Wallet?.accountName)
+                              await AccessNativeStorage.saveWallet({
+                                name: Wallet.accountName,
+                                address: Wallet.address,
+                                privatekey: Wallet.privateKey,
+                                stellarPublicKey: Wallet.stellarWallet.publicKey,
+                                stellarPrivateKey: Wallet.stellarWallet.secretKey,
+                                mnemonic: Wallet.mnemonic,
+                                walletType:"Multi-coin"
+                              })
                               dispatch(
                                 setCurrentWallet(
                                   Wallet?.address,
                                   Wallet?.accountName,
-                                  Wallet?.privateKey,
-                                  Wallet?.mnemonic ? Wallet.mnemonic : ""
                                 )
                               )
                               setTimeout(() => {
@@ -385,11 +386,9 @@ const CheckNewWalletMnemonic = ({
                 }
               }}
             >
-              <Text style={{ color: "white" }}>Import</Text>
+            {loading ? <ActivityIndicator size="small" color="#FFFF" /> : <Text style={{ color: "white",fontSize:16 }}>Create</Text>}
             </TouchableOpacity>
-          </View>
-          }
-        </SafeAreaView>
+        </View>
       </Modal>
     </Animated.View>
   );
@@ -398,12 +397,6 @@ const CheckNewWalletMnemonic = ({
 export default CheckNewWalletMnemonic;
 
 const style = StyleSheet.create({
-  Body: {
-    width: wp(100),
-    height:hp(95),
-    alignSelf:"center",
-    textAlign: "center",
-  },
   welcomeText: {
     fontSize: 15,
     fontWeight: "200",
@@ -500,17 +493,28 @@ const style = StyleSheet.create({
     marginHorizontal: wp(1.5),
   },
   ButtonView: {
-    backgroundColor:"#2164C1",
-    width: wp(85),
+    width: wp(90),
     alignSelf: "center",
     alignItems: "center",
     padding: 10,
-    borderRadius: 50,
-    marginTop: hp(3),
-    paddingVertical: hp(1.7),
+    borderRadius: 20,
+    marginTop: hp(2),
+    paddingVertical: hp(2),
+    marginBottom:hp(5)
   },
   crossIcon:{
-    alignSelf:"flex-start",
+    alignSelf:"flex-end",
     padding:hp(1.5)
-  }
+  },
+  modalCon:{
+    justifyContent: "flex-end",
+    margin: 0,
+  },
+  Body: {
+    borderTopLeftRadius:20,
+    borderTopRightRadius:20,
+    justifyContent: "flex-end",
+    margin: 0,
+    width:wp(100)
+  },
 });

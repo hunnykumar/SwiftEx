@@ -4,15 +4,16 @@ import {
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  Modal, 
   SafeAreaView,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import axios from 'axios';
 import { STELLAR_URL } from '../../../../constants';
+import { colors } from '../../../../../Screens/ThemeColorsConfig';
 const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
 
 const StellarAccountReserve = ({ 
@@ -38,89 +39,74 @@ const StellarAccountReserve = ({
 
 
   async function getAccountReserves(publicKey) {
-    try {
-      // Fetch account data
-      const account = await server.loadAccount(publicKey);
-  
-      // Base reserve and extra calculations
-      const baseReserve = 0.5; // 0.5 XLM per entry
-      const minAccountBalance = 2 * baseReserve; // 1 XLM base reserve for account
-  
-      // Extract account details
-      const subEntries = account.subentry_count;
-      const balances = account.balances;
-      const signers = account.signers.length - 1;
-      const sponsoringEntries = account.num_sponsoring;
-      const sponsoredEntries = account.num_sponsored;
-  
-      // Calculate reserved for entries
-      const reservedForEntries = 0.5;
-  
-      // Fetch active offers using Axios
-      let xlmInOffers = 0;
-      let offerCount = 0;
-      try {
-        const apiUrl = `${STELLAR_URL.URL}/accounts/${publicKey}/offers?limit=200&order=desc`;
-        const response = await axios.get(apiUrl);
-        
-        // Log the response for debugging
-        console.log('Fetched Offers:', response.data);
-  
-        const fetchedOffers = response.data._embedded?.records || [];
-  
-        offerCount = fetchedOffers.length; // Count the number of offers
-        xlmInOffers = fetchedOffers.reduce((total, offer) => {
-          return total + parseFloat(offer.amount);
-        }, 0);
-  
-        // Log offer details for debugging
-        console.log('Offer Count:', offerCount);
-        console.log('XLM in Active Offers:', xlmInOffers);
-      } catch (offerError) {
-        console.warn('No active offers or Error: ', offerError.message);
+  try {
+    // Fetch account data
+    const account = await server.loadAccount(publicKey);
+
+    // Get dynamic base reserve from latest ledger
+    const latestLedger = await server.ledgers().order('desc').limit(1).call();
+    const baseReserve = parseFloat(latestLedger.records[0].base_reserve_in_stroops) / 10000000;
+    
+    // Official Stellar formula: (2 + subentries + sponsoring - sponsored) * baseReserve
+    const subentryCount = account.subentry_count || 0;
+    const numSponsoring = account.num_sponsoring || 0;
+    const numSponsored = account.num_sponsored || 0;
+    
+    const minBalance = (2 + subentryCount + numSponsoring - numSponsored) * baseReserve;
+    
+    // Get native XLM balance and liabilities (correct offer locking)
+    let xlmBalance = 0;
+    let sellingLiabilities = 0;
+    account.balances.forEach((balance) => {
+      if (balance.asset_type === "native") {
+        xlmBalance = parseFloat(balance.balance);
+        sellingLiabilities = parseFloat(balance.selling_liabilities || '0');
       }
-  
-      // Include offer reserve (0.5 XLM per offer)
-      const offerReserve = offerCount * baseReserve;
-  
-      const totalTrustReserve=account.balances.length-1===1?baseReserve:0;
-      // Total reserved
-      const totalReserved = minAccountBalance + reservedForEntries + xlmInOffers + offerReserve+totalTrustReserve;
-      // Calculate total XLM balance in the account
-      let xlmBalance = 0;
-      balances.forEach((balance) => {
-        if (balance.asset_type === "native") {
-          xlmBalance = parseFloat(balance.balance);
-        }
-      });
-      const transactionBuffer = 0.022;
-      // Available balance (Total balance - Total reserved)
-      const availableBalance = xlmBalance - totalReserved-transactionBuffer;
-  
-      // Update data for reserve information
-      const data = [
-        { label: "Reserved:", value: `${totalReserved} XLM` },
-        { label: "Base Reserve:", value: `${minAccountBalance} XLM` },
-        { label: "Extra:", value: `${reservedForEntries} XLM` },
-        { label: "Reserved for Active Offers:", value: `${xlmInOffers} XLM` },
-        { label: "Trustlines:", value: `${account.balances.length - 1} (${baseReserve} XLM)` },
-        { label: "Offers:", value: `${offerCount} (${offerReserve} XLM)` },
-        { label: "Signers:", value: `${signers} (0 XLM)` },
-        { label: "Sponsoring Entries for Others:", value: `${sponsoringEntries} XLM` },
-        { label: "Entries Sponsored for Account:", value: `${sponsoredEntries} XLM` },
-        { label: "Total Balance:", value: `${xlmBalance} XLM` },
-        { label: "Available Balance:", value: `${availableBalance} XLM` },
-      ];
-  
-      // Set the reserve data
-      setReserveData(data);
-      setIsLoading(false);
-  
-    } catch (error) {
-      console.error("Error fetching account details:", error.message);
-      setIsLoading(false);
-    }
+    });
+
+    const transactionBuffer = 0.022; // Your expected buffer
+    const totalReserved = minBalance + sellingLiabilities;
+    const availableBalance = Math.max(0, xlmBalance - totalReserved - transactionBuffer);
+
+    // Accurate breakdown for UI
+    const trustlines = account.balances.length - 1;
+    const signers = account.signers?.length - 1 || 0;
+    const offers = subentryCount - trustlines - signers; // Derived from subentries
+    
+    const data = [
+      { label: "Reserved:", value: `${totalReserved.toFixed(7)} XLM` },
+      { label: "Base Reserve:", value: `${(2 * baseReserve).toFixed(7)} XLM` },
+      { label: "Subentries:", value: `${subentryCount} (${(subentryCount * baseReserve).toFixed(7)} XLM)` },
+      { label: "Trustlines:", value: `${trustlines} (${(trustlines * baseReserve).toFixed(7)} XLM)` },
+      { label: "Offers:", value: `${offers} (${(offers * baseReserve).toFixed(7)} XLM)` },
+      { label: "Signers:", value: `${signers} (0 XLM)` },
+      { label: "Sponsoring:", value: `${numSponsoring} (${(numSponsoring * baseReserve).toFixed(7)} XLM)` },
+      { label: "Sponsored:", value: `${numSponsored} (${(numSponsored * baseReserve).toFixed(7)} XLM)` },
+      { label: "XLM in Offers:", value: `${sellingLiabilities.toFixed(7)} XLM` },
+      { label: "Buffer:", value: `${transactionBuffer} XLM` },
+      { label: "Total Balance:", value: `${xlmBalance.toFixed(7)} XLM` },
+      { label: "Available Balance:", value: `${availableBalance.toFixed(7)} XLM` },
+    ];
+
+    console.debug({
+      baseReserve: baseReserve.toFixed(7),
+      subentryCount,
+      minBalance: minBalance.toFixed(7),
+      sellingLiabilities: sellingLiabilities.toFixed(7),
+      totalReserved: totalReserved.toFixed(7),
+      availableBalance: availableBalance.toFixed(7)
+    });
+
+    setReserveData(data);
+    setIsLoading(false);
+
+  } catch (error) {
+    console.error("Error fetching account details:", error.message);
+    setReserveData([{ label: "Error", value: error.message }]);
+    setIsLoading(false);
   }
+}
+
   
 
 
@@ -131,6 +117,9 @@ const StellarAccountReserve = ({
     }
   }, [isVisible]);
 
+
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
+
   return (
     <Modal
       animationType="slide"
@@ -139,15 +128,15 @@ const StellarAccountReserve = ({
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.contentContainer}>
+        <View style={[styles.contentContainer,{backgroundColor:theme.cardBg}]}>
           {/* Header with close button */}
           <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={[styles.title,{color:theme.headingTx}]}>{title}</Text>
             <TouchableOpacity 
               style={styles.closeButton}
               onPress={onClose}
             >
-              <Text style={styles.closeButtonText}>✕</Text>
+              <Text style={[styles.closeButtonText,{color:theme.headingTx}]}>✕</Text>
             </TouchableOpacity>
           </View>
 
@@ -155,14 +144,14 @@ const StellarAccountReserve = ({
           <View style={styles.content}>
             {isLoading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007AFF" />
+                <ActivityIndicator size="large" color="#4052D6" />
               </View>
             ) : (
               <ScrollView>
                   {reserveData.map((item, index) => (
-                    <View key={index} style={styles.row}>
-                      <Text style={styles.label}>{item.label}</Text>
-                      <Text style={styles.value}>{item.value}</Text>
+                    <View key={index} style={[styles.row,{borderBottomColor:theme.bg}]}>
+                      <Text style={[styles.label,{color:theme.headingTx}]}>{item.label}</Text>
+                      <Text style={[styles.value,{color:theme.headingTx}]}>{item.value}</Text>
                     </View>
                   ))}
 
@@ -175,7 +164,7 @@ const StellarAccountReserve = ({
             style={styles.doneButton}
             onPress={onClose}
           >
-            <Text style={styles.doneButtonText}>Done</Text>
+            <Text style={styles.doneButtonText}>Okay</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -190,9 +179,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    // backgroundColor: '#FFFFFF',
-    backgroundColor:"#011434",
-    marginTop: 50,
+    marginTop: "50%",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
@@ -227,8 +214,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    // backgroundColor: '#FFFFFF',
-    backgroundColor:"#011434"
   },
   loadingContainer: {
     flex: 1,
@@ -241,7 +226,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
   },
   label: {
     fontSize: 16,
@@ -261,7 +245,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   doneButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#4052D6',
     margin: 16,
     padding: 16,
     borderRadius: 12,

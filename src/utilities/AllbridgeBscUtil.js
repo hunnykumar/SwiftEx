@@ -1,311 +1,234 @@
 import { ethers } from "ethers";
-import { REACT_APP_HOST } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
-const { getAuth, proxyRequest, PPOST, PGET } = require("../Dashboard/exchange/crypto-exchange-front-end-main/src/api");
+import { PPOST, proxyRequest } from "../Dashboard/exchange/crypto-exchange-front-end-main/src/api";
+import { NativeModules } from "react-native";
 
 
-async function hasEnoughFunds(fromAddress, txMeta, value = "0") {
-    const resProxy = await proxyRequest(`/v1/bsc/${fromAddress}/balance`, PGET);
-    const balance = ethers.BigNumber.from(resProxy?.res);
-    const gasLimit = ethers.BigNumber.from(txMeta.gasLimit);
-    const gasPrice = ethers.BigNumber.from(txMeta.feeData.gasPrice);
-    const maxFeePerGas = ethers.BigNumber.from(txMeta.feeData.maxFeePerGas);
-    const txValue = ethers.BigNumber.from(value);
-    const requiredLegacy = txValue.add(gasLimit.mul(gasPrice));
-    const requiredEip1559 = txValue.add(gasLimit.mul(maxFeePerGas));
-    return {
-        balance,
-        requiredLegacy,
-        requiredEip1559,
-        hasLegacy: balance.gte(requiredLegacy),
-        hasEip1559: balance.gte(requiredEip1559),
-    };
-}
 
+export async function SwapPepare(
+  privateKey,
+  fromAddress,
+  toAddress,
+  amount,
+  sourceToken,
+  destinationToken,
+  walletType,
+  feePayType,
+  destinationWalletType
+) {
+  try {
+    console.log("Starting bridge swap process");
+    const prepareResponse = await proxyRequest("/v1/bridge/swap-transaction/prepare", PPOST, {
+      fromAddress,
+      toAddress,
+      amount,
+      sourceToken,
+      destinationToken,
+      walletType,
+      feePayType: feePayType === "native" ? "native" : "stablecoin",
+      destinationWalletType
+    });
 
-export async function SwapPepare(privateKey, fromAddress, toAddress, amount, sourceToken, destinationToken, walletType, feePayType) {
-    try {
-        const firstResponse = await proxyRequest("/v1/bridge/swap-transaction/prepare", PPOST, {
-            "fromAddress": fromAddress,
-            "toAddress": toAddress,
-            "amount": amount,
-            "sourceToken": sourceToken,
-            "destinationToken": destinationToken,
-            "walletType": walletType,
-            "feePayType": feePayType === "native" ? "native" : "stablecoin"
-        });
+    console.log("Swap prepare response:", prepareResponse);
 
-        console.log("First API call response:", firstResponse);
+    if (prepareResponse.err) {
+      return {
+        res: prepareResponse.err?.message || "Swap preparation failed",
+        status_task: false
+      };
+    }
 
-        if (firstResponse.err) {
-            return {
-                res: firstResponse.err?.message || "Swap failed",
-                status_task: false
-            };
-        }
+    const { needsApproval, transactions } = prepareResponse.res;
 
-        if (!firstResponse.res.transaction) {
-            return {
-                res: "No transaction data received",
-                status_task: false
-            };
-        }
+    if (!transactions || transactions.length === 0) {
+      return {
+        res: "No transaction data received from server",
+        status_task: false
+      };
+    }
 
-        const transactionType = firstResponse.res.type;
-        console.log(`Executing ${transactionType} transaction...`);
-        if (feePayType === "native") {
-            const fundCheck = await hasEnoughFunds(fromAddress, firstResponse.res.txMeta);
-            console.log("Wallet Balance:", ethers.utils.formatEther(fundCheck.balance));
-            console.log("Needed (EIP-1559):", ethers.utils.formatEther(fundCheck.requiredEip1559));
-            if (!fundCheck.hasEip1559) {
-                return {
-                    res: `Insufficient funds: not enough ETH to pay for ${transactionType} gas.`,
-                    status_task: false
-                };
-            }
-        }
-        const firstTxResult = await sendEvmRawTransaction(privateKey, firstResponse.res);
-        console.log(`${transactionType} transaction result:`, firstTxResult);
+    console.log(`Transactions to process: ${transactions.length}`);
+    if (needsApproval) {
+      console.log("Approval transaction required");
+    }
 
-        if (firstTxResult.status !== true) {
-            return {
-                res: `${transactionType} transaction failed`,
-                status_task: false
-            };
-        }
+    console.log("Signing all transactions");
+    const signedTransactions = [];
 
-        const firstTxHash = firstTxResult.res;
-        console.log(`${transactionType} completed, hash:`, firstTxHash);
-        if (transactionType === 'approve') {
-            console.log("Approval completed, now executing transfer...");
-            await waitForTransactionConfirmation(firstTxHash);
-            const secondResponse = await proxyRequest("/v1/bridge/swap-transaction/prepare", PPOST, {
-                "fromAddress": fromAddress,
-                "toAddress": toAddress,
-                "amount": amount,
-                "sourceToken": sourceToken,
-                "destinationToken": destinationToken,
-                "walletType": walletType,
-                "feePayType": feePayType === "native" ? "native" : "stablecoin"
-            });
-            console.log("Second API call response:", secondResponse);
-            if (secondResponse.err) {
-                return {
-                    res: secondResponse.err?.message || "Transfer preparation failed",
-                    status_task: false,
-                    approvalTxHash: firstTxHash?.txHash
-                };
-            }
-
-            if (!secondResponse.res.transaction) {
-                return {
-                    res: "No transfer transaction data received",
-                    status_task: false,
-                    approvalTxHash: firstTxHash?.txHash
-                };
-            }
-            if (feePayType === "native") {
-                const transferFundCheck = await hasEnoughFunds(fromAddress, secondResponse.res.txMeta);
-                if (!transferFundCheck.hasEip1559) {
-                    return {
-                        res: "Insufficient funds for transfer transaction",
-                        status_task: false,
-                        approvalTxHash: firstTxHash?.txHash
-                    };
-                }
-            }
-            const secondTxResult = await sendEvmRawTransaction(privateKey, secondResponse.res);
-            console.log("Transfer transaction result:", secondTxResult);
-
-            if (secondTxResult.status === true) {
-                return {
-                    res: {
-                        approvalTxHash: firstTxHash?.txHash,
-                        transferTxHash: secondTxResult?.res?.txHash,
-                        message: "Swap completed successfully! Both approval and transfer done."
-                    },
-                    status_task: true
-                };
-            } else {
-                return {
-                    res: "Transfer transaction failed",
-                    status_task: false,
-                    approvalTxHash: firstTxHash?.txHash
-                };
-            }
-        }
-        else if (transactionType === 'transfer') {
-            return {
-                res: {
-                    transferTxHash: firstTxHash?.txHash,
-                    message: "Swap completed successfully! Transfer done directly."
-                },
-                status_task: true
-            };
-        }
-        else {
-            return {
-                res: "Unknown transaction type received",
-                status_task: false
-            };
-        }
-
-    } catch (error) {
-        console.error("Error in SwapPrepare:", error);
+    for (const txData of transactions) {
+      try {
+        const signedTx = await signTransaction(privateKey, txData);
+        signedTransactions.push(signedTx);
+        console.log(`${txData.type} transaction signed`);
+      } catch (signError) {
+        console.error(`Failed to sign ${txData.type}:`, signError);
         return {
-            res: error.message || "Unknown error occurred",
-            status_task: false
+          res: `Failed to sign ${txData.type} transaction: ${signError.message}`,
+          status_task: false
         };
-    }
-}
-
-async function waitForTransactionConfirmation(paymentObj, maxWaitTime = 60000) {
-    console.log(`Waiting for confirmation of tx: ${paymentObj}`);
-    const startTime = Date.now();
-    while (Date.now() - startTime < maxWaitTime) {
-        try {
-            if (paymentObj.status === 1) {
-                console.log(`Transaction confirmed: ${paymentObj?.txHash}`);
-                return true;
-            }
-            await new Promise(resolve => setTimeout(resolve, 3000));
-        } catch (error) {
-            console.warn("Error checking transaction status:", error);
-        }
+      }
     }
 
-    console.warn(`Transaction confirmation timeout: ${paymentObj?.txHash}`);
-    return false;
-}
+    console.log("Broadcasting transactions");
 
-async function sendEvmRawTransaction(privateKey, rawTransaction) {
-    try {
-        const account = new ethers.Wallet(privateKey);
-        const tx = rawTransaction.transaction;
-        const meta = rawTransaction.txMeta;
+    const broadcastResponse = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, {
+      signedTransactions
+    });
 
-        if (!tx.from) {
-            throw new Error("rawTransaction.from is undefined");
-        }
+    console.log("Broadcast response:", broadcastResponse);
 
-        const { gas, ...cleanTx } = tx;
-
-        let txToSign = {
-            ...cleanTx,
-            gasLimit: ethers.BigNumber.from(meta.gasLimit),
-            nonce: meta.nonce,
-            chainId: Number(meta.network.chainId),
-        };
-
-
-        txToSign.value = ethers.BigNumber.from(txToSign.value || 0);
-
-        if (txToSign.data && !txToSign.data.startsWith("0x")) {
-            txToSign.data = "0x" + txToSign.data;
-        }
-
-        if (meta.feeData.maxFeePerGas && meta.feeData.maxPriorityFeePerGas) {
-            txToSign = {
-                ...txToSign,
-                type: 2,
-                maxFeePerGas: ethers.BigNumber.from(meta.feeData.maxFeePerGas),
-                maxPriorityFeePerGas: ethers.BigNumber.from(meta.feeData.maxPriorityFeePerGas),
-            };
-        } else if (meta.feeData.gasPrice) {
-            txToSign = {
-                ...txToSign,
-                type: 0,
-                gasPrice: ethers.BigNumber.from(meta.feeData.gasPrice),
-            };
-        } else {
-            throw new Error("No valid fee data found (missing gasPrice and EIP-1559 fields)");
-        }
-
-        const signedTx = await account.signTransaction(txToSign);
-        if (!signedTx) {
-            throw new Error("signedTx is undefined");
-        }
-
-        const respoExe = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, { signedTx });
-        if (respoExe?.res?.txHash) {
-            console.log("Transaction Sent", `Tx Hash: ${respoExe?.res?.txHash}`);
-            return { res: respoExe?.res, status: true };
-        }
-        if (respoExe?.err) {
-            console.log("Transaction Failed", respoExe);
-            return { res: respoExe.err, status: false };
-        }
-    } catch (error) {
-        console.error("Error sending transaction:", error);
-        throw error;
+    if (broadcastResponse.err) {
+      return {
+        res: broadcastResponse.err?.message || "Transaction broadcast failed",
+        status_task: false,
+        partialResults: broadcastResponse.err?.completedTransactions
+      };
     }
+
+    const { success, results, totalTransactions } = broadcastResponse.res;
+
+    if (success) {
+      const response = {
+        message: "Swap completed successfully!",
+        totalTransactions
+      };
+
+      results.forEach((result) => {
+        if (result.type === 'approve') {
+          response.approvalTxHash = result.transactionHash;
+          response.approvalBlock = result.blockNumber;
+          response.approvalGasUsed = result.gasUsed;
+        } else if (result.type === 'transfer') {
+          response.transferTxHash = result.transactionHash;
+          response.transferBlock = result.blockNumber;
+          response.transferGasUsed = result.gasUsed;
+        }
+      });
+
+      console.log("All transactions completed successfully:", response);
+
+      return {
+        res: response,
+        status_task: true
+      };
+    } else {
+      return {
+        res: "Broadcast completed but some transactions failed",
+        status_task: false,
+        results
+      };
+    }
+
+  } catch (error) {
+    console.log("Error in swap_prepare:", error);
+    return {
+      res: error.message || "Unknown error occurred during swap",
+      status_task: false
+    };
+  }
 }
 
+async function signTransaction(publicKey, txData) {
+  try {
+    const account = publicKey;
+    const tx = txData.transaction;
+    const meta = txData.txMeta;
 
+    if (!tx.from) throw new Error("Transaction 'from' address is missing");
+    if (!tx.to) throw new Error("Transaction 'to' address is missing");
+    if (!meta?.gasLimit) throw new Error("Gas limit is missing");
+    if (!meta?.feeData) throw new Error("Fee data is missing");
+    if (meta.nonce === undefined) throw new Error("Nonce is missing");
 
+    const toBigNumber = (value, fieldName = "value") => {
+      if (value === null || value === undefined) {
+        return ethers.BigNumber.from(0);
+      }
+      
+      if (ethers.BigNumber.isBigNumber(value)) {
+        return value;
+      }
+      
+      try {
+        return ethers.BigNumber.from(value);
+      } catch (err) {
+        console.error(`Error converting ${fieldName}:`, value);
+        throw new Error(`Invalid ${fieldName}: ${value}`);
+      }
+    };
 
-// async function sendEvmRawTransaction(privateKey, rawTransaction) {
-//     try {
-//         const account = new ethers.Wallet(privateKey);
-//         const tx = rawTransaction.transaction;
-//         const meta = rawTransaction.txMeta;
+    const isEIP1559 = meta.feeData.maxFeePerGas !== null && 
+                      meta.feeData.maxPriorityFeePerGas !== null;
 
-//         if (!tx.from) {
-//             throw new Error("rawTransaction.from is undefined");
-//         }
+    const nativeTxFormat = {
+      chainId: parseInt(meta.network.chainId) || 56,
+      nonce: ethers.utils.hexlify(meta.nonce || 0),
+      to: tx.to,
+      value: ethers.utils.hexlify(toBigNumber(tx.value, "value")),
+      data: (tx.data || "0x").startsWith("0x") ? (tx.data || "0x") : "0x" + (tx.data || ""),
+      gasLimit: ethers.utils.hexlify(toBigNumber(meta.gasLimit, "gasLimit")),
+    };
 
-//         const { gas, ...cleanTx } = tx;
+    if (isEIP1559) {
+      console.log(` Preparing EIP-1559 for NativeModule (${txData.type})`);
+      nativeTxFormat.maxFeePerGas = ethers.utils.hexlify(
+        toBigNumber(meta.feeData.maxFeePerGas, "maxFeePerGas")
+      );
+      nativeTxFormat.maxPriorityFeePerGas = ethers.utils.hexlify(
+        toBigNumber(meta.feeData.maxPriorityFeePerGas, "maxPriorityFeePerGas")
+      );
+    } else {
+      console.log(` Preparing Legacy for NativeModule (${txData.type})`);
+      nativeTxFormat.gasPrice = ethers.utils.hexlify(
+        toBigNumber(meta.feeData.gasPrice, "gasPrice")
+      );
+    }
 
-//         let txToSign = {
-//             ...cleanTx,
-//             gasLimit: ethers.BigNumber.from(meta.gasLimit),
-//             nonce: meta.nonce,
-//             chainId: Number(meta.network.chainId),
-//         };
+    console.log(`NativeModule TX format (${txData.type}):`, nativeTxFormat);
 
-//         // Normalize value
-//         txToSign.value = ethers.BigNumber.from(txToSign.value || 0);
+    const { TransactionSigner } = NativeModules;
+    const result = await TransactionSigner.signTransaction(
+      "bsc",
+      publicKey,
+      JSON.stringify(nativeTxFormat),
+      nativeTxFormat.chainId
+    );
 
-//         // Ensure data is hex-prefixed
-//         if (txToSign.data && !txToSign.data.startsWith("0x")) {
-//             txToSign.data = "0x" + txToSign.data;
-//         }
+    let signedTx = result.signedTx;
+    if (signedTx.startsWith("0x0x")) {
+      signedTx = signedTx.replace(/^0x/, "");
+    }
 
-//         // Handle EIP-1559 vs Legacy
-//         if (meta.feeData.maxFeePerGas && meta.feeData.maxPriorityFeePerGas) {
-//             txToSign = {
-//                 ...txToSign,
-//                 type: 2,
-//                 maxFeePerGas: ethers.BigNumber.from(meta.feeData.maxFeePerGas),
-//                 maxPriorityFeePerGas: ethers.BigNumber.from(meta.feeData.maxPriorityFeePerGas),
-//             };
-//         } else if (meta.feeData.gasPrice) {
-//             txToSign = {
-//                 ...txToSign,
-//                 type: 0,
-//                 gasPrice: ethers.BigNumber.from(meta.feeData.gasPrice),
-//             };
-//         } else {
-//             throw new Error("No valid fee data found (missing gasPrice and EIP-1559 fields)");
-//         }
+    if (!signedTx) {
+      throw new Error("TransactionSigner returned empty signedTx");
+    }
 
-//         // Sign transaction
-//         const signedTx = await account.signTransaction(txToSign);
-//         if (!signedTx) {
-//             throw new Error("signedTx is undefined");
-//         }
+    console.log(`${txData.type} signed by NativeModule (${signedTx.length} bytes)`);
+    return signedTx;
 
-//         // Broadcast transaction
-//         const respoExe = await proxyRequest("/v1/bsc/transaction/broadcast", PPOST, { signedTx });
-//         if (respoExe?.res?.txHash) {
-//             console.log("Transaction Sent", `Tx Hash: ${respoExe?.res?.txHash}`);
-//             return { res: respoExe?.res, status: true };
-//         }
-//         if (respoExe?.err) {
-//             console.log("Transaction Failed", respoExe);
-//             return { res: respoExe.err, status: false };
-//         }
-//     } catch (error) {
-//         console.error("Error sending transaction:", error);
-//         throw error;
-//     }
-// }
+  } catch (error) {
+    console.error(`Error signing ${txData.type} transaction:`, error);
+    console.error("Full transaction data:", JSON.stringify(txData, null, 2));
+    throw error;
+  }
+}
+
+export async function getWalletBalance(address) {
+  try {
+    const resProxy = await proxyRequest(`/v1/bsc/${address}/balance`, PGET);
+
+    if (resProxy?.err) {
+      throw new Error(resProxy.err.message || "Failed to fetch balance");
+    }
+
+    const balance = ethers.BigNumber.from(resProxy?.res || "0");
+
+    return {
+      balanceWei: balance.toString(),
+      balanceEth: ethers.utils.formatEther(balance),
+      balance: balance
+    };
+  } catch (error) {
+    console.log("Error fetching wallet balance:", error);
+    throw error;
+  }
+}

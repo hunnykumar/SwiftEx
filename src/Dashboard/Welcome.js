@@ -7,6 +7,8 @@ import {
   Dimensions,
   Animated,
   ActivityIndicator,
+  NativeModules,
+  Linking,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
@@ -28,12 +30,15 @@ import { useNavigation } from "@react-navigation/native";
 import apiHelper from "./exchange/crypto-exchange-front-end-main/src/apiHelper";
 import { REACT_APP_HOST } from "./exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
 import * as StellarSdk from '@stellar/stellar-sdk';
+import AccessNativeStorage from "./Wallets/AccessNativeStorage";
+import crashlytics from '@react-native-firebase/crashlytics';
+
 const Welcome = (props) => {
   const [Loading,setLoading]=useState(false)
   const [enableUserAccess,setenableUserAccess]=useState(false);
   const dispatch = useDispatch();
   const navigation=useNavigation();
-  const images = [W4, W2, W3, W1];
+  const images = [W1];
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const Spin = new Animated.Value(0);
@@ -62,8 +67,10 @@ const Welcome = (props) => {
     const initGuestUser = async () => {
       try {
         setLoading(true);
+        const appReset=await NativeModules.StorageModule.clearAll();
+        crashlytics().setCrashlyticsCollectionEnabled(true);
         const userStatus=await createGuestUser();
-        console.log("userStatus:-",userStatus.status)
+        console.log("userStatus:-",userStatus.status,appReset)
         if(userStatus.status)
         {
           setenableUserAccess(true);
@@ -83,13 +90,18 @@ const Welcome = (props) => {
   }, []);
   const defaultWalletGenration=async()=>{
     try {
+      setLoading(true);
       const response=await dispatch(Generate_Wallet2())
         if (response) {
           console.log("respoms:",response)
           const result = await apiHelper.post(REACT_APP_HOST+'/v1/wallet', {
-            "multiChainAddress":response.wallet.address,
-            "stellarAddress": response.wallet.stellarWallet.publicKey,
-            "isPrimary": true
+              "addresses": {
+                  "eth": response.wallet.address,
+                  "xlm": response.wallet.stellarWallet.publicKey,
+                  "bnb": response.wallet.address,
+                  "multi": response.wallet.address
+              },
+              "isPrimary": true
           });
           
           if (result.success) {
@@ -123,7 +135,6 @@ const Welcome = (props) => {
 
   const dispatChingData=async(wallet)=>{
     try {
-      console.log("respoms wallet:",wallet)
       const pin = await AsyncStorageLib.getItem("pin");
             const body = {
               accountName: "Main",
@@ -132,17 +143,13 @@ const Welcome = (props) => {
             const token = genUsrToken(body);
             const accounts = {
               address: wallet.address,
-              privateKey: wallet.privateKey,
-              mnemonic: wallet.mnemonic,
               name: "Main",
               walletType: "Multi-coin",
               xrp: {
-                address: wallet.xrp.address,
-                privateKey: wallet.xrp.privateKey,
+                address: wallet.xrp.address
               },
               stellarWallet: {
                 publicKey: wallet.stellarWallet.publicKey,
-                secretKey: wallet.stellarWallet.secretKey
               },
               wallets: [],
             };
@@ -151,16 +158,12 @@ const Welcome = (props) => {
             const allWallets = [
               {
                 address: wallet.address,
-                privateKey: wallet.privateKey,
                 name: "Main",
-                mnemonic: wallet.mnemonic,
                 xrp: {
-                  address: wallet.xrp.address,
-                  privateKey: wallet.xrp.privateKey,
+                  address: wallet.xrp.address
                 },
                 stellarWallet: {
-                  publicKey: wallet.stellarWallet.publicKey,
-                  secretKey: wallet.stellarWallet.secretKey
+                  publicKey: wallet.stellarWallet.publicKey
                 },
                 walletType: "Multi-coin",
               },
@@ -192,14 +195,8 @@ const Welcome = (props) => {
               setCurrentWallet(
                 wallet.address,
                 "Main",
-                wallet.privateKey,
-                wallet.mnemonic,
-                wallet.xrp.address
-                  ? wallet.xrp.address
-                  : "",
-                wallet.xrp.privateKey
-                  ? wallet.xrp.privateKey
-                  : "",
+                "",
+                "",
                 (walletType = "Multi-coin")
               )
             );
@@ -212,17 +209,31 @@ const Welcome = (props) => {
             dispatch(getBalance(wallet.address));
             dispatch(setWalletType("Multi-coin"));
             dispatch(setToken(token));
-            genrateStellarKeypair(wallet.address,wallet.stellarWallet.publicKey,wallet.stellarWallet.secretKey)
+            genrateStellarKeypair(wallet.address,wallet.stellarWallet.publicKey)
+            const walletResponse = await AccessNativeStorage.saveWallet({
+              name: "Main",
+              address: wallet.address,
+              privatekey: wallet.privateKey,
+              stellarPublicKey: wallet.stellarWallet.publicKey,
+              stellarPrivateKey: wallet.stellarWallet.secretKey,
+              mnemonic: wallet.mnemonic,
+              walletType: wallet.walletType
+            })
+            if (walletResponse.success) {
             setLoading(false);
             navigation.navigate("HomeScreen");
             alert("success", "Wallet Genration Compleated!");
+            } else {
+            alert("error", "Wallet generation failed.");
+            setLoading(false);
+            }
     } catch (error) {
       alert("error","Wallet generation failed.");
       console.log("---Error-getting-from-dispatChingData--",error)
     }   
   }
 
-  const genrateStellarKeypair =async(etherAddress,publicKey,secretKey) => {
+  const genrateStellarKeypair =async(etherAddress,publicKey) => {
     try {
       let userTransactions = [];
       const transactions = await AsyncStorageLib.getItem('myDataKey');
@@ -232,7 +243,7 @@ const Welcome = (props) => {
           userTransactions = [];
         }
       }
-      userTransactions.push({etherAddress,publicKey,secretKey});
+      userTransactions.push({etherAddress,publicKey});
       await AsyncStorageLib.setItem('myDataKey', JSON.stringify(userTransactions));
     } catch (error) {
       setLoading(false);
@@ -244,8 +255,8 @@ const Welcome = (props) => {
   return (
     <View style={styles.container}>
       <CustomImageSlider images={images} />
-      
       <Animated.View style={[styles.buttonContainer, { opacity: fadeAnim }]}>
+       <Text style={styles.termsTxt}>By continuing, you agree to the <Text style={styles.openLink} onPress={() => { Linking.openURL("https://swiftexwallet.com/terms-of-service") }}>Terms</Text> and <Text style={styles.openLink} onPress={()=>{ Linking.openURL("https://swiftexwallet.com/privacy-policy") }}>Privacy Policy.</Text></Text>
         {/* {Loading?null:<TouchableOpacity
           style={styles.createView}
           onPress={() => props.navigation.navigate("GenerateWallet")}
@@ -266,6 +277,7 @@ const Welcome = (props) => {
             <ActivityIndicator color={"green"} size={"large"} />
           </View>
         }
+       
 
       </Animated.View>
     </View>
@@ -320,6 +332,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignSelf: "center",
     marginBottom: hp(1),
+  },
+  termsTxt:{
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#fff",
+    fontStyle:"italic",
+    marginVertical:hp(1)
+  },
+  openLink:{
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#135cfaff",
+    fontStyle:"italic",
+    marginVertical:hp(1)
   },
 });
 

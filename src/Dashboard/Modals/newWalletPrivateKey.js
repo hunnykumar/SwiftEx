@@ -3,37 +3,33 @@ import {
   StyleSheet,
   Text,
   View,
-  Button,
   FlatList,
-  Image,
   TouchableOpacity,
   TextInput,
   Keyboard,
-  SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { Animated } from "react-native";
-import title_icon from "../../../assets/title_icon.png";
 import { useDispatch, useSelector } from "react-redux";
 import {
   AddToAllWallets,
-  getBalance,
   setCurrentWallet,
-  setUser,
-  setToken,
-  setWalletType,
 } from "../../components/Redux/actions/auth";
 import AsyncStorageLib from "@react-native-async-storage/async-storage";
-import DialogInput from "react-native-dialog-input";
-import { encryptFile } from "../../utilities/utilities";
-import { urls } from "../constants";
 import Modal from "react-native-modal";
-import CheckNewWalletMnemonic from "./checkNewWalletMnemonic";
-import ModalHeader from "../reusables/ModalHeader";
 import Icon from "../../icon";
+import { colors } from "../../Screens/ThemeColorsConfig";
+import { checkWalletExistOrNot } from "../Wallets/WalletManagement";
+import apiHelper from "../exchange/crypto-exchange-front-end-main/src/apiHelper";
+import { REACT_APP_HOST } from "../exchange/crypto-exchange-front-end-main/src/ExchangeConstants";
+import AccessNativeStorage from "../Wallets/AccessNativeStorage";
+import { alert } from "../reusables/Toasts";
+import { useNavigation } from "@react-navigation/native";
+import Clipboard from "@react-native-clipboard/clipboard";
 
 const NewWalletPrivateKey = ({
   props,
@@ -46,28 +42,17 @@ const NewWalletPrivateKey = ({
 }) => {
   const state=useSelector((state)=>state);
   const [accountName, setAccountName] = useState("");
-  const [visible, setVisible] = useState(false);
-  const [newWallet, setNewWallet] = useState(Wallet);
   const [data, setData] = useState();
   const [user, setUser] = useState("");
-  const [text_input_up,settext_input_up]=useState(false);
-
-  const [MnemonicVisible, setMnemonicVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const dispatch = useDispatch();
-
-  const Spin = new Animated.Value(0);
-  const SpinValue = Spin.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
+  const navigation=useNavigation();
 
   useEffect(()=>{
     const  Keybord_state_cls=Keyboard.addListener('keyboardDidHide',()=>{
-      settext_input_up(false);
     });
     const  Keybord_state_opn=Keyboard.addListener('keyboardDidShow',()=>{
-      settext_input_up(true);
     });
     
     return ()=>{
@@ -76,57 +61,7 @@ const NewWalletPrivateKey = ({
     }
   },[]);
   
-  async function saveUserDetails() {
-    let response;
-    try {
-      response = await fetch(`http://${urls.testUrl}/user/saveUserDetails`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          emailId: accountName,
-          walletAddress: Wallet.address,
-        }),
-      })
-        .then((response) => response.json())
-        .then(async (responseJson) => {
-          if (responseJson.responseCode === 200) {
-            alert("success", "success");
-            return responseJson.responseCode;
-          } else if (responseJson.responseCode === 400) {
-            alert(
-              "error",
-              "account with same name already exists. Please use a different name"
-            );
-            return responseJson.responseCode;
-          } else {
-            alert("error", "Unable to create account. Please try again");
-            return 401;
-          }
-        })
-        .catch((error) => {
-          setVisible(!visible);
-
-          alert(error);
-        });
-    } catch (e) {
-      setVisible(!visible);
-
-      console.log(e);
-      alert("error", e);
-    }
-    console.log(response);
-    return response;
-  }
-
-  const closeModal = () => {
-    SetVisible(false);
-  };
   const mnemonic = Wallet?.mnemonic.match(/\b(\w+)'?(\w+)?\b/g)
-
-  console.log("My mnemonic", mnemonic);
 
   useEffect(() => {
     setAccountName("")
@@ -135,7 +70,6 @@ const NewWalletPrivateKey = ({
         console.log(Wallet);
         let wallet = Wallet;
         wallet.Mnemonic = mnemonic;
-        setNewWallet(wallet);
       } catch (error) {
         console.log("=-===",error)
       }
@@ -148,32 +82,131 @@ const NewWalletPrivateKey = ({
   }, []);
 
   const RenderItem = ({ item, index }) => {
-    console.log("============------------", item);
     setData(data);
     return (
-      <TouchableOpacity style={[style.flatBtn,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
-        <Text style={{ textAlign: "right",color:"#fff" }}>{index + 1}</Text>
-        <Text style={{ color:"#fff" }}>{item}</Text>
+      <TouchableOpacity style={[style.flatBtn,{backgroundColor:theme.cardBg}]}>
+        <Text style={{ textAlign: "right",color:theme.headingTx}}>{index + 1}</Text>
+        <Text style={{ color:theme.headingTx }}>{item}</Text>
       </TouchableOpacity>
     );
   };
   const handleUsernameChange = (text) => {
-    // Remove whitespace from the username
     const formattedUsername = text.replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '');
     setAccountName(formattedUsername);
   };
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
+
+  const handleWallet = async () => {
+    console.debug(JSON.stringify(Wallet,null,2))
+    try {
+      setLoading(true);
+      const user = await AsyncStorageLib.getItem("user");
+      let wallets = [];
+      const data = await AsyncStorageLib.getItem(
+        `${user}-wallets`
+      )
+        .then((response) => {
+          console.log(response);
+          JSON.parse(response).map((item) => {
+            wallets.push(item);
+          });
+        })
+        .catch((e) => {
+          setModalVisible(false);
+          console.log(e);
+        });
+
+      const allWallets = [
+        {
+          address: Wallet.address,
+          name: Wallet.accountName,
+          walletType: "Multi-coin",
+          xrp: {
+            address: Wallet.xrp.address,
+          },
+          stellarWallet: {
+            publicKey: Wallet.stellarWallet.publicKey,
+          },
+          wallets: wallets,
+        },
+      ];
+
+      dispatch(AddToAllWallets(allWallets, user)).then(
+        async (response) => {
+          if (response) {
+            if (response.status === "Already Exists") {
+              alert(
+                "error",
+                "Account with same name already exists"
+              );
+              setLoading(false);
+              return;
+            } else if (response.status === "success") {
+              const result = await apiHelper.post(REACT_APP_HOST + '/v1/wallet', {
+                "addresses": {
+                  "eth": Wallet.address,
+                  "xlm": Wallet.stellarWallet.publicKey,
+                  "bnb": Wallet.address,
+                  "multi": Wallet.address
+                },
+                "isPrimary": true
+              });
+              if (result.success) {
+                alert("success", "wallet synced!");
+              } else {
+                alert("error", "unable to sync wallet.");
+                console.log('Error:', result.error, 'Status:', result.status);
+              }
+              AsyncStorageLib.setItem("currentWallet", Wallet?.accountName)
+              await AccessNativeStorage.saveWallet({
+                name: Wallet.accountName,
+                address: Wallet.address,
+                privatekey: Wallet.privateKey,
+                stellarPublicKey: Wallet.stellarWallet.publicKey,
+                stellarPrivateKey: Wallet.stellarWallet.secretKey,
+                mnemonic: Wallet.mnemonic,
+                walletType: "Multi-coin"
+              })
+              dispatch(
+                setCurrentWallet(
+                  Wallet?.address,
+                  Wallet?.accountName,
+                )
+              )
+              setTimeout(() => {
+                setLoading(false);
+                SetVisible(false);
+                setModalVisible(false);
+                setNewWalletVisible(false);
+                navigation.navigate("AllWallets");
+              }, 0);
+            } else {
+              alert("error", "failed please try again");
+              return;
+            }
+          }
+        }
+      );
+    } catch (e) {
+      setLoading(false);
+      SetVisible(false);
+      setModalVisible(false);
+      setNewWalletVisible(false);
+      alert("error", "Failed to import wallet. Please try again");
+    }
+  }
+
   return (
-    <Animated.View // Special animatable View
+    <Animated.View
       style={{ opacity: fadeAnim }}
     >
       <Modal
-        animationIn="slideInRight"
-        animationOut="slideOutRight"
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
         animationInTiming={500}
         animationOutTiming={650}
         isVisible={Visible}
         statusBarTranslucent={true}
-        // style={{backgroundColor:"blue",height:hp(100),top:20,width:wp(100),alignSelf:"center"}}
         useNativeDriverForBackdrop={true}
         backdropTransitionOutTiming={0}
         hideModalContentWhileAnimating
@@ -183,43 +216,40 @@ const NewWalletPrivateKey = ({
         onBackButtonPress={() => {
           SetVisible(false);
         }}
+        style={style.modalCon}
       >
 
-        <SafeAreaView style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
-          {/* <ModalHeader Function={closeModal} name={'Private Key'}/> */}
+        <View style={[style.Body,{backgroundColor:theme.bg}]}>
           <Icon
-            name={"arrow-left"} 
+            name={"close-circle-outline"} 
             type={"materialCommunity"}
-            color={"#fff"}
-            size={24}
+            color={theme.headingTx}
+            size={30}
             style={style.croosIcon}
             onPress={onCrossPress}
           />
-            <View style={{marginTop:hp(1)}}>
-            <Text style={style.label}>Account Name</Text>
+            <Text style={[style.label,{color:theme.headingTx}]}>Wallet Name</Text>
             <TextInput
               value={accountName}
               returnKeyType="done"
               onChangeText={(text) => {
                 handleUsernameChange(text)
               }}
-              style={style.labelInputContainer}
-              placeholder={user ? user : "Enter your account name"}
+              style={[style.labelInputContainer,{color:theme.headingTx,backgroundColor:theme.cardBg}]}
+              placeholder={user ? user : "Enter your wallet name"}
               placeholderTextColor={"gray"}
               maxLength={20}
+              autoFocus={true}
             />
-          </View>
 
-          <Text style={[style.backupText,{color:"#fff"}]}>Backup Mnemonic Phrase</Text>
-          <Text style={style.welcomeText1}>
-            Please select the mnemonic in order to ensure the backup is
-            correct.
-          </Text>
+          <Text style={[style.backupText,{color:theme.headingTx}]}>Backup Mnemonic Phrase</Text>
+          <Text style={[style.welcomeText1,{color:theme.inactiveTx}]}>Keep your mnemonic in a safe place, isolated from any network.</Text>
 
-          <View style={{ marginTop: hp(3) }}>
+          <View style={{ marginTop: hp(2) }}>
             <FlatList
               data={mnemonic}
               renderItem={RenderItem}
+              keyExtractor={(item, index) => index}
               numColumns={3}
               contentContainerStyle={{
                 alignSelf: "center",
@@ -228,76 +258,51 @@ const NewWalletPrivateKey = ({
           </View>
 
           <View style={style.dotView}>
-            <Icon name="dot-single" type={"entypo"} size={20} color={"gray"}/>
-            <Text style={{ color: "gray" }}>
-            Keep your mnemonic in a safe place, isolated from any network.
-            </Text>
-          </View>
-          <View style={style.dotView1}>
-            <Icon name="dot-single" type={"entypo"} size={20} color={"gray"}/>
-            <Text style={{ color: "gray", width: "90%" }}>
+           <View style={{flexDirection:"row"}}>
+             <Icon name="dot-single" type={"entypo"} size={24} color={theme.inactiveTx}/>
+            <Text style={{ color: theme.inactiveTx, width: wp(56) }}>
             Do not share it through email, photos, social media, apps, etc.
             </Text>
+           </View>
+
+            <TouchableOpacity
+              onPress={() => {
+                Clipboard.setString(Wallet?.mnemonic);
+                alert("success", "Copied");
+              }}
+              style={{ backgroundColor: "#4052D6", borderRadius: 15, paddingVertical: 10,paddingHorizontal:wp(2.3), alignSelf: "center", alignItems: "center" }}
+            >
+              <Text style={{ color: "white", fontSize: 16 }}>Copy Phrase</Text>
+            </TouchableOpacity>
           </View>
-          {/* <Text selectable={true} style={style.welcomeText2}>
-            {Wallet ? Wallet.mnemonic : ""}
-          </Text> */}
-          {/* <Text style={style.welcomeText2}> Account Name</Text> */}
 
-          
-
-          {/* <TextInput
-          placeholder="Enter your account name"
-            style={style.input}
-            value={accountName}
-            placeholder='Enter account name'
-            onChangeText={(text) => setAccountName(text)}
-            autoCapitalize={"none"}
-          /> */}
-
-          <View style={{ width: wp(100) }}>
+          <View style={{ width: wp(100),marginBottom:hp(5) }}>
             <TouchableOpacity
               style={{
-                // backgroundColor:
-                  // accountName && !/\s/.test(accountName) ? "#4CA6EA" : "gray",
-                  backgroundColor:!accountName || !/\S/.test(accountName)?"gray":"#2164C1",
+                backgroundColor:!accountName || !/\S/.test(accountName)||loading?"gray":"#4052D6",
                 width: wp(90),
                 alignSelf: "center",
                 alignItems: "center",
-                borderRadius: 50,
-                marginTop: hp(3),
+                borderRadius: 20,
+                marginVertical: hp(3),
                 paddingVertical: hp(1.7),
               }}
-              // disabled={accountName && !/\s/.test(accountName) ? false : true}
-              disabled={!accountName || !/\S/.test(accountName)}
-              onPress={() => {
+              disabled={!accountName || !/\S/.test(accountName)||loading}
+              onPress={async() => {
                 Keyboard.dismiss();
-                //setVisible(!visible)
-                let wallet = Wallet;
-                wallet.accountName = accountName;
-                wallet.Mnemonic = mnemonic;
-                setNewWallet(wallet);
-                console.log(newWallet);
-                setMnemonicVisible(true);
+                const checkWalletName=await checkWalletExistOrNot(accountName);
+                if(!checkWalletName){
+                  let wallet = Wallet;
+                  wallet.accountName = accountName;
+                  wallet.Mnemonic = mnemonic;
+                  handleWallet();
+                }
               }}
             >
-              <Text style={{ color: "white",fontSize:16  }}>Done</Text>
+              <Text style={{ color: "white",fontSize:16  }}>{loading?<ActivityIndicator/>:"Create"}</Text>
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
-        {MnemonicVisible && (
-          <CheckNewWalletMnemonic
-            Wallet={newWallet}
-            SetVisible={setMnemonicVisible}
-            onCrossPress={() => {
-              setMnemonicVisible(false);
-            }}
-            Visible={MnemonicVisible}
-            setModalVisible={setModalVisible}
-            SetPrivateKeyVisible={SetVisible}
-            setNewWalletVisible={setNewWalletVisible}
-          />
-        )}
+        </View>
       </Modal>
     </Animated.View>
   );
@@ -306,75 +311,19 @@ const NewWalletPrivateKey = ({
 export default NewWalletPrivateKey;
 
 const style = StyleSheet.create({
+  modalCon:{
+    justifyContent: "flex-end",
+    margin: 0,
+  },
   Body: {
-    width: wp(100),
-    height:hp(90),
-    alignSelf:"center",
-    textAlign: "center",
-  },
-  welcomeText: {
-    fontSize: 20,
-    fontWeight: "200",
-    color: "white",
-    marginTop: hp(5),
-  },
-  welcomeText2: {
-    fontSize: 14,
-    color: "black",
-    textAlign: "center",
-    marginTop: hp(3),
-  },
-  Button: {
-    marginTop: hp(0),
-  },
-  tinyLogo: {
-    width: wp("5"),
-    height: hp("5"),
-    padding: 30,
-    marginTop: hp(10),
-  },
-  Text: {
-    marginTop: hp(5),
-    fontSize: 15,
-    fontWeight: "200",
-    color: "white",
-  },
-  input: {
-    marginTop: hp(2),
-    width: wp("70"),
-    height: hp(5),
-    borderRadius: hp(1),
-    backgroundColor: "white",
-    paddingHorizontal: wp(4),
-    alignSelf: "center",
-    borderWidth: StyleSheet.hairlineWidth * 1,
-  },
-  verifyText: {
-    color: "black",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-    marginTop: hp(2),
-  },
-  wordText: {
-    color: "black",
-    textAlign: "center",
-    marginTop: hp(1),
-    width: wp(88),
-    marginHorizontal: wp(5),
-  },
-  ButtonView: {
-    backgroundColor: "#4CA6EA",
-    width: wp(40),
-    alignSelf: "center",
-    alignItems: "center",
-    borderRadius: 10,
-    marginTop: hp(1.5),
-    paddingVertical: hp(1.7),
+    borderTopLeftRadius:20,
+    borderTopRightRadius:20,
+    justifyContent: "flex-end",
+    margin: 0,
+    width:wp(100)
   },
   flatBtn: {
-    backgroundColor: "#F2F2F2",
-    borderRadius: hp(0.3),
+    borderRadius: hp(0.5),
     width: wp(30),
     paddingVertical: hp(2),
     borderWidth: 0.3,
@@ -383,7 +332,7 @@ const style = StyleSheet.create({
   },
   backupText: {
     fontWeight: "bold",
-    fontSize: 17,
+    fontSize: 15,
     color: "black",
     marginLeft: 20,
     marginBottom: hp(1),
@@ -391,8 +340,6 @@ const style = StyleSheet.create({
   },
   welcomeText1: {
     marginLeft: wp(4.7),
-    color: "gray",
-    // marginLeft: wp(4),
     width: wp(90),
   },
   dotView: {
@@ -400,18 +347,7 @@ const style = StyleSheet.create({
     alignItems: "center",
     width: wp(85),
     marginLeft: 18,
-    marginTop: hp(3),
-  },
-  dotView1: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: wp(85),
-    marginLeft: 18,
     marginTop: hp(2),
-  },
-  welcomeText: {
-    color: "black",
-    textAlign: "center",
   },
   labelInputContainer: {
     marginTop:hp(1),
@@ -419,21 +355,17 @@ const style = StyleSheet.create({
     alignItems: "center",
     alignSelf: "center",
     borderRadius: wp(2),
-    backgroundColor: "white",
     paddingLeft: wp(3),
     paddingVertical: hp(1.6),
     fontSize:15,
-    color:"black"
   },
   label: {
     marginLeft: 20,
     fontSize:16,
-    color:"white",
     fontWeight: "bold",
   },
   croosIcon: {
-    alignSelf: "flex-start",
-    padding: hp(1.2),
+    alignSelf: "flex-end",
+    padding: 10,
   },
 });
-//  const mnemonic = Wallet?.mnemonic.match(/\b(\w+)'?(\w+)?\b/g)

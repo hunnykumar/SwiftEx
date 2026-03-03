@@ -1,4 +1,4 @@
-package com.app.swiftEx.app.ethwallet
+package org.app.swiftEx.wallet.ethwallet
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

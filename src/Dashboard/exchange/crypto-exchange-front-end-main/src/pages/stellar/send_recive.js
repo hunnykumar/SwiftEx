@@ -1,5 +1,5 @@
 import { useIsFocused, useNavigation } from "@react-navigation/native";
-import { ActivityIndicator, Alert, Image, Keyboard, Linking, Modal, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { ActivityIndicator, Alert, Image, Keyboard, Linking, Modal, NativeModules, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp,
@@ -17,13 +17,16 @@ import { RNCamera } from 'react-native-camera';
 import { Exchange_screen_header } from "../../../../../reusables/ExchangeHeader";
 import { alert } from "../../../../../reusables/Toasts";
 import { STELLAR_URL } from "../../../../../constants";
-import { SaveTransaction } from "../../../../../../utilities/utilities";
+import { Paste, SaveTransaction } from "../../../../../../utilities/utilities";
 import Snackbar from "react-native-snackbar";
 import ErrorComponet from "../../../../../../utilities/ErrorComponet";
-import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance } from "../../../../../../utilities/StellarUtils";
+import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance, stellarWalletStatus } from "../../../../../../utilities/StellarUtils";
 import WalletActivationComponent from "../../utils/WalletActivationComponent";
 import * as StellarSdk from '@stellar/stellar-sdk';
 import CustomInfoProvider from "../../components/CustomInfoProvider";
+import QRScannerComponent from "../../../../../Modals/QRScannerComponent";
+import TokenQrCode from "../../../../../Modals/TokensQrCode";
+import { colors } from "../../../../../../Screens/ThemeColorsConfig";
 StellarSdk.Networks.PUBLIC
 
 const send_recive = ({route}) => {
@@ -34,7 +37,7 @@ const send_recive = ({route}) => {
     const state = useSelector((state) => state);
     const FOCUSED = useIsFocused();
     const navigation = useNavigation();
-    const [modalContainer_menu, setmodalContainer_menu] = useState(false);
+    const [receiveQrOpen, setreceiveQrOpen] = useState(false);
     const [mode_selected, setmode_selected] = useState("SED");
     const [recepi_address, setrecepi_address] = useState("");
     const [recepi_memo, setrecepi_memo] = useState("");
@@ -120,32 +123,108 @@ const send_recive = ({route}) => {
           return false;
       }
   }
-  async function send_XLM(sourceSecret, destinationPublic, amount) {
+  async function send_XLM(sourcePublicKey, destinationPublic, amount) {
     Keyboard.dismiss();
     try {
     const server = new StellarSdk.Horizon.Server(STELLAR_URL.URL);
       // Load the source account
-      const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecret);
-      const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());
+      const sourceAccount = await server.loadAccount(sourcePublicKey);
   
       // Create the transaction
-      const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
-        fee: await server.fetchBaseFee(),
-        networkPassphrase: StellarSdk.Networks.PUBLIC,
-      })
-        .addOperation(
-          StellarSdk.Operation.payment({
-            destination: destinationPublic,
-            asset: asset_name==="native"?StellarSdk.Asset.native():usdtAsset,
-            amount: amount,
-          })
-        )
-        .addMemo(StellarSdk.Memo.text(recepi_memo)) 
-        .setTimeout(30)
-        .build();
+    let destinationAccount;
+    let isActivated = true;
+    let isXLMNative = asset_name === "native";
   
-      // Sign the transaction
-      transaction.sign(sourceKeypair);
+    try {
+      destinationAccount = await server.loadAccount(destinationPublic);
+    } catch (accountError) {
+      if (accountError.response?.data?.title === "ResourceMissingError") {
+        isActivated = false;
+        console.log("Destination account not activated");
+      } else {
+        isActivated = false;
+      }
+    }
+
+      let transaction;
+      
+      if (!isActivated && isXLMNative) {
+        if(parseFloat(amount)<parseFloat(1))
+        {
+          CustomInfoProvider.show("warning","Opps!","Recipient account not activated. Minimum 1 XLM required to activate account.");
+          setPayment_loading(false);
+          return;
+        }
+        transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+          fee: await server.fetchBaseFee(),
+          networkPassphrase: StellarSdk.Networks.PUBLIC,
+        })
+          .addOperation(
+            StellarSdk.Operation.createAccount({
+              destination: destinationPublic,
+              startingBalance: amount,
+            })
+          )
+          .addMemo(StellarSdk.Memo.text(recepi_memo))
+          .setTimeout(30)
+          .build();
+          
+      } else if (isActivated) {
+        if (isXLMNative) {
+          transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+            fee: await server.fetchBaseFee(),
+            networkPassphrase: StellarSdk.Networks.PUBLIC,
+          })
+            .addOperation(
+              StellarSdk.Operation.payment({
+                destination: destinationPublic,
+                asset: StellarSdk.Asset.native(),
+                amount: amount,
+              })
+            )
+            .addMemo(StellarSdk.Memo.text(recepi_memo))
+            .setTimeout(30)
+            .build();
+            
+        } else {
+          const customAsset = new StellarSdk.Asset(asset_name, assetIssuer);
+          const destAccountData = await server.loadAccount(destinationPublic);
+          const hasTrustline = destAccountData.balances.some(balance => 
+            balance.asset_code === asset_name && 
+            balance.asset_issuer === assetIssuer
+          );
+          
+          if (!hasTrustline) {
+            CustomInfoProvider.show("warning","Opps!",`Recipient needs to trust ${asset_name}.`);
+            setPayment_loading(false);
+            return;
+          }
+
+          transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+            fee: await server.fetchBaseFee(),
+            networkPassphrase: StellarSdk.Networks.PUBLIC,
+          })
+            .addOperation(
+              StellarSdk.Operation.payment({
+                destination: destinationPublic,
+                asset: customAsset,
+                amount: amount,
+              })
+            )
+            .addMemo(StellarSdk.Memo.text(recepi_memo))
+            .setTimeout(30)
+            .build();
+        }
+        
+      } else {
+        CustomInfoProvider.show("warning","Opps!",`Cannot send ${asset_name} asset to unactivated account. Send XLM first to activate.`);
+        setPayment_loading(false);
+        return;
+      }
+      const txXDR = transaction.toXDR();
+      const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
+      const signatureBuffer = Buffer.from(signedTx.signature, 'base64');
+      transaction.addSignature(signedTx.publicKey, signatureBuffer.toString('base64'));
   
       // Submit the transaction
       const transactionResult = await server.submitTransaction(transaction);
@@ -229,7 +308,7 @@ const send_recive = ({route}) => {
              });
             setPayment_loading(false);
            }else{
-            send_XLM(state.STELLAR_SECRET_KEY, recepi_address, recepi_amount)
+            send_XLM(state.STELLAR_PUBLICK_KEY, recepi_address, recepi_amount)
            }
           }
         } else {
@@ -251,18 +330,18 @@ const send_recive = ({route}) => {
   }
 
     useEffect(() => {
+        setreceiveQrOpen(false)
         setACTIVATION_MODAL_PROD(false)
         setLoading(false)
         setErroVisible(false)
         setPayment_loading(false)
         get_data()
         setmode_selected("SED");
-        if(state.STELLAR_ADDRESS_STATUS===false)
-        {
-          setTimeout(()=>{
-            setACTIVATION_MODAL_PROD(true)
-          },600)
+        const inti = async () => {
+          const walletStatus = await stellarWalletStatus(state?.STELLAR_PUBLICK_KEY);
+          setACTIVATION_MODAL_PROD(walletStatus)
         }
+        inti()
     }, [FOCUSED])
 
     useEffect(()=>{
@@ -278,8 +357,9 @@ const send_recive = ({route}) => {
 
   const ActivateModal = () => {
     setACTIVATION_MODAL_PROD(false);
-    navigation.goBack()
   };
+
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
     return (
         <>
      <Exchange_screen_header title="Transaction" onLeftIconPress={() => navigation.goBack()} onRightIconPress={() => console.log('Pressed')} />
@@ -290,65 +370,64 @@ const send_recive = ({route}) => {
         />
          <WalletActivationComponent 
          isVisible={ACTIVATION_MODAL_PROD}
-         onClose={() => {ActivateModal}}
+         onClose={() => {ActivateModal()}}
          onActivate={()=>{setACTIVATION_MODAL_PROD(false)}}
          navigation={navigation}
          appTheme={true}
          shouldNavigateBack={true}
       />
-            <View style={styles.main_con}>
+            <View style={[styles.main_con,{backgroundColor:theme.bg}]}>
                 <View style={styles.mode_con}>
-                    <TouchableOpacity style={[styles.mode_sele, { backgroundColor: mode_selected === "SED" ? "green" : "#011434" }]} onPress={() => { setmode_selected("SED") }}>
-                        <Text style={styles.mode_text}>Send</Text>
+                    <TouchableOpacity style={[styles.mode_sele, { backgroundColor: mode_selected === "SED" ? "#5B65E1" : theme.cardBg }]} onPress={() => { setmode_selected("SED") }}>
+                        <Text style={[styles.mode_text,{color: mode_selected === "SED"?"#fff":theme.headingTx}]}>Send</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.mode_sele, { backgroundColor: mode_selected === "RVC" ? "green" : "#011434" }]} onPress={() => { setmode_selected("RVC") }}>
-                        <Text style={styles.mode_text}>Receive</Text>
+                    <TouchableOpacity style={[styles.mode_sele, { backgroundColor: mode_selected === "RVC" ? "#5B65E1" : theme.cardBg }]} onPress={() => { setmode_selected("RVC"),setreceiveQrOpen(true) }}>
+                        <Text style={[styles.mode_text,{color: mode_selected === "RVC"?"#fff":theme.headingTx}]}>Receive</Text>
                     </TouchableOpacity>
                 </View>
-                {
-                    mode_selected === "SED" ?
-                        <>
-                            <View style={[styles.text_input,{flexDirection:"row",alignItems:"center"}]}>
-                            <TextInput placeholder="Enter stellar address" placeholderTextColor={"gray"} value={recepi_address} style={{height:"100%",width:"80%",fontSize:19,color:"#fff"}}  onChangeText={(value) => { setrecepi_address(value) }} />
-                           <TouchableOpacity onPress={()=>{toggleModal();}}>
-                            <Icon
-                            name={"qrcode-scan"}
-                            type={"materialCommunity"}
-                            size={28}
-                            color={"white"}
-                            />
-                            </TouchableOpacity>
-                            </View>
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 16, marginTop: 10 }]}>Available: {asset_name==="native"||asset_name!=="native"?!resStellarbal?<ActivityIndicator/>:resStellarbal==="Error"?0.00:resStellarbal:resStellarbal==="Error"?0.00:resStellarbal}</Text>
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Amount</Text>
-                            <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="number-pad" style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_amount(value) }} />
-                            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 19, fontSize: 18, marginTop: 15 }]}>Transaction memo</Text>
-                            <TextInput placeholder="Enter transaction memo" placeholderTextColor={"gray"} value={recepi_memo} style={[styles.text_input,{marginTop: 2}]} onChangeText={(value) => { setrecepi_memo(value) }} />
+          <View style={[styles.card,{backgroundColor:theme.cardBg}]}>
+            <View style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center",paddingVertical:5}}>
+            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 16, fontSize: 16, color: theme.inactiveTx }]}>Recipient Address</Text>
+            <TouchableOpacity style={{flexDirection:"row",alignItems:"center"}}  onPress={() => {Paste(setrecepi_address)}}>
+            <Icon name={"content-copy"} type={"materialCommunity"} size={18} color={"#5B65E1"}/>
+            <Text style={[styles.mode_text, { textAlign: "left", marginRight: 16,marginLeft:5, fontSize: 16, color: "#5B65E1" }]}>PASTE</Text>
+            </TouchableOpacity>
+            </View>
+            <View style={[styles.text_input, { flexDirection: "row", alignItems: "center", backgroundColor: theme.bg }]}>
+              <TextInput placeholder="Recipient stellar address" placeholderTextColor={"gray"} value={recepi_address} style={{ height: "100%", width: "88%", fontSize: 19, color: theme.headingTx }} onChangeText={(value) => { setrecepi_address(value) }} />
+              <TouchableOpacity onPress={() => { toggleModal(); }}>
+                <Icon
+                  name={"qrcode-scan"}
+                  type={"materialCommunity"}
+                  size={28}
+                  color={"#5B65E1"}
+                />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 16, fontSize: 16, marginTop: 10, color: theme.inactiveTx }]}>Available: {asset_name === "native" || asset_name !== "native" ? resStellarbal === null || resStellarbal === undefined ||Loading ? <ActivityIndicator /> : resStellarbal === "Error" ? 0.00 : resStellarbal : resStellarbal === "Error" ? 0.00 : resStellarbal}</Text>
+          </View>
 
-                            <TouchableOpacity disabled={Payment_loading} style={[styles.mode_sele, { height: 60, backgroundColor: Payment_loading  ? "#011434" : "green", marginTop: 40, alignSelf: "center" }]} onPress={() => {Send_Asseet()}}>
-                                {Payment_loading?<ActivityIndicator color={"green"}/>:<Text style={styles.mode_text}>Send</Text>}
-                            </TouchableOpacity>
-                        </> :
-                        <View style={styles.QR_con}>
-                            <View style={{ alignSelf: "center", marginTop: hp(5) }}>
-                                <QRCode
-                                    value={qrvalue ? qrvalue : "NA"}
-                                    size={250}
-                                    color="black"
-                                    backgroundColor="white"
-                                    logo={{
-                                        url: "https://raw.githubusercontent.com/AboutReact/sampleresource/master/logosmalltransparen.png",
-                                    }}
-                                    logoSize={30}
-                                    logoMargin={2}
-                                    logoBorderRadius={15}
-                                />
-                            </View>
-                            <Text style={styles.addressTxt}>
-                                {qrvalue ? qrvalue : ""}
-                            </Text>
-                        </View>
-                }
+          <View style={[styles.card, { backgroundColor: theme.cardBg,marginTop:2 }]}>
+            <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 16, fontSize: 16, color: theme.inactiveTx }]}>Amount</Text>
+            <View style={[styles.text_input, { flexDirection: "row", alignItems: "center", backgroundColor: theme.bg }]}>
+              <TextInput placeholder="Enter amount" placeholderTextColor={"gray"} value={recepi_amount} returnKeyType="done" keyboardType="decimal-pad" style={{ height: "100%", width: "88%", fontSize: 19, color: theme.headingTx }} onChangeText={(value) => { 
+                const replaceComma = value.replace(',', '.');
+                const numericText = replaceComma.replace(/[^0-9.]/g, '');
+                setrecepi_amount(numericText)
+              }} />
+            </View>
+          </View>
+
+          <View style={[styles.card, { backgroundColor: theme.cardBg,marginTop:2 }]}>
+
+              <Text style={[styles.mode_text, { textAlign: "left", marginLeft: 16, fontSize: 16,color:theme.inactiveTx }]}>Transaction Memo</Text>
+              <View style={[styles.text_input, { flexDirection: "row", alignItems: "center", backgroundColor: theme.bg }]}>
+              <TextInput placeholder="Enter transaction memo" placeholderTextColor={"gray"} value={recepi_memo} style={{ height: "100%", width: "88%", fontSize: 19, color: theme.headingTx }} onChangeText={(value) => { setrecepi_memo(value) }} />
+              </View>
+                </View>
+              <TouchableOpacity disabled={Payment_loading} style={[styles.mode_sele, { height: 60,width:wp(91), backgroundColor: Payment_loading  ? "#011434" : "#5B65E1", marginTop: 20, alignSelf: "center" }]} onPress={() => {Send_Asseet()}}>
+              {Payment_loading?<ActivityIndicator color={"green"}/>:<Text style={styles.mode_text}>Send</Text>}
+              </TouchableOpacity>
            <Modal
         animationType="slide"
         transparent={true}
@@ -362,29 +441,24 @@ const send_recive = ({route}) => {
             captureAudio={false}
             onStatusChange={({ status }) => handleCameraStatus(status)} // Use onStatusChange
           >
-            <>
-              <View style={styles.header}>
-                <TouchableOpacity onPress={() => { setModalVisible(false); }}>
-                  <Icon name="arrow-left" size={24} color="#fff" style={styles.backIcon} />
-                </TouchableOpacity>
-                <Text style={[styles.title, { marginTop: Platform.OS === "ios" ? hp(5) : 0 }]}>Scan QR Code</Text>
-              </View>
-              <View style={styles.rectangleContainer}>
-                <View style={styles.rectangle}>
-                  <View style={styles.innerRectangle} />
-                </View>
-              </View>
-            </>
+             <QRScannerComponent setModalVisible={setModalVisible}/>
           </RNCamera>
     </Modal>
             </View>
+        <TokenQrCode
+          modalVisible={receiveQrOpen}
+          setModalVisible={()=>{setreceiveQrOpen(false),setmode_selected("SED")}}
+          iconType={asset_name}
+          qrvalue={state?.STELLAR_PUBLICK_KEY}
+          isDark={state.THEME.THEME}
+        />
         </>
     )
 }
 const styles = StyleSheet.create({
     main_con: {
-        backgroundColor: "#011434",
-        height: "100%"
+        height: "100%",
+        paddingHorizontal:5
     },
     QR_con: {
         alignSelf: "center",
@@ -399,6 +473,7 @@ const styles = StyleSheet.create({
         width: wp(65),
         alignSelf: "center",
         color: "black",
+        padding:10,
         fontWeight: "600"
     },
     mode_con: {
@@ -412,14 +487,12 @@ const styles = StyleSheet.create({
     text_input: {
         alignSelf: "center",
         color: "#fff",
-        height: 50,
         width: "95%",
         fontSize: 20,
-        borderWidth: 1.9,
-        borderColor: "rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
-        borderRadius: 19,
+        borderRadius: 15,
         paddingLeft: 10,
-        marginTop: 19
+        marginTop: 10,
+        paddingVertical:hp(1.5)
     },
     mode_text: {
         color: "#fff",
@@ -430,9 +503,7 @@ const styles = StyleSheet.create({
     mode_sele: {
         height: "90%",
         width: "45%",
-        borderWidth: 1.9,
-        borderColor: "rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
-        borderRadius: 19,
+        borderRadius: 15,
         justifyContent: "center"
     },
     headerContainer1_TOP: {
@@ -527,6 +598,13 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color:"#fff"
+      },
+      card: {
+        borderRadius: 16,
+        paddingVertical:hp(1.9),
+        paddingHorizontal:hp(0.1),
+        marginVertical: hp(1.5),
+        marginHorizontal:wp(2)
       },
 })
 export default send_recive;

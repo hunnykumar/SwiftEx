@@ -16,6 +16,9 @@ import Moralis from "moralis"
 import { API_KEYS, MORALIS_API_KEY } from "./src/Dashboard/constants";
 import Network_Checker from "./src/utilities/Network_Checker";
 import CustomInfoProvider from "./src/Dashboard/exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
+import ErrorBoundary from "./src/utilities/ErrorBoundary";
+import crashlytics from '@react-native-firebase/crashlytics';
+import { CheckAppAvailable } from "./src/Screens/AppChecks/AppCheckService";
 
 LogBox.ignoreLogs(["Setting a timer"]);
 
@@ -40,11 +43,14 @@ export default function App() {
   LogBox.ignoreLogs([
     "verified is not a valid icon name for family FontAwesome"
   ])
+  useEffect(() => {
+    crashlytics().log('App mounted.');
+  }, []);
 
   
   useEffect(() => {
+    CheckAppAvailable()
     setTimeout(async () => {
-      
       setReady(true);
       await Moralis.start({
         apiKey: MORALIS_API_KEY.apiKey//API_KEYS.MORALIS
@@ -65,13 +71,12 @@ export default function App() {
 
  
   return (
+     <ErrorBoundary>
     <StoreProvider store={store}>
       <NativeBaseProvider>
         <PaperProvider>
           <Network_Checker/>
             <View style={styles.container}>
-              {/* <StatusBar  backgroundColor="#011434" /> */}
-              {Platform.OS==="ios"?<StatusBar hidden={true}/>:<StatusBar barStyle={"light-content"} backgroundColor={"#011434"}/>}
 
               <NavigationProvider />
             </View>
@@ -79,6 +84,7 @@ export default function App() {
       </NativeBaseProvider>
       <CustomInfoProvider/>
     </StoreProvider>
+    </ErrorBoundary>
   );
 }
 const styles = StyleSheet.create({

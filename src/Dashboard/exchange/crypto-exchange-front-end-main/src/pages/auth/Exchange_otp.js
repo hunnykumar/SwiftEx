@@ -49,7 +49,7 @@ const Exchange_otp = (props) => {
                 setOtp(null);
                 setLoading(false);
                 await AsyncStorage.setItem("UserAuthID", result.data.token) 
-                navigation.navigate("exchange");
+                navigation.navigate("Settings");
                 Snackbar.show({
                     text: "Login Success.",
                     duration: Snackbar.LENGTH_SHORT,

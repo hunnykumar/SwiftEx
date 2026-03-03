@@ -1,4 +1,4 @@
-package com.app.swiftEx.app
+package org.app.swiftEx.wallet
 
 import android.os.Bundle
 import android.widget.Button

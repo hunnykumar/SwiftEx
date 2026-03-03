@@ -187,7 +187,7 @@ useEffect(()=>{
           >
             <Image style={styles.tinyLogo} source={darkBlue} />
             <Text style={{ color: "#fff", paddingVertical:hp(0.4), fontSize: 20,textAlign:"center" ,fontWeight:"700"}}>
-              Create your exchange account
+              Create Your SDEX Account
             </Text>
 
 

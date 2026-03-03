@@ -3,22 +3,27 @@ import { StyleSheet, View, Text, TouchableOpacity, Animated, Alert, Image, Platf
 import darkBlue from "../../assets/darkBlue.png";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { useDispatch } from "react-redux";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useIsFocused, useNavigation } from "@react-navigation/native";
 import { useBiometrics } from "../biometrics/biometric";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SET_APP_THEME } from "../components/Redux/actions/type";
 import { alert } from "./reusables/Toasts";
 import Icon from "../icon";
 import { setPlatform } from "../components/Redux/actions/auth";
+import { colors } from "../Screens/ThemeColorsConfig";
+import { AppNavigation } from "../Screens/AppChecks/AppCheckService";
+import { AddPassCode, CheckPasscode } from "../biometrics/utils";
 
 const Passcode = (props) => {
   const [pin, setPin] = useState("");
   const [isError, setIsError] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [activeTheme,setactiveTheme] = useState(false);
   const shakeAnimation = useRef(new Animated.Value(0)).current;
   const dispatch = useDispatch();
   const [status, setStatus] = useState("");
   const [tempPin, setTempPin] = useState("");
+  const isFocused=useIsFocused();
   const handlePress = async (value) => {
   if (pin.length < 6) {
     const newPin = pin + value; 
@@ -27,10 +32,10 @@ const Passcode = (props) => {
     if (newPin.length === 6) {
       if (status === "verify") {
         if (tempPin === newPin) {
-          await AsyncStorage.setItem("pin", JSON.stringify(tempPin));
+          await AddPassCode(tempPin)
           resetInput();
           setStatus("");
-          props.navigation.navigate("Welcome");
+          AppNavigation(props)
         } else {
           triggerShake();
           setIsError(true);
@@ -41,14 +46,14 @@ const Passcode = (props) => {
           }, 200);
         }
       } else if (status === "pinset") {
-        const storedPin = await AsyncStorage.getItem("pin");
+        const validPin=await CheckPasscode(newPin);
         const user = await AsyncStorage.getItem("user");
 
-        if (JSON.parse(storedPin) === newPin) {
+        if (validPin) {
           setIsSuccess(true);
           setTimeout(() => {
             resetInput();
-            props.navigation.navigate(user ? "HomeScreen" : "Welcome");
+            AppNavigation(props,user)
           }, 500);
         } else {
           triggerShake();
@@ -116,10 +121,17 @@ const Passcode = (props) => {
   useEffect(() => {
     const initializeApp = async () => {
       const Checked = await AsyncStorage.getItem("APP_THEME");
+      setactiveTheme(Checked === null ? false : Checked === "false" ? false : true);
       dispatch({
         type: SET_APP_THEME,
         payload: { THEME: Checked === null ? false : Checked === "false" ? false : true },
       });
+    };
+    initializeApp();
+  }, [isFocused]);
+
+  useEffect(() => {
+    const initializeApp = async () => {
       const Check = await AsyncStorage.getItem("pin");
       const biometric = await AsyncStorage.getItem("Biometric");
       if (biometric === "SET") {
@@ -146,8 +158,9 @@ const Passcode = (props) => {
       );
     }
   };
+  const theme = activeTheme ? colors.dark : colors.light;
   return (
-    <View style={[styles.container]}>
+    <View style={[styles.container,{backgroundColor:theme.bg}]}>
       <View style={styles.upper_con}>
         <Image
           style={{
@@ -159,8 +172,8 @@ const Passcode = (props) => {
           source={darkBlue}
         />
         <View style={styles.text_con}>
-          <Text style={styles.text_style}>Hi,</Text>
-          <Text style={[styles.text_style, { marginTop: 10 }]}>{status === "verify"
+          <Text style={[styles.text_style,{color:theme.headingTx}]}>Hi,</Text>
+          <Text style={[styles.text_style, { marginTop: 10, color:theme.headingTx}]}>{status === "verify"
             ? "Please Re-enter your pin"
             : status === "pinset"
             ? "Please enter your pin"
@@ -201,32 +214,32 @@ const Passcode = (props) => {
             onPress={() => handlePress(key.toString())}
             style={styles.key}
           >
-            <Text style={styles.keyText}>{key}</Text>
+            <Text style={[styles.keyText,{color:theme.headingTx}]}>{key}</Text>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity onPress={()=>{handleBiometrics()}} style={styles.key}>
+        <TouchableOpacity onPress={()=>{resetInput(),handleBiometrics()}} style={styles.key}>
           <Icon
                 type={"materialCommunity"}
                 name={Platform.OS === "android" ? "fingerprint" : "face-recognition"}
                 size={36}
-                color={"gray"}
+                color={theme.inactiveTx}
               />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handlePress("0")} style={styles.key}>
-          <Text style={styles.keyText}>0</Text>
+          <Text style={[styles.keyText,{color:theme.headingTx}]}>0</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleDelete} style={styles.key}>
           <Icon
                 type={"materialCommunity"}
                 name={"backspace"}
                 size={36}
-                color={"gray"}
+                color={theme.inactiveTx}
               />
         </TouchableOpacity>
       </View>
       <View style={styles.text_con}>
-        <Text style={[styles.text_style, { fontSize: 13, color: "gray" }]}>Passcode adds an extra layer of security</Text>
-        <Text style={[styles.text_style, { fontSize: 13, color: "gray" }]}>when using the app</Text>
+        <Text style={[styles.text_style, { fontSize: 13, color: theme.inactiveTx }]}>Passcode adds an extra layer of security</Text>
+        <Text style={[styles.text_style, { fontSize: 13, color: theme.inactiveTx }]}>when using the app</Text>
       </View>
     </View>
   );

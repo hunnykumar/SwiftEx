@@ -13,6 +13,8 @@ import {
   TouchableOpacity,
   Modal,
   Keyboard,
+  ScrollView,
+  NativeModules,
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import * as StellarSdk from '@stellar/stellar-sdk';
@@ -26,6 +28,7 @@ import {
 import BigNumber from 'bignumber.js';
 import { STELLAR_URL } from '../../../../constants';
 import CustomInfoProvider from '../components/CustomInfoProvider';
+import { colors } from '../../../../../Screens/ThemeColorsConfig';
 
 const STELLAR_NETWORK = StellarSdk.Networks.PUBLIC;
 
@@ -67,6 +70,9 @@ const Offers_manages = () => {
     setSTELLAR_ACCOUNT_SECRET(state.STELLAR_SECRET_KEY);
     fetchOffers();
   }, [isFocused]);
+
+
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
 
 
   const fetchAvilableBalance=async(asset,coinName,assetIssuer)=>{
@@ -138,8 +144,8 @@ const Offers_manages = () => {
   const handleDelete = (offerId,index) => {
     setSelectedIndex(index)
    CustomInfoProvider.show(
-      'Delete Offer',
-      'Are you sure you want to delete this offer?',
+      'Delete Request',
+      'Are you sure you want to delete this request?',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'OK', onPress: () => deleteOffer(offerId) },
@@ -150,9 +156,8 @@ const Offers_manages = () => {
   const deleteOffer = async (offer) => {
     console.log("==--------lppp",sellingAssetCode,buyingAssetCode)
     setloading_del(true);
-    const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
     try {
-      const account = await server.loadAccount(keypair.publicKey());
+      const account = await server.loadAccount(state.STELLAR_PUBLICK_KEY);
   
       const selling =
         offer.selling.asset_type === "native"
@@ -180,17 +185,19 @@ const Offers_manages = () => {
         .setTimeout(30)
         .build();
 
-      transaction.sign(keypair);
-
+      const txXDR = transaction.toXDR();
+      const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
+      const signatureBuffer = Buffer.from(signedTx.signature, 'base64');
+      transaction.addSignature(signedTx.publicKey, signatureBuffer.toString('base64'));
       const response = await server.submitTransaction(transaction);
       console.log('Offer deleted:', response);
       setloading_del(false);
       fetchOffers(); 
-     CustomInfoProvider.show('Success', 'Offer deleted successfully.');
+     CustomInfoProvider.show('Success', 'Request successfull.');
     } catch (error) {
       setloading_del(false);
       console.log("Error deleting offer:", error);
-     CustomInfoProvider.show('Info', 'Failed to delete the offer');
+     CustomInfoProvider.show('Info', 'Failed to delete the request.');
     }
   };
 
@@ -200,9 +207,19 @@ const Offers_manages = () => {
     fetchAvilableBalance(offer?.selling?.asset_type,offer?.selling?.asset_code,offer?.selling?.asset_issuer)
     setSelectedIndex(index)
     setSelectedOffer(offer);
-    setNewAmount(Number(offer.amount).toFixed(5));
-    setNewPrice(Number(offer.price).toFixed(5));
+    setNewAmount(Number(offer.amount).toFixed(7));
+    setNewPrice(Number(offer.price).toFixed(7));
     setModalVisible(true);
+  };
+
+  const isValidNumber = (value) => {
+    if (value === null || value === undefined) return false;
+    if (value === "" || value === ".") return false;
+    const num = new BigNumber(value);
+    if (!num.isFinite() || num.isNaN()) return false;
+    if (num.lte(0)) return false;
+    if (num.decimalPlaces() > 7) return false;
+    return true;
   };
 
   const updateOffer = async () => {
@@ -220,22 +237,20 @@ const Offers_manages = () => {
       });
       return;
     }
-    if (newAmountBN.isZero() || BigNumber(newPrice || 0).isZero()) {
+    if (!isValidNumber(newAmountBN) || !isValidNumber(newPrice)) {
       Snackbar.show({
         text: 'Invalid value provided',
         duration: Snackbar.LENGTH_SHORT,
         backgroundColor: 'red',
       });
-      setNewAmount('');
-      setNewPrice('');
       return;
     }
-  
+    
     setloading_edi(true);
-    const keypair = StellarSdk.Keypair.fromSecret(STELLAR_ACCOUNT_SECRET);
+
   
     try {
-      const account = await server.loadAccount(keypair.publicKey());
+      const account = await server.loadAccount(state.STELLAR_PUBLICK_KEY);
   
       const selling =
         sellingAssetCode === "XLM" || sellingAssetCode === "native"
@@ -262,63 +277,75 @@ const Offers_manages = () => {
         .setTimeout(30)
         .build();
   
-      transaction.sign(keypair);
+      const txXDR = transaction.toXDR();
+      const signedTx = await NativeModules.StellarSigner.signTransaction(txXDR);
+      const signatureBuffer = Buffer.from(signedTx.signature, 'base64');
+      transaction.addSignature(signedTx.publicKey, signatureBuffer.toString('base64'));
   
       const response = await server.submitTransaction(transaction);
       console.log('Offer updated:', response);
   
       setloading_edi(false);
       fetchOffers();
-     CustomInfoProvider.show('Success', 'Offer updated successfully.');
+     CustomInfoProvider.show('Success', 'Request updated successfully.');
       setModalVisible(false);
     } catch (error) {
       setloading_edi(false);
       console.log("Error updating offer:", error.response?.data || error);
-     CustomInfoProvider.show('Info', 'Failed to update the offer');
+     CustomInfoProvider.show('Info', 'Failed to update the request.');
     }
   };
   
   
 
   const renderItem = ({ item,index }) => (
-    <View style={styles.offerItem}>
+    <View style={[styles.offerItem, { backgroundColor: theme.cardBg }]}>
       <View style={styles.offer_id_con}>
-        <Text style={[styles.offerText,{color:"#94A3B8"}]}>Offer ID: {item.id}</Text>
-        <View style={styles.active_text}>
-          <Text style={[styles.offerText, { color: "#2DAA20" }]}>Active</Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={[styles.offerText, { color: theme.headingTx }]}>Swap ID: {item.id}</Text>
+          <View style={styles.active_text}>
+            <Text style={[styles.offerText, { color: "#fff", fontSize: 13 }]}>Active</Text>
+          </View>
+        </View>
+        <View style={styles.buttonContainer}>
+          {loading_edi && SelectedIndex === index ? <ActivityIndicator color={"green"} size={"small"} /> :
+            <TouchableOpacity style={{ marginRight: 15 }} disabled={loading_del} onPress={() => handleEdit(item, index)}>
+              <Icon name={"edit"} type={"antDesign"} size={25} color={"#AA2022"} />
+            </TouchableOpacity>}
+          {loading_del && SelectedIndex === index ? <ActivityIndicator color={"green"} size={"small"} /> :
+            <TouchableOpacity disabled={loading_edi} onPress={() => handleDelete(item, index)}>
+              <Icon name={"delete"} type={"antDesign"} size={25} color={"#40BF6A"} />
+            </TouchableOpacity>}
         </View>
       </View>
-      <View style={styles.container_sub}>
-      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Asset Selling :</Text>
-      <Text style={styles.offerText}>{item?.selling?.asset_type==="native"?"XLM":item.selling?.asset_code}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <View style={{flexDirection:"row",alignItems:"center",justifyContent:"center"}}>
+        <View style={styles.container_sub}>
+          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Send Asset</Text>
+          <Text style={[styles.offerSubText, { color: theme.headingTx }]}>{item?.selling?.asset_type === "native" ? "XLM" : item.selling?.asset_code}</Text>
+        </View>
+        <View style={styles.container_sub}>
+          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Receive Asset</Text>
+          <Text style={[styles.offerSubText, { color: theme.headingTx }]}>{item?.buying?.asset_type === "native" ? "XLM" : item.buying?.asset_code}</Text>
+        </View>
+        <View style={styles.container_sub}>
+          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Amount</Text>
+          <Text style={[styles.offerSubText, { color: theme.headingTx }]}>{Number(item.amount).toFixed(5)}</Text>
+        </View>
+        <View style={styles.container_sub}>
+          <Text style={[styles.offerText, { color: theme.inactiveTx }]}>Price</Text>
+          <Text style={[styles.offerSubText, { color: theme.headingTx }]}>{Number(item.price).toFixed(5)}</Text>
+        </View>
+
       </View>
-      <View style={styles.container_sub}>
-      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Asset Buying :</Text>
-      <Text style={styles.offerText}>{item?.buying?.asset_type==="native"?"XLM":item.buying?.asset_code}</Text>
-      </View>
-      <View style={styles.container_sub}>
-      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Amount :</Text>
-      <Text style={styles.offerText}>{Number(item.amount).toFixed(5)}</Text>
-      </View>
-      <View style={styles.container_sub}>
-      <Text style={[styles.offerText,{color:"#94A3B8"}]}>Price :</Text>
-      <Text style={styles.offerText}>{Number(item.price).toFixed(5)}</Text>
-      </View>
-      <View style={styles.buttonContainer}>
-      {loading_edi&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
-        <TouchableOpacity style={[styles.buttonView,{backgroundColor:"#2164C1",marginRight:10}]} disabled={loading_del} onPress={() => handleEdit(item,index)}><Text style={{color:"#fff",fontSize:15}}>Edit</Text></TouchableOpacity> }
-        {loading_del&&SelectedIndex===index?<ActivityIndicator color={"green"} size={"small"}/>:
-        <TouchableOpacity style={[styles.buttonView,{backgroundColor:"rgba(254, 32, 36, 0.16)"}]} disabled={loading_edi} onPress={() => handleDelete(item,index)}><Text style={{color:"rgb(254, 32, 36)",fontSize:15}}>Delete</Text></TouchableOpacity>}
-      </View>
+      </ScrollView>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Active Offers</Text>
-    
+    <View style={[styles.container,{backgroundColor:theme.bg}]}>
       {loading ? (
-        <ActivityIndicator color={"gray"} size={"large"}/>
+        <ActivityIndicator color={"#4052D6"} size={"large"}/>
       ) : (
         offers.length>0?<FlatList
           data={offers}
@@ -327,7 +354,8 @@ const Offers_manages = () => {
           style={styles.offerList}
         />:
         <View style={styles.error_cont}>
-          <Text style={styles.error_text}>No Active Offers</Text>
+          <Icon name={"cart-outline"} type={"materialCommunity"} size={55} color={theme.inactiveTx} />
+          <Text style={[styles.error_text,{color:theme.inactiveTx}]}>No Pending Adv. Swaps</Text>
         </View>
       )}
 
@@ -345,8 +373,8 @@ const Offers_manages = () => {
           <Icon name={"close"} type={"antDesign"} size={25} color={"#fff"}/>
           </TouchableOpacity>
             <View style={styles.container_sub}>
-            <Text style={styles.modalTitle}>Edit Offer</Text>
-            <Text style={styles.modalTitle}>ID: {selectedOffer?.id}</Text>
+            <Text style={styles.modalTitle}>Edit Swap</Text>
+            <Text style={styles.modalTitle}>Swap ID: {selectedOffer?.id}</Text>
             </View>
             <TextInput
               editable={!loading_edi}
@@ -354,7 +382,11 @@ const Offers_manages = () => {
               placeholder="New Amount"
               placeholderTextColor={"gray"}
               value={newAmount}
-              onChangeText={setNewAmount}
+              onChangeText={(input)=>{
+                const replaceComma = input.replace(',', '.');
+                const filteredValue = replaceComma.replace(/[^0-9.]/g, '');
+                setNewAmount(filteredValue);
+              }}
               keyboardType="numeric"
               returnKeyType='done'
             />
@@ -364,7 +396,11 @@ const Offers_manages = () => {
               placeholder="New Price"
               placeholderTextColor={"gray"}
               value={newPrice}
-              onChangeText={setNewPrice}
+              onChangeText={(input) => {
+                const replaceComma = input.replace(',', '.');
+                const filteredValue = replaceComma.replace(/[^0-9.]/g, '');
+                setNewPrice(filteredValue);
+              }}
               keyboardType="numeric"
               returnKeyType='done'
             />
@@ -373,7 +409,7 @@ const Offers_manages = () => {
                   <Text style={styles.balance}>{stellarAvalibleBalance ? Number(stellarAvalibleBalance) : 0.0} </Text>}
             </View>
             <TouchableOpacity style={styles.update_btn} disabled={loading_edi||reserveLoading} onPress={()=>{updateOffer()}}>
-              {loading_edi?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={{color:"#4B84ED",fontSize:19}}>Update Offer</Text>}
+              {loading_edi?<ActivityIndicator color={"green"} size={"small"}/>:<Text style={{color:"#4B84ED",fontSize:19}}>Update Swap</Text>}
             </TouchableOpacity>
           </View>
         </View>
@@ -406,22 +442,17 @@ const styles = StyleSheet.create({
     color:"black"
   },
   offerItem: {
-    backgroundColor: 'rgba(13, 30, 59, 0.8)',
     borderRadius: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-    elevation: 3,
+    marginBottom: 15
   },
   offerText: {
-    fontSize: 16,
-    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight:"500"
+  },
+  offerSubText: {
+    fontSize: 13,
+    fontWeight:"500",
+    textAlign:"left"
   },
   offerList: {
     marginTop: 10,
@@ -449,17 +480,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 10,
-    borderTopColor:"#fff",
-    borderWidth:0.5,
-    borderLeftColor:'rgba(13, 30, 59, 0.8)',
-    borderRightColor:'rgba(13, 30, 59, 0.8)',
-    borderBottomColor:'rgba(13, 30, 59, 0.8)',
-    borderBottomLeftRadius:15,
-    borderBottomRightRadius:15,
     paddingHorizontal:10,
-    paddingVertical:9
   },
   buttonView:{
     alignContent:"center",
@@ -481,23 +502,29 @@ const styles = StyleSheet.create({
   },
   container_sub:{
     justifyContent:"space-between",
-    flexDirection:"row",
-    marginBottom:5,
-    paddingHorizontal: 15,
+    flexDirection:"column",
+    alignItems:"center",
+    paddingHorizontal: 12,
+    paddingTop:5,
+    paddingBottom:15
   },
   offer_id_con:{
     justifyContent:"space-between",
     flexDirection:"row",
-    paddingVertical:21,
-    paddingBottom:10,
+    paddingVertical:14,
     paddingHorizontal: 15,
+    borderBottomColor:"gray",
+    borderBottomWidth:0.5,
+    marginBottom:8
   },
   active_text:{
-    backgroundColor:"#2DAA2033",
-    paddingHorizontal:16,
+    backgroundColor:"#1D5F33",
+    paddingHorizontal:wp(2),
+    paddingVertical:hp(0.4),
     alignItems:"center",
     justifyContent:"center",
-    borderRadius:10
+    borderRadius:8,
+    marginLeft:4
   },
   update_btn:{
     alignSelf:"center",

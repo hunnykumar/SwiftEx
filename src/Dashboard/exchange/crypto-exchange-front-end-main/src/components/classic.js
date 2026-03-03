@@ -1,1348 +1,1138 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Modal, View, Text, Picker, ActivityIndicator, StyleSheet, TouchableOpacity, TextInput, Image, Platform, Keyboard, Alert, BackHandler, TouchableWithoutFeedback } from 'react-native';
-import Icon from "../../../../../icon";
-import { FlatList, useToast } from 'native-base';
-import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
-import Bridge from "../../../../../../assets/Bridge.png";
-import { useSelector } from 'react-redux';
-import { ScrollView } from 'react-native-gesture-handler';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
-import { REACT_APP_HOST, REACT_APP_LOCAL_TOKEN, REACT_PROXY_HOST } from '../ExchangeConstants';
-import AsyncStorageLib from '@react-native-async-storage/async-storage';
-import darkBlue from '../../../../../../assets/darkBlue.png'
-import steller_img from '../../../../../../assets/Stellar_(XLM).png'
-import bnbimage from "../../../../../../assets/bnb-icon2_2x.png";
-import WalletActivationComponent from '../utils/WalletActivationComponent';
-import { GET, PGET, PPOST, authRequest, getToken, proxyRequest } from '../api';
-import { ShowErrotoast, alert } from '../../../../reusables/Toasts';
-import { toInt } from 'validator';
-import { SignTransaction, swap_prepare } from '../../../../../../All_bridge';
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Modal,
+  Image,
+  FlatList,
+  ActivityIndicator,
+  Keyboard,
+} from 'react-native';
+
+import { useSelector } from 'react-redux';
+import { colors } from '../../../../../Screens/ThemeColorsConfig';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { Exchange_screen_header } from '../../../../reusables/ExchangeHeader';
-import { ethers } from 'ethers';
-import { OneTapContractAddress, OneTapUSDCAddress, RPC } from '../../../../constants';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { QuoteModalBottomSheet } from '../utils/QuotesComponent';
-import { CustomQuotes } from '../utils/CustomQuotes';
-import Wallet_selection_bottom from '../../../../Wallets/Wallet_selection_bottom';
+import { useNavigation } from '@react-navigation/native';
+import Icon from '../../../../../icon';
+import { getTokenBalancesUsingAddress } from '../utils/getWalletInfo/EtherWalletService';
+import { GetStellarAvilabelBalance, GetStellarUSDCAvilabelBalance, stellarWalletStatus } from '../../../../../utilities/StellarUtils';
+import { getChainTokenData, swapPepare } from '../../../../../utilities/AllbridgeUtil';
+import { alert } from '../../../../reusables/Toasts';
 import { debounce } from 'lodash';
-import { fetchBSCTokenInfo, fetchTokenInfo } from '../../../../../ethSwap/tokenUtils';
-import { SwapPepare } from '../../../../../utilities/AllbridgeBscUtil';
+import LocalTxManager from '../../../../../utilities/LocalTxManager';
 import CustomInfoProvider from './CustomInfoProvider';
-import AllbridgeTxTrack from './AllbridgeTxTrack';
-const classic = ({ route }) => {
-  const Focused=useIsFocused();
-  const toast=useToast();
-  const navigation=useNavigation();
-  const { Asset_type } = route.params;
-  const TEMPCHOSE=Asset_type==="ETH"?"Ethereum":Asset_type==="BNB"?"BNB":Asset_type 
+import WalletActivationComponent from '../utils/WalletActivationComponent';
+import { swap_prepare } from '../../../../../../All_bridge';
+import { SwapPepare } from '../../../../../utilities/AllbridgeBscUtil';
+
+const classic = ({ props }) => {
+  const navigation = useNavigation();
   const state = useSelector((state) => state);
-  const nav = useNavigation();
-  const [chooseModalVisible, setChooseModalVisible] = useState(false);
-  const [modalContainer_menu, setmodalContainer_menu] = useState(false);
-  const [con_modal, setcon_modal] = useState(false)
-  const [chooseSelectedItemId, setChooseSelectedItemId] = useState(TEMPCHOSE);
-  const [chooseSelectedItemIdCho, setChooseSelectedItemIdCho] = useState(null);
-  const [chooseSearchQuery, setChooseSearchQuery] = useState('');
-  const [idIndex, setIdIndex] = useState(null);
-  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-  const [main_modal, setmain_modal] = useState(true);
-  const [fianl_modal, setfianl_modal] = useState(false);
-  const [fianl_modal_error, setfianl_modal_error] = useState(false);
-  const [fianl_modal_loading, setfianl_modal_loading] = useState(false);
-  const [amount, setamount] = useState('');
-  const [chooseModalVisible_choose, setchooseModalVisible_choose] = useState(false);
-  const [not_avilable, setnot_avilable] = useState(false);
-  const [WALLETADDRESS,setWALLETADDRESS]=useState('')
-  const [WALLETBALANCE,setWALLETBALANCE]=useState('')
-  const [ErrorMessageUI,setErrorMessageUI]=useState(null);
-  const [ACTIVATION_MODAL_PROD,setACTIVATION_MODAL_PROD]=useState(false);
-  const [balanceLoading,setbalanceLoading]=useState(false)
-  const [onTapFeature,setonTapFeature]=useState(false)
-  const [Wallet_modal,setWallet_modal]=useState(false);
-  const [fianl_modal_text,setfianl_modal_text]=useState("Transaction Faild")
-  const [messageError,setmessageError]=useState(null);
-  const [resQuotes,setresQuotes]=useState(null);
-  const [getInfo,setgetInfo]=useState(false);
-  const [payFeeType,setPayFeeType]=useState("native");
-  const [errorMsg,seterrorMsg]=useState(null)
-  const [showTx,setshowTx]=useState(false);
-  const [showTxHash,setshowTxHash]=useState([]);
-  const chooseItemList = [
-    { id: 1, name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" },
-    { id: 2, name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" },
-  ]
-  const chooseItemList_ETH = [
-    { id: 1, name: "USDT", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" },
-    { id: 2, name: "USDC", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }
-  ];
-  const [Profile, setProfile] = useState({
-    isVerified: false,
-    firstName: "jane",
-    lastName: "doe",
-    email: "xyz@gmail.com",
-    phoneNumber: "93400xxxx",
-    isEmailVerified: false,
-});
-const [open, setOpen] = useState(false);
-const ActivateModal = () => {
-  setACTIVATION_MODAL_PROD(false);
-  navigation.goBack()
-};
-useEffect(()=>{
-  setshowTx(false);
-  setshowTxHash([]);
-  setmessageError(null)
-  setresQuotes(null)
-  setgetInfo(false)
-  setonTapFeature(false)
-  setACTIVATION_MODAL_PROD(false)
-  setbalanceLoading(false)
-  setErrorMessageUI(null);
-  fetchUSDCBalnce(state&&state.wallet && state.wallet.address)
-  setfianl_modal_error(false);
-  setWALLETBALANCE(state&&state.EthBalance)
-  setWALLETADDRESS(state&&state.wallet && state.wallet.address)
-  setfianl_modal_loading(false)
-  setamount('');
-  setPayFeeType('native')
-  seterrorMsg(null)
-},[])
-useEffect(()=>{
-  setonTapFeature(false)
-  setACTIVATION_MODAL_PROD(false)
-  setbalanceLoading(false)
-  setErrorMessageUI(null);
-  fetchUSDCBalnce(state&&state.wallet && state.wallet.address)
-  setfianl_modal_error(false);
-  setWALLETBALANCE(state&&state.EthBalance)
-  setWALLETADDRESS(state&&state.wallet && state.wallet.address)
-  setfianl_modal_loading(false)
-  setamount('');
-},[state?.wallet?.address])
+  const theme = state.THEME.THEME ? colors.dark : colors.light;
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.bg,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    card: {
+      paddingHorizontal: wp(3),
+      paddingVertical: hp(2)
+    },
+    section: {
+      marginBottom: hp(1),
+      paddingHorizontal: wp(3),
+      paddingVertical: hp(2),
+      borderRadius: 13,
+      backgroundColor: theme.cardBg
+    },
+    toSection: {
+      marginTop: 8,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    networkHeader: {
+      flexDirection: 'column',
+      alignItems: "flex-start",
+      width:wp(50)
+    },
+    labelText: {
+      color: theme.headingTx,
+      fontSize: 14,
+      fontWeight: '500',
+      textAlign: "center"
+    },
+    networkSelector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.bg,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 9,
+      gap: 8,
+      borderWidth: 1,
+      borderColor: theme.inactiveTx,
+    },
+    networkIcon: {
+      width: 25,
+      height: 25,
+      borderRadius: 12,
+    },
+    networkName: {
+      color: theme.headingTx,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    balanceText: {
+      color: theme.inactiveTx,
+      fontSize: 13,
+      marginBottom: 16,
+      marginTop: -10
+    },
+    balanceAmount: {
+      color: theme.headingTx,
+    },
+    assetContainer: {
+      borderTopLeftRadius: 12,
+      borderTopRightRadius: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: "space-between",
+      borderColor: theme.inactiveTx,
+      borderWidth: 1,
+      marginTop: hp(1.4),
+      paddingHorizontal: wp(1),
+      backgroundColor: theme.bg
+    },
+    assetSelector: {
+      width: wp(40),
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderTopLeftRadius: 12,
+      paddingHorizontal: wp(2),
+      paddingVertical: hp(0.8),
+      gap: 10,
+    },
+    assetIconLarge: {
+      width: wp(9),
+      height: hp(4),
+      borderRadius: 20,
+    },
+    assetInfo: {
+      flex: 1,
+    },
+    assetLabel: {
+      color: theme.inactiveTx,
+      fontSize: 12,
+    },
+    assetName: {
+      color: theme.headingTx,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    addButton: {
+      padding: 4,
+    },
+    amountContainer: {
+      backgroundColor: theme.bg,
+      borderBottomLeftRadius: 12,
+      borderBottomRightRadius: 12,
+      padding: 16,
+      marginBottom: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between"
+    },
+    amountInput: {
+      color: theme.headingTx,
+      fontSize: 20,
+    },
+    availableContainer: {
+      alignItems: 'flex-end',
+      gap: 8,
+      width:wp(19)
+    },
+    availableLabel: {
+      color: theme.headingTx,
+      fontSize: 14,
+    },
+    availableAmount: {
+      color: theme.headingTx,
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    walletAddress: {
+      fontSize: 14,
+      color: theme.headingTx,
+    },
+    usdcContainer: {
+      marginTop: hp(2),
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    toAssetSelector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.bg,
+      padding: 11,
+      borderRadius: 12,
+      gap: 8,
+      borderWidth: 1,
+      borderColor: theme.inactiveTx,
+      width: wp(38)
+    },
+    usdcIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+    },
+    toAssetInfo: {
+      flex: 1,
+    },
+    usdcName: {
+      color: theme.headingTx,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    usdcSource: {
+      color: theme.inactiveTx,
+      fontSize: 12,
+    },
+    relayerFeeContainer: {
+      marginLeft: wp(2)
+    },
+    relayerFeeLabel: {
+      color: theme.headingTx,
+      fontSize: 15,
+      marginTop: hp(-1),
+      marginVertical: hp(0.5)
+    },
+    feeButtons: {
+      flexDirection: 'row',
+    },
+    feeButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.bg,
+      paddingVertical: 9,
+      paddingHorizontal: wp(3.3)
+    },
+    gasFeeNativeCon: {
+      borderTopLeftRadius: 10,
+      borderBottomLeftRadius: 10
+    },
+    gasFeeStableCon: {
+      borderTopRightRadius: 10,
+      borderBottomRightRadius: 10,
+    },
+    feeButtonActive: {
+      backgroundColor: '#4F46E5',
+      borderColor: '#4F46E5',
+    },
+    feeButtonText: {
+      color: theme.inactiveTx,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    feeButtonTextActive: {
+      color: "#fff",
+    },
+    feeIconSmall: {
+      width: 25,
+      height: 25,
+      borderRadius: 15,
+    },
+    toAmountContainer: {
+      marginTop: hp(1.3),
+      borderRadius: 10,
+      paddingVertical: hp(2),
+      paddingHorizontal: wp(2.4),
+      backgroundColor: theme.bg,
+      flexDirection: "row"
+    },
+    toAmount: {
+      color: theme.inactiveTx,
+      fontSize: 20,
+      fontWeight: '400',
+    },
+    toAmountUsd: {
+      color: theme.inactiveTx,
+      fontSize: 14,
+      fontWeight: '400',
+      marginTop: hp(1)
+    },
+    toAmountSubContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between"
+    },
+    minAmount: {
+      color: theme.inactiveTx,
+      fontSize: 13,
+      textAlign: 'right',
+    },
+    confirmButton: {
+      paddingVertical: 18,
+      borderRadius: 16,
+      alignItems: 'center',
+      marginTop: 12,
+    },
+    confirmButtonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: '600',
+    },
 
-useEffect(()=>{
-  setonTapFeature(false)
-  setACTIVATION_MODAL_PROD(false)
-  setbalanceLoading(false)
-  setErrorMessageUI(null);
-  fetchUSDCBalnce(state&&state.wallet && state.wallet.address)
-  setfianl_modal_error(false);
-  setWALLETBALANCE(state&&state.EthBalance)
-  setWALLETADDRESS(state&&state.wallet && state.wallet.address)
-  setfianl_modal_loading(false)
-  setamount('');
-},[chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho])
 
-  const fetchUSDCBalnce = async (addresses) => {
-    try {
-      setbalanceLoading(true)
-      const activeAsset=chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho;
-      if(state.STELLAR_ADDRESS_STATUS===false)
-        {
-            setACTIVATION_MODAL_PROD(true)
-        }
-      const activeNetwork=chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
-      console.log("activeNetwork",activeNetwork)
-      if(activeNetwork==="Ethereum")
-      {
-        const usdtAddress = activeAsset==="USDT"?"0xdAC17F958D2ee523a2206206994597C13D831ec7":"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-        if (usdtAddress && addresses) {
-          const resposeBalance = await fetchTokenInfo(usdtAddress, addresses)
-          const balance = resposeBalance[0].tokenBalance;
-          console.log(`USDT Balance of ${addresses}: ${balance} USDT`);
-          
-          setWALLETBALANCE(balance);
-        }
-        setbalanceLoading(false)
-        BridgeUSDCValidation()
-      }
-      if(activeNetwork==="BNB")
-      {
-        const usdtAddress = activeAsset==="USDT"?"0x55d398326f99059fF775485246999027B3197955":"0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d";
-        if (usdtAddress && addresses) {
-          const resposeBalance = await fetchBSCTokenInfo(usdtAddress, addresses)
-          const balance = resposeBalance[0].tokenBalance;
-          console.log(`USDT Balance of ${addresses}: ${balance} USDT`);
-          
-          setWALLETBALANCE(balance);
-        }
-        setbalanceLoading(false)
-        BridgeUSDCValidation()
-      }
-    } catch (error) {
-      setWALLETBALANCE(0.00);
-      setbalanceLoading(false)
-      BridgeUSDCValidation()
-      console.log("Error fetching balance:", error);
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.2)',
+      justifyContent: 'flex-end',
+    },
+    modalContainer: {
+      backgroundColor: theme.bg,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      maxHeight: '70%',
+      borderWidth: 1,
+      borderColor: theme.bg,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.bg,
+    },
+    modalTitle: {
+      color: theme.headingTx,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    modalList: {
+      padding: 16,
+    },
+    modalItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.bg,
+      padding: 16,
+      borderRadius: 12,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: theme.inactiveTx,
+    },
+    modalItemIcon: {
+      width: wp(10),
+      height: hp(4.5),
+      borderRadius: 20,
+      marginRight: 12,
+    },
+    modalItemInfo: {
+      flex: 1,
+    },
+    modalItemText: {
+      color: theme.headingTx,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    modalItemSubtext: {
+      color: theme.inactiveTx,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    optionCon: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-around",
+      width: wp(36)
+    },
+    optioBtn: {
+      backgroundColor: "#4052D6",
+      height: hp(4),
+      width: wp(16),
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 10
+    },
+    quoteRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    quoteLabel: {
+      fontSize: 14,
+      color: theme.inactiveTx,
+      fontWeight: "500"
+    },
+    quoteValue: {
+      color: theme.headingTx,
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    quoteHeading: {
+      color: theme.headingTx,
+      fontSize: 19,
+      fontWeight: '500',
+      marginBottom: hp(1)
+    },
+    quotesLoadingCon: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignContent: "center",
+      paddingHorizontal: wp(3),
+      paddingVertical: hp(2),
+      borderRadius: 13,
+      backgroundColor: theme.cardBg
+    },
+    quotesLoadingConTxt: {
+      color: "#4F46E5",
+      fontSize: 20,
+      fontWeight: '500',
     }
-  }
-  function isAssetData(state) {
-    return state?.assetData !== undefined && state?.assetData !== null;
-}
-  const BridgeUSDCValidation=async()=>{
-    const avlRes=isAssetData(state?.assetData);
-    if(!avlRes)
-    {
-      const ALL_STELLER_BALANCES=state?.assetData;
-      const hasAsset = ALL_STELLER_BALANCES.some(
-        (balance) => balance.asset_code === "USDC" || balance.asset_type === "USDC"
-      );
-      if (!hasAsset) {
-        // setnot_avilable(true);
-      }
-      else{
-        setnot_avilable(false);
-      }
-    }
-    
-  }
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        navigation.navigate('/');
-        return true;
-      };
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
-      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-    }, [navigation])
-  );
-
-  const for_trading = async () => {
-    try {
-        const { res, err } = await authRequest("/users/:id", GET);
-        setProfile(res);
-        await getOffersData()
-    } catch (err) {
-        console.log(err)
-    }
-};
-const getOffersData = async () => {
-  try {
-      // const { res, err } = await authRequest("/offers", GET);
-      // if (err) return console.log(`${err.message}`);
-      //  setOffers(res);
-  } catch (err) {
-      console.log(err)
-  }
-  setfianl_modal(false)
-  navigation.navigate("newOffer_modal", {
-      user: { Profile },
-      open: { open },
-      getOffersData: { getOffersData }
   });
+  const chooseItemList = [
+    { id: 1, chainName: "ETH", subName: "ETH", name: "Ethereum", url: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png", walletAddress: state?.wallet?.address },
+    { id: 2, chainName: "BSC", subName: "BNB", name: "BNB", url: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png", walletAddress: state?.wallet?.address },
+    { id: 3, chainName: "SRB", subName: "STR", name: "Stellar", url: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq", walletAddress: state?.STELLAR_PUBLICK_KEY },
+  ];
 
-}
-  const handleUpdate = (id) => {
-    if (idIndex === 1) {
-      setChooseSelectedItemId(id);
-      setChooseModalVisible(false);
-      setmain_modal(true)
-    } else if (idIndex === 3) {
-      setChooseSelectedItemIdCho(id);
-      setmain_modal(true)
+  const bscSupportTokens = [
+    {
+      "name": "Binance USDT",
+      "symbol": "USDT",
+      "address": "0x55d398326f99059fF775485246999027B3197955",
+      "chainId": 56,
+      "decimals": 18,
+      "logoURI": "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png"
+    },
+    {
+      "name": "Binance USDC",
+      "symbol": "USDC",
+      "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+      "chainId": 56,
+      "decimals": 18,
+      "logoURI": "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png"
     }
-    setchooseModalVisible_choose(false);
+  ];
+
+  const ethSupportTokens = [
+    {
+      "name": "Tether USD",
+      "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "symbol": "USDT",
+      "decimals": 6,
+      "chainId": 1,
+      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png"
+    },
+    {
+      "name": "USDCoin",
+      "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "symbol": "USDC",
+      "decimals": 6,
+      "chainId": 1,
+      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"
+    }
+  ];
+
+  const stellarSupportTokens = [
+    {
+      name: "USDC (Centre)",
+      symbol: "USDC",
+      address: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+      decimals: 6,
+      logoURI: "https://tokens.pancakeswap.finance/images/0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d.png"
+    }
+  ];
+
+  const [fromAmount, setFromAmount] = useState(0.0);
+  const [selectedRelayerFee, setSelectedRelayerFee] = useState('native');
+  const [showNetworkModal, setShowNetworkModal] = useState(false);
+  const [showFromAssetModal, setShowFromAssetModal] = useState(false);
+  const [showToAssetModal, setShowToAssetModal] = useState(false);
+  const [modalType, setModalType] = useState('from');
+  const [selectedFromNetwork, setSelectedFromNetwork] = useState(chooseItemList[1]);
+  const [selectedToNetwork, setSelectedToNetwork] = useState(chooseItemList[2]);
+  const [selectedFromAsset, setSelectedFromAsset] = useState(bscSupportTokens[0]);
+  const [selectedToAsset, setSelectedToAsset] = useState(stellarSupportTokens[0]);
+  const [showOption, setShowOption] = useState(false);
+  const [balanceLoading, setbalanceLoading] = useState(false);
+  const [fromBalance, setFromBalance] = useState(0.0);
+  const [pairQuotes, setPairQuotes] = useState(null);
+  const [quotesLoading, setQuotesLoading] = useState(false);
+  const [swapLoading,setSwapLoading] = useState(false);
+  const [showWalletActivation,setShowWalletActivation] = useState(false);
+  const [walletActivationWarning,setWalletActivationWarning] = useState(false);
+
+  const getFromNetworkTokens = () => {
+    if (selectedFromNetwork.subName === 'BNB') {
+      return bscSupportTokens;
+    } else if (selectedFromNetwork.subName === 'ETH') {
+      return ethSupportTokens;
+    } else if (selectedFromNetwork.subName === 'STR') {
+      return stellarSupportTokens;
+    }
+    return [];
   };
 
-  const chooseRenderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => handleUpdate(item.name)} style={styles.chooseItemContainer}>
-      <Image style={styles.chooseItemImage} source={{ uri: item.url }} />
-      <Text style={styles.chooseItemText}>{item.name}</Text>
-    </TouchableOpacity>
-  );
 
-  const chooseFilteredItemList = chooseItemList.filter(
-    item => item.name.toLowerCase().includes(chooseSearchQuery.toLowerCase())
-  );
-
-  const handleNext = () => {
-    setmain_modal(false)
-    setConfirmModalVisible(true);
+  const getToNetworkTokens = () => {
+    if (selectedToNetwork.subName === 'BNB') {
+      return bscSupportTokens;
+    } else if (selectedToNetwork.subName === 'ETH') {
+      return ethSupportTokens;
+    } else if (selectedToNetwork.subName === 'STR') {
+      return stellarSupportTokens;
+    }
+    return [];
   };
-  {
-    fianl_modal === true && setTimeout(() => {
-      nav.goBack()
-    }, 1300)
-  }
 
-  const keysUpdate=async()=>{
+
+  useEffect(() => {
+    let toAsset = null;
+    if (selectedToNetwork.subName === 'BNB') {
+      toAsset = bscSupportTokens[0];
+    } else if (selectedToNetwork.subName === 'ETH') {
+      toAsset = ethSupportTokens[0];
+    } else if (selectedToNetwork.subName === 'STR') {
+      toAsset = stellarSupportTokens[0];
+    }
+    setSelectedToAsset(toAsset);
+  }, [selectedToNetwork]);
+
+  useEffect(() => {
+    const initService = async () => {
+      if (fromAmount) {
+        setQuotesLoading(true);
+        await fetchPairQuotes(selectedFromNetwork.chainName, selectedToNetwork.chainName, selectedFromAsset.symbol, selectedToAsset.symbol, fromAmount);
+      }
+      await fetchSelectedTokenBalance()
+    }
+    initService();
+  }, [selectedFromAsset, selectedFromNetwork,selectedToAsset,selectedToNetwork]);
+
+  useEffect(() => {
+    const init = async () => {
+      const walletStatus = await stellarWalletStatus(state?.STELLAR_PUBLICK_KEY);
+      setShowWalletActivation(walletStatus);
+    }
+    init()
+  }, [])
+
+  const handleNetworkSelect = (network) => {
+    if (modalType === 'from') {
+      setSelectedFromNetwork(network);
+      if (network.subName === 'BNB') {
+        setSelectedFromAsset(bscSupportTokens[0]);
+      } else if (network.subName === 'ETH') {
+        setSelectedFromAsset(ethSupportTokens[0]);
+      } else if (network.subName === 'STR') {
+        setSelectedFromAsset(stellarSupportTokens[0]);
+      }
+    } else {
+      setSelectedToNetwork(network);
+    }
+    setShowNetworkModal(false);
+  };
+
+  const handleFromAssetSelect = (asset) => {
+    setSelectedFromAsset(asset);
+    setShowFromAssetModal(false);
+  };
+
+  const handleToAssetSelect = (asset) => {
+    setSelectedToAsset(asset);
+    setShowToAssetModal(false);
+  };
+
+  const openNetworkModal = (type) => {
+    setModalType(type);
+    setShowNetworkModal(true);
+  };
+
+  const fetchSelectedTokenBalance = async () => {
     try {
-       const postData = {
-              publicKey: state?.STELLAR_PUBLICK_KEY,
-              wallletPublicKey:state?.ETH_KEY
-            };
-        
-            // Update public key by email
-            const response = await fetch(`${REACT_APP_HOST}/users/updatePublicKey`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': "Bearer "+await getToken()
-              },
-              body: JSON.stringify(postData),
+      setbalanceLoading(true);
+      switch (selectedFromNetwork.subName) {
+        case "ETH":
+        case "BNB":
+          const evmBalance = await getTokenBalancesUsingAddress(selectedFromAsset.address, selectedFromNetwork.walletAddress, selectedFromNetwork.subName === "ETH" ? selectedFromNetwork.subName : "BSC");
+          setFromBalance(evmBalance.status ? evmBalance.tokenInfo[0] : 0.0);
+          setbalanceLoading(false);
+          break;
+        case "STR":
+          const nativeBalance = await GetStellarAvilabelBalance(selectedFromNetwork.walletAddress);
+          const tokenBalance = await GetStellarUSDCAvilabelBalance(selectedFromNetwork.walletAddress, selectedFromAsset.symbol, selectedFromAsset.address);
+          if (nativeBalance.availableBalance && tokenBalance.availableBalance) {
+            setFromBalance({
+              walletBalance: nativeBalance.availableBalance ? parseFloat(nativeBalance.availableBalance) : 0.0,
+              tokenBalance: tokenBalance.availableBalance ? parseFloat(tokenBalance.availableBalance) : 0.0
             });
-            
-            const data = await response.json();
-            console.log("---keysUpdate>>>>", data);
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  const sendEthToContract = async () => {
-    try {
-      const activeNetwork=chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId;
-      const activeAsset=chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho;
-      console.log("active -",activeNetwork,activeAsset)
-      const wallet = new ethers.Wallet(state?.wallet?.privateKey);
-     if(activeNetwork==="Ethereum"){
-      const respoExe = await swap_prepare(state?.wallet?.privateKey, wallet.address, state.STELLAR_PUBLICK_KEY, amount, activeAsset, "USDC", "ETH",payFeeType)
-      console.log("classic last ui res ---->", respoExe)
-      if (respoExe?.status_task) {
-        setfianl_modal_text("Transaction Successful");
-        setfianl_modal_loading(false);
-        setfianl_modal_error(true);
-        setshowTx(true)
-        setshowTxHash([{ chain: "ETH", hash: respoExe.res.transferTxHash }]);
-      }
-      if (!respoExe.status_task) {
-        setfianl_modal_text("Transaction Failed");
-        console.log("Transaction Failed", respoExe);
-        setfianl_modal_loading(false);
-        setfianl_modal_error(true);
-      }
-     }
-     if(activeNetwork==="BNB"){
-      const respoExe = await SwapPepare(state?.wallet?.privateKey, wallet.address, state.STELLAR_PUBLICK_KEY, amount, activeAsset, "USDC", "BNB",payFeeType)
-      console.log("bnb last ui response ---->", respoExe)
-      if (respoExe?.status_task) {
-        setfianl_modal_text("Transaction Successful");
-        setfianl_modal_loading(false);
-        setfianl_modal_error(true);
-        setshowTx(true)
-        setshowTxHash([{ chain: "BSC", hash: respoExe.res.transferTxHash }]);
-      }
-      if (!respoExe.status_task) {
-        setfianl_modal_text("Transaction Failed");
-        console.log("Transaction Failed", respoExe);
-        setfianl_modal_loading(false);
-        setfianl_modal_error(true);
-      }
-     }
-
-    } catch (error) {
-      setfianl_modal_text("Transaction Failed");
-      console.log("Transaction Failed", error);
-      setfianl_modal_loading(false);
-      setfianl_modal_error(true);
-    }
-  
-  };
-  const manage_swap = async () => {
-    setfianl_modal_loading(true);
-    const amountValue = parseFloat(amount);
-    const walletBalanceValue = parseFloat(WALLETBALANCE);
-    if (isNaN(amount)||amountValue == 0) {
-      setfianl_modal_loading(false);
-      ShowErrotoast(toast, "Invalid amount");
-      setamount("");
-    }
-    else{
-      if (amountValue <= 0 || amountValue > walletBalanceValue) {
-        setfianl_modal_loading(false);
-        ShowErrotoast(toast, "Insufficient funds");
-        setamount("");
-      }
-      else{
-        sendEthToContract()
-      }
-      
-    }
-      
-      // setfianl_modal_loading(false) //error alert
-      // setfianl_modal_error(true)
-
-
-  }
-  const copyToClipboard = (tokenAddress) => {
-    Clipboard.setString(tokenAddress);
-    alert("success", "Copied to clipboard!");
-  };
-  const handleClose=()=>{
-    setonTapFeature(false)
-    navigation.goBack();
-  }
-
-  const isValidNumber = (value) => {
-    const num = parseFloat(value);
-    return !isNaN(num) && num !== 0;
-  };
-  const getQuote = useCallback(
-    debounce((value,chaiType,inputToken) => {
-      setmessageError(null);
-      if (isValidNumber(value)&&value!=="null") {
-        setmessageError(null);
-        setresQuotes(null)
-        setgetInfo(false)
-        if(chaiType==="ETH")
-        {
-          setgetInfo(true);
-          collectQuotes(value,chaiType,inputToken) 
-        }
-        if(chaiType==="BNB")
-          {
-            setgetInfo(true);
-            collectQuotes(value,chaiType,inputToken) 
           }
+          setbalanceLoading(false);
+          break;
+        default:
+          setFromBalance(0.0);
+          setbalanceLoading(false);
+          break;
       }
-      else {
-        setmessageError("Invalid Amount");
+    } catch (error) {
+      setbalanceLoading(false);
+      console.error("Error fetching balance:", error);
+    }
+  };
+
+  const handleInputChange = async (value) => {
+    const replaceComma = value.replace(',', '.');
+    const cleanValue = replaceComma.replace(/[^0-9.]/g, '');
+    setFromAmount(cleanValue)
+    if (parseFloat(cleanValue) === 0 || !cleanValue) {
+      return;
+    }
+    setQuotesLoading(true);
+    fetchPairQuotes(selectedFromNetwork.chainName, selectedToNetwork.chainName, selectedFromAsset.symbol, selectedToAsset.symbol, cleanValue);
+  }
+  const fetchPairQuotes = useCallback(
+    debounce(async (sourceChainName, destChainName, sourceTokenSymbol, destTokenSymbol, qouteValue) => {
+      const qoutesRep = await getChainTokenData(sourceChainName, destChainName, sourceTokenSymbol, destTokenSymbol, qouteValue);
+      if (qoutesRep.success) {
+        setPairQuotes(qoutesRep.info);
+        setQuotesLoading(false);
+        Keyboard.dismiss();
+      } else {
+        setQuotesLoading(false);
+        setPairQuotes(null);
+        Keyboard.dismiss();
+        alert("error", qoutesRep.error)
       }
-    }, 400),
+    }, 500),
     []
   );
-  
-  const handleInputChange = (text,tokenChain,inputToken) => {
-    setresQuotes(null);
-    const numericText = text.replace(/[^0-9.]/g, '');
-    setamount(numericText)
-    getQuote(numericText,tokenChain==="BNB"?"BNB":"ETH",inputToken);
-  };
-  
-  const collectQuotes = async (value,typeOfchain,spendToken) => {
-    const deviceToken = await getToken();
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-      myHeaders.append("Authorization", "Bearer " + deviceToken);
-      myHeaders.append("x-auth-device-token", deviceToken);
-      const raw = JSON.stringify({
-        "amount": value,
-        "chainType":typeOfchain,
-        "sourceToken":spendToken
-      });
-  
-      const requestOptions = {
-        method: "POST",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow"
-      };
-  
-      fetch(REACT_PROXY_HOST + `/v1/bridge/swap-quotes`, requestOptions)
-        .then((response) => response.json())
-        .then((result) => {
-          console.log("---err->",result)
-          if (result?.quotes) {
-            setresQuotes(result?.quotes),
-            setgetInfo(false)
-          }
-          else {
-            setgetInfo(false)
-            setresQuotes(null)
-            console.log("---err->",result)
-           CustomInfoProvider.show("Info", result?.message==="Amount must be greater than zero"?result?.message:"An error occurred. Please try again later.")
-          }
-        })
-        .catch((error) => {
-          setgetInfo(false)
-          setresQuotes(null)
-          console.log("--->errorClasic",error)
-        });
-    }
 
-    useEffect(() => {
-      if (!resQuotes) return;
-      const feeAmount = payFeeType === "native"
-        ? parseFloat(resQuotes?.fee?.native?.amount || "0")
-        : parseFloat(resQuotes?.fee?.stablecoin?.amount || "0");
-    
-      const minReceive = parseFloat(resQuotes?.minimumAmountOut || "0");
-      const netReceive = Math.max(0, minReceive - feeAmount);
-    
-      if (netReceive <= 0 || (payFeeType === "stable" && feeAmount > parseFloat(WALLETBALANCE))) {
-        seterrorMsg("Insufficient funds to pay gas.");
+  const nextStep=()=>{
+    setSwapLoading(false);
+    navigation.navigate("StellarTransactions");
+  }
+
+  const swapManager = async () => {
+    Keyboard.dismiss();
+    if(selectedFromNetwork.chainName!==selectedToNetwork.chainName){
+      if (parseFloat(fromAmount) <= 0) {
+        CustomInfoProvider.show("error","Please enter a valid amount.");
       } else {
-        seterrorMsg(null);
+        if (selectedFromNetwork.subName === "STR") {
+          await executeNonEvmSwap();
+        } else {
+          await executeSwap();
+        }
       }
-    }, [payFeeType, resQuotes, WALLETBALANCE]);
-    
+    }else{
+      CustomInfoProvider.show("error","The source and destination networks cannot be the same.");
+    }
+  }
+
+  const executeNonEvmSwap=async()=>{
+    console.debug("executeNonEvmSwap");
+    setSwapLoading(true);
+     try {
+      const stellarWallet = {
+        publicKey: state && state.STELLAR_PUBLICK_KEY
+      };
+      const result = await swapPepare(
+        selectedFromNetwork.chainName,
+        selectedToNetwork.chainName,
+        selectedFromAsset.symbol,
+        selectedToAsset.symbol,
+        fromAmount,
+        selectedToNetwork.walletAddress,
+        stellarWallet,
+        selectedRelayerFee
+      );
+      console.debug("swap-result->", result)
+      if (result.success) {
+        setSwapLoading(false);
+        CustomInfoProvider.show("success", "Bridge Successfull.", [
+          { text: "Okay", onPress: nextStep },
+        ]);
+      } else {
+        setSwapLoading(false);
+        CustomInfoProvider.show("error", result.error||"Bridge Faild.");
+        console.debug("Bridge Faild:-", result);
+      }
+    } catch (error) {
+      setSwapLoading(false);
+      console.error("error in Bridge swap execute:", error)
+      CustomInfoProvider.show("error","Bridge Faild.");
+    }
+  }
+
+  const executeSwap = async () => {
+    console.debug("executeSwap");
+    setSwapLoading(true);
+    try {
+      const resultOfBidirectional = selectedFromNetwork.chainName === "ETH" ? await swap_prepare(
+        state?.wallet?.address,
+        selectedFromNetwork.walletAddress,
+        selectedToNetwork.walletAddress,
+        fromAmount.toString(),
+        selectedFromAsset.symbol,
+        selectedToAsset.symbol,
+        selectedFromNetwork.chainName === "BSC" ? "BNB" : selectedFromNetwork.chainName,
+        selectedRelayerFee,
+        selectedToNetwork.chainName === "BSC" ? "BNB" : selectedToNetwork.chainName,
+      ) : await SwapPepare(
+        state?.wallet?.address,
+        state?.wallet?.address,
+        selectedToNetwork.walletAddress,
+        fromAmount.toString(),
+        selectedFromAsset.symbol,
+        selectedToAsset.symbol,
+        selectedFromNetwork.chainName === "BSC" ? "BNB" : selectedFromNetwork.chainName,
+        selectedRelayerFee,
+        selectedToNetwork.chainName === "BSC" ? "BNB" : selectedToNetwork.chainName,
+      );
+      console.debug("swap bidirectional response:", resultOfBidirectional);
+      if (resultOfBidirectional?.status_task) {
+        const { res } = resultOfBidirectional;
+        const txHashes = [];
+        if (res.approvalTxHash) {
+          await LocalTxManager.saveTx(
+            state && state.wallet && state.wallet.address,
+            {
+              chain: selectedFromNetwork.chainName,
+              hash: res.approvalTxHash,
+              status: "pending",
+              statusColor: "#eec14fff",
+              type: "approval",
+              timestamp: Date.now()
+            }
+          );
+          txHashes.push({
+            chain: selectedFromNetwork.chainName,
+            hash: res.approvalTxHash,
+            type: "Approval"
+          });
+        }
+        await LocalTxManager.saveTx(
+          state && state.wallet && state.wallet.address,
+          {
+            chain: selectedFromNetwork.chainName,
+            hash: res.transferTxHash,
+            status: "pending",
+            statusColor: "#eec14fff",
+            type: "transfer",
+            timestamp: Date.now()
+          }
+        );
+        txHashes.push({
+          chain: selectedFromNetwork.chainName,
+          hash: res.transferTxHash,
+          type: "Transfer"
+        });
+        CustomInfoProvider.show("success", "Bridge Successfull.", [
+          { text: "Okay", onPress: nextStep },
+        ]);
+      } else {
+        setSwapLoading(false);
+        console.error("Transaction failed:", resultOfBidirectional?.res);
+        CustomInfoProvider.show("error", resultOfBidirectional?.res||"Bridge Faild.");
+      }
+    } catch (error) {
+      setSwapLoading(false);
+      console.error("Transaction error:", error);
+      CustomInfoProvider.show("error", "Bridge Faild.");
+    }
+  }
+  const fromAmt = Number(fromAmount || 0);
+  const tokenBal = Number(fromBalance?.tokenBalance || 0);
+  const walletBal = Number(fromBalance?.walletBalance || 0);
+  const stableFee = Number(pairQuotes?.fee?.stablecoin?.amount || 0);
+  const nativeFee = Number(pairQuotes?.fee?.native?.amount || 0);
+  const isTokenInsufficient = fromAmt > tokenBal;
+  const isStableFeeInsufficient = selectedRelayerFee === "stablecoin" && stableFee > tokenBal;
+  const isNativeFeeInsufficient = selectedRelayerFee === "native" && nativeFee > walletBal;
+  const isInsufficientBalance = isTokenInsufficient || isStableFeeInsufficient || isNativeFeeInsufficient;
+  const isDisabled = walletActivationWarning || quotesLoading || swapLoading || fromAmt <= 0 || isInsufficientBalance;
 
   return (
-    <View style={{ backgroundColor: "#011434",width:wp(100),height:hp(100)}}>
-     <Exchange_screen_header title="Bridge" onLeftIconPress={() => navigation.navigate("/")} onRightIconPress={() => console.log('Pressed')} />
-     <WalletActivationComponent
-         isVisible={ACTIVATION_MODAL_PROD}
-         onClose={() => {ActivateModal}}
-         onActivate={()=>{setACTIVATION_MODAL_PROD(false)}}
-         navigation={navigation}
-         appTheme={true}
-         shouldNavigateBack={true}
-       /> 
-         {/* <CustomQuotes
-                   isVisible={onTapFeature}
-                   onClose={()=>{handleClose()}}
-                   tokenChain={"ETH"}
-                   tokenName={"WETH"}
-                   tokenAddress={"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"}
-                   ACTIVATED={state?.STELLAR_ADDRESS_STATUS}
-                 /> */}
-      <ScrollView style={{marginBottom:hp(5)}}>
-      <View style={styles.modalHeader}>
-            <Text style={styles.headingText}>Import USDC on Trade Wallet</Text>
-          </View>
-          <View style={{ marginTop: hp(0),alignSelf:"center" }}>
-              <TouchableOpacity style={styles.modalOpen} onPress={() => { setChooseModalVisible(true); setIdIndex(1); }}>
-               <View style={{flexDirection:"row"}}>
-               {chooseSelectedItemId === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemId === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemId === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" }} style={styles.logoImg_TOP_1} />}
-                <View>
-                <Text style={styles.networkSubHeading}>Network</Text>
-                <Text style={styles.networkHeading}>{chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId}</Text>
+    <View style={styles.container}>
+      <WalletActivationComponent
+       isVisible={showWalletActivation}
+       onClose={() => {setWalletActivationWarning(true),setShowWalletActivation(false)}}
+       onActivate={()=>{setWalletActivationWarning(true),setShowWalletActivation(false)}}
+       navigation={navigation}
+       appTheme={state.THEME.THEME}
+       shouldNavigateBack={true}
+      />
+      <Exchange_screen_header
+        title="Bridge"
+        onLeftIconPress={() => navigation.goBack()}
+        onRightIconPress={() => {
+          console.log("Right icon pressed");
+        }}
+      />
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.card}>
+          <View style={styles.section}>
+            <View style={styles.headerRow}>
+              <View style={styles.networkHeader}>
+                <Text style={styles.labelText}>From Network</Text>
+                {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> : 
+                <View style={{flexDirection:"row"}}>
+                <Text style={styles.balanceAmount}>{selectedFromNetwork.subName} Balance : </Text>
+                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                   <Text style={styles.balanceAmount}>
+                   {fromBalance ? parseFloat(fromBalance?.walletBalance) : "0.000"}
+                   </Text>
+                   </ScrollView>
                 </View>
-               </View>
-              <Icon name={"chevron-right"} type={"materialCommunity"} color={"#fff"} size={30}/>
-            </TouchableOpacity>
-
-              <TouchableOpacity style={styles.modalOpen} onPress={() => { setchooseModalVisible_choose(true); setIdIndex(3); }}>
-               <View style={{flexDirection:"row"}}>
-                {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" }} style={styles.logoImg_TOP_1} />}
-               <View>
-               <Text style={styles.networkSubHeading}>Assets</Text>
-               <Text style={styles.networkHeading}>{chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho}</Text>
-               </View>
-               </View>
-               <Icon name={"chevron-right"} type={"materialCommunity"} color={"#fff"} size={30}/>
+                }
+              </View>
+              <TouchableOpacity
+                style={styles.networkSelector}
+                onPress={() => openNetworkModal('from')}
+              >
+                <Image
+                  source={{ uri: selectedFromNetwork.url }}
+                  style={styles.networkIcon}
+                />
+                <Text style={styles.networkName}>{selectedFromNetwork.subName}</Text>
+                <Icon type="ionicon" name="chevron-down" size={20} color={theme.headingTx} />
               </TouchableOpacity>
-          </View>
-
-          <View style={[styles.modalOpen,{paddingVertical: hp(0.5),}]}>
-            <View>
-            <Text style={styles.subInputText}>Amount</Text>
-            <TextInput maxLength={10} placeholder='0.0' placeholderTextColor={"gray"} keyboardType="number-pad" style={[ {width: wp(40),fontSize:18,color:"#fff",marginTop:hp(-0.9)}]} onChangeText={(value) => { handleInputChange(value,chooseSelectedItemId === null ? chooseItemList[1].name : chooseSelectedItemId,chooseSelectedItemIdCho === null ? chooseItemList_ETH[0].name : chooseSelectedItemIdCho) }} returnKeyType="done"/>
             </View>
-            <TouchableOpacity style={styles.maxCon} onPress={()=>{setamount(parseFloat(WALLETBALANCE)===0?null:WALLETBALANCE)}}>
-            <Text style={styles.maxBtn}>MAX</Text>
-            </TouchableOpacity>    
-          </View>
 
-          <View style={[styles.modalOpen,{paddingVertical: hp(1.5),}]}>
-            <Text style={[styles.subInputText,{ marginTop:hp(0)}]}>Address</Text>
-            <View style={{width:"50%"}}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
-                <Text style={{fontSize:17,color:"gray" }}>{WALLETADDRESS}</Text>
+            <View style={styles.assetContainer}>
+              <TouchableOpacity
+                style={styles.assetSelector}
+                onPress={() => setShowFromAssetModal(true)}
+              >
+                <Image
+                  source={{ uri: selectedFromAsset.logoURI }}
+                  style={styles.assetIconLarge}
+                />
+                <View style={styles.assetInfo}>
+                  <Text style={styles.assetLabel}>Assets</Text>
+                  <Text style={styles.assetName}>{selectedFromAsset.symbol}</Text>
+                </View>
+                <Icon type="ionicon" name="chevron-down" size={20} color={theme.headingTx} />
+              </TouchableOpacity>
+              {showOption && <View style={styles.optionCon}>
+                <TouchableOpacity style={styles.optioBtn} onPress={() => { navigation.navigate("EthSwap", { activeNetwork: selectedFromNetwork.subName, activeAsset: selectedFromAsset }) }}>
+                  <Text style={[styles.amountInput, { color: "#fff" }]}>Swap</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.optioBtn, { backgroundColor: "#fff" }]} onPress={() => { navigation.navigate("KycComponent", { cryptoRequest: selectedFromAsset.symbol, cryptoRequestChain: selectedFromNetwork.subName }) }}>
+                  <Text style={[styles.amountInput, { color: "#4052D6" }]}>Buy</Text>
+                </TouchableOpacity>
+              </View>}
+              <TouchableOpacity style={styles.addButton} onPress={() => { setShowOption(!showOption ? true : false) }}>
+                <Icon type="ionicon" name={showOption ? "close-circle-outline" : "add-circle-outline"} size={28} color={theme.headingTx} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.amountContainer}>
+              <TextInput
+                style={[styles.amountInput,{width:wp(60),height:hp(6),padding:0}]}
+                placeholder={`Enter ${selectedFromAsset.symbol} amount`}
+                placeholderTextColor={theme.inactiveTx}
+                value={fromAmount}
+                onChangeText={(value) => { handleInputChange(value) }}
+                keyboardType="numeric"
+                returnKeyType="done"
+              />
+              <View style={styles.availableContainer}>
+                <TouchableOpacity style={{ flexDirection: "row" }} onPress={async () => { await fetchSelectedTokenBalance() }}>
+                  <Text style={styles.availableLabel}>Available</Text>
+                  <Icon type="ionicon" name="refresh" size={16} color={theme.headingTx} />
+                </TouchableOpacity>
+                {balanceLoading ? <ActivityIndicator size={"small"} color={"green"} /> :
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <Text selectable={true} style={styles.availableAmount}>{fromBalance ? fromBalance?.tokenBalance : "0.000"}</Text>
+                  </ScrollView>}
+              </View>
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <Text style={styles.walletAddress} numberOfLines={1}>Active Wallet : </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: wp(70) }}>
+                <Text style={styles.walletAddress} numberOfLines={1}>{selectedFromAsset.chainId===56||selectedFromAsset.chainId===1?state && state.wallet && state.wallet.address:state && state.STELLAR_PUBLICK_KEY}</Text>
               </ScrollView>
             </View>
           </View>
 
-          <View style={[styles.modalOpen,{paddingVertical: hp(1.5),marginTop:hp(0.5)}]}>
-            <Text style={[styles.subInputText,{ marginTop:hp(0)}]}>Balance</Text>
-            <View style={{width:"15%"}}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%"}}>
-            {balanceLoading?<ActivityIndicator color={"green"}/>:<Text style={{color:"gray",fontSize:17 }}>{WALLETBALANCE}</Text>}
-              </ScrollView>
-            </View>
-          </View>
+          <View style={[styles.section, styles.toSection]}>
+            <View style={styles.headerRow}>
+              <View style={[styles.networkHeader, { marginTop: hp(-1.5) }]}>
+                <Text style={styles.labelText}>To Network</Text>
 
-        <View style={[styles.modalOpen, { paddingVertical: hp(1.5), marginTop: hp(0.5) }]}>
-          <View style={{ flexDirection: "row" }}>
-            <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={"#fff"} />
-            <Text style={[styles.subInputText, { marginTop: hp(0), fontSize: 19 }]}> Relayer Fee</Text>
-          </View>
-          <View style={{ flexDirection: "row" }}>
-            <TouchableOpacity style={[styles.feePayCon, { borderColor: payFeeType === "native" ? "#2164C1" : "#fff" }]} onPress={() => { setPayFeeType("native") }}>
-              <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={payFeeType === "native" ? "#2164C1" : "#fff"} />
-              <Text style={[styles.feePayTx, { color: payFeeType === "native" ? "#2164C1" : "#fff" }]}> Native</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.feePayCon, { borderColor: payFeeType === "stable" ? "#2164C1" : "#fff" }]} onPress={() => { setPayFeeType("stable") }}>
-              <Icon name={"fire-circle"} type={"materialCommunity"} size={25} color={payFeeType === "stable" ? "#2164C1" : "#fff"} />
-              <Text style={[styles.feePayTx, { color: payFeeType === "stable" ? "#2164C1" : "#fff" }]}> Stable-Coin</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-      <View style={styles.modalOpen}>
-        <View style={{ flexDirection: "row" }}>
-         {chooseSelectedItemIdCho === null ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "USDC" ? <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "BNB" ? <Image source={{ uri: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png" }} style={styles.logoImg_TOP_1} /> : chooseSelectedItemIdCho === "Matic" ? <Image source={{ uri: "https://assets.coingecko.com/coins/images/4713/thumb/matic-token-icon.png?1624446912" }} style={styles.logoImg_TOP_1} /> : <Image source={{ uri: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" }} style={styles.logoImg_TOP_1} />}
-          <View>
-            <Text style={styles.networkSubHeading}>Receive</Text>
-            <View style={{flexDirection:"row",alignItems:"center"}}>
-            <Text style={styles.networkHeading}>{chooseSelectedItemIdCho === null ? "USDC" : chooseSelectedItemIdCho === "USDC" ? chooseSelectedItemId === "Matic" || chooseSelectedItemIdCho === "Matic" ? "apUSDC" : "USDC" : chooseSelectedItemIdCho === "BNB" ? "BNB" : chooseSelectedItemIdCho === "Matic" ? "apMATIC" : "USDC"}</Text>
-            <Text style={{color:"gray",fontSize:13}}> (centre.io)</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.networkSelector}
+                onPress={() => openNetworkModal('to')}
+                disabled={true}
+              >
+                <Image
+                  source={{ uri: selectedToNetwork.url }}
+                  style={styles.networkIcon}
+                />
+                <Text style={styles.networkName}>Stellar</Text>
+              </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </View>
-      {getInfo && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#0066cc" />
-                <Text style={styles.loadingText}>Getting best quote...</Text>
+
+            {selectedToAsset && (
+              <View style={styles.usdcContainer}>
+                <TouchableOpacity
+                  style={[styles.toAssetSelector,{borderWidth: 0}]}
+                  onPress={() => setShowToAssetModal(true)}
+                  disabled={true}
+                >
+                  <Image
+                    source={{ uri: selectedToAsset.logoURI }}
+                    style={styles.assetIconLarge}
+                  />
+                  <View style={styles.toAssetInfo}>
+                    <Text style={styles.assetLabel}>Assets</Text>
+                    <Text style={styles.usdcName}>{selectedToAsset.symbol}</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <View style={styles.relayerFeeContainer}>
+                  <Text style={styles.relayerFeeLabel}>Relayer Fee <Icon name={"gas-station"} type={"materialCommunity"} size={16} color={theme.headingTx} /></Text>
+                  <View style={styles.feeButtons}>
+                    <TouchableOpacity
+                      style={[
+                        styles.feeButton,
+                        selectedRelayerFee === 'native' && styles.feeButtonActive,
+                        styles.gasFeeNativeCon
+                      ]}
+                      onPress={() => setSelectedRelayerFee('native')}
+                    >
+                      <Image
+                        source={{ uri: selectedFromNetwork.url }}
+                        style={styles.feeIconSmall}
+                      />
+                      <Text style={[
+                        styles.feeButtonText,
+                        selectedRelayerFee === 'native' && styles.feeButtonTextActive
+                      ]}> Native</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.feeButton,
+                        selectedRelayerFee === 'stablecoin' && styles.feeButtonActive,
+                        styles.gasFeeStableCon
+                      ]}
+                      onPress={() => setSelectedRelayerFee('stablecoin')}
+                    >
+                      <Image
+                        source={{ uri: selectedFromAsset.logoURI }}
+                        style={styles.feeIconSmall}
+                      />
+                      <Text style={[
+                        styles.feeButtonText,
+                        selectedRelayerFee === 'stablecoin' && styles.feeButtonTextActive
+                      ]}> {selectedFromAsset.symbol}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             )}
-      {resQuotes !== null && <View style={styles.modalQoutesCon}>
-      <Text style={styles.quoteTitle}>Quote Details</Text>
-        <View style={[styles.quoteDetailsContainer]}>
-          <View style={styles.quoteRow}>
-            <Text style={styles.quoteLabel}>Provider</Text>
-            <Text style={styles.quoteValue}>Allbridge</Text>
-          </View>
 
-          <View style={styles.quoteRow}>
-            <Text style={styles.quoteLabel}>Rate</Text>
-            <Text style={styles.quoteValue}>
-              1 USDT = {resQuotes.conversionRate} USDC
-            </Text>
-          </View>
-
-          <View style={styles.quoteRow}>
-            <Text style={styles.quoteLabel}>Slippage</Text>
-            <Text style={styles.quoteValue}>
-              {resQuotes.slippageTolerance}%
-            </Text>
-          </View>
-
-          <View style={styles.quoteRow}>
-            <Text style={styles.quoteLabel}>Minimum Received</Text>
-            <View style={{ width: wp(25), flexDirection: 'row' }}>
+            <View style={styles.toAmountContainer}>
+              <Text style={styles.toAmount}>≈ </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <Text style={styles.quoteValue}>{resQuotes.minimumAmountOut}</Text>
+                <Text style={styles.toAmount}>{pairQuotes ? selectedRelayerFee === "native" ? pairQuotes?.minimumAmountOut : Math.max(0,parseFloat(pairQuotes?.minimumAmountOut || "0") - parseFloat(pairQuotes?.fee[selectedRelayerFee].amount)) : `Expected ${selectedToAsset.symbol} will be recieved`}</Text>
               </ScrollView>
-              <Text style={styles.quoteValue}>USDC</Text>
+              {/* <Text style={styles.toAmount}>{selectedToAsset.symbol}</Text> */}
             </View>
           </View>
+
+          {quotesLoading && <View style={styles.quotesLoadingCon}>
+            <ActivityIndicator color={"#4F46E5"} size={"small"} />
+            <Text style={styles.quotesLoadingConTxt}> Please wait...</Text>
+          </View>}
+
+          {pairQuotes && !quotesLoading && <View style={[styles.section, styles.toSection]}>
+            <Text style={styles.quoteHeading}>Quote Details</Text>
             <View style={styles.quoteRow}>
-              <Text style={styles.quoteLabel}>Fee</Text>
-              <View style={{ width: wp(25), flexDirection: 'row' }}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <Text style={styles.quoteValue}>{payFeeType === "native" ? resQuotes?.fee?.native?.amount +" "+resQuotes?.fee?.native?.symbol : resQuotes?.fee?.stablecoin?.amount+" "+resQuotes?.fee?.stablecoin?.symbol}</Text>
-                </ScrollView>
-              </View>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Provider</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>Allbridge</Text>
             </View>
             <View style={styles.quoteRow}>
-              <Text style={styles.quoteLabel}>Time</Text>
-              <Text style={styles.quoteValue}>{resQuotes.completionTime?(resQuotes.completionTime / (1000 * 60)+" Min"):"getting.."}</Text>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Conversion Rate</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>1 {selectedFromAsset.symbol} = {pairQuotes.conversionRate} {selectedToAsset.symbol}</Text>
             </View>
-        </View>
-        <View style={styles.quoteTextCon}>
-          <Text style={styles.quoteText}>≈</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <Text style={styles.quoteText}>
-                {Math.max(
-                  0,
-                  parseFloat(resQuotes.minimumAmountOut || "0") -
-                  parseFloat(
-                    payFeeType === "native"
-                      ? resQuotes?.fee?.native?.amount || "0"
-                      : resQuotes?.fee?.stablecoin?.amount || "0"
-                  )
-                ).toFixed(6)}
-              </Text>
-            </ScrollView>
-          <Text style={styles.quoteText}>USDC</Text>
-        </View>
-      </View>}
-
-
-            <TouchableOpacity
-              // disabled={chooseSelectedItemIdCho === null||chooseSelectedItemId === null} 
-              style={[styles.nextButton, { backgroundColor: !amount||balanceLoading||getInfo||errorMsg!==null?"gray":'#2F7DFF' }]}
-            disabled={!amount||fianl_modal_loading||balanceLoading||getInfo||errorMsg!==null} onPress={() => { Keyboard.dismiss(),manage_swap() }}
-            >
-              {fianl_modal_loading||getInfo?<ActivityIndicator color={"white"}/>:<Text style={styles.nextButtonText}>{errorMsg!==null?errorMsg:"Confirm Transaction"}</Text>}
-            </TouchableOpacity>
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalContainer_menu}>
-
-        <TouchableOpacity style={styles.modalContainer_option_top} onPress={() => { setmodalContainer_menu(false) }}>
-          <View style={styles.modalContainer_option_sub}>
-
-
-            <TouchableOpacity style={styles.modalContainer_option_view}>
-              <Icon
-                name={"anchor"}
-                type={"materialCommunity"}
-                size={30}
-                color={"gray"}
-              />
-              <Text style={styles.modalContainer_option_text}>Anchor Settings</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.modalContainer_option_view}>
-              <Icon
-                name={"badge-account-outline"}
-                type={"materialCommunity"}
-                size={30}
-                color={"gray"}
-              />
-              <Text style={styles.modalContainer_option_text}>KYC</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.modalContainer_option_view} onPress={()=>{navigation.navigate("Wallet")}}>
-      <Icon
-        name={"wallet-outline"}
-        type={"materialCommunity"}
-        size={30}
-        color={"white"}
-      />
-      <Text style={[styles.modalContainer_option_text,{color:"white"}]}>Wallet</Text>
-      </TouchableOpacity>
-            <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => {
-              console.log('clicked');
-              const LOCAL_TOKEN = REACT_APP_LOCAL_TOKEN;
-              AsyncStorageLib.removeItem(LOCAL_TOKEN);
-              setmodalContainer_menu(false)
-              nav.navigate('exchangeLogin');
-            }}>
-              <Icon
-                name={"logout"}
-                type={"materialCommunity"}
-                size={30}
-                color={"#fff"}
-              />
-              <Text style={[styles.modalContainer_option_text, { color: "#fff" }]}>Logout</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.modalContainer_option_view} onPress={() => { setmodalContainer_menu(false) }}>
-              <Icon
-                name={"close"}
-                type={"materialCommunity"}
-                size={30}
-                color={"#fff"}
-              />
-              <Text style={[styles.modalContainer_option_text, { color: "#fff" }]}>Close Menu</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-      {/* <Image source={Bridge}/> */}
-      {/* <Modal
-        animationType="fade"
-        transparent={true}
-        visible={main_modal}
-      > */}
-
-      {/* </Modal> */}
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={confirmModalVisible}
-      // visible={true}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.confirmModalContent}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%" }}>
-              <Text style={[styles.confirmText, { marginStart: 60 }]}>Confirm Transaction</Text>
-              <Icon name={"close"} size={28} color={"white"} onPress={() => { setConfirmModalVisible(false) }} />
+            <View style={styles.quoteRow}>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Slippage</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>1%</Text>
             </View>
-            <View style={styles.inputContainer}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "96%" }}>
-                <Text>{WALLETADDRESS}</Text>
-              </ScrollView>
+            <View style={styles.quoteRow}>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Minimum Received</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{parseFloat(pairQuotes.minimumAmountOut)} {selectedToAsset.symbol}</Text>
             </View>
-            <View style={styles.inputContainer}>
-              <TextInput placeholder='Amount' placeholderTextColor="gray" keyboardType="number-pad" value={amount} style={styles.input} onChangeText={(value) => { setamount(value) }} />
+            <View style={styles.quoteRow}>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Relayer Fee</Text>
+              <Text selectable={true} style={[styles.quoteValue, { color: theme.headingTx }]}>{pairQuotes.fee[selectedRelayerFee].amount} {pairQuotes.fee[selectedRelayerFee].symbol}</Text>
             </View>
-            <TouchableOpacity style={[styles.confirmButton, { backgroundColor: !amount ? "gray" : "green" }]} disabled={!amount} onPress={() => { setConfirmModalVisible(false), setfianl_modal(true) }}>
-              <Text style={styles.confirmButtonText}>Confirm</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={fianl_modal}>
-
-        <View style={styles.modalContainer}>
-          <View style={{
-            backgroundColor: 'rgba(33, 43, 83, 1)',
-            padding: 20,
-            borderRadius: 10,
-            alignItems: 'center',
-            width: "90%",
-            height: "25%",
-            justifyContent: "center"
-          }}>
-            <Icon
-              name={"check-circle-outline"}
-              type={"materialCommunity"}
-              size={60}
-              color={"green"}
-            />
-            <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 10, color: "#fff" }} onPress={() => { nav.goBack() }}>Transaction Success</Text>
-            {/* <TouchableOpacity style={[styles.confirmButton, { backgroundColor: "green" }]} onPress={() => {  for_trading() }}>
-              <Text style={styles.confirmButtonText}>Trade</Text>
-            </TouchableOpacity> */}
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={fianl_modal_error}>
-          
-        <View style={styles.modalContainer}>
-          <View style={{
-            backgroundColor: 'rgba(33, 43, 83, 1)',
-            padding: 20,
-            borderRadius: 10,
-            alignItems: 'center',
-            width: "90%",
-            height: "30%",
-          }}>
-            
-            <Icon
-              name={fianl_modal_text==="Transaction Failed"?"alert-circle-outline":"check-circle-outline"}
-              type={"materialCommunity"}
-              size={60}
-              color={fianl_modal_text==="Transaction Failed"?"red":"green"}
-              style={{marginTop:19}}
-            />
-            <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical: 19, color: "#fff" }}>{fianl_modal_text}</Text>
-            <TouchableOpacity style={styles.alertBtn} onPress={()=>{fianl_modal_text==="Transaction Failed"?setfianl_modal_error(false):[setfianl_modal_error(false),navigation.navigate("Assets_manage")]}}>
-              <Text style={styles.alertBtnText}>Ok</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={chooseModalVisible}
-      >
-        <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setChooseModalVisible(false)}>
-          <View style={styles.chooseModalContent}>
-          <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical:hp(1), color: "#fff" }}>Select Wallet</Text>
-            {/* <TextInput
-              style={styles.searchInput}
-              placeholder="Search..."
-              placeholderTextColor={"gray"}
-              onChangeText={text => setChooseSearchQuery(text)}
-              value={chooseSearchQuery}
-              autoCapitalize='none'
-            /> */}
-            <FlatList
-              data={chooseFilteredItemList}
-              renderItem={chooseRenderItem}
-              keyExtractor={(item) => item.id.toString()}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={chooseModalVisible_choose}
-      >
-        <TouchableOpacity style={styles.chooseModalContainer} onPress={() => setchooseModalVisible_choose(false)}>
-          <View style={styles.chooseModalContent}>
-          <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical:hp(1), color: "#fff" }}>Choose Asset</Text>
-            {/* <TextInput
-              style={styles.searchInput}
-              placeholder="Search..."
-              placeholderTextColor={"gray"}
-              onChangeText={text => setChooseSearchQuery(text)}
-              value={chooseSearchQuery}
-              autoCapitalize='none'
-            /> */}
-            <FlatList
-              data={chooseItemList_ETH}
-              renderItem={chooseRenderItem}
-              keyExtractor={(item) => item.id.toString()}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={not_avilable}>
-        <View style={styles.modalContainer}>
-          <View style={{
-            backgroundColor: 'rgba(33, 43, 83, 1)',
-            padding: 10,
-            borderRadius: 10,
-            alignItems: 'center',
-            width: "95%",
-            height: "30%",
-            justifyContent: "center",
-            borderColor:"#4CA6EA",
-            borderWidth:2
-          }}>
-            <Icon
-              name={"shield-alert-outline"}
-              type={"materialCommunity"}
-              size={60}
-              color={"orange"}
-            />
-            <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: hp(2.5), color: "#fff",textAlign:"center" }}>To use this feature, you must trust USDC. Please trust USDC first to ensure a smooth and uninterrupted experience.</Text>
-            <View style={{ flexDirection: "row",justifyContent:"space-around",width:"83%" }}>
-              <TouchableOpacity style={{
-                alignSelf: "center", marginTop: hp(2.5), backgroundColor: "gray", alignContent: "center", justifyContent: "center", width: "40%", paddingVertical: hp(1), borderRadius: 10, borderColor: "#4CA6EA",
-                borderWidth: 2
-              }} onPress={() => {setnot_avilable(false),navigation.goBack()}}>
-                <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff", textAlign: "center" }}>Maybe Later</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={{ alignSelf: "center", marginTop:hp(2.5),backgroundColor:"green",alignContent:"center",justifyContent:"center",width:"40%",paddingVertical:hp(1),borderRadius:10,borderColor:"#4CA6EA",
-            borderWidth:2 }} onPress={() => {navigation.navigate("Assets_manage",{openAssetModal:true})}}>
-            <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff",textAlign:"center" }}>Trust Now</Text>
-            </TouchableOpacity>
+            <View style={styles.quoteRow}>
+              <Text style={[styles.quoteLabel, { color: theme.inactiveTx }]}>Estimated time</Text>
+              <Text style={[styles.quoteValue, { color: theme.headingTx }]}>{pairQuotes.completionTime}</Text>
             </View>
-          </View>
-        </View>
-      </Modal>
+          </View>}
 
-      <Modal
-          animationType="slide"
-          transparent={true}
-          visible={Wallet_modal}
-          onRequestClose={() => setWallet_modal(false)}
-        >
-          <TouchableWithoutFeedback onPress={() => {setWallet_modal(false)}}>
-            <View style={styles.modalBackground}>
-              <TouchableOpacity
-                onPress={() => setWallet_modal(false)}
-                style={{ marginBottom: Platform.OS === "ios" ? hp(-1.5) : hp(-2) }}
-              >
-              </TouchableOpacity>
-              <View style={[styles.modalView, { backgroundColor: state.THEME.THEME === false ? "#fff" : "black", borderBottomColor: state.THEME.THEME === false ? "#fff" : "black" }]}>
-                <View style={styles.modal_heading_view}>
-                  <Text style={[styles.modalText, { color: state.THEME.THEME === false ? "black" : "#fff" }]}>Choose wallet</Text>
-                  <TouchableOpacity
-                    onPress={() => [setWallet_modal(false), navigation.navigate("Wallet")]}
-                  >
-                    <Text style={[styles.modalText, { color: '#2196F3' }]}>Add Wallet</Text>
-                  </TouchableOpacity>
-                </View>
-                <Wallet_selection_bottom onClose={()=>{setWallet_modal(false)}} />
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
+          <TouchableOpacity
+            style={[
+              styles.confirmButton,
+              { backgroundColor: isDisabled ? theme.inactiveTx : "#4F46E5" }
+            ]}
+            disabled={isDisabled}
+            onPress={swapManager}
+          >
+            <Text style={styles.confirmButtonText}>
+              {walletActivationWarning
+                ? "Stellar wallet Activation Required"
+                : swapLoading
+                  ? "Wait transaction under process..."
+                  : isInsufficientBalance
+                    ? "Insufficient Balance"
+                    : "Confirm Transaction"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
-      <View style={styles.allBridgeTxCon}>
-        <AllbridgeTxTrack txs={showTxHash} isDarkMode={state?.THEME?.THEME} showTx={showTx} closeTx={() => { setshowTx(false) }} />
-      </View>
+
+      <Modal
+        visible={showNetworkModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowNetworkModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                Select {modalType === 'from' ? 'From' : 'To'} Network
+              </Text>
+              <TouchableOpacity onPress={() => setShowNetworkModal(false)}>
+                <Icon type="ionicon" name="close" size={24} color={theme.headingTx} />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={chooseItemList.slice(0,2)}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => handleNetworkSelect(item)}
+                >
+                  <Image source={{ uri: item.url }} style={styles.modalItemIcon} />
+                  <Text style={styles.modalItemText}>{item.name}</Text>
+                  {((modalType === 'from' && selectedFromNetwork.id === item.id) ||
+                    (modalType === 'to' && selectedToNetwork.id === item.id)) && (
+                      <Icon type="ionicon" name="checkmark-circle" size={24} color="#4F46E5" />
+                    )}
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.modalList}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showFromAssetModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowFromAssetModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select From Asset</Text>
+              <TouchableOpacity onPress={() => setShowFromAssetModal(false)}>
+                <Icon type="ionicon" name="close" size={24} color={theme.headingTx} />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={getFromNetworkTokens()}
+              keyExtractor={(item) => item.address}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => handleFromAssetSelect(item)}
+                >
+                  <Image source={{ uri: item.logoURI }} style={styles.modalItemIcon} />
+                  <View style={styles.modalItemInfo}>
+                    <Text style={styles.modalItemText}>{item.symbol}</Text>
+                    <Text style={styles.modalItemSubtext}>{item.name}</Text>
+                  </View>
+                  {selectedFromAsset.address === item.address && (
+                    <Icon type="ionicon" name="checkmark-circle" size={24} color="#4F46E5" />
+                  )}
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.modalList}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showToAssetModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowToAssetModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select To Asset</Text>
+              <TouchableOpacity onPress={() => setShowToAssetModal(false)}>
+                <Icon type="ionicon" name="close" size={24} color={theme.headingTx} />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={getToNetworkTokens()}
+              keyExtractor={(item) => item.address}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => handleToAssetSelect(item)}
+                >
+                  <Image source={{ uri: item.logoURI }} style={styles.modalItemIcon} />
+                  <View style={styles.modalItemInfo}>
+                    <Text style={styles.modalItemText}>{item.symbol}</Text>
+                    <Text style={styles.modalItemSubtext}>{item.name}</Text>
+                  </View>
+                  {selectedToAsset.address === item.address && (
+                    <Icon type="ionicon" name="checkmark-circle" size={24} color="#4F46E5" />
+                  )}
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.modalList}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
-};
+}
 
-const styles = StyleSheet.create({
-  modalView: {
-    width: wp(100),
-    height: hp(30),
-    backgroundColor: 'white',
-    borderRadius: 10,
-    paddingVertical: hp(1.5),
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    borderColor: "#2196F3",
-    borderWidth: 0.9,
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: "400"
-  },
-  modalBackground: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  modal_heading_view: {
-    flexDirection: "row",
-    width: wp(100),
-    paddingVertical: 5,
-    paddingHorizontal: 16,
-    justifyContent: "space-between"
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: 'rgba(33, 43, 83, 1)',
-    width: wp(100),
-    height: hp(100)
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: "flex-start",
-    marginTop: 1,
-    paddingLeft:wp(5)
-  },
-  headingText: {
-    marginTop: 10,
-    color: "#fff",
-    fontSize: 19,
-  },
-  subInputText: {
-    marginTop:hp(1),
-    color: "#94A3B8",
-    fontSize: 16,
-  },
-  maxBtn: {
-    color: "#FFF",
-    fontSize: 16,
-  },
-  maxCon:{
-    backgroundColor:"#2F7DFF",
-    borderRadius:10,
-    padding:8,
-    paddingHorizontal:wp(5),
-  },
-  modalOpen: {
-    width: '93%',
-    flexDirection:"row",
-    justifyContent:"space-between",
-    alignItems: "center",
-    backgroundColor:"#0D2041",
-    marginTop: hp(1.5),
-    borderRadius: 10,
-    alignSelf:"center",
-    paddingVertical:hp(1.8),
-    paddingHorizontal:wp(3.6)
-  },
-  modalQoutesCon: {
-    width: '93%',
-    flexDirection:"column",
-    justifyContent:"space-between",
-    backgroundColor:"#0D2041",
-    marginTop: hp(1.8),
-    borderRadius: 10,
-    alignSelf:"center",
-    paddingVertical:hp(1.8),
-    paddingHorizontal:wp(3.6)
-  },
-  nextButton: {
-    width: wp(93),
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 10,
-    marginTop: 20,
-    alignSelf: "center",
-    height:hp(6.4),
-    marginTop:hp(1.6)
-  },
-  nextButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight:"bold"
-  },
-  confirmModalContent: {
-    backgroundColor: 'rgba(33, 43, 83, 1)',
-    padding: 20,
-    borderRadius: 10,
-    width: '90%',
-    alignItems: 'center',
-  },
-  confirmText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  inputContainer: {
-    width: '90%',
-    borderRadius: 19,
-    borderColor: 'gray',
-    borderWidth: 1,
-    justifyContent: 'center',
-    marginTop: 19,
-    padding: 10,
-    backgroundColor: '#ededeb',
-  },
-  input: {
-    backgroundColor: '#ededeb',
-  },
-  confirmButton: {
-    width: '50%',
-    borderRadius: 19,
-    borderColor: 'gray',
-    borderWidth: 1,
-    justifyContent: 'center',
-    marginTop: 19,
-    padding: 10,
-    backgroundColor: 'green',
-  },
-  confirmButtonText: {
-    textAlign: 'center',
-    color: '#fff',
-  },
-  chooseModalContainer: {
-    flex: 1,
-    justifyContent: "flex-end",
-    alignItems: 'center',
-    // backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  chooseModalContent: {
-    backgroundColor: 'rgba(33, 43, 83, 1)',
-    padding: 20,
-    borderRadius: 10,
-    width: wp(99),
-    maxHeight: '80%',
-  },
-  searchInput: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    color: "#fff"
-  },
-  chooseItemContainer: {
-    marginVertical: 3,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth:0.9,
-    borderBlockEndColor: '#fff',
-    marginBottom: hp(0.5),
-    paddingBottom:hp(2)
-  },
-  chooseItemImage: {
-    width: 39,
-    height: 39,
-    resizeMode: 'contain',
-    marginVertical: 3,
-  },
-  chooseItemText: {
-    marginLeft: 10,
-    fontSize: 24,
-    color: '#fff',
-  },
-  headerContainer1_TOP: {
-    backgroundColor: "#4CA6EA",
-    justifyContent: "space-between",
-    alignItems: "center",
-    alignSelf: "center",
-    flexDirection: "row",
-    width: wp(100),
-    paddingHorizontal: wp(2),
-  },
-  logoImg_TOP: {
-    height: hp("8"),
-    width: wp("12"),
-  },
-  logoImg_TOP_1: {
-    height: 39,
-    width: 39,
-    marginRight: 3
-  },
-  text_TOP: {
-    color: "white",
-    fontSize: 19,
-    fontWeight: "bold",
-    alignSelf: "center",
-    marginStart: wp(34)
-  },
-  text1_ios_TOP: {
-    alignSelf:"center",
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
-    paddingTop:hp(3),
-  },
-  container_a: {
-    flex: 1,
-    width: "94%",
-    // alignItems: 'center',
-    // justifyContent: 'center',
-    backgroundColor: "rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)",
-    margin: 10,
-    borderRadius: 10
-  },
-  card: {
-    marginRight: 10,
-    borderWidth: 1.9,
-    borderColor: 'rgba(122, 59, 144, 1)rgba(100, 115, 197, 1)',
-    borderRadius: 10,
-    padding: 8,
-    backgroundColor: "#011434"
-  },
-  image: {
-    width: 90,
-    height: 65,
-    borderRadius: 10,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 3,
-    color: "#fff"
-  },
-  status: {
-    fontSize: 14,
-    color: 'yellow',
-  },
-  frame_1: {
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 3,
-    width: "90%",
-    marginTop: 3
-  },
-  kyc_Container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  kyc_Content: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  kyc_text: {
-    marginBottom: 10,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  logoImg_kyc: {
-    height: hp("9"),
-    width: wp("12"),
-  },
-  modalContainer_option_top: {
-    // flex: 1,
-    alignSelf: "flex-end",
-    alignItems: 'center',
-    // backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    width: "100%",
-    height: "60%",
-  },
-  modalContainer_option_sub: {
-    alignSelf: "flex-end",
-    backgroundColor: 'rgba(33, 43, 83, 1)',
-    padding: 10,
-    borderRadius: 10,
-    width: "65%",
-    height: "70%"
-  },
-  modalContainer_option_view: {
-    flexDirection: "row",
-    marginTop: 25,
-    alignItems: "center",
-  },
-  modalContainer_option_text: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "gray",
-    marginStart: 5
-  },
-  alertBtn: {
-    width: "90%",
-    height: 40,
-    borderRadius: 80,
-    marginTop:19,
-    backgroundColor:"#2164C1",
-    alignItems:"center",
-    justifyContent:"center"
-  },
-  alertBtnText:{
-      textAlign:"center",
-      fontSize:19,
-      fontWeight:"400",
-      color:"#fff"
-  },
-  networkHeading:{
-    color:"#fff",
-    fontSize:16,
-    fontWeight:"500",
-    marginLeft:wp(1.3),
-    marginTop:hp(-0.1)
-  },
-  networkSubHeading:{
-    color:"#94A3B8",
-    fontSize:13,
-    marginLeft:wp(1.3)
-  },
-  quoteTextCon: {
-    flexDirection: "row",
-    padding: 9,
-    backgroundColor: "#10B981",
-    borderRadius: 8,
-  },
-  quoteText: {
-    fontSize: 24,
-    color: '#fff',
-    borderRadius: 8,
-  },
-  quoteDetailsContainer: {
-    paddingHorizontal: 1,
-    borderRadius: 8,
-  },
-  quoteTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#fff',
-  },
-  quoteRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  quoteLabel: {
-    fontSize: 14,
-    color: 'silver',
-  },
-  quoteValue: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  loadingText: {
-    marginTop: 8,
-    color: 'silver',
-  },
-  feePayCon:{
-    flexDirection: "row",
-    marginLeft:10,
-    borderColor:"#fff",
-    borderWidth:1,
-    paddingHorizontal:10,
-    paddingVertical:4,
-    borderRadius:10
-  },
-  feePayTx: {
-    fontSize: 16,
-    fontWeight:"600"
-  },
-  allBridgeTxCon:{
-    zIndex:20,
-    position:"absolute",
-    width:"100%",
-    maxHeight:"50%",
-    bottom:25
-  }
-});
 export default classic;

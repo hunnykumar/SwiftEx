@@ -207,23 +207,24 @@ const style = StyleSheet.create({
   Box: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: wp(6),
-    marginTop: hp(3),
-    borderBottomWidth: StyleSheet.hairlineWidth * 1,
-    padding: 8,
-    borderColor: "#DADADA",
+    marginHorizontal: wp(3.9),
+    marginTop: hp(1),
+    padding: 18,
+    backgroundColor:"#F4F4F8",
+    borderRadius:10
+
   },
   Box1:{
     flexDirection: "row",
     alignItems: "center",
     marginHorizontal: wp(4),
-    marginTop: hp(3),
-    borderBottomWidth: StyleSheet.hairlineWidth * 1,
+    marginTop: hp(1),
     padding: 8,
-    borderColor: "#DADADA",
+    backgroundColor:"#F4F4F8",
+    borderRadius:10
   },
   text: {
-    marginHorizontal: wp(4),
+    marginHorizontal: wp(2),
     color:"black",
     fontSize:16,
     fontWeight:"500"
@@ -239,7 +240,7 @@ const style = StyleSheet.create({
     width: wp(8),
   },
   img1:{
-    height: hp(6),
-    width: wp(11.9),
+    height: hp(5.5),
+    width: wp(12.10),
   }
 });

@@ -3,28 +3,21 @@ import {
   StyleSheet,
   Text,
   View,
-  Button,
   ActivityIndicator,
   TouchableOpacity,
+  Image,
 } from "react-native";
-import { TextInput, Checkbox, Switch } from "react-native-paper";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { Animated } from "react-native";
-import title_icon from "../../../assets/title_icon.png";
-import { useDispatch, useSelector } from "react-redux";
-import { Generate_Wallet2 } from "../../components/Redux/actions/auth";
+import { useSelector } from "react-redux";
 import Modal from "react-native-modal";
-import NewWalletPrivateKey from "./newWalletPrivateKey";
-import ModalHeader from "../reusables/ModalHeader";
-import { alert } from "../reusables/Toasts";
-//import { TouchableOpacity } from "react-native-gesture-handler";
-import { LinearGradient } from "react-native-linear-gradient";
 import darkBlue from "../../../assets/darkBlue.png";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "../../icon";
+import { Checkbox } from "react-native-paper";
 
 export const GetPrivateKeyModal = ({ visible, setVisible, onCrossPress }) => {
   const state=useSelector((state)=>state);
@@ -32,155 +25,138 @@ export const GetPrivateKeyModal = ({ visible, setVisible, onCrossPress }) => {
   const [Checked2, setCheckBox2] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
-  const dispatch = useDispatch();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const Spin = new Animated.Value(0);
-  const SpinValue = Spin.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
-
-  const closeModal = () => {
-    setVisible(false);
-  };
+  const sheetRef = useRef(null);
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 1000,
-    }).start();
+    setCheckBox(false);
+    setCheckBox2(false);
+    if (visible) sheetRef.current?.present();
+    else sheetRef.current?.dismiss();
+  }, [visible]);
 
-    Animated.timing(Spin, {
-      toValue: 1,
-      duration: 2000,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim, Spin]);
+  useEffect(() => {
+    if (visible) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible]);
+
+  const themeDark = state?.THEME?.THEME !== false;
 
   return (
-    <Animated.View // Special animatable View
-      style={{ opacity: fadeAnim }}
-    >
+    <Animated.View style={{ opacity: fadeAnim }}>
       <Modal
+        isVisible={visible}
         animationIn="slideInUp"
         animationOut="slideOutDown"
-        animationInTiming={500}
-        animationOutTiming={650}
-        isVisible={visible}
-        // statusBarTranslucent={true}
+        animationInTiming={400}
+        animationOutTiming={400}
+        backdropTransitionOutTiming={0}
         useNativeDriver={true}
         useNativeDriverForBackdrop={true}
-        backdropTransitionOutTiming={0}
         hideModalContentWhileAnimating
         onBackdropPress={() => setVisible(false)}
-        onBackButtonPress={() => {
-          setVisible(false);
-        }}
+        onBackButtonPress={() => setVisible(false)}
+        style={styles.modalContainer}
       >
-        <View style={[style.Body,{backgroundColor:state.THEME.THEME===false?"#011434":"black"}]}>
+        <View
+          style={[
+            styles.sheetBody,
+            { backgroundColor: themeDark ? "#242426" : "#F4F4F8" },
+          ]}
+        >
           <Icon
-            type={"entypo"}
+            type="entypo"
             name="cross"
-            color={"white"}
+            color={themeDark ? "#F4F4F8":"#242426" }
             size={29}
             onPress={onCrossPress}
-            style={style.crossIcon}
-          />
-          {/* <ModalHeader Function={closeModal} name={"Import"} /> */}
-          <Animated.Image
-            style={{
-              width: wp("16"),
-              height: hp("12"),
-              // padding: 30,
-            }}
-            source={darkBlue}
+            style={styles.crossIcon}
           />
 
-          <Text style={style.welcomeText}> Back up you wallet now </Text>
-          <Text style={style.welcomeText}>
+          <Image
+            source={darkBlue}
+            style={{ width: wp("16"), height: hp("12") }}
+          />
+
+          <Text style={[styles.welcomeText,{color:themeDark ? "#fff" : "black"}]}>Back up your wallet now</Text>
+          <Text style={[styles.welcomeText,,{color:themeDark ? "#fff" : "black"}]}>
             In the next page, you will see your secret phrase
           </Text>
+
           <TouchableOpacity
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              marginTop: hp(5),
-              alignItems: "center",
-            }}
-          onPress={()=>{setCheckBox(!Checked)}}>
-            <Icon
-            name={"check-circle"}
-            type={"materialCommunity"}
-            size={25}
-            color={Checked?"green":"gray"}
+            style={styles.row}
             onPress={() => setCheckBox(!Checked)}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: Checked?"#fff":"gray" ,
+                borderRadius: 10,
+              }}
+            >
+            <Checkbox
+              status={Checked ? "checked" : "unchecked"}
+              color="#4052D6"
             />
-            <View style={{ marginLeft: 10 }}>
-            <Text style={style.welcomeText2}>
-              If I loose my private key, my funds will be lost
-            </Text>
-              {/* <Switch
-                value={Checked}
-                onValueChange={() => setCheckBox(!Checked)}
-              /> */}
             </View>
+            <Text style={[styles.welcomeText2,{color:themeDark ? "#fff" : "black"}]}>
+              If I lose my private key, my funds will be lost
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              marginTop: hp(5),
-              alignItems: "center",
-            }}
-            onPress={()=>{setCheckBox2(!Checked2)}}
-          >
-             <Icon
-            name={"check-circle"}
-            type={"materialCommunity"}
-            size={25}
-            color={Checked2?"green":"gray"}
+            style={styles.row}
             onPress={() => setCheckBox2(!Checked2)}
-            />
-            <View style={{ marginLeft: 10 }}>
-            <Text style={style.welcomeText2}>
-              If I share my private key, my funds can get stolen
-            </Text>
-              {/* <Switch
-                value={Checked2}
-                onValueChange={() => setCheckBox2(!Checked2)}
-              /> */}
-            </View>
-          </TouchableOpacity>
-          {loading ? (
-            <ActivityIndicator size="large" color="white" />
-          ) : (
-            <Text> </Text>
-          )}
-      <TouchableOpacity
-              disabled={loading ? true : Checked && Checked2 ? false : true}
-            style={[style.PresssableBtn,{backgroundColor:Checked && Checked2?"rgba(33, 43, 83, 1)rgba(28, 41, 77, 1)":"gray" }]}
-              onPress={() => {
-                // setLoading(true);
-                setVisible(false);
-                navigation.navigate("My PrivateKey");
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: Checked2?"#fff":"gray" ,
+                borderRadius: 10,
               }}
             >
-          {/* <LinearGradient
-            start={[1, 0]}
-            end={[0, 1]}
-            colors={
-              Checked && Checked2
-                ? ["rgba(33, 43, 83, 1)","rgba(28, 41, 77, 1)"]
-                : ["gray", "gray"]
-            }
-            style={style.PresssableBtn}
-          > */}
-      
-              <Text style={{color:"white"}}>Continue</Text>
-          {/* </LinearGradient> */}
-            </TouchableOpacity>
+            <Checkbox
+              status={Checked2 ? "checked" : "unchecked"}
+              color="#4052D6"
+            />
+            </View>
+            <Text style={[styles.welcomeText2,{color:themeDark ? "#fff" : "black"}]}>
+              If I share my private key, my funds can get stolen
+            </Text>
+          </TouchableOpacity>
+
+          {loading && <ActivityIndicator size="large" color="white" />}
+
+          <TouchableOpacity
+            disabled={loading || !(Checked && Checked2)}
+            style={[
+              styles.PressableBtn,
+              {
+                backgroundColor:
+                  Checked && Checked2 ? "#4052D6" : "gray",
+              },
+            ]}
+            onPress={() => {
+              setVisible(false);
+              navigation.navigate("My PrivateKey");
+            }}
+          >
+            <Text style={{ color: "white" }}>Continue</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </Animated.View>
@@ -189,71 +165,46 @@ export const GetPrivateKeyModal = ({ visible, setVisible, onCrossPress }) => {
 
 export default GetPrivateKeyModal;
 
-const style = StyleSheet.create({
-  Body: {
-    // backgroundColor: "#131E3A",
-    backgroundColor: "#145DA0",
-    paddingTop: hp(1),
-    alignSelf: "center",
-    paddingBottom: hp(4),
-    justifyContent: "center",
-    borderRadius: hp(2),
-    width: wp(90),
+const styles = StyleSheet.create({
+  modalContainer: {
+    justifyContent: "flex-end",
+    margin: 0,
+  },
+  sheetBody: {
+    paddingVertical: hp(3),
+    paddingHorizontal: wp(5),
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     alignItems: "center",
-    textAlign: "center",
-    borderColor:"#145DA0",
-    borderWidth:0.9
-  },
-  welcomeText: {
-    color: "white",
-    marginTop: hp(2),
-    fontWeight:"900"
-  },
-  welcomeText2: {
-    fontSize: 15,
-    fontWeight: "300",
-    color: "white",
-    marginTop: hp(1),
-    width: wp(70),
-  },
-  Button: {
-    marginTop: hp(10),
-  },
-  tinyLogo: {
-    width: wp("5"),
-    height: hp("5"),
-    padding: 30,
-    marginTop: hp(10),
-  },
-  Text: {
-    marginTop: hp(5),
-    fontSize: 15,
-    fontWeight: "200",
-    color: "white",
-  },
-  input: {
-    height: hp("5%"),
-    marginBottom: hp("2"),
-    color: "black",
-    marginTop: hp("2"),
-    width: wp("70"),
-    paddingRight: wp("7"),
-    backgroundColor: "white",
-  },
-  PresssableBtn: {
-    padding: hp(1),
-    width: wp(30),
-    alignSelf: "center",
-    paddingHorizontal: wp(3),
-    borderRadius: hp(0.8),
-    marginTop: hp(2),
-    marginBottom: hp(2),
-    alignItems: "center",
-    borderColor:"rgba(72, 93, 202, 1)rgba(67, 89, 205, 1)",
-    borderWidth:1.3,
   },
   crossIcon: {
     alignSelf: "flex-end",
-    padding: hp(1),
+    marginBottom: hp(2),
+  },
+  welcomeText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: hp(2),
+  },
+  welcomeText2: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "white",
+    marginLeft: 10,
+    width: wp(70),
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: hp(3),
+  },
+  PressableBtn: {
+    padding: hp(1.5),
+    width: wp(90),
+    borderRadius: hp(1),
+    alignItems: "center",
+    marginTop: hp(3),
   },
 });

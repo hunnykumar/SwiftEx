@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,69 +6,71 @@ import {
   ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
-  StatusBar,
-  useColorScheme as _useColorScheme,
   Appearance,
-  SafeAreaView,
   RefreshControl,
-  ScrollView,
   Modal,
-  Image
+  Image,
+  Animated,
+  Clipboard,
+  Alert,
+  Dimensions,
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSelector } from 'react-redux';
-import { TransactionForStellar, Wallet_screen_header } from './reusables/ExchangeHeader';
-import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import { Wallet_screen_header, TransactionForStellar } from './reusables/ExchangeHeader';
+import { useIsFocused, useNavigation, useRoute, useNavigationState } from '@react-navigation/native';
 import StellarTransactionHistory from './exchange/crypto-exchange-front-end-main/src/pages/StellarTransactionHistory';
-import { PGET, PPOST, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';
+import { PGET, proxyRequest } from './exchange/crypto-exchange-front-end-main/src/api';
+import CustomInfoProvider from './exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider';
+import ShortTermStorage from '../utilities/ShortTermStorage';
 
 const ThemeContext = React.createContext();
 
 const themes = {
   light: {
-    background: '#FFFF',
-    cardBackground: '#ebe8e8',
+    background: "#FFFFFF",
+    cardBackground: "#F4F4F8",
     textPrimary: '#1A1A1A',
-    textSecondary: '#666666',
-    textTertiary: '#999999',
-    accent: '#3b82f6',
-    tabInactive: '#F0F0F0',
-    tabInactiveText: '#666666',
-    cardDark: '#F5F5F5',
-    iconContainer: '#FFFFFF',
-    divider: '#E0E0E0',
-    success: '#4ECB71',
-    error: '#FF6B6B',
-    warning: '#FFCC00',
-    cardShadow: 'rgba(0, 0, 0, 0.05)',
+    textSecondary: '#6B7280',
+    textTertiary: '#9CA3AF',
+    accent: '#3B82F6',
+    success: '#10B981',
+    error: '#EF4444',
+    warning: '#F59E0B',
+    pending: '#F59E0B',
+    border: '#E5E7EB',
+    chipBg: '#F3F4F6',
+    chipActive: '#3B82F6',
+    skeleton: '#E5E7EB',
+    divider: '#F3F4F6',
   },
   dark: {
-    background: 'black',
-    cardBackground: '#1E1E1E',
-    textPrimary: '#FFFFFF',
-    textSecondary: '#BBBBBB',
-    textTertiary: '#888888',
-    accent: '#3b82f6',
-    tabInactive: '#333333',
-    tabInactiveText: '#BBBBBB',
-    cardDark: '#252525',
-    iconContainer: '#2C2C2C',
-    divider: '#333333',
-    success: '#4ECB71',
-    error: '#FF6B6B',
-    warning: '#FFCC00',
-    cardShadow: 'rgba(0, 0, 0, 0.2)',
+    background: "#1B1B1C",
+    cardBackground: "#242426",
+    textPrimary: '#F1F5F9',
+    textSecondary: '#94A3B8',
+    textTertiary: '#64748B',
+    accent: '#3B82F6',
+    success: '#10B981',
+    error: '#EF4444',
+    warning: '#F59E0B',
+    pending: '#F59E0B',
+    border: '#334155',
+    chipBg: '#334155',
+    chipActive: '#3B82F6',
+    skeleton: '#334155',
+    divider: '#1E293B',
   }
 };
 
 const ThemeProvider = ({ children }) => {
   const state = useSelector((state) => state);
-  const deviceTheme = Appearance.getColorScheme();
-  const [theme, setTheme] = useState(deviceTheme === 'dark' ? 'dark' : 'light');
+  const [theme, setTheme] = useState('light');
 
   useEffect(() => {
     setTheme(state.THEME.THEME === true ? 'dark' : 'light');
-  }, []);
+  }, [state.THEME.THEME]);
 
   return (
     <ThemeContext.Provider value={{ theme, colors: themes[theme] }}>
@@ -79,281 +81,698 @@ const ThemeProvider = ({ children }) => {
 
 const useTheme = () => useContext(ThemeContext);
 
-const formatNumber = (value, decimals = 4) => {
-  if (!value) return '0';
-  return parseFloat(value).toFixed(decimals);
+// Utility Functions
+const formatNumber = (num) => {
+  if (num === 0) return "0";
+  if (Math.abs(num) < 0.0001) return num.toExponential(2);
+  if (Math.abs(num) > 1000000) return (num / 1000000).toFixed(2) + 'M';
+  return num.toLocaleString(undefined, { maximumFractionDigits: 6 });
 };
 
-const TransactionHistory = () => {
-  const backData=useRoute();
-  const [selectedTab,setselectedTab]=useState(null);
-  const isFocusedTab=useIsFocused();
-  const navigation=useNavigation();
-  const { theme, colors } = useTheme();
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('All');
-  const [filteredTransactions, setFilteredTransactions] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
-  const state = useSelector((state) => state);
-  const walletAddress = state?.wallet?.address;;
-  const [activeChainNetwork, setactiveChainNetwork] = useState('ETH');
-  const [selectChainOpen, setSelectChainOpen] = useState(false);
-  const supportedChains=[
-    { id: 1, name: "Ethereum", imgUrl: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",value:"ETH" },
-    { id: 2, name: "Binance", imgUrl: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png",value:"BSC" },
-    { id: 2, name: "Stellar", imgUrl: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq",value:"STR" },
+const formatDate = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  const now = new Date();
+  const txDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  const diffMs = todayDate - txDate;
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+const groupTransactionsByDate = (transactions) => {
+  const groups = {};
+  
+  transactions.forEach(tx => {
+    const dateKey = formatDate(tx.timestamp);
+    if (!groups[dateKey]) {
+      groups[dateKey] = [];
+    }
+    groups[dateKey].push(tx);
+  });
+  
+  return groups;
+};
+
+const shortenAddress = (address, chars = 4) => {
+  if (!address) return 'Unknown';
+  return `${address.slice(0, chars + 2)}...${address.slice(-chars)}`;
+};
+
+// Skeleton Loader Component
+const TransactionSkeleton = ({ colors }) => (
+  <View style={[styles.skeletonCard, { backgroundColor: colors.cardBackground }]}>
+    <View style={styles.skeletonRow}>
+      <View style={[styles.skeletonCircle, { backgroundColor: colors.skeleton }]} />
+      <View style={styles.skeletonContent}>
+        <View style={[styles.skeletonLine, { backgroundColor: colors.skeleton, width: '60%' }]} />
+        <View style={[styles.skeletonLine, { backgroundColor: colors.skeleton, width: '40%', marginTop: 8 }]} />
+      </View>
+    </View>
+  </View>
+);
+
+// Chain Selector Component
+const ChainSelector = ({ activeChain, onSelect, colors }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  
+  const chains = [
+    { 
+      id: 1, 
+      name: "Ethereum", 
+      symbol: "ETH",
+      icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png"
+    },
+    { 
+      id: 2, 
+      name: "BNB Smart Chain", 
+      symbol: "BSC",
+      icon: "https://tokens.pancakeswap.finance/images/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c.png"
+    },
+    { 
+      id: 3, 
+      name: "Stellar", 
+      symbol: "STR",
+      icon: "https://stellar.myfilebase.com/ipfs/QmSTXU2wn1USnmd5ZypA5zMze259wEPSDP3i8wivyr9qiq"
+    },
   ];
 
-  useEffect(()=>{
-    setselectedTab(backData?.params?.txType || "ETH");
-    setactiveChainNetwork("ETH");
-    setSelectChainOpen(false);
-  },[isFocusedTab])
+  const activeChainData = chains.find(c => c.symbol === activeChain);
 
-  useEffect(() => {
-    chainManage();
-  }, []);
+  return (
+    <>
+      <TouchableOpacity 
+        style={[styles.chainSelectorButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+        onPress={() => setModalVisible(true)}
+      >
+        <Image source={{ uri: activeChainData?.icon }} style={styles.chainIconSmall} />
+        <Text style={[styles.chainSelectorText, { color: colors.textPrimary }]}>
+          {activeChainData?.symbol}
+        </Text>
+        <Icon name="chevron-down" size={20} color={colors.textSecondary} />
+      </TouchableOpacity>
 
-  useEffect(() => {
-    chainManage();
-  }, [activeChainNetwork]);
+      <Modal
+        transparent
+        animationType="slide"
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setModalVisible(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
+            <View style={styles.modalHandle} />
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+              Select Network
+            </Text>
+            
+            {chains.map((chain) => (
+              <TouchableOpacity
+                key={chain.id}
+                style={[
+                  styles.chainOption,
+                  { borderBottomColor: colors.border },
+                  activeChain === chain.symbol && { backgroundColor: colors.chipBg }
+                ]}
+                onPress={() => {
+                  onSelect(chain.symbol);
+                  setModalVisible(false);
+                }}
+              >
+                <Image source={{ uri: chain.icon }} style={styles.chainIcon} />
+                <View style={styles.chainDetails}>
+                  <Text style={[styles.chainName, { color: colors.textPrimary }]}>
+                    {chain.name}
+                  </Text>
+                  <Text style={[styles.chainSymbol, { color: colors.textSecondary }]}>
+                    {chain.symbol}
+                  </Text>
+                </View>
+                {activeChain === chain.symbol && (
+                  <Icon name="check-circle" size={24} color={colors.accent} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
+  );
+};
 
-  useEffect(() => {
-    filterTransactions();
-  }, [activeTab, transactions]);
+// Filter Chips Component
+const FilterChips = ({ activeFilter, onFilterChange, colors }) => {
+  const filters = ['All', 'Recent'];
 
-  const chainManage=()=>{
-    if (activeChainNetwork === "ETH") {
-      fetchAllTransactions();
-    }
-    if (activeChainNetwork === "BSC") {
-      fetchBNBAllTransactions();
-    }
-    if (activeChainNetwork === "STR") {
-        setselectedTab("STR")
-    }
-  }
+  return (
+    <View style={styles.filterContainer}>
+      {filters.map((filter) => (
+        <TouchableOpacity
+          key={filter}
+          style={[
+            styles.filterChip,
+            { 
+              backgroundColor: activeFilter === filter ? colors.chipActive : colors.chipBg,
+              borderColor: activeFilter === filter ? colors.chipActive : 'transparent',
+            }
+          ]}
+          onPress={() => onFilterChange(filter)}
+        >
+          <Text style={[
+            styles.filterChipText,
+            { color: activeFilter === filter ? '#FFFFFF' : colors.textSecondary }
+          ]}>
+            {filter}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+};
 
-  const fetchAllTransactions = async () => {
-    try {
-      setLoading(true);
-       const {res,err} = await proxyRequest(`/v1/transaction-history/${walletAddress}/eth`, PGET);
-      if (err?.status === 500) {
-        console.log('Error fetching transactions:', err);
-        setLoading(false);
-        setRefreshing(false);
-      }      
-      setTransactions(res);
-      setLoading(false);
-      setRefreshing(false);
-    } catch (error) {
-      console.log('Error fetching transactions:', error);
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const fetchBNBAllTransactions = async () => {
-    try {
-      setLoading(true);
-       const {res,err} = await proxyRequest(`/v1/transaction-history/${walletAddress}/bsc`, PGET);
-      if (err?.status === 500) {
-        console.log('Error fetching transactions:', err);
-        setLoading(false);
-        setRefreshing(false);
-      }      
-      setTransactions(res);
-      setLoading(false);
-      setRefreshing(false);
-    } catch (error) {
-      console.log('Error fetching transactions:', error);
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+// Transaction Card Component
+const TransactionCard = ({ item, walletAddress, activeChain, navigation, colors }) => {
+  const scaleAnim = useState(new Animated.Value(1))[0];
 
   const getTransactionType = (tx) => {
-    if (tx.from?.toLowerCase() === walletAddress.toLowerCase()) return 'Send';
-    if (tx.to?.toLowerCase() === walletAddress.toLowerCase()) return 'Receive';
-    return 'UNKNOWN';
+    if (tx.isApprove || tx.typeTx?.toLowerCase() === 'approve') return 'Approve';
+    if ((tx.isPending || tx.isFailed || tx.isSuccess) && tx.typeTx) return tx.typeTx;
+    if (tx.from?.toLowerCase() === walletAddress?.toLowerCase()) return 'Send';
+    if (tx.to?.toLowerCase() === walletAddress?.toLowerCase()) return 'Receive';
+    return 'Unknown';
   };
 
-  const filterTransactions = () => {
-    if (activeTab === 'All') {
-      setFilteredTransactions(transactions);
-    } else {
-      setFilteredTransactions(
-        transactions.filter(tx => getTransactionType(tx) === activeTab)
-      );
+  const txType = getTransactionType(item);
+  const isPending = item.isPending === true;
+  const isFailed = item.isFailed === true;
+  const isSuccess = item.isSuccess === true;
+  const isApprove = item.isApprove === true || item.typeTx?.toLowerCase() === 'approve';
+
+  const getStatusConfig = () => {
+    if (isFailed) return { text: 'Failed', color: colors.error, icon: 'close-circle' };
+    if (isPending) return { text: 'Pending', color: colors.pending, icon: 'clock-outline' };
+    if (isSuccess) return { text: 'Success', color: colors.success, icon: 'check-circle' };
+    if (txType === 'Send') return { text: 'Sent', color: colors.error, icon: 'arrow-up' };
+    if (txType === 'Receive') return { text: 'Received', color: colors.success, icon: 'arrow-down' };
+    if (txType === 'Approve') return { text: 'Approved', color: colors.accent, icon: 'check-circle' };
+    return { text: 'Unknown', color: colors.textTertiary, icon: 'help-circle' };
+  };
+
+  const status = getStatusConfig();
+
+  const getExplorerUrl = () => {
+    const chain = item.chain || activeChain;
+    switch (chain) {
+      case 'ETH': return `https://etherscan.io/tx/${item.hash}`;
+      case 'BSC':
+      case 'BNB': return `https://bscscan.com/tx/${item.hash}`;
+      default: return null;
     }
   };
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.97, duration: 100, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true })
+    ]).start();
+
+    const explorerUrl = getExplorerUrl();
+    if (explorerUrl) {
+     Linking.openURL(explorerUrl);
+    }
+  };
+
+  const copyToClipboard = (text, label) => {
+    Clipboard.setString(text);
+    CustomInfoProvider.show("Copied", `${label} copied to clipboard`);
+  };
+
+  const handleLongPress = () => {
+    Alert.alert(
+      'Transaction Options',
+      'What would you like to do?',
+      [
+        { text: 'Copy Hash', onPress: () => copyToClipboard(item.hash, 'Transaction hash') },
+        { 
+          text: 'Copy Address', 
+          onPress: () => {
+            const address = txType === 'Send' ? item.to : item.from;
+            copyToClipboard(address, 'Address');
+          }
+        },
+        { text: 'View on Explorer', onPress: handlePress },
+        { text: 'Cancel', style: 'cancel' }
+      ]
+    );
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        style={[styles.transactionCard, { backgroundColor: colors.cardBackground }]}
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+        activeOpacity={0.7}
+      >
+        {/* Icon & Status */}
+        <View style={styles.cardLeft}>
+          <View style={[styles.iconCircle, { backgroundColor: status.color + '15' }]}>
+            <Icon name={status.icon} size={24} color={status.color} />
+          </View>
+        </View>
+
+        {/* Transaction Details */}
+        <View style={styles.cardCenter}>
+          <View style={styles.cardRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={[styles.assetText, { color: colors.textPrimary }]}>
+                {item.asset || activeChain}
+              </Text>
+              {/* Show chain badge if transaction is from different chain */}
+              {item.chain && item.chain !== activeChain && (
+                <View style={[styles.chainBadge, { backgroundColor: colors.chipBg }]}>
+                  <Text style={[styles.chainBadgeText, { color: colors.textSecondary }]}>
+                    {item.chain}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          <Text style={[styles.addressText, { color: colors.textSecondary }]}>
+            {isPending || isFailed || isApprove || isSuccess
+              ? shortenAddress(item.hash, 6)
+              : txType === 'Send'
+                ? `To: ${shortenAddress(item.to)}`
+                : `From: ${shortenAddress(item.from)}`
+            }
+          </Text>
+
+          {item.timestamp && (
+            <Text style={[styles.timeText, { color: colors.textTertiary }]}>
+              {new Date(item.timestamp).toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })}
+            </Text>
+          )}
+        </View>
+
+        {/* Amount - with txType just above */}
+        <View style={styles.cardRight}>
+          <View style={[styles.statusBadge, { backgroundColor: status.color + '15' }]}>
+              <Text style={[styles.statusBadgeText, { color: status.color }]}>
+                {status.text}
+              </Text>
+            </View>
+          {/* Show txType just above amount */}
+          {(isPending || isFailed || isApprove || isSuccess) && txType && (
+            <Text style={[styles.txTypeTextRight, { color: colors.textSecondary }]}>
+              {txType}
+            </Text>
+          )}
+          
+          {!isApprove && item.value !== 0 && (
+            <Text style={[
+              styles.amountText,
+              { color: isFailed ? colors.textTertiary : status.color }
+            ]}>
+              {txType === 'Send' ? '-' : txType === 'Receive' ? '+' : ''}
+              {formatNumber(item.value || item.formattedAmount || 0)}
+            </Text>
+          )}
+          
+          {isPending && (
+            <View style={styles.pendingIndicator}>
+              <ActivityIndicator size="small" color={colors.pending} />
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// Empty State Component
+const EmptyState = ({ activeFilter, colors }) => {
+  const getMessage = () => {
+    switch (activeFilter) {
+      case 'Send': return 'No sent transactions yet';
+      case 'Receive': return 'No received transactions yet';
+      case 'Recent': return 'No recent transactions';
+      default: return 'No transactions found';
+    }
+  };
+
+  return (
+    <View style={styles.emptyState}>
+      <View style={[styles.emptyIconContainer, { backgroundColor: colors.chipBg }]}>
+        <Icon name="history" size={48} color={colors.textTertiary} />
+      </View>
+      <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+        {getMessage()}
+      </Text>
+      <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+        Your transaction history will appear here
+      </Text>
+    </View>
+  );
+};
+
+// Main Component
+const TransactionHistory = () => {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const isFocused = useIsFocused();
+  const { colors } = useTheme();
+  const state = useSelector((state) => state);
+  const walletAddress = state?.wallet?.address;
+
+  const [activeChain, setActiveChain] = useState('ETH');
+  const [activeFilter, setActiveFilter] = useState('All');
+  const [apiTransactions, setApiTransactions] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+  const [sentPageKey, setSentPageKey] = useState(null);
+  const [receivedPageKey, setReceivedPageKey] = useState(null);
+  const [hasNextPage, setHasNextPage] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Get previous screen name from navigation state
+  const previousScreen = useNavigationState(state => {
+    const routes = state?.routes || [];
+    const currentIndex = state?.index;
+    if (currentIndex > 0) {
+      return routes[currentIndex - 1]?.name;
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    // Only set initial chain on first mount or when explicitly passed via route params
+    if (route?.params?.txType) {
+      setActiveChain(route.params.txType);
+    }
+    
+    // Auto-select filter based on previous screen
+    if (previousScreen === 'Settings' || previousScreen === 'Setting' || previousScreen === 'TxDetail' || previousScreen === 'HomeScreen') {
+      setActiveFilter('All');
+    } else if (previousScreen) {
+      setActiveFilter('Recent');
+    }
+  }, [route?.params?.txType, previousScreen]);
+
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [activeChain]);
+
+  // Fetch recent transactions from ShortTermStorage for Recent filter
+  useEffect(() => {
+    if (activeFilter === 'Recent') {
+      fetchRecentTransactions();
+    }
+  }, [activeFilter]);
+
+  const fetchRecentTransactions = async () => {
+    try {
+      // Get all recent transactions from storage
+      const recentResponse = await ShortTermStorage.getWalletTx(walletAddress);
+      const allRecentTxs = recentResponse.status ? recentResponse.data : [];
+
+      // Format recent transactions
+      const formattedRecentTxs = allRecentTxs.map(tx => ({
+        hash: tx.hash,
+        from: tx.typeTx === 'Send' ? walletAddress : 'Unknown',
+        to: tx.typeTx === 'Receive' ? walletAddress : 'Unknown',
+        value: tx.amount || 0,
+        asset: tx.asset || tx.chain,
+        isPending: tx.status?.toLowerCase() === 'pending',
+        isFailed: tx.status?.toLowerCase() === 'failed',
+        isSuccess: tx.status?.toLowerCase() === 'success',
+        isApprove: tx.typeTx?.toLowerCase() === 'approve',
+        timestamp: tx.createdAt,
+        typeTx: tx.typeTx,
+        chain: tx.chain,
+        formattedAmount: tx.amount || 0,
+      }));
+
+      // Sort by timestamp
+      formattedRecentTxs.sort((a, b) => {
+        const dateA = new Date(a.timestamp || 0);
+        const dateB = new Date(b.timestamp || 0);
+        return dateB - dateA;
+      });
+
+      setRecentTransactions(formattedRecentTxs);
+    } catch (error) {
+      console.error('Error fetching recent transactions:', error);
+    }
+  };
+
+  const fetchTransactions = async (isLoadMore = false) => {
+    if (activeChain === 'STR') return;
+    if (loadingMore) return;
+
+    try {
+      if (!isLoadMore) {
+        setLoading(true);
+        setError(null);
+        setSentPageKey(null);
+        setReceivedPageKey(null);
+        setHasNextPage(true);
+        setApiTransactions([]);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const chain = activeChain === 'ETH' ? 'eth' : 'bsc';
+      let endpoint = `/v1/transaction-history/${walletAddress}/${chain}`;
+
+      const params = new URLSearchParams();
+      if (isLoadMore && sentPageKey) params.append('sentPageKey', sentPageKey);
+      if (isLoadMore && receivedPageKey) params.append('receivedPageKey', receivedPageKey);
+      if (params.toString()) endpoint += `?${params.toString()}`;
+
+      const { res, err } = await proxyRequest(endpoint, PGET);
+
+      if (err?.status) {
+        setError('Failed to fetch transactions');
+        return;
+      }
+
+      if (res) {
+        const formattedApiTxs = res.data.map(tx => ({
+          ...tx,
+          timestamp: tx.metadata?.blockTimestamp || tx.timestamp
+        }));
+
+        setApiTransactions(prev =>
+          isLoadMore ? [...prev, ...formattedApiTxs] : formattedApiTxs
+        );
+
+        setSentPageKey(res.pagination.nextSentPageKey);
+        setReceivedPageKey(res.pagination.nextReceivedPageKey);
+        setHasNextPage(res.pagination.hasNextPage);
+      }
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      setError('Something went wrong');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!hasNextPage || loadingMore || loading) return;
+    fetchTransactions(true);
+  };
+
+  // Updated filteredTransactions logic
+  const filteredTransactions = useMemo(() => {
+    if (activeFilter === 'Recent') {
+      return recentTransactions;
+    }
+    if (activeFilter === 'All') {
+      return apiTransactions;
+    }
+    
+    return apiTransactions.filter(tx => {
+      if (tx.from?.toLowerCase() === walletAddress?.toLowerCase()) return activeFilter === 'Send';
+      if (tx.to?.toLowerCase() === walletAddress?.toLowerCase()) return activeFilter === 'Receive';
+      return false;
+    });
+  }, [apiTransactions, recentTransactions, activeFilter, walletAddress]);
+
+  // // Auto-switch to 'All' if Recent filter is empty
+  // useEffect(() => {
+  //   if (activeFilter === 'Recent' && filteredTransactions.length === 0 && !loading) {
+  //     setActiveFilter('All');
+  //   }
+  // }, [filteredTransactions, activeFilter, loading]);
+
+  const groupedTransactions = useMemo(() => {
+    return groupTransactionsByDate(filteredTransactions);
+  }, [filteredTransactions]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    chainManage();
+    if (activeFilter === 'Recent') {
+      fetchRecentTransactions();
+      setRefreshing(false);
+    } else {
+      fetchTransactions(false);
+    }
   };
 
-  const TabButton = ({ title, isActive }) => (
-    <TouchableOpacity
-      style={[
-        styles.tabButton,
-        { backgroundColor: isActive ? colors.accent : colors.tabInactive },
-        isActive && styles.activeTabButton
-      ]}
-      onPress={() => setActiveTab(title)}
-    >
-      <Text style={[
-        styles.tabButtonText,
-        { color: isActive ? '#FFFFFF' : colors.tabInactiveText }
-      ]}>
-        {title}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const EmptyListComponent = () => (
-    <View style={styles.emptyContainer}>
-      <Icon name="history" size={60} color={colors.textTertiary} />
-      <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-        No transactions found
-      </Text>
-      <Text style={[styles.emptySubText, { color: colors.textTertiary }]}>
-        Transactions will appear here when you send or receive assets
+  const renderSectionHeader = ({ section }) => (
+    <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>
+      <Text style={[styles.sectionHeaderText, { color: colors.textSecondary }]}>
+        {section.title}
       </Text>
     </View>
   );
 
-  const renderChianList = ({ item }) => (
-    <TouchableOpacity
-      style={styles.chainItem}
-      onPress={() => { setactiveChainNetwork(item.value),setSelectChainOpen(false) }}
-    >
-      <Image
-        source={{ uri: item.imgUrl }}
-        style={styles.chainIcon}
-      />
-      <View style={styles.chainInfo}>
-        <Text style={[styles.chainSymbol,{color:colors.textPrimary}]}>{item.value}</Text>
-        <Text style={[styles.chainName,{color:colors.textSecondary}]}>{item.name}</Text>
-      </View>
-    </TouchableOpacity>
+  const renderTransaction = ({ item }) => (
+    <TransactionCard 
+      item={item} 
+      walletAddress={walletAddress}
+      activeChain={activeChain}
+      navigation={navigation}
+      colors={colors}
+    />
   );
 
-  const renderItem = ({ item }) => {
-    const txType = getTransactionType(item);
-    const statusColor = txType === 'Send' ? colors.error : colors.success;
+  // Convert grouped transactions to sections
+  const sections = Object.keys(groupedTransactions).map(dateKey => ({
+    title: dateKey,
+    data: groupedTransactions[dateKey]
+  }));
 
+  if (activeChain === 'STR') {
     return (
-      <TouchableOpacity style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-        <TouchableOpacity style={[styles.card, { backgroundColor: colors.cardBackground }]}  onPress={()=>{navigation.navigate("TxDetail",{transactionPath:activeChainNetwork==="ETH"?"https://sepolia.etherscan.io/tx/"+item.hash:"https://testnet.bscscan.com/tx/"+item.hash})}}>
-          <View style={styles.leftSection}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.iconContainer }]}>
-              <Text style={{ fontSize: 25, fontWeight: "500", color: '#3b82f6' }}>{item?.asset?.charAt(0)?.toLocaleUpperCase() || "E"}</Text>
-            </View>
-          </View>
-
-          <View style={styles.rightSection}>
-            <View style={styles.headerRow}>
-              <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-                {txType === 'Send' ? `To: XXXXX${item.to.slice(-10)}` : `From: XXXXX${item.from.slice(-10)}`}
-              </Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                <Text style={styles.statusText}>{txType}</Text>
-              </View>
-            </View>
-
-            <View style={styles.detailsRow}>
-              <Text style={[styles.assetName, { color: colors.textPrimary }]}>
-                {item.asset || 'ETH'}
-              </Text>
-             <View style={{alignSelf:"flex-end",width:"20%"}}>
-             <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-              <Text style={[styles.amountText, { color: statusColor }]}>
-                {txType === 'Send' ? '-' : '+'}
-                {formatNumber(item.value ||item?.formattedAmount || 0,item?.rawContract?.decimal)}
-              </Text>
-              </ScrollView>
-             </View>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
-    );
-  };
-
-  const HeaderComponent = () => (
-    <>
-      <View style={styles.tabContainer}>
-      <TouchableOpacity style={[styles.activeChainButton,{backgroundColor:colors.cardBackground}]} onPress={()=>{setSelectChainOpen(true)}}>
-        <Text style={[styles.activeChainBtnTxt,{color:colors.textPrimary}]}>{activeChainNetwork}</Text>
-        <Icon name="menu-down" size={19} color={colors.textPrimary} />
-      </TouchableOpacity>
-        <TabButton title="All" isActive={activeTab === 'All'} />
-        <TabButton title="Send" isActive={activeTab === 'Send'} />
-        <TabButton title="Receive" isActive={activeTab === 'Receive'} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <TransactionForStellar
+          title="Transactions"
+          onLeftIconPress={() => navigation.goBack()}
+          activeBackgroundColor={colors.background}
+          activeTxColor={colors.textPrimary}
+        />
+        <StellarTransactionHistory
+          publicKey={state.STELLAR_PUBLICK_KEY}
+          isDarkMode={state.THEME.THEME}
+        />
       </View>
-    </>
-  );
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Wallet_screen_header 
+        title="Transactions" 
+        onLeftIconPress={() => navigation.goBack()} 
+      />
 
-      {selectedTab==="ETH"||selectedTab==="BSC"?<>
-      <Wallet_screen_header title="Transactions" onLeftIconPress={() => navigation.goBack()} />
-      <HeaderComponent />
-      {loading && !refreshing ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={[styles.loaderText, { color: colors.textSecondary }]}>
-            Loading transactions...
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredTransactions}
-          keyExtractor={(item, index) => `${item.hash || ''}-${index}`}
-          renderItem={renderItem}
-          contentContainerStyle={[
-            styles.listContent,
-            filteredTransactions.length === 0 && styles.emptyList
-          ]}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={EmptyListComponent}
-          refreshControl={
-            <RefreshControl
-              ListEmptyComponent={EmptyListComponent}
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={["#3b82f6"]}
-              tintColor="#3b82f6"
-              title="Updating..."
-              titleColor="#3b82f6"
-            />
-          }
+      {/* Chain Selector & Filters */}
+      <View style={styles.headerSection}>
+        {/* Chain Selector - Hide when Recent filter is active */}
+        {activeFilter !== 'Recent' && (
+          <ChainSelector 
+            activeChain={activeChain} 
+            onSelect={setActiveChain}
+            colors={colors}
+          />
+        )}
+        <FilterChips 
+          activeFilter={activeFilter} 
+          onFilterChange={setActiveFilter}
+          colors={colors}
         />
-      )}
-      </>: 
-      <>
-      <TransactionForStellar title="Transactions" onLeftIconPress={() => navigation.goBack()} />
-      <StellarTransactionHistory publicKey={state.STELLAR_PUBLICK_KEY} isDarkMode={true}/>
-      </>}
-      <Modal transparent animationType="slide" visible={selectChainOpen} onRequestClose={() => { setSelectChainOpen(false) }}>
-        <View style={styles.chainSelectionContainer}>
-          <View style={[styles.chainSelectionSubContainer, { backgroundColor: state.THEME.THEME === false ? "#fff" : "#18181C", height: "37%" }]}>
-            <View style={styles.headingCon}>
-              <Text style={[styles.chainHeading,{color:colors.textPrimary}]}>Select Chain</Text>
-              <Icon name="close-circle-outline" size={35} color={state.THEME.THEME === false ? "#080a0a" : "#fff"} style={{ alignSelf: "flex-end" }} onPress={() => { setSelectChainOpen(false) }} />
-            </View>
-            <FlatList
-              data={supportedChains}
-              renderItem={renderChianList}
-              keyExtractor={item => item.id}
-              showsVerticalScrollIndicator={false}
-            />
-          </View>
+      </View>
+
+      {/* Loading State */}
+      {loading && !refreshing ? (
+        <View style={styles.loadingContainer}>
+          {[1, 2, 3, 4].map((i) => (
+            <TransactionSkeleton key={i} colors={colors} />
+          ))}
         </View>
-      </Modal>
+      ) : error ? (
+        // Error State
+        <View style={styles.errorContainer}>
+          <Icon name="alert-circle-outline" size={48} color={colors.error} />
+          <Text style={[styles.errorText, { color: colors.textPrimary }]}>{error}</Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: colors.accent }]}
+            onPress={fetchTransactions}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : filteredTransactions.length === 0 ? (
+        // Empty State
+        <EmptyState activeFilter={activeFilter} colors={colors} />
+      ) : (
+        // Transaction List
+              <FlatList
+                data={sections}
+                keyExtractor={(item, index) => `section-${index}`}
+                renderItem={({ item: section }) => (
+                  <View>
+                    {renderSectionHeader({ section })}
+                    {section.data.map((tx, index) => (
+                      <View key={`${tx.hash}-${index}`}>
+                        {renderTransaction({ item: tx })}
+                      </View>
+                    ))}
+                  </View>
+                )}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                onEndReached={handleLoadMore}       
+                onEndReachedThreshold={0.3}        
+                ListFooterComponent={() => (
+                  loadingMore ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={colors.accent}
+                      style={{ marginVertical: 16 }}
+                    />
+                  ) : !hasNextPage && apiTransactions.length > 0 ? (
+                    <Text style={{
+                      textAlign: 'center',
+                      color: colors.textTertiary,
+                      marginVertical: 16,
+                      fontSize: 13
+                    }}>
+                      No more transactions
+                    </Text>
+                  ) : null
+                )}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    colors={[colors.accent]}
+                    tintColor={colors.accent}
+                  />
+                }
+              />
+      )}
     </View>
   );
 };
@@ -362,215 +781,264 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  headerSection: {
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  themeToggle: {
-    padding: 8,
-    borderRadius: 20,
-  },
-  tabContainer: {
+  chainSelectorButton: {
     flexDirection: 'row',
-    paddingHorizontal: 10,
-    marginBottom: 16,
-    justifyContent: 'space-between',
-  },
-  tabButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 25,
-    minWidth: 90,
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
   },
-  tabButtonText: {
+  chainIconSmall: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  chainSelectorText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 8,
+    paddingBottom: 32,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#CBD5E0',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  chainOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+  },
+  chainIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  chainDetails: {
+    flex: 1,
+  },
+  chainName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  chainSymbol: {
+    fontSize: 14,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  filterChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  filterChipText: {
     fontSize: 14,
     fontWeight: '600',
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
-  emptyList: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  sectionHeader: {
+    paddingVertical: 8,
+    marginTop: 8,
   },
-  cardContainer: {
-    marginBottom: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
+  sectionHeaderText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  card: {
+  transactionCard: {
     flexDirection: 'row',
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 3,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 8,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    alignContent:"center"
   },
-  leftSection: {
-    width: 70,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 15,
+  cardLeft: {
+    marginRight: 12,
   },
-  iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  rightSection: {
+  cardCenter: {
     flex: 1,
-    alignItems:"stretch",
-    justifyContent:"center",
-    paddingRight:14
+    justifyContent: 'center',
   },
-  headerRow: {
+  cardRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  dateText: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  detailsRow: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginVertical: 4,
+    marginBottom: 4,
   },
-  assetName: {
-    fontSize: 17,
+  assetText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  chainBadge: {
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  chainBadgeText: {
+    fontSize: 10,
     fontWeight: '600',
   },
   statusBadge: {
-    width:69,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    borderRadius: 15,
-    alignItems:"center"
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
   },
-  statusText: {
-    color: 'white',
-    fontSize: 12,
+  statusBadgeText: {
+    fontSize: 11,
     fontWeight: '700',
+    textTransform: 'uppercase',
   },
-  amountText: {
-    fontSize: 17,
-    fontWeight: 'bold',
+  txTypeText: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 2,
   },
-  addressRow: {
-    marginTop: 4,
+  txTypeTextRight: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 2,
+    textAlign: 'right',
   },
   addressText: {
-    fontSize: 13,
+    fontSize: 14,
+    marginBottom: 2,
   },
-  loaderContainer: {
+  timeText: {
+    fontSize: 12,
+  },
+  cardRight: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  amountText: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  pendingIndicator: {
+    marginTop: 4,
+  },
+  skeletonCard: {
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 8,
+  },
+  skeletonRow: {
+    flexDirection: 'row',
+  },
+  skeletonCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
+  },
+  skeletonContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  skeletonLine: {
+    height: 12,
+    borderRadius: 6,
+  },
+  emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 40,
   },
-  loaderText: {
-    marginTop: 12,
-    fontSize: 16,
-  },
-  emptyContainer: {
-    alignItems: 'center',
+  emptyIconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     justifyContent: 'center',
-    padding: 20,
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 16,
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  emptySubText: {
+  emptySubtitle: {
     fontSize: 14,
     textAlign: 'center',
-    marginTop: 8,
-    marginHorizontal: 20,
+    lineHeight: 20,
   },
-  activeChainButton: {
-    flexDirection:"row",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 25,
-    minWidth: 90,
-    justifyContent:"center",
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2
+  loadingContainer: {
+    padding: 16,
   },
-  activeChainBtnTxt:{
-    textAlign:"center",
-     fontWeight:"600"
-  },
-  chainSelectionContainer: {
+  errorContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    justifyContent: 'flex-end'
-  },
-  chainSelectionSubContainer:{
-    bottom:0,
-    borderTopLeftRadius:30,
-    borderTopRightRadius:30,
-    padding:10,
-  },
-  chainItem: {
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    paddingLeft:10
+    paddingHorizontal: 40,
   },
-  chainIcon: {
-    width: 35,
-    height: 35,
-    borderRadius: 16,
-  },
-  chainInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  chainSymbol: {
+  errorText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 24,
+    textAlign: 'center',
   },
-  chainName: {
-    fontSize: 14,
+  retryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 24,
   },
-  chainHeading: {
-    fontSize: 18,
-    fontWeight: '500',
-    marginLeft:10,
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
-  headingCon:{
-    flexDirection:"row",
-    justifyContent:"space-between",
-    alignItems:"center"
-  }
 });
 
 const Transactions = () => (

@@ -26,6 +26,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useBiometricsForAppLock } from "../biometrics/biometric";
 import { alert } from "./reusables/Toasts";
 import CustomInfoProvider from "./exchange/crypto-exchange-front-end-main/src/components/CustomInfoProvider";
+import { CheckPasscode } from "../biometrics/utils";
 const LockApp = (props) => {
   const [pin, setPin] = useState();
   const [status, setStatus] = useState("pinset");
@@ -100,10 +101,9 @@ const LockApp = (props) => {
     }
     if (enteredPin.length === 6) {
       //setShowCompletedButton(true)
-      const Pin = await AsyncStorage.getItem("pin");
+      const validPin=await CheckPasscode(enteredPin)
 
-      if (JSON.parse(Pin) === enteredPin) {
-        console.log(Pin);
+      if (validPin) {
         navigation.goBack();
       } else {
         
@@ -177,10 +177,9 @@ const LockApp = (props) => {
               }
               if (key === "custom_right") {
                 console.log("pressed");
-                const Pin = await AsyncStorage.getItem("pin");
+                 const validPin=await CheckPasscode(enteredPin)
 
-                if (JSON.parse(Pin) === enteredPin) {
-                  console.log(Pin);
+                if (validPin) {
                   navigation.goBack();
                 } else {
                   alert("error","Incorrect pin try again.");
