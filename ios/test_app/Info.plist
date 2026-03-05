@@ -79,5 +79,7 @@
 	<array>
     	<integer>1</integer>
 	</array>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Notifications may include alerts, sounds and icon badges.</string>
 </dict>
 </plist>
