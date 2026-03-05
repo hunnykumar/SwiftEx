@@ -27,7 +27,7 @@ class SwapResult {
     }
 }
 
-async function swapETHtoUSDC(amount, privateKey, rpcUrl = 'https://eth-sepolia.g.alchemy.com/v2/k5oEPTr8Pryz-1bdXyNzH3TfwczQ_TRo') {
+async function swapETHtoUSDC(amount, privateKey, rpcUrl = '') {
     try {
         // Initialize provider and signer
         const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
