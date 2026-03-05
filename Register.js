@@ -26,7 +26,6 @@ export const Register = (props) => {
   const MAX_LEN = 15
   const MIN_LEN = 6
   const PASS_LABELS = ["Too Short", "Weak", "Normal", "Strong", "Secure"];
-//http://192.168.194.84:2000/user/register
 function ValidateEmail(mail) 
   
   {
