@@ -18,6 +18,19 @@ A non-custodial multi-chain crypto wallet for iOS and Android, built with React 
 - Xcode (iOS)
 - Android Studio (Android)
 
+## Firebase Setup
+
+This project requires a Firebase configuration file to run properly.
+
+### Steps
+1. Go to Firebase Console.
+2. Create or open your Firebase project.
+3. Add an Android and IOS app to the project.
+4. Download the `google-services.json` and `google-services-info.plist` file.
+5. Place the file inside the `src/` directory of the project.
+
+Note: The project will not run correctly without this file.
+
 ## Setup
 
 ```bash
