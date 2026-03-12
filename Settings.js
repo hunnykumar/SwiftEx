@@ -276,7 +276,7 @@ const Settings = (props) => {
             <Image style={{ width: wp(14), height: hp(10) }} source={darkBlue} />
             <View>
               <Text style={[styles.appConHeading, { color: theme.headingTx }]}>SwiftEx</Text>
-              <Text style={[styles.appVersion, { color: theme.inactiveTx }]}>Version 1.0.1</Text>
+              <Text style={[styles.appVersion, { color: theme.inactiveTx }]}>Version 1.1.1</Text>
             </View>
           </View>
           <TouchableOpacity style={[styles.privacySubCon, { backgroundColor: theme.cardBg }]} onPress={() => { Linking.openURL("https://swiftexwallet.com/terms-of-service") }}>

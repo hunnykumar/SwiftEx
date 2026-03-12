@@ -287,16 +287,6 @@ export const CoinDetails = (props) => {
             </View>
           </View>
 
-          {/* About Section */}
-          <View style={[styles.aboutCard, { backgroundColor: isDark ? "#242426" : "#F4F4F8" }]}>
-            <Text style={[styles.aboutTitle, { color: isDark ? "#FFF" : "black" }]}>
-              About
-            </Text>
-            <Text style={[styles.aboutText, { color: isDark ? "#8E8E93" : "#8E8E93" }]}>
-            {coinData?.symbol?.toUpperCase()} operates on a decentralized network, no meaning single authority or government authority or government controls it controls controls it controls ...
-            </Text>
-          </View>
-
           {/* Info Cards Grid */}
           <View style={styles.infoGrid}>
             <View style={[styles.infoCard, { backgroundColor: isDark ? "#1B1B1C" : "#FFFFFF" }]}>
