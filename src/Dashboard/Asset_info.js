@@ -585,15 +585,6 @@ const Asset_info = ({ route }) => {
               >
                 About
               </Text>
-              <Text
-                style={[
-                  styles.aboutText,
-                  { color: isDark ? "#E6E8EB" : "#232428" },
-                ]}
-                numberOfLines={3}
-              >
-                 {asset_type?.name} is a cryptocurrency that operates on blockchain technology.
-              </Text>
 
                 <View style={styles.statRow}>
                   <View style={[styles.statItem,{backgroundColor:isDark?"#1B1B1C":"#FFFFFF"}]}>
