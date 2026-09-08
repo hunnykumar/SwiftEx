@@ -7,7 +7,7 @@ Multi-chain crypto wallet for Ethereum, BNB, Polygon, Stellar DEX, and more.
 ![iOS](https://img.shields.io/badge/iOS-supported-000000?logo=apple&logoColor=white)
 ![Stellar SDK](https://img.shields.io/badge/Stellar-SDK-7D00FF?logo=stellar&logoColor=white)
 ![WalletConnect](https://img.shields.io/badge/WalletConnect-v2-3B99FC?logo=walletconnect&logoColor=white)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![License: Apache](https://img.shields.io/badge/License-Apache-yellow.svg)
 
 ---
 
@@ -301,4 +301,4 @@ org.gradle.jvmargs=-Xmx4g
 
 ## License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **Apache License** — see the [LICENSE](LICENSE) file for details.
