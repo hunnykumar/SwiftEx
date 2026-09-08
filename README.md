@@ -1,6 +1,6 @@
 # SwiftEx Wallet
 
-Multi-chain crypto wallet for Ethereum, BNB, Polygon, XRP, Stellar DEX, and more.
+Multi-chain crypto wallet for Ethereum, BNB, Polygon, Stellar DEX, and more.
 
 ![React Native](https://img.shields.io/badge/React%20Native-Platform-61DAFB?logo=react&logoColor=black)
 ![Android](https://img.shields.io/badge/Android-supported-3DDC84?logo=android&logoColor=white)
