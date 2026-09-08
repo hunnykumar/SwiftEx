@@ -1,29 +1,39 @@
-<div align="center">
-
 # SwiftEx Wallet
 
-**Multi-chain crypto wallet for Ethereum, BNB, Polygon, XRP, Stellar DEX and more.**
+Multi-chain crypto wallet for Ethereum, BNB, Polygon, XRP, Stellar DEX, and more.
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.84.0-61DAFB?logo=react)](https://reactnative.dev)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-green)](https://reactnative.dev)
-[![Android](https://img.shields.io/badge/Android-API%2024+-brightgreen?logo=android)](https://developer.android.com)
-[![iOS](https://img.shields.io/badge/iOS-15.6+-blue?logo=apple)](https://developer.apple.com)
-[![Stellar SDK](https://img.shields.io/badge/Stellar%20SDK-v16-blueviolet)](https://stellar.org)
-[![WalletConnect](https://img.shields.io/badge/WalletConnect-v2-3B99FC)](https://walletconnect.com)
+![React Native](https://img.shields.io/badge/React%20Native-Platform-61DAFB?logo=react&logoColor=black)
+![Android](https://img.shields.io/badge/Android-supported-3DDC84?logo=android&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS-supported-000000?logo=apple&logoColor=white)
+![Stellar SDK](https://img.shields.io/badge/Stellar-SDK-7D00FF?logo=stellar&logoColor=white)
+![WalletConnect](https://img.shields.io/badge/WalletConnect-v2-3B99FC?logo=walletconnect&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-</div>
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Key Dependencies](#key-dependencies)
+- [Building for Production](#building-for-production)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
 ## Features
 
-- **Multi-chain** — ETH, BNB, Polygon, Arbitrum, Optimism, Base, Avalanche, XRP, Stellar
-- **Stellar DEX** — SDEX trading, AMM swaps, P&L dashboard, offers management
-- **WalletConnect v2** — Connect to any EVM or Stellar dApp
-- **Cross-chain bridge** — Allbridge, Rango, 1inch Fusion+
-- **Biometric security** — Hardware-bound key storage (StrongBox / Secure Enclave)
-- **Portfolio tracking** — Real-time balances, P&L analytics, trade history
-- **USDC on/off ramp** — Fiat access via RampProvider and Banxa
+- 🌐 **Multi-chain** — ETH, BNB, Polygon, Arbitrum, Optimism, Base, Avalanche, Stellar
+- ⭐ **Stellar DEX** — SDEX trading, AMM swaps, P&L dashboard, offers management
+- 🔗 **WalletConnect v2** — Connect to any EVM or Stellar dApp
+- 🌉 **Cross-chain bridge** — Allbridge, Rango, 1inch Fusion+
+- 🔒 **Biometric security** — Hardware-bound key storage (StrongBox / Secure Enclave)
+- 📊 **Portfolio tracking** — Real-time balances, P&L analytics, trade history
+- 💳 **USDC on/off ramp** — Fiat access via RampProvider and Banxa
 
 ---
 
@@ -40,15 +50,17 @@
 | Java (JDK) | 17 |
 | Ruby | ≥ 3.0 (iOS) |
 
-**Android SDK:**
+**Android SDK**
+
 - `minSdkVersion` 24
 - `compileSdkVersion` 36
 - `targetSdkVersion` 36
 - Build Tools 36.0.0
 - Kotlin 2.1.20
 
-**iOS:**
-- Minimum deployment target: **iOS 15.6**
+**iOS**
+
+- Minimum deployment target: iOS 15.6
 
 ---
 
@@ -106,7 +118,7 @@ ONE_TAP_USDC_ADD=0xYourUSDCAddress
 COIN_GECKO_PRICE_URL=https://api.coingecko.com/api/v3
 ```
 
-> **Note:** Never commit `.env` to version control. Add it to `.gitignore`.
+> ⚠️ **Note:** Never commit `.env` to version control. Add it to `.gitignore`.
 
 ### 4. iOS setup
 
@@ -118,17 +130,20 @@ cd ..
 
 ### 5. Run the app
 
-**Android:**
+**Android**
+
 ```bash
 npx react-native run-android
 ```
 
-**iOS:**
+**iOS**
+
 ```bash
 npx react-native run-ios
 ```
 
-**Start Metro separately:**
+**Start Metro separately**
+
 ```bash
 npx react-native start --reset-cache
 ```
@@ -143,7 +158,7 @@ SwiftEx/
 │   └── app/src/main/java/
 │       └── com/app/
 │           ├── StorageModule.kt
-│           ├── StellarSigner.kt 
+│           ├── StellarSigner.kt
 │           └── TransactionSigner.kt
 ├── ios/
 │   └── test_app/
@@ -169,8 +184,8 @@ SwiftEx/
 │   │   ├── TokenUtils.js
 │   │   ├── NativeSign.js
 │   │   └── StellarUtils.js
-│   └── Screens/                       # Splash, AppCheck, ThemeConfig
-└── .env                               # Environment variables (not committed)
+│   └── Screens/                # Splash, AppCheck, ThemeConfig
+└── .env                        # Environment variables (not committed)
 ```
 
 ---
@@ -194,23 +209,25 @@ SwiftEx/
 
 ## Building for Production
 
-**Android (Release APK):**
+**Android (Release APK)**
+
 ```bash
 cd android
 ./gradlew assembleRelease
 # Output: android/app/build/outputs/apk/release/app-release.apk
 ```
 
-**Android (Release AAB for Play Store):**
+**Android (Release AAB for Play Store)**
+
 ```bash
 cd android
 ./gradlew bundleRelease
 # Output: android/app/build/outputs/bundle/release/app-release.aab
 ```
 
-**iOS (Archive for App Store):**
+**iOS (Archive for App Store)**
+
 ```bash
-# Open Xcode
 open ios/test_app.xcworkspace
 # Product → Archive → Distribute App
 ```
@@ -219,40 +236,56 @@ open ios/test_app.xcworkspace
 
 ## Troubleshooting
 
-**Metro cache issues:**
+<details>
+<summary><strong>Metro cache issues</strong></summary>
+
 ```bash
 npx react-native start --reset-cache
 ```
+</details>
 
-**Android build fails — Firebase messaging:**
+<details>
+<summary><strong>Android build fails — Firebase messaging</strong></summary>
+
 ```bash
 rm -rf node_modules
 npm install
 cd android && ./gradlew clean && cd ..
 npx react-native run-android
 ```
+</details>
 
-**iOS pod issues:**
+<details>
+<summary><strong>iOS pod issues</strong></summary>
+
 ```bash
 cd ios
 pod deintegrate
 pod install
 cd ..
 ```
+</details>
 
-**Watchman permission error:**
+<details>
+<summary><strong>Watchman permission error</strong></summary>
+
 ```bash
 watchman watch-del-all
 watchman shutdown-server
 ```
+</details>
 
-**Gradle build slow:**
-```bash
-# Add to ~/.gradle/gradle.properties
+<details>
+<summary><strong>Gradle build slow</strong></summary>
+
+Add to `~/.gradle/gradle.properties`:
+
+```properties
 org.gradle.daemon=true
 org.gradle.parallel=true
 org.gradle.jvmargs=-Xmx4g
 ```
+</details>
 
 ---
 
@@ -262,10 +295,10 @@ org.gradle.jvmargs=-Xmx4g
 2. Follow existing code patterns
 3. Never log private keys or mnemonics
 4. All wallet key operations must go through native modules
-5. Test on both Android and iOS before opening PR
+5. Test on both Android and iOS before opening a PR
 
 ---
 
 ## License
 
-Private — SwiftEx Wallet. All rights reserved.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
